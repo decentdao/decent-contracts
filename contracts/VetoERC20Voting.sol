@@ -5,16 +5,14 @@ import "./interfaces/IVetoGuard.sol";
 import "./interfaces/IVetoERC20Voting.sol";
 import "./TransactionHasher.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @notice A contract for casting veto votes with an ERC20 votes token
 contract VetoERC20Voting is
     IVetoERC20Voting,
     TransactionHasher,
-    Initializable,
-    Ownable
+    FactoryFriendly
 {
     uint256 public vetoVotesThreshold; // Number of votes required to veto a transaction
     uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
@@ -28,15 +26,11 @@ contract VetoERC20Voting is
     mapping(address => mapping(bytes32 => bool)) public userHasVoted;
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
-    /// @notice Initializes the contract that can only be called once
-    /// @param _owner The owner address that can update configurable parameters
-    /// @param _vetoVotesThreshold The number of votes required to veto a transaction
-    /// @param _freezeVotesThreshold The number of votes required to freeze the DAO
-    /// @param _freezeProposalBlockDuration The number of blocks a freeze proposal has to succeed
-    /// @param _freezeBlockDuration The number of blocks a freeze last, from time of freeze proposal creation
-    /// @param _votesToken The address of the VotesToken contract
-    /// @param _vetoGuard The address of the VetoGuard contract
-    function initialize(
+    /// @notice Initialize function, will be triggered when a new proxy is deployed
+    /// @param initializeParams Parameters of initialization encoded
+    function setUp(bytes memory initializeParams) public override initializer {
+        __Ownable_init();
+        (
         address _owner,
         uint256 _vetoVotesThreshold,
         uint256 _freezeVotesThreshold,
@@ -44,7 +38,8 @@ contract VetoERC20Voting is
         uint256 _freezeBlockDuration,
         address _votesToken,
         address _vetoGuard
-    ) external initializer {
+        ) = abi.decode(initializeParams, (address, uint256, uint256, uint256, uint256, address, address));
+
         _transferOwnership(_owner);
         vetoVotesThreshold = _vetoVotesThreshold;
         freezeVotesThreshold = _freezeVotesThreshold;
