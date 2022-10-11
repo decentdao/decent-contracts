@@ -130,23 +130,35 @@ describe("Gnosis Safe", () => {
 
     // Deploy VetoGuard contract with a 10 block delay between queuing and execution
     const abiCoder = new ethers.utils.AbiCoder(); // encode data
-    const setupData = abiCoder.encode(
+    const vetoGuardSetupData = abiCoder.encode(
       ["uint256", "address", "address", "address"],
       [10, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
     );
     vetoGuard = await new VetoGuard__factory(deployer).deploy();
-    await vetoGuard.setUp(setupData);
+    await vetoGuard.setUp(vetoGuardSetupData);
 
     // Initialize VetoERC20Voting contract
-    await vetoERC20Voting.initialize(
-      vetoGuardOwner.address,
-      1000, // veto votes threshold
-      1090, // freeze votes threshold
-      10, // proposal block length
-      100, // freeze duration
-      votesToken.address,
-      vetoGuard.address
+    const vetoERC20VotingSetupData = abiCoder.encode(
+      [
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "uint256",
+        "address",
+        "address",
+      ],
+      [
+        vetoGuardOwner.address,
+        1000, // veto votes threshold
+        1090, // freeze votes threshold
+        10, // proposal block length
+        100, // freeze duration
+        votesToken.address,
+        vetoGuard.address,
+      ]
     );
+    await vetoERC20Voting.setUp(vetoERC20VotingSetupData);
 
     // Create transaction to set the guard address
     const setGuardData = gnosisSafe.interface.encodeFunctionData("setGuard", [
