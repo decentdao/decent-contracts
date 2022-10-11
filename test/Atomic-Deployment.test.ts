@@ -5,7 +5,6 @@ import { ethers, network } from "hardhat";
 import { VetoGuard, VetoGuard__factory } from "../typechain-types";
 import { CallbackGnosis } from "../typechain-types/contracts/CallbackGnosis";
 import { CallbackGnosis__factory } from "../typechain-types/factories/contracts/CallbackGnosis__factory";
-
 import {
   ifaceSafe,
   abi,

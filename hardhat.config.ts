@@ -7,6 +7,7 @@ import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-tracer";
 import "solidity-coverage";
+import "hardhat-dependency-compiler";
 
 dotenv.config();
 
@@ -32,6 +33,9 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  dependencyCompiler: {
+    paths: ["@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol"],
   },
   namedAccounts: {
     deployer: {

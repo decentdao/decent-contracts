@@ -9,9 +9,20 @@ import {
   ClaimFactory__factory,
   ClaimFactory,
   ERC1967Proxy__factory,
+  ModuleProxyFactory,
+  ModuleProxyFactory__factory,
 } from "../typechain-types";
 import chai from "chai";
 import { ethers } from "hardhat";
+import {
+  ifaceSafe,
+  abi,
+  abiSafe,
+  predictGnosisSafeCallbackAddress,
+  ifaceFactory,
+  calculateProxyAddress,
+  abiFactory,
+} from "./helpers";
 
 const expect = chai.expect;
 
@@ -24,6 +35,7 @@ describe("Token Factory", function () {
   let claimSubsidiary: ClaimSubsidiary;
   let claimSubImpl: ClaimSubsidiary;
   let predictedClaimSub: string;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // eslint-disable-next-line camelcase
   let deployer: SignerWithAddress;
@@ -39,17 +51,33 @@ describe("Token Factory", function () {
 
     await cToken.approve(predictedClaimSub, ethers.utils.parseUnits("100", 18));
 
-    const claimResult = await claimFactory.callStatic.create(
-      deployer.address,
-      claimData
+    const vetoGuardFactoryInit =
+      // eslint-disable-next-line camelcase
+      ClaimSubsidiary__factory.createInterface().encodeFunctionData("cToken");
+
+    predictedClaimSub = await calculateProxyAddress(
+      moduleProxyFactory,
+      claimSubImpl.address,
+      vetoGuardFactoryInit,
+      "10031021"
     );
 
-    await claimFactory.create(deployer.address, claimData);
-    // eslint-disable-next-line camelcase
-    claimSubsidiary = ClaimSubsidiary__factory.connect(
-      claimResult[0],
-      deployer
+    claimSubsidiary = await ethers.getContractAt(
+      "ClaimSubsidiary",
+      predictedClaimSub
     );
+
+    // const claimResult = await claimFactory.callStatic.create(
+    //   deployer.address,
+    //   claimData
+    // );
+
+    // await claimFactory.create(deployer.address, claimData);
+    // // eslint-disable-next-line camelcase
+    // claimSubsidiary = ClaimSubsidiary__factory.connect(
+    //   claimResult[0],
+    //   deployer
+    // );
     await claimSubsidiary.initialize(
       deployer.address,
       pToken.address,
@@ -69,28 +97,33 @@ describe("Token Factory", function () {
       claimFactory = await new ClaimFactory__factory(deployer).deploy();
       claimSubImpl = await new ClaimSubsidiary__factory(deployer).deploy();
 
+      moduleProxyFactory = await ethers.getContractAt(
+        "ModuleProxyFactory",
+        "0x00000000000DC7F163742Eb4aBEf650037b1f588"
+      );
+
       const { chainId } = await ethers.provider.getNetwork();
       const abiCoder = new ethers.utils.AbiCoder();
-      predictedClaimSub = ethers.utils.getCreate2Address(
-        claimFactory.address,
-        ethers.utils.solidityKeccak256(
-          ["address", "address", "uint256", "bytes32"],
-          [
-            deployer.address,
-            deployer.address,
-            chainId,
-            ethers.utils.formatBytes32String("hi"),
-          ]
-        ),
-        ethers.utils.solidityKeccak256(
-          ["bytes", "bytes"],
-          [
-            // eslint-disable-next-line camelcase
-            ERC1967Proxy__factory.bytecode,
-            abiCoder.encode(["address", "bytes"], [claimSubImpl.address, []]),
-          ]
-        )
-      );
+      // predictedClaimSub = ethers.utils.getCreate2Address(
+      //   claimFactory.address,
+      //   ethers.utils.solidityKeccak256(
+      //     ["address", "address", "uint256", "bytes32"],
+      //     [
+      //       deployer.address,
+      //       deployer.address,
+      //       chainId,
+      //       ethers.utils.formatBytes32String("hi"),
+      //     ]
+      //   ),
+      //   ethers.utils.solidityKeccak256(
+      //     ["bytes", "bytes"],
+      //     [
+      //       // eslint-disable-next-line camelcase
+      //       ERC1967Proxy__factory.bytecode,
+      //       abiCoder.encode(["address", "bytes"], [claimSubImpl.address, []]),
+      //     ]
+      //   )
+      // );
 
       const pData = [
         abiCoder.encode(["string"], ["ParentDecent"]),
