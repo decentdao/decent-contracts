@@ -13,6 +13,7 @@ contract TokenFactory is ITokenFactory {
     /// @return address The address of the created token
     function create(address creator, bytes[] calldata data)
         external
+        override
         returns (address[] memory)
     {
         address[] memory createdContracts = new address[](1);

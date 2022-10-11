@@ -6,7 +6,7 @@ import "./VotesToken.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract ClaimSubsidiary is IClaimSubsidiary, Initializable {
+contract ClaimSubsidiary is Initializable, IClaimSubsidiary {
     using SafeERC20 for IERC20;
 
     address public cToken;

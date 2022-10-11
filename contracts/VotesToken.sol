@@ -57,4 +57,3 @@ contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
         super._afterTokenTransfer(from, to, amount);
     }
 }
-  
