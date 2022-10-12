@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./interfaces/IClaimSubsidiary.sol";
 import "./VotesToken.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract ClaimSubsidiary is Initializable, IClaimSubsidiary {
+contract ClaimSubsidiary is FactoryFriendly, IClaimSubsidiary {
     using SafeERC20 for IERC20;
 
     address public cToken;
@@ -15,17 +15,17 @@ contract ClaimSubsidiary is Initializable, IClaimSubsidiary {
     uint256 public pAllocation;
     mapping(address => bool) isSnapClaimed;
 
-    /// @notice Initilize Claim Contract
-    /// @param _metaFactory Address funding claimContract
-    /// @param _pToken Address of the parent token used for snapshot reference
-    /// @param _cToken Address of child Token being claimed
-    /// @param _pAllocation Total tokens allocated for pToken holders
-    function initialize(
-        address _metaFactory,
-        address _pToken,
-        address _cToken,
-        uint256 _pAllocation
-    ) external initializer {
+    /// @notice Initialize function, will be triggered when a new proxy is deployed
+    /// @param initializeParams Parameters of initialization encoded
+    function setUp(bytes memory initializeParams) public override initializer {
+        __Ownable_init();
+        (
+            address _metaFactory,
+            address _pToken,
+            address _cToken,
+            uint256 _pAllocation
+        ) = abi.decode(initializeParams, (address, address, address, uint256));
+
         cToken = _cToken;
         _createSubsidiary(_metaFactory, _pToken, _cToken, _pAllocation);
     }
@@ -74,9 +74,4 @@ contract ClaimSubsidiary is Initializable, IClaimSubsidiary {
         pAllocation = _pAllocation;
         emit SnapAdded(_pToken, _cToken, _pAllocation);
     }
-
-    /// @dev This empty reserved space is put in place to allow future versions to add new
-    /// variables without shifting down storage in the inheritance chain.
-    /// See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-    uint256[48] private __gap;
 }

@@ -56,7 +56,7 @@ describe("Fractal-Module Integration", () => {
 
   beforeEach(async () => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setTimeout(function () {}, 100); // This timeout is to prevent API rate limit errors
+    setTimeout(function () {}, 200); // This timeout is to prevent API rate limit errors
     // Fork Goerli to use contracts deployed on Goerli
     await network.provider.request({
       method: "hardhat_reset",
@@ -275,12 +275,14 @@ describe("Fractal-Module Integration", () => {
         callback.address
       );
       // FUND SAFE
-      const votesToken = await new VotesToken__factory(deployer).deploy(
-        "DCNT",
-        "DCNT",
-        [gnosisSafe.address],
-        [1000]
+
+      const abiCoder = new ethers.utils.AbiCoder(); // encode data
+      const votesTokenSetupData = abiCoder.encode(
+        ["string", "string", "address[]", "uint256[]"],
+        ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
       );
+      const votesToken = await new VotesToken__factory(deployer).deploy();
+      await votesToken.setUp(votesTokenSetupData);
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1000);
       expect(await votesToken.balanceOf(owner1.address)).to.eq(0);
 

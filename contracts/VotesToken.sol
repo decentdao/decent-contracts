@@ -1,23 +1,39 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20SnapshotUpgradeable.sol";
 
-contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        address[] memory _hodlers,
-        uint256[] memory _allocations
-    ) ERC20(_name, _symbol) ERC20Permit(_name) {
-        _registerInterface(type(IERC20).interfaceId);
+contract VotesToken is
+    IERC20Upgradeable,
+    ERC20SnapshotUpgradeable,
+    ERC20VotesUpgradeable,
+    ERC165Storage,
+    FactoryFriendly
+{
+    /// @notice Initialize function, will be triggered when a new proxy is deployed
+    /// @param initializeParams Parameters of initialization encoded
+    function setUp(bytes memory initializeParams) public override initializer {
+        (
+            string memory _name,
+            string memory _symbol,
+            address[] memory _hodlers,
+            uint256[] memory _allocations // Address(0) == msg.sender
+        ) = abi.decode(
+                initializeParams,
+                (string, string, address[], uint256[])
+            );
+
+        __ERC20_init(_name, _symbol);
+        __ERC20Permit_init(_name);
+        _registerInterface(type(IERC20Upgradeable).interfaceId);
+
         for (uint256 i = 0; i < _hodlers.length; i++) {
             _mint(_hodlers[i], _allocations[i]);
         }
-
     }
 
     function captureSnapShot() external returns (uint256 snapId) {
@@ -28,7 +44,7 @@ contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
     function _mint(address to, uint256 amount)
         internal
         virtual
-        override(ERC20, ERC20Votes)
+        override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
         super._mint(to, amount);
     }
@@ -36,7 +52,7 @@ contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
     function _burn(address account, uint256 amount)
         internal
         virtual
-        override(ERC20, ERC20Votes)
+        override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
         super._burn(account, amount);
     }
@@ -45,7 +61,7 @@ contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20, ERC20Snapshot) {
+    ) internal virtual override(ERC20Upgradeable, ERC20SnapshotUpgradeable) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -53,7 +69,7 @@ contract VotesToken is IERC20, ERC20Snapshot, ERC20Votes, ERC165Storage {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override(ERC20, ERC20Votes) {
+    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         super._afterTokenTransfer(from, to, amount);
     }
 }
