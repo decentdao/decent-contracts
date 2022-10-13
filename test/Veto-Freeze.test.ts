@@ -114,12 +114,20 @@ describe("Gnosis Safe", () => {
     );
 
     // Deploy token, allocate supply to two token vetoers and Gnosis Safe
-    votesToken = await new VotesToken__factory(deployer).deploy(
-      "DCNT",
-      "DCNT",
-      [tokenVetoer1.address, tokenVetoer2.address, gnosisSafe.address],
-      [500, 600, 1000]
+    votesToken = await new VotesToken__factory(deployer).deploy();
+
+    const abiCoder = new ethers.utils.AbiCoder(); // encode data
+    const votesTokenSetupData = abiCoder.encode(
+      ["string", "string", "address[]", "uint256[]"],
+      [
+        "DCNT",
+        "DCNT",
+        [tokenVetoer1.address, tokenVetoer2.address, gnosisSafe.address],
+        [500, 600, 1000],
+      ]
     );
+
+    await votesToken.setUp(votesTokenSetupData);
 
     // Vetoers delegate their votes to themselves
     await votesToken.connect(tokenVetoer1).delegate(tokenVetoer1.address);
@@ -129,7 +137,6 @@ describe("Gnosis Safe", () => {
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
 
     // Deploy VetoGuard contract with a 10 block delay between queuing and execution
-    const abiCoder = new ethers.utils.AbiCoder(); // encode data
     const vetoGuardSetupData = abiCoder.encode(
       ["uint256", "address", "address", "address"],
       [10, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]

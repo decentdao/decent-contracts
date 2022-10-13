@@ -5,7 +5,6 @@ import { ethers, network } from "hardhat";
 import { VetoGuard, VetoGuard__factory } from "../typechain-types";
 import { CallbackGnosis } from "../typechain-types/contracts/CallbackGnosis";
 import { CallbackGnosis__factory } from "../typechain-types/factories/contracts/CallbackGnosis__factory";
-
 import {
   ifaceSafe,
   abi,
@@ -45,7 +44,7 @@ describe("Gnosis Safe", () => {
 
   beforeEach(async () => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setTimeout(function () {}, 100); // This timeout is to prevent API rate limit errors
+    setTimeout(function () {}, 200); // This timeout is to prevent API rate limit errors
     // Fork Goerli to use contracts deployed on Goerli
     await network.provider.request({
       method: "hardhat_reset",
