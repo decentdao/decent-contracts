@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-interface IClaimSubsidiary {
+interface ITokenClaim {
     error NoAllocation();
     error AllocationClaimed();
-    event SnapAdded(address pToken, address cToken, uint256 pAllocation);
-    event SnapClaimed(
+    event SnapShotCaptured(address parentToken, address childToken, uint256 parentAllocation);
+    event TokenClaimed(
         address indexed pToken,
         address indexed cToken,
         address indexed claimer,
@@ -14,14 +14,13 @@ interface IClaimSubsidiary {
 
     /// @notice This function allows pToken holders to claim cTokens
     /// @param claimer Address which is being claimed for
-    function claimSnap(address claimer) external;
+    function claimToken(address claimer) external;
 
-    //////////////////// View Functions //////////////////////////
-    /// @notice Calculate a users cToken allocation
+    /// @notice Gets a users child token claimable amount
     /// @param claimer Address which is being claimed for
     /// @return cTokenAllocation Users cToken allocation
-    function calculateClaimAmount(address claimer)
+    function getClaimAmount(address claimer)
         external
         view
-        returns (uint256 cTokenAllocation);
+        returns (uint256);
 }
