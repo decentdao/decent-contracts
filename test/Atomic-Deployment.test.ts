@@ -87,9 +87,7 @@ describe("Gnosis Safe", () => {
     vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
     const vetoGuardFactoryInit =
       // eslint-disable-next-line camelcase
-      VetoGuard__factory.createInterface().encodeFunctionData(
-        "vetoERC20Voting"
-      );
+      VetoGuard__factory.createInterface().encodeFunctionData("vetoVoting");
 
     predictedVetoGuard = await calculateProxyAddress(
       moduleFactory,
@@ -186,7 +184,7 @@ describe("Gnosis Safe", () => {
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(predictedVetoGuard, vetoImpl.address);
       expect(await vetoGuard.executionDelayBlocks()).eq(10);
-      expect(await vetoGuard.vetoERC20Voting()).eq(owner1.address);
+      expect(await vetoGuard.vetoVoting()).eq(owner1.address);
       expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
     });
 
