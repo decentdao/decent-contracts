@@ -6,8 +6,8 @@ import { ethers, network } from "hardhat";
 import {
   VotesToken,
   VotesToken__factory,
-  VetoERC20Voting,
-  VetoERC20Voting__factory,
+  VetoMultisigVoting,
+  VetoMultisigVoting__factory,
   VetoGuard,
   VetoGuard__factory,
 } from "../typechain-types";
@@ -27,22 +27,25 @@ describe("Gnosis Safe", () => {
   let gnosisFactory: Contract;
 
   // Deployed contracts
-  let gnosisSafe: Contract;
+  let childGnosisSafe: Contract;
+  let parentGnosisSafe: Contract;
   let vetoGuard: VetoGuard;
-  let vetoERC20Voting: VetoERC20Voting;
+  let vetoMultisigVoting: VetoMultisigVoting;
   let votesToken: VotesToken;
 
   // Wallets
   let deployer: SignerWithAddress;
-  let owner1: SignerWithAddress;
-  let owner2: SignerWithAddress;
-  let owner3: SignerWithAddress;
-  let tokenVetoer1: SignerWithAddress;
-  let tokenVetoer2: SignerWithAddress;
+  let parentMultisigOwner1: SignerWithAddress;
+  let parentMultisigOwner2: SignerWithAddress;
+  let parentMultisigOwner3: SignerWithAddress;
+  let childMultisigOwner1: SignerWithAddress;
+  let childMultisigOwner2: SignerWithAddress;
+  let childMultisigOwner3: SignerWithAddress;
   let vetoGuardOwner: SignerWithAddress;
 
   // Gnosis
-  let createGnosisSetupCalldata: string;
+  let createParentGnosisSetupCalldata: string;
+  let createChildGnosisSetupCalldata: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
@@ -69,19 +72,24 @@ describe("Gnosis Safe", () => {
 
     [
       deployer,
-      owner1,
-      owner2,
-      owner3,
-      tokenVetoer1,
-      tokenVetoer2,
+      parentMultisigOwner1,
+      parentMultisigOwner2,
+      parentMultisigOwner3,
+      childMultisigOwner1,
+      childMultisigOwner2,
+      childMultisigOwner3,
       vetoGuardOwner,
     ] = await ethers.getSigners();
 
     // Get deployed Gnosis Safe
     gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer);
 
-    createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [owner1.address, owner2.address, owner3.address],
+    createParentGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
+      [
+        parentMultisigOwner1.address,
+        parentMultisigOwner2.address,
+        parentMultisigOwner3.address,
+      ],
       threshold,
       ethers.constants.AddressZero,
       ethers.constants.HashZero,
@@ -91,24 +99,61 @@ describe("Gnosis Safe", () => {
       ethers.constants.AddressZero,
     ]);
 
-    const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
+    createChildGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
+      [
+        childMultisigOwner1.address,
+        childMultisigOwner2.address,
+        childMultisigOwner3.address,
+      ],
+      threshold,
+      ethers.constants.AddressZero,
+      ethers.constants.HashZero,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.AddressZero,
+    ]);
+
+    const predictedParentGnosisSafeAddress = await predictGnosisSafeAddress(
       gnosisFactory.address,
-      createGnosisSetupCalldata,
+      createParentGnosisSetupCalldata,
       saltNum,
       gnosisSingletonAddress,
       gnosisFactory
     );
 
-    // Deploy Gnosis Safe
+    const predictedChildGnosisSafeAddress = await predictGnosisSafeAddress(
+      gnosisFactory.address,
+      createChildGnosisSetupCalldata,
+      saltNum,
+      gnosisSingletonAddress,
+      gnosisFactory
+    );
+
+    // Deploy Parent Gnosis Safe
     await gnosisFactory.createProxyWithNonce(
       gnosisSingletonAddress,
-      createGnosisSetupCalldata,
+      createParentGnosisSetupCalldata,
       saltNum
     );
 
-    // Get Gnosis Safe contract
-    gnosisSafe = new ethers.Contract(
-      predictedGnosisSafeAddress,
+    // Deploy Child Gnosis Safe
+    await gnosisFactory.createProxyWithNonce(
+      gnosisSingletonAddress,
+      createChildGnosisSetupCalldata,
+      saltNum
+    );
+
+    // Get Parent Gnosis Safe contract
+    parentGnosisSafe = new ethers.Contract(
+      predictedParentGnosisSafeAddress,
+      abiSafe,
+      deployer
+    );
+
+    // Get Child Gnosis Safe contract
+    childGnosisSafe = new ethers.Contract(
+      predictedChildGnosisSafeAddress,
       abiSafe,
       deployer
     );
@@ -119,33 +164,31 @@ describe("Gnosis Safe", () => {
     const abiCoder = new ethers.utils.AbiCoder(); // encode data
     const votesTokenSetupData = abiCoder.encode(
       ["string", "string", "address[]", "uint256[]"],
-      [
-        "DCNT",
-        "DCNT",
-        [tokenVetoer1.address, tokenVetoer2.address, gnosisSafe.address],
-        [500, 600, 1000],
-      ]
+      ["DCNT", "DCNT", [childGnosisSafe.address], [1000]]
     );
 
     await votesToken.setUp(votesTokenSetupData);
 
-    // Vetoers delegate their votes to themselves
-    await votesToken.connect(tokenVetoer1).delegate(tokenVetoer1.address);
-    await votesToken.connect(tokenVetoer2).delegate(tokenVetoer2.address);
-
     // Deploy VetoERC20Voting contract
-    vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
+    vetoMultisigVoting = await new VetoMultisigVoting__factory(
+      deployer
+    ).deploy();
 
     // Deploy VetoGuard contract with a 10 block delay between queuing and execution
     const vetoGuardSetupData = abiCoder.encode(
       ["uint256", "address", "address", "address"],
-      [10, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
+      [
+        10,
+        vetoGuardOwner.address,
+        vetoMultisigVoting.address,
+        childGnosisSafe.address,
+      ]
     );
     vetoGuard = await new VetoGuard__factory(deployer).deploy();
     await vetoGuard.setUp(vetoGuardSetupData);
 
     // Initialize VetoERC20Voting contract
-    const vetoERC20VotingSetupData = abiCoder.encode(
+    const vetoMultisigVotingSetupData = abiCoder.encode(
       [
         "address",
         "uint256",
@@ -157,36 +200,37 @@ describe("Gnosis Safe", () => {
       ],
       [
         vetoGuardOwner.address,
-        1000, // veto votes threshold
-        1090, // freeze votes threshold
+        2, // veto votes threshold
+        2, // freeze votes threshold
         10, // proposal block length
         100, // freeze duration
-        votesToken.address,
+        parentGnosisSafe.address,
         vetoGuard.address,
       ]
     );
-    await vetoERC20Voting.setUp(vetoERC20VotingSetupData);
+    await vetoMultisigVoting.setUp(vetoMultisigVotingSetupData);
 
     // Create transaction to set the guard address
-    const setGuardData = gnosisSafe.interface.encodeFunctionData("setGuard", [
-      vetoGuard.address,
-    ]);
+    const setGuardData = childGnosisSafe.interface.encodeFunctionData(
+      "setGuard",
+      [vetoGuard.address]
+    );
 
     const tx = buildSafeTransaction({
-      to: gnosisSafe.address,
+      to: childGnosisSafe.address,
       data: setGuardData,
       safeTxGas: 1000000,
-      nonce: await gnosisSafe.nonce(),
+      nonce: await childGnosisSafe.nonce(),
     });
     const sigs = [
-      await safeSignTypedData(owner1, gnosisSafe, tx),
-      await safeSignTypedData(owner2, gnosisSafe, tx),
+      await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+      await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
     ];
     const signatureBytes = buildSignatureBytes(sigs);
 
     // Execute transaction that adds the veto guard to the Safe
     await expect(
-      gnosisSafe.execTransaction(
+      childGnosisSafe.execTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -198,16 +242,16 @@ describe("Gnosis Safe", () => {
         tx.refundReceiver,
         signatureBytes
       )
-    ).to.emit(gnosisSafe, "ExecutionSuccess");
+    ).to.emit(childGnosisSafe, "ExecutionSuccess");
 
     // Gnosis Safe received the 1,000 tokens
-    expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1000);
+    expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(1000);
   });
 
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0x4877b8b2")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0xfac0f7cd")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
@@ -230,12 +274,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
@@ -257,7 +301,7 @@ describe("Gnosis Safe", () => {
         await network.provider.send("evm_mine");
       }
 
-      await gnosisSafe.execTransaction(
+      await childGnosisSafe.execTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -270,7 +314,7 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(1000);
     });
 
@@ -285,17 +329,17 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx.to,
           tx.value,
           tx.data,
@@ -321,11 +365,13 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       // Only 1 signer signs, while the threshold is 2
-      const sigs = [await safeSignTypedData(owner1, gnosisSafe, tx)];
+      const sigs = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+      ];
       const signatureBytes = buildSignatureBytes(sigs);
 
       await expect(
@@ -355,12 +401,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
@@ -378,7 +424,7 @@ describe("Gnosis Safe", () => {
       );
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx.to,
           tx.value,
           tx.data,
@@ -404,12 +450,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
@@ -426,7 +472,7 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      const txHash = await vetoERC20Voting.getTransactionHash(
+      const txHash = await vetoMultisigVoting.getTransactionHash(
         tx.to,
         tx.value,
         tx.data,
@@ -438,12 +484,14 @@ describe("Gnosis Safe", () => {
         tx.refundReceiver
       );
 
-      // Vetoer 1 casts 500 veto votes
-      await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
+      // Vetoer 1 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash, false);
 
-      // 500 veto votes have been cast
+      // 1 veto vote have been cast
       expect(
-        await vetoERC20Voting.getVetoVotes(
+        await vetoMultisigVoting.getVetoVotes(
           tx.to,
           tx.value,
           tx.data,
@@ -454,10 +502,10 @@ describe("Gnosis Safe", () => {
           tx.gasToken,
           tx.refundReceiver
         )
-      ).to.eq(500);
+      ).to.eq(1);
 
       expect(
-        await vetoERC20Voting.getIsVetoed(
+        await vetoMultisigVoting.getIsVetoed(
           tx.to,
           tx.value,
           tx.data,
@@ -475,7 +523,7 @@ describe("Gnosis Safe", () => {
         await network.provider.send("evm_mine");
       }
 
-      await gnosisSafe.execTransaction(
+      await childGnosisSafe.execTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -489,7 +537,7 @@ describe("Gnosis Safe", () => {
       );
 
       expect(await votesToken.balanceOf(deployer.address)).to.eq(1000);
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(0);
     });
 
     it("A transaction cannot be executed if it has received more veto votes than the threshold", async () => {
@@ -503,12 +551,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
@@ -525,7 +573,7 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      const txHash = await vetoERC20Voting.getTransactionHash(
+      const txHash = await vetoMultisigVoting.getTransactionHash(
         tx.to,
         tx.value,
         tx.data,
@@ -537,15 +585,19 @@ describe("Gnosis Safe", () => {
         tx.refundReceiver
       );
 
-      // Vetoer 1 casts 500 veto votes
-      await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
+      // Vetoer 1 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash, false);
 
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash, false);
+      // Vetoer 2 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner2)
+        .castVetoVote(txHash, false);
 
-      // 1100 veto votes have been cast
+      // 2 veto votes have been cast
       expect(
-        await vetoERC20Voting.getVetoVotes(
+        await vetoMultisigVoting.getVetoVotes(
           tx.to,
           tx.value,
           tx.data,
@@ -556,10 +608,10 @@ describe("Gnosis Safe", () => {
           tx.gasToken,
           tx.refundReceiver
         )
-      ).to.eq(1100);
+      ).to.eq(2);
 
       expect(
-        await vetoERC20Voting.getIsVetoed(
+        await vetoMultisigVoting.getIsVetoed(
           tx.to,
           tx.value,
           tx.data,
@@ -578,7 +630,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx.to,
           tx.value,
           tx.data,
@@ -609,25 +661,25 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const tx2 = buildSafeTransaction({
         to: votesToken.address,
         data: tokenTransferData2,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
       const sigs2 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx2),
-        await safeSignTypedData(owner2, gnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx2),
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
@@ -644,7 +696,7 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      const txHash1 = await vetoERC20Voting.getTransactionHash(
+      const txHash1 = await vetoMultisigVoting.getTransactionHash(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -656,15 +708,19 @@ describe("Gnosis Safe", () => {
         tx1.refundReceiver
       );
 
-      // Vetoer 1 casts 500 veto votes
-      await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash1, false);
+      // Vetoer 1 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash1, false);
 
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, false);
+      // Vetoer 2 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner2)
+        .castVetoVote(txHash1, false);
 
-      // 1100 veto votes have been cast
+      // 2 veto votes have been cast
       expect(
-        await vetoERC20Voting.getVetoVotes(
+        await vetoMultisigVoting.getVetoVotes(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -675,10 +731,10 @@ describe("Gnosis Safe", () => {
           tx1.gasToken,
           tx1.refundReceiver
         )
-      ).to.eq(1100);
+      ).to.eq(2);
 
       expect(
-        await vetoERC20Voting.getIsVetoed(
+        await vetoMultisigVoting.getIsVetoed(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -697,7 +753,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -730,7 +786,7 @@ describe("Gnosis Safe", () => {
         await network.provider.send("evm_mine");
       }
 
-      await gnosisSafe.execTransaction(
+      await childGnosisSafe.execTransaction(
         tx2.to,
         tx2.value,
         tx2.data,
@@ -744,7 +800,7 @@ describe("Gnosis Safe", () => {
       );
 
       expect(await votesToken.balanceOf(deployer.address)).to.eq(999);
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1);
+      expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(1);
     });
 
     it("A vetoer cannot cast veto votes more than once", async () => {
@@ -758,12 +814,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs = [
-        await safeSignTypedData(owner1, gnosisSafe, tx),
-        await safeSignTypedData(owner2, gnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
@@ -780,7 +836,7 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      const txHash = await vetoERC20Voting.getTransactionHash(
+      const txHash = await vetoMultisigVoting.getTransactionHash(
         tx.to,
         tx.value,
         tx.data,
@@ -792,11 +848,15 @@ describe("Gnosis Safe", () => {
         tx.refundReceiver
       );
 
-      // Vetoer 1 casts 500 veto votes
-      await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
+      // Vetoer 1 casts 1 veto vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash, false);
 
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false)
+        vetoMultisigVoting
+          .connect(parentMultisigOwner1)
+          .castVetoVote(txHash, false)
       ).to.be.revertedWith("User has already voted");
     });
 
@@ -811,10 +871,10 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await parentGnosisSafe.nonce(),
       });
 
-      const txHash = await vetoERC20Voting.getTransactionHash(
+      const txHash = await vetoMultisigVoting.getTransactionHash(
         tx.to,
         tx.value,
         tx.data,
@@ -827,7 +887,9 @@ describe("Gnosis Safe", () => {
       );
 
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false)
+        vetoMultisigVoting
+          .connect(parentMultisigOwner1)
+          .castVetoVote(txHash, false)
       ).to.be.revertedWith("Transaction has not yet been queued");
     });
   });
@@ -849,25 +911,25 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const tx2 = buildSafeTransaction({
         to: votesToken.address,
         data: tokenTransferData2,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
       const sigs2 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx2),
-        await safeSignTypedData(owner2, gnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx2),
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
@@ -884,7 +946,7 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      const txHash1 = await vetoERC20Voting.getTransactionHash(
+      const txHash1 = await vetoMultisigVoting.getTransactionHash(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -896,15 +958,19 @@ describe("Gnosis Safe", () => {
         tx1.refundReceiver
       );
 
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash1, true);
+      // Vetoer 1 casts 1 veto vote and 1 freeze vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash1, true);
 
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, true);
+      // Vetoer 2 casts 1 veto vote and 1 freeze vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner2)
+        .castVetoVote(txHash1, true);
 
-      // 1100 veto votes have been cast
+      // 2 veto votes have been cast
       expect(
-        await vetoERC20Voting.getVetoVotes(
+        await vetoMultisigVoting.getVetoVotes(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -915,13 +981,13 @@ describe("Gnosis Safe", () => {
           tx1.gasToken,
           tx1.refundReceiver
         )
-      ).to.eq(1100);
+      ).to.eq(2);
 
-      // 1100 freeze votes have been cast
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
+      // 2 freeze votes have been cast
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
 
       expect(
-        await vetoERC20Voting.getIsVetoed(
+        await vetoMultisigVoting.getIsVetoed(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -935,7 +1001,7 @@ describe("Gnosis Safe", () => {
       ).to.eq(true);
 
       // Check that the DAO has been frozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -943,7 +1009,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -977,7 +1043,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx2.to,
           tx2.value,
           tx2.data,
@@ -992,17 +1058,17 @@ describe("Gnosis Safe", () => {
       ).to.be.revertedWith("DAO is frozen");
     });
 
-    it("A DAO may be frozen ind. of a veto ", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
+    it("A DAO may be frozen independently of a veto ", async () => {
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      // Vetoer 2 casts 1 freeze votes
+      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
 
-      // 1100 freeze votes have been cast
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
+      // 2 freeze votes have been cast
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
 
       // Check that the DAO has been frozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1014,12 +1080,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
@@ -1042,7 +1108,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -1057,12 +1123,12 @@ describe("Gnosis Safe", () => {
       ).to.be.revertedWith("DAO is frozen");
     });
 
-    it("A DAO may execute txs during a the freeze proposal period if the freeze threshold is not met", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
+    it("A DAO may execute txs during a freeze proposal period if the freeze threshold is not met", async () => {
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      // Check that the DAO has been frozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+      // Check that the DAO has not been frozen
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1074,12 +1140,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
@@ -1102,7 +1168,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -1114,44 +1180,44 @@ describe("Gnosis Safe", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.emit(gnosisSafe, "ExecutionSuccess");
+      ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
     it("Freeze vars set properly during init", async () => {
       // Frozen Params init correctly
-      expect(await vetoERC20Voting.freezeVotesThreshold()).to.eq(1090);
-      expect(await vetoERC20Voting.freezeProposalBlockDuration()).to.eq(10);
-      expect(await vetoERC20Voting.freezeBlockDuration()).to.eq(100);
-      expect(await vetoERC20Voting.owner()).to.eq(vetoGuardOwner.address);
+      expect(await vetoMultisigVoting.freezeVotesThreshold()).to.eq(2);
+      expect(await vetoMultisigVoting.freezeProposalBlockDuration()).to.eq(10);
+      expect(await vetoMultisigVoting.freezeBlockDuration()).to.eq(100);
+      expect(await vetoMultisigVoting.owner()).to.eq(vetoGuardOwner.address);
     });
 
-    it("updates state properly due to freeze actions", async () => {
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(0);
-      expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(0);
+    it("Updates state properly due to freeze actions", async () => {
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(0);
+      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(0);
 
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
       const latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
+      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock.number
       );
 
-      await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
-      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
     });
 
     it("Casting a vote after the freeze voting period resets state", async () => {
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(0);
-      expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(0);
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(0);
+      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(0);
 
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
       let latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
+      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock.number
       );
 
@@ -1159,31 +1225,31 @@ describe("Gnosis Safe", () => {
         await network.provider.send("evm_mine");
       }
 
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
       latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
+      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock.number
       );
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
     });
 
-    it("A user cannot vote twice to freeze a dao during the same voting period", async () => {
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
+    it("A user cannot vote twice to freeze a DAO during the same voting period", async () => {
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).castFreezeVote()
+        vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote()
       ).to.be.revertedWith("User has already voted");
-      expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
     });
 
-    it("Prev. Frozen DAOs may execute txs after the frozen period", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
+    it("Previously Frozen DAOs may execute TXs after the freeze period has elapsed", async () => {
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      // Vetoer 2 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // Check that the DAO has been frozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1195,12 +1261,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
@@ -1223,7 +1289,7 @@ describe("Gnosis Safe", () => {
       }
 
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -1242,9 +1308,9 @@ describe("Gnosis Safe", () => {
       }
 
       // Check that the DAO has been unFrozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -1256,19 +1322,19 @@ describe("Gnosis Safe", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.emit(gnosisSafe, "ExecutionSuccess");
+      ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
     it("Defrosted DAOs may execute txs", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
-      await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 veto votes
-      await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
+      // Vetoer 1 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      // Vetoer 2 casts 1 freeze vote
+      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // Check that the DAO has been frozen
-      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-      await vetoERC20Voting.connect(vetoGuardOwner).defrost();
-      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+      await vetoMultisigVoting.connect(vetoGuardOwner).defrost();
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1280,12 +1346,12 @@ describe("Gnosis Safe", () => {
         to: votesToken.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
+        nonce: await childGnosisSafe.nonce(),
       });
 
       const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
@@ -1309,7 +1375,7 @@ describe("Gnosis Safe", () => {
 
       // Check that the DAO has been unFrozen
       await expect(
-        gnosisSafe.execTransaction(
+        childGnosisSafe.execTransaction(
           tx1.to,
           tx1.value,
           tx1.data,
@@ -1321,36 +1387,38 @@ describe("Gnosis Safe", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.emit(gnosisSafe, "ExecutionSuccess");
+      ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
-    it("You must have voting weight to cast a freeze vote", async () => {
+    it("You must be a parent multisig owner to cast a freeze vote", async () => {
       await expect(
-        vetoERC20Voting.connect(vetoGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("User has no votes");
-      vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-      await expect(
-        vetoERC20Voting.connect(vetoGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("User has no votes");
+        vetoMultisigVoting.connect(vetoGuardOwner).castFreezeVote()
+      ).to.be.revertedWith("User is not an owner");
     });
 
-    it("Only owner methods must be called by vetoGuard owner", async () => {
+    it("Only owner methods must be called by the owner", async () => {
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).defrost()
+        vetoMultisigVoting.connect(childMultisigOwner1).defrost()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).updateVetoVotesThreshold(0)
+        vetoMultisigVoting
+          .connect(childMultisigOwner1)
+          .updateVetoVotesThreshold(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).updateFreezeVotesThreshold(0)
+        vetoMultisigVoting
+          .connect(childMultisigOwner1)
+          .updateFreezeVotesThreshold(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting
-          .connect(tokenVetoer1)
+        vetoMultisigVoting
+          .connect(childMultisigOwner1)
           .updateFreezeProposalBlockDuration(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).updateFreezeBlockDuration(0)
+        vetoMultisigVoting
+          .connect(childMultisigOwner1)
+          .updateFreezeBlockDuration(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
