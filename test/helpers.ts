@@ -156,6 +156,11 @@ export const ifaceSafe = new Interface([
   "function removeOwner(address prevOwner,address owner,uint256 _threshold) external",
   "function isOwner(address owner) public view returns (bool)",
   "function enableModule(address module) public",
+  "function nonce() public view returns (uint256)",
+]);
+
+export const ifaceMultiSend = new Interface([
+  "function multiSend(bytes memory transactions) public payable",
 ]);
 
 export const ifaceFactory = new Interface([
@@ -171,6 +176,10 @@ export const abi = [
   "function createProxyWithNonce(address _singleton,bytes memory initializer,uint256 saltNonce) returns (address proxy)",
   "function createProxyWithCallback(address _singleton,bytes memory initializer,uint256 saltNonce,address callback) public returns (address proxy)",
   "function calculateCreateProxyWithNonceAddress(address _singleton,bytes calldata initializer,uint256 saltNonce) external returns (address proxy)",
+];
+
+export const multisendABI = [
+  "function multiSend(bytes memory transactions) public payable",
 ];
 
 export const abiSafe = [
@@ -191,6 +200,7 @@ export const abiSafe = [
   "function getTransactionHash(address to,uint256 value,bytes calldata data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 _nonce) public view returns (bytes32)",
   "function setGuard(address guard) external",
   "function enableModule(address module) public",
+  "function removeOwner(address prevOwner,address owner,uint256 _threshold) external",
 ];
 
 export const abiFactory = [
@@ -465,4 +475,33 @@ export const buildSafeTransaction = (template: {
     refundReceiver: template.refundReceiver || AddressZero,
     nonce: template.nonce,
   };
+};
+
+const encodeMetaTransaction = (tx: MetaTransaction): string => {
+  const data = utils.arrayify(tx.data);
+  const encoded = utils.solidityPack(
+    ["uint8", "address", "uint256", "uint256", "bytes"],
+    [tx.operation, tx.to, tx.value, data.length, data]
+  );
+  return encoded.slice(2);
+};
+
+export const encodeMultiSend = (txs: MetaTransaction[]): string => {
+  return "0x" + txs.map((tx) => encodeMetaTransaction(tx)).join("");
+};
+
+export const buildMultiSendSafeTx = (
+  multiSend: Contract,
+  txs: MetaTransaction[],
+  nonce: number,
+  overrides?: Partial<SafeTransaction>
+): SafeTransaction => {
+  return buildContractCall(
+    multiSend,
+    "multiSend",
+    [encodeMultiSend(txs)],
+    nonce,
+    true,
+    overrides
+  );
 };
