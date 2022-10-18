@@ -77,4 +77,9 @@ interface IGnosisSafe {
         address refundReceiver,
         uint256 _nonce
     ) external view returns (bytes memory);
+
+    /// @notice Returns whether the passed address is an owner
+    /// @param owner The address the check
+    /// @return bool True if the address is an owner
+    function isOwner(address owner) external view returns (bool);
 }
