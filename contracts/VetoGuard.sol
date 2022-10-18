@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IVetoGuard.sol";
-import "./interfaces/IVetoERC20Voting.sol";
+import "./interfaces/IVetoVoting.sol";
 import "./interfaces/IGnosisSafe.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
@@ -17,7 +17,7 @@ contract VetoGuard is
     IVetoGuard
 {
     uint256 public executionDelayBlocks;
-    IVetoERC20Voting public vetoERC20Voting;
+    IVetoVoting public vetoVoting;
     IGnosisSafe public gnosisSafe;
     mapping(bytes32 => uint256) transactionQueuedBlock;
 
@@ -28,13 +28,13 @@ contract VetoGuard is
         (
             uint256 _executionDelayBlocks,
             address _owner,
-            address _vetoERC20Voting,
+            address _vetoVoting,
             address _gnosisSafe // Address(0) == msg.sender
         ) = abi.decode(initializeParams, (uint256, address, address, address));
 
         executionDelayBlocks = _executionDelayBlocks;
         transferOwnership(_owner);
-        vetoERC20Voting = IVetoERC20Voting(_vetoERC20Voting);
+        vetoVoting = IVetoVoting(_vetoVoting);
         gnosisSafe = IGnosisSafe(
             _gnosisSafe == address(0) ? msg.sender : _gnosisSafe
         );
@@ -43,7 +43,7 @@ contract VetoGuard is
             msg.sender,
             _executionDelayBlocks,
             _owner,
-            _vetoERC20Voting
+            _vetoVoting
         );
     }
 
@@ -112,6 +112,14 @@ contract VetoGuard is
         emit TransactionQueued(msg.sender, transactionHash, signatures);
     }
 
+    /// @notice Updates the execution delay blocks, only callable by the owner
+    /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
+    function updateExecutionDelayBlocks(
+        uint256 _executionDelayBlocks
+    ) external onlyOwner {
+        executionDelayBlocks = _executionDelayBlocks;
+    }
+
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
     /// @notice Reverts if this transaction cannot be executed
     /// @param to Destination address.
@@ -160,7 +168,7 @@ contract VetoGuard is
         );
 
         require(
-            !vetoERC20Voting.getIsVetoed(
+            !vetoVoting.getIsVetoed(
                 to,
                 value,
                 data,
@@ -174,7 +182,7 @@ contract VetoGuard is
             "Transaction has been vetoed"
         );
 
-        require(!vetoERC20Voting.isFrozen(), "DAO is frozen");
+        require(!vetoVoting.isFrozen(), "DAO is frozen");
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe
