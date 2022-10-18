@@ -10,7 +10,7 @@ import { ethers } from "hardhat";
 
 const expect = chai.expect;
 
-describe.only("VotesToken Claiming", function () {
+describe("VotesToken Claiming", function () {
   let pToken: VotesToken;
   let cToken: VotesToken;
   let tokenClaim: TokenClaim;
