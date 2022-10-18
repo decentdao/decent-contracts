@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IVetoGuard.sol";
-import "./interfaces/IVetoERC20Voting.sol";
+import "./interfaces/IVetoVoting.sol";
 import "./TransactionHasher.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /// @notice A contract for casting veto votes with an ERC20 votes token
 contract VetoERC20Voting is
-    IVetoERC20Voting,
+    IVetoVoting,
     TransactionHasher,
     FactoryFriendly
 {
