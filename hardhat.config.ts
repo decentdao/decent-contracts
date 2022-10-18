@@ -8,6 +8,7 @@ import "@typechain/hardhat";
 import "hardhat-tracer";
 import "solidity-coverage";
 import "hardhat-dependency-compiler";
+import { gnosisPm } from "./typechain-types/factories";
 
 dotenv.config();
 
@@ -35,7 +36,10 @@ const config: HardhatUserConfig = {
     },
   },
   dependencyCompiler: {
-    paths: ["@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol"],
+    paths: [
+      "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
+      "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
+    ],
   },
   namedAccounts: {
     deployer: {
