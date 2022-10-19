@@ -8,7 +8,7 @@ import "./TransactionHasher.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 
-/// @notice A contract for casting veto votes with an ERC20 votes token
+/// @notice A contract for a parent Multisig DAO to cast veto and freeze votes on a child DAO
 contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     uint256 public vetoVotesThreshold; // Number of votes required to veto a transaction
     uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
