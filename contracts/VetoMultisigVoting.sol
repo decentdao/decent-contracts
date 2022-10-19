@@ -80,8 +80,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
         emit VetoVoteCast(msg.sender, _transactionHash, 1, _freeze);
     }
 
-    /// @notice Allows a user to cast a freeze vote if there is an active freeze proposal
-    /// @notice If there isn't an active freeze proposal, it is created and the user's votes are cast
+    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
     function castFreezeVote() public {
         require(gnosisSafe.isOwner(msg.sender), "User is not an owner ");
 

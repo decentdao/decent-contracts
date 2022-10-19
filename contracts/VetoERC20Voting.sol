@@ -88,8 +88,7 @@ contract VetoERC20Voting is
         emit VetoVoteCast(msg.sender, _transactionHash, vetoVotes, _freeze);
     }
 
-    /// @notice Allows a user to cast a freeze vote if there is an active freeze proposal
-    /// @notice If there isn't an active freeze proposal, it is created and the user's votes are cast
+    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
     function castFreezeVote() public {
         uint256 userVotes;
 
