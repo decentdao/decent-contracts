@@ -490,19 +490,7 @@ describe("Gnosis Safe", () => {
         .castVetoVote(txHash, false);
 
       // 1 veto vote have been cast
-      expect(
-        await vetoMultisigVoting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(1);
+      expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(1);
 
       expect(
         await vetoMultisigVoting.getIsVetoed(
@@ -596,19 +584,7 @@ describe("Gnosis Safe", () => {
         .castVetoVote(txHash, false);
 
       // 2 veto votes have been cast
-      expect(
-        await vetoMultisigVoting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(2);
+      expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(2);
 
       expect(
         await vetoMultisigVoting.getIsVetoed(
@@ -719,19 +695,7 @@ describe("Gnosis Safe", () => {
         .castVetoVote(txHash1, false);
 
       // 2 veto votes have been cast
-      expect(
-        await vetoMultisigVoting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(2);
+      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
 
       expect(
         await vetoMultisigVoting.getIsVetoed(
@@ -969,19 +933,7 @@ describe("Gnosis Safe", () => {
         .castVetoVote(txHash1, true);
 
       // 2 veto votes have been cast
-      expect(
-        await vetoMultisigVoting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(2);
+      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
 
       // 2 freeze votes have been cast
       expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);

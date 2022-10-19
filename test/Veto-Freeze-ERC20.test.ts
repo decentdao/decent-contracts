@@ -442,19 +442,7 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
 
       // 500 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(500);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(500);
 
       expect(
         await vetoERC20Voting.getIsVetoed(
@@ -544,19 +532,7 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash, false);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(1100);
 
       expect(
         await vetoERC20Voting.getIsVetoed(
@@ -663,19 +639,7 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, false);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
 
       expect(
         await vetoERC20Voting.getIsVetoed(
@@ -903,19 +867,7 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, true);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
 
       // 1100 freeze votes have been cast
       expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);

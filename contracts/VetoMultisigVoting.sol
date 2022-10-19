@@ -193,44 +193,6 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
             ] >= vetoVotesThreshold;
     }
 
-    /// @notice Returns the number of votes that have been cast to veto the specified transaction
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
-    /// @return uint256 The number of veto votes that have been cast
-    function getVetoVotes(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address payable refundReceiver
-    ) external view returns (uint256) {
-        return
-            transactionVetoVotes[
-                getTransactionHash(
-                    to,
-                    value,
-                    data,
-                    operation,
-                    safeTxGas,
-                    baseGas,
-                    gasPrice,
-                    gasToken,
-                    refundReceiver
-                )
-            ];
-    }
-
     /// @notice Returns true if the DAO is currently frozen
     /// @return bool Indicates whether the DAO is currently frozen
     function isFrozen() public view returns (bool) {
