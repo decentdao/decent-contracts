@@ -100,7 +100,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
             emit FreezeProposalCreated(msg.sender);
         } else {
-            // There is an existing freeze proposal, count user's votes
+            // There is an existing freeze proposal, count user's vote
             require(
                 !userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock],
                 "User has already voted"
