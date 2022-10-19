@@ -93,7 +93,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
             block.number >
             freezeProposalCreatedBlock + freezeProposalBlockDuration
         ) {
-            // Create freeze proposal, set total votes to msg.sender's vote count
+            // Create freeze proposal, count user's vote
             freezeProposalCreatedBlock = block.number;
 
             freezeProposalVoteCount = 1;
