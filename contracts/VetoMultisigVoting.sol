@@ -71,7 +71,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
         // If the user is voting to freeze, count that vote as well
         if (_freeze) {
-            castFreezeVote();
+            _castFreezeVote();
         }
 
         // User has voted
@@ -81,9 +81,14 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     }
 
     /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
-    function castFreezeVote() public {
+    function castFreezeVote() external {
         require(gnosisSafe.isOwner(msg.sender), "User is not an owner ");
 
+        _castFreezeVote();
+    }
+
+    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
+    function _castFreezeVote() internal {
         if (
             block.number >
             freezeProposalCreatedBlock + freezeProposalBlockDuration
