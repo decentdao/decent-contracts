@@ -41,7 +41,7 @@ interface IVetoGuard {
         bytes memory signatures
     ) external;
 
-    /// @notice Updates the execution delay blocks, only callable by the owner
+    /// @notice Updates the execution delay blocks
     /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
     function updateExecutionDelayBlocks(
         uint256 _executionDelayBlocks
