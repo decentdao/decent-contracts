@@ -12,7 +12,7 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
     address public parentToken;
     uint256 public snapShotId;
     uint256 public parentAllocation;
-    mapping(address => bool) claimed;
+    mapping(address => bool) public claimed;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
