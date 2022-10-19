@@ -112,7 +112,6 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
     /// @notice Unfreezes the DAO, only callable by the owner
     function defrost() public onlyOwner {
-        require(isFrozen(), "DAO is not already frozen");
         freezeProposalCreatedBlock = 0;
         freezeProposalVoteCount = 0;
     }
