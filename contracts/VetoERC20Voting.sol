@@ -180,7 +180,7 @@ contract VetoERC20Voting is IVetoVoting, TransactionHasher, FactoryFriendly {
         return transactionVetoVotes[_transactionHash] > vetoVotesThreshold;
     }
 
-    /// @notice Returns true if the DAO is currently frozen
+    /// @notice Returns true if the DAO is currently frozen, false otherwise
     /// @return bool Indicates whether the DAO is currently frozen
     function isFrozen() public view returns (bool) {
         if (

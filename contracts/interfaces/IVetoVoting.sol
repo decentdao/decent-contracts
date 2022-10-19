@@ -29,7 +29,7 @@ interface IVetoVoting {
     /// @return bool True if the transaction is vetoed
     function getIsVetoed(bytes32 _transactionHash) external view returns (bool);
 
-    /// @notice Returns true if the DAO is currently frozen
+    /// @notice Returns true if the DAO is currently frozen, false otherwise
     /// @return bool Indicates whether the DAO is currently frozen
     function isFrozen() external view returns (bool);
 }
