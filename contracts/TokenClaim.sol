@@ -19,7 +19,7 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
-            address _metaFactory,
+            address _childTokenFunder,
             address _parentToken,
             address _childToken,
             uint256 _parentAllocation
@@ -31,9 +31,9 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
 
         snapShotId = VotesToken(_parentToken).captureSnapShot();
 
-        IERC20(_childToken).transferFrom(_metaFactory, address(this), _parentAllocation);
+        IERC20(_childToken).transferFrom(_childTokenFunder, address(this), _parentAllocation);
 
-        emit SnapShotCaptured(_parentToken, _childToken, _parentAllocation);
+        emit TokenClaimCreated(_parentToken, _childToken, _parentAllocation, snapShotId);
     }
 
     /// @notice This function allows pToken holders to claim cTokens

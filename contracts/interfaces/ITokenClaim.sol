@@ -4,7 +4,12 @@ pragma solidity ^0.8.0;
 interface ITokenClaim {
     error NoAllocation();
     error AllocationClaimed();
-    event SnapShotCaptured(address parentToken, address childToken, uint256 parentAllocation);
+    event TokenClaimCreated(
+        address parentToken,
+        address childToken,
+        uint256 parentAllocation,
+        uint256 snapshotId
+    );
     event TokenClaimed(
         address indexed pToken,
         address indexed cToken,
@@ -19,8 +24,5 @@ interface ITokenClaim {
     /// @notice Gets a users child token claimable amount
     /// @param claimer Address which is being claimed for
     /// @return cTokenAllocation Users cToken allocation
-    function getClaimAmount(address claimer)
-        external
-        view
-        returns (uint256);
+    function getClaimAmount(address claimer) external view returns (uint256);
 }
