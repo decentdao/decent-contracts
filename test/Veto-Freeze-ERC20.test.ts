@@ -444,19 +444,7 @@ describe("Gnosis Safe", () => {
       // 500 veto votes have been cast
       expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(500);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(false);
+      expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(false);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -534,19 +522,7 @@ describe("Gnosis Safe", () => {
       // 1100 veto votes have been cast
       expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -641,19 +617,7 @@ describe("Gnosis Safe", () => {
       // 1100 veto votes have been cast
       expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -872,19 +836,7 @@ describe("Gnosis Safe", () => {
       // 1100 freeze votes have been cast
       expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
 
       // Check that the DAO has been frozen
       expect(await vetoERC20Voting.isFrozen()).to.eq(true);

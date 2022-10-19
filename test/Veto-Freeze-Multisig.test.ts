@@ -492,19 +492,7 @@ describe("Gnosis Safe", () => {
       // 1 veto vote have been cast
       expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(1);
 
-      expect(
-        await vetoMultisigVoting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(false);
+      expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(false);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -586,19 +574,7 @@ describe("Gnosis Safe", () => {
       // 2 veto votes have been cast
       expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(2);
 
-      expect(
-        await vetoMultisigVoting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -697,19 +673,7 @@ describe("Gnosis Safe", () => {
       // 2 veto votes have been cast
       expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
 
-      expect(
-        await vetoMultisigVoting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -938,19 +902,7 @@ describe("Gnosis Safe", () => {
       // 2 freeze votes have been cast
       expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
 
-      expect(
-        await vetoMultisigVoting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
 
       // Check that the DAO has been frozen
       expect(await vetoMultisigVoting.isFrozen()).to.eq(true);

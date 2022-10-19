@@ -114,9 +114,10 @@ contract VetoGuard is
 
     /// @notice Updates the execution delay blocks, only callable by the owner
     /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
-    function updateExecutionDelayBlocks(
-        uint256 _executionDelayBlocks
-    ) external onlyOwner {
+    function updateExecutionDelayBlocks(uint256 _executionDelayBlocks)
+        external
+        onlyOwner
+    {
         executionDelayBlocks = _executionDelayBlocks;
     }
 
@@ -169,15 +170,17 @@ contract VetoGuard is
 
         require(
             !vetoVoting.getIsVetoed(
-                to,
-                value,
-                data,
-                operation,
-                safeTxGas,
-                baseGas,
-                gasPrice,
-                gasToken,
-                refundReceiver
+                getTransactionHash(
+                    to,
+                    value,
+                    data,
+                    operation,
+                    safeTxGas,
+                    baseGas,
+                    gasPrice,
+                    gasToken,
+                    refundReceiver
+                )
             ),
             "Transaction has been vetoed"
         );
@@ -205,7 +208,6 @@ contract VetoGuard is
         return transactionQueuedBlock[_transactionHash];
     }
 
-
     /// @notice Can be used to check if this contract supports the specified interface
     /// @param interfaceId The bytes representing the interfaceId being checked
     /// @return bool True if this contract supports the checked interface
@@ -213,7 +215,7 @@ contract VetoGuard is
         public
         view
         virtual
-        override (FractalBaseGuard)
+        override(FractalBaseGuard)
         returns (bool)
     {
         return
