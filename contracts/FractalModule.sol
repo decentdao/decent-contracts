@@ -30,8 +30,8 @@ contract FractalModule is IFractalModule, Module {
                 (address, address, address, address[])
             );
 
-        setAvatar(_avatar == address(0) ? msg.sender : _avatar);
-        setTarget(_target == address(0) ? msg.sender : _target);
+        setAvatar(_avatar);
+        setTarget(_target);
         addControllers(_controllers);
         transferOwnership(_owner);
     }
