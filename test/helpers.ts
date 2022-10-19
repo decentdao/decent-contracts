@@ -168,6 +168,10 @@ export const ifaceFactory = new Interface([
   "event ModuleProxyCreation(address indexed proxy,address indexed masterCopy)",
 ]);
 
+export const usuliface = new Interface([
+  "function setUp(bytes memory initParams) public",
+]);
+
 export const abi = [
   "event ProxyCreation(address proxy, address singleton)",
   "function createProxy(address singleton, bytes memory data) public returns (address proxy)",
@@ -194,18 +198,24 @@ export const abiSafe = [
   "function nonce() public view returns (uint256)",
   "function isOwner(address owner) public view returns (bool)",
   "function getThreshold() public view returns (uint256)",
-  "function getGuard() view returns (address guard)",
   "function setup(address[] calldata _owners,uint256 _threshold,address to,bytes calldata data,address fallbackHandler,address paymentToken,uint256 payment,address payable paymentReceiver)",
   "function execTransaction(address to,uint256 value,bytes calldata data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address payable refundReceiver,bytes memory signatures) public payable returns (bool success)",
   "function getTransactionHash(address to,uint256 value,bytes calldata data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 _nonce) public view returns (bytes32)",
   "function setGuard(address guard) external",
   "function enableModule(address module) public",
   "function removeOwner(address prevOwner,address owner,uint256 _threshold) external",
+  "function isModuleEnabled(address module) public view returns (bool)",
 ];
 
 export const abiFactory = [
   "event ModuleProxyCreation(address indexed proxy,address indexed masterCopy)",
   "function deployModule(address masterCopy,bytes memory initializer,uint256 saltNonce) public returns (address proxy)",
+];
+
+export const abiUsul = [
+  "function owner() public view returns (address)",
+  "function avatar() public view returns (address)",
+  "function target() public view returns (address)",
 ];
 
 export const calculateSafeDomainSeparator = (
