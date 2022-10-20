@@ -233,7 +233,7 @@ describe("Gnosis Safe", () => {
     });
 
     it("Setup Usul Module w/ ModuleProxyCreationEvent", async () => {
-      const VOTING_STRATEGIES_TO_DEPLOY: string[] = []; // @todo pass expected addresses for voting strategies
+      const VOTING_STRATEGIES_TO_DEPLOY: string[] = [];
       const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
         ["address", "address", "address", "address[]"],
         [
