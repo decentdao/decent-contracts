@@ -62,7 +62,7 @@ describe("Gnosis Safe", () => {
 
   beforeEach(async () => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setTimeout(function () { }, 500); // This timeout is to prevent API rate limit errors
+    setTimeout(function () {}, 500); // This timeout is to prevent API rate limit errors
     // Fork Goerli to use contracts deployed on Goerli
     await network.provider.request({
       method: "hardhat_reset",
