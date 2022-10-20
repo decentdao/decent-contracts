@@ -2,8 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   VotesToken,
   VotesToken__factory,
-  ClaimSubsidiary,
-  ClaimSubsidiary__factory,
+  TokenClaim,
+  TokenClaim__factory,
 } from "../typechain-types";
 import chai from "chai";
 import { ethers } from "hardhat";
@@ -13,7 +13,7 @@ const expect = chai.expect;
 describe("VotesToken Claiming", function () {
   let pToken: VotesToken;
   let cToken: VotesToken;
-  let claimSubsidiary: ClaimSubsidiary;
+  let tokenClaim: TokenClaim;
 
   let deployer: SignerWithAddress;
   let userA: SignerWithAddress;
@@ -22,7 +22,7 @@ describe("VotesToken Claiming", function () {
   beforeEach(async function () {
     [deployer, userA, userB] = await ethers.getSigners();
 
-    claimSubsidiary = await new ClaimSubsidiary__factory(deployer).deploy();
+    tokenClaim = await new TokenClaim__factory(deployer).deploy();
     pToken = await new VotesToken__factory(deployer).deploy();
     cToken = await new VotesToken__factory(deployer).deploy();
 
@@ -58,7 +58,7 @@ describe("VotesToken Claiming", function () {
 
     await cToken.setUp(cTokenSetupData);
 
-    const claimSubsidiarySetupData = abiCoder.encode(
+    const tokenClaimSetupData = abiCoder.encode(
       ["address", "address", "address", "uint256"],
       [
         deployer.address,
@@ -70,9 +70,9 @@ describe("VotesToken Claiming", function () {
 
     await cToken
       .connect(deployer)
-      .approve(claimSubsidiary.address, ethers.utils.parseUnits("100", 18));
+      .approve(tokenClaim.address, ethers.utils.parseUnits("100", 18));
 
-    await claimSubsidiary.setUp(claimSubsidiarySetupData);
+    await tokenClaim.setUp(tokenClaimSetupData);
   });
 
   it("Init is correct", async () => {
@@ -99,59 +99,53 @@ describe("VotesToken Claiming", function () {
     expect(await cToken.balanceOf(deployer.address)).to.eq(
       ethers.utils.parseUnits("0", 18)
     );
-    expect(await cToken.balanceOf(claimSubsidiary.address)).to.eq(
+    expect(await cToken.balanceOf(tokenClaim.address)).to.eq(
       ethers.utils.parseUnits("100", 18)
     );
   });
 
   it("Inits ClaimSubsidiary contract", async () => {
-    expect(await claimSubsidiary.cToken()).to.eq(cToken.address);
-    expect(await claimSubsidiary.pToken()).to.eq(pToken.address);
-    expect(await claimSubsidiary.snapId()).to.eq(1);
-    expect(await claimSubsidiary.pAllocation()).to.eq(
+    expect(await tokenClaim.childToken()).to.eq(cToken.address);
+    expect(await tokenClaim.parentToken()).to.eq(pToken.address);
+    expect(await tokenClaim.snapShotId()).to.eq(1);
+    expect(await tokenClaim.parentAllocation()).to.eq(
       ethers.utils.parseUnits("100", 18)
     );
   });
 
   it("Claim Snap", async () => {
-    const amount = await claimSubsidiary.calculateClaimAmount(deployer.address);
+    const amount = await tokenClaim.getClaimAmount(deployer.address);
     // Claim on behalf
     await expect(
-      claimSubsidiary.connect(userB).claimSnap(deployer.address)
-    ).to.emit(claimSubsidiary, "SnapClaimed");
+      tokenClaim.connect(userB).claimToken(deployer.address)
+    ).to.emit(tokenClaim, "TokenClaimed");
     expect(
       await amount
-        .add(await await claimSubsidiary.calculateClaimAmount(userA.address))
-        .add(
-          await await claimSubsidiary.calculateClaimAmount(
-            claimSubsidiary.address
-          )
-        )
+        .add(await await tokenClaim.getClaimAmount(userA.address))
+        .add(await await tokenClaim.getClaimAmount(tokenClaim.address))
     ).to.eq(ethers.utils.parseUnits("100", 18));
     expect(await cToken.balanceOf(deployer.address)).to.eq(amount);
-    expect(await cToken.balanceOf(claimSubsidiary.address)).to.eq(
+    expect(await cToken.balanceOf(tokenClaim.address)).to.eq(
       ethers.utils.parseUnits("100", 18).sub(amount)
     );
   });
 
   it("Should revert double claim", async () => {
-    await expect(claimSubsidiary.claimSnap(deployer.address)).to.emit(
-      claimSubsidiary,
-      "SnapClaimed"
+    await expect(tokenClaim.claimToken(deployer.address)).to.emit(
+      tokenClaim,
+      "TokenClaimed"
     );
-    expect(await claimSubsidiary.calculateClaimAmount(deployer.address)).to.eq(
-      0
-    );
+    expect(await tokenClaim.getClaimAmount(deployer.address)).to.eq(0);
     await expect(
-      claimSubsidiary.connect(userA).claimSnap(deployer.address)
+      tokenClaim.connect(userA).claimToken(deployer.address)
     ).to.revertedWith("NoAllocation()");
-    await expect(claimSubsidiary.claimSnap(deployer.address)).to.revertedWith(
+    await expect(tokenClaim.claimToken(deployer.address)).to.revertedWith(
       "NoAllocation()"
     );
   });
 
   it("Should revert without an allocation", async () => {
-    await expect(claimSubsidiary.claimSnap(userB.address)).to.revertedWith(
+    await expect(tokenClaim.claimToken(userB.address)).to.revertedWith(
       "NoAllocation()"
     );
   });
