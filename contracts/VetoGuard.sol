@@ -29,15 +29,13 @@ contract VetoGuard is
             uint256 _executionDelayBlocks,
             address _owner,
             address _vetoERC20Voting,
-            address _gnosisSafe // Address(0) == msg.sender
+            address _gnosisSafe
         ) = abi.decode(initializeParams, (uint256, address, address, address));
 
         executionDelayBlocks = _executionDelayBlocks;
         transferOwnership(_owner);
         vetoERC20Voting = IVetoERC20Voting(_vetoERC20Voting);
-        gnosisSafe = IGnosisSafe(
-            _gnosisSafe == address(0) ? msg.sender : _gnosisSafe
-        );
+        gnosisSafe = IGnosisSafe(_gnosisSafe);
 
         emit VetoGuardSetup(
             msg.sender,
@@ -197,7 +195,6 @@ contract VetoGuard is
         return transactionQueuedBlock[_transactionHash];
     }
 
-
     /// @notice Can be used to check if this contract supports the specified interface
     /// @param interfaceId The bytes representing the interfaceId being checked
     /// @return bool True if this contract supports the checked interface
@@ -205,7 +202,7 @@ contract VetoGuard is
         public
         view
         virtual
-        override (FractalBaseGuard)
+        override(FractalBaseGuard)
         returns (bool)
     {
         return

@@ -2,17 +2,26 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
-import { VetoGuard, VetoGuard__factory } from "../typechain-types";
-import { CallbackGnosis } from "../typechain-types/contracts/CallbackGnosis";
-import { CallbackGnosis__factory } from "../typechain-types/factories/contracts/CallbackGnosis__factory";
+import {
+  FractalModule,
+  FractalModule__factory,
+  VetoGuard,
+  VetoGuard__factory,
+} from "../typechain-types";
 import {
   ifaceSafe,
   abi,
   abiSafe,
-  predictGnosisSafeCallbackAddress,
-  ifaceFactory,
   calculateProxyAddress,
   abiFactory,
+  predictGnosisSafeAddress,
+  buildContractCall,
+  MetaTransaction,
+  multisendABI,
+  encodeMultiSend,
+  ifaceMultiSend,
+  usuliface,
+  abiUsul,
 } from "./helpers";
 
 describe("Gnosis Safe", () => {
@@ -22,9 +31,14 @@ describe("Gnosis Safe", () => {
   // Deployed contracts
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
+  let multiSend: Contract;
   let vetoGuard: VetoGuard;
   let vetoImpl: VetoGuard;
-  let callback: CallbackGnosis;
+  let moduleImpl: FractalModule;
+  let fractalModule: FractalModule;
+
+  // Predicted Contracts
+  let predictedFractalModule: string;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -33,18 +47,22 @@ describe("Gnosis Safe", () => {
   let owner3: SignerWithAddress;
 
   const abiCoder = new ethers.utils.AbiCoder(); // encode data
+  let createGnosisSetupCalldata: string;
+  let vetoGuardFactoryInit: string;
+  let setModuleCalldata: string;
+  let sigs: string;
+
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
   let predictedVetoGuard: string;
-  let bytecode: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
   beforeEach(async () => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setTimeout(function () {}, 200); // This timeout is to prevent API rate limit errors
+    setTimeout(function () {}, 500); // This timeout is to prevent API rate limit errors
     // Fork Goerli to use contracts deployed on Goerli
     await network.provider.request({
       method: "hardhat_reset",
@@ -60,7 +78,11 @@ describe("Gnosis Safe", () => {
     });
 
     [deployer, owner1, owner2, owner3] = await ethers.getSigners();
-
+    multiSend = new ethers.Contract(
+      "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
+      multisendABI,
+      deployer
+    );
     gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer); // Gnosis Factory
     moduleFactory = new ethers.Contract(
       "0x00000000000DC7F163742Eb4aBEf650037b1f588",
@@ -69,11 +91,10 @@ describe("Gnosis Safe", () => {
       deployer
     );
 
-    callback = await new CallbackGnosis__factory(deployer).deploy(); // Gnosis Callback
-
-    // Setup GNOSIS
-    const createGnosisCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [owner1.address, owner2.address, owner3.address, callback.address],
+    /// ////////////////// GNOSIS //////////////////
+    // SETUP GnosisSafe
+    createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
+      [owner1.address, owner2.address, owner3.address, multiSend.address],
       1,
       ethers.constants.AddressZero,
       ethers.constants.HashZero,
@@ -82,85 +103,10 @@ describe("Gnosis Safe", () => {
       0,
       ethers.constants.AddressZero,
     ]);
-
-    // DEPLOY GUARD
-    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
-    const vetoGuardFactoryInit =
-      // eslint-disable-next-line camelcase
-      VetoGuard__factory.createInterface().encodeFunctionData(
-        "vetoERC20Voting"
-      );
-
-    predictedVetoGuard = await calculateProxyAddress(
-      moduleFactory,
-      vetoImpl.address,
-      vetoGuardFactoryInit,
-      "10031021"
-    );
-
-    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
-
-    const moduleData = ifaceFactory.encodeFunctionData("deployModule", [
-      vetoImpl.address,
-      vetoGuardFactoryInit,
-      "10031021",
-    ]);
-
-    // SET GUARD
-    const setGuardCalldata = ifaceSafe.encodeFunctionData("setGuard", [
-      predictedVetoGuard,
-    ]);
-
-    // REMOVE OWNER
-    const removeCalldata = ifaceSafe.encodeFunctionData("removeOwner", [
-      owner3.address,
-      callback.address,
-      threshold,
-    ]);
-
-    // INIT GUARD
-    const initParams = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
-      [10, owner1.address, owner1.address, ethers.constants.AddressZero]
-    );
-
-    const initGuard = vetoGuard.interface.encodeFunctionData("setUp", [
-      initParams,
-    ]);
-
-    // TX Array
-    const sigs =
-      "0x000000000000000000000000" +
-      callback.address.slice(2) +
-      "0000000000000000000000000000000000000000000000000000000000000000" +
-      "01";
-
-    const txdata = abiCoder.encode(
-      ["address[][]", "bytes[][]", "bool[]"],
-      [
-        [
-          [ethers.constants.AddressZero, moduleFactory.address], // SetupGnosis + Deploy Guard
-          [
-            ethers.constants.AddressZero, // setGuard Gnosis
-            ethers.constants.AddressZero, // remove owner + threshold
-            vetoGuard.address, // setup Guard
-          ],
-        ],
-        [
-          [createGnosisCalldata, moduleData],
-          [setGuardCalldata, removeCalldata, initGuard],
-        ],
-        [false, true],
-      ]
-    );
-    bytecode = abiCoder.encode(["bytes", "bytes"], [txdata, sigs]);
-
-    // Predidct Gnosis Safe
-    const predictedGnosisSafeAddress = await predictGnosisSafeCallbackAddress(
+    const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       gnosisFactory.address,
-      bytecode,
+      createGnosisSetupCalldata,
       saltNum,
-      callback.address,
       gnosisSingletonAddress,
       gnosisFactory
     );
@@ -171,18 +117,114 @@ describe("Gnosis Safe", () => {
       abiSafe,
       deployer
     );
+
+    /// /////////////  GUARD ///////////////////
+    // DEPLOY GUARD
+    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
+    vetoGuardFactoryInit =
+      // eslint-disable-next-line camelcase
+      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["uint256", "address", "address", "address"],
+          [10, owner1.address, owner1.address, gnosisSafe.address]
+        ),
+      ]);
+
+    predictedVetoGuard = await calculateProxyAddress(
+      moduleFactory,
+      vetoImpl.address,
+      vetoGuardFactoryInit,
+      "10031021"
+    );
+
+    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
+
+    /// /////////////// MODULE ////////////////
+    // DEPLOY Fractal Module
+    moduleImpl = await new FractalModule__factory(deployer).deploy();
+
+    // SETUP Module
+    setModuleCalldata =
+      // eslint-disable-next-line camelcase
+      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["address", "address", "address", "address[]"],
+          [
+            owner1.address,
+            gnosisSafe.address,
+            gnosisSafe.address,
+            [owner2.address],
+          ]
+        ),
+      ]);
+
+    predictedFractalModule = await calculateProxyAddress(
+      moduleFactory,
+      moduleImpl.address,
+      setModuleCalldata,
+      "10031021"
+    );
+
+    fractalModule = await ethers.getContractAt(
+      "FractalModule",
+      predictedFractalModule
+    );
+
+    // TX Array
+    sigs =
+      "0x000000000000000000000000" +
+      multiSend.address.slice(2) +
+      "0000000000000000000000000000000000000000000000000000000000000000" +
+      "01";
   });
 
   describe("Atomic Gnosis Safe Deployment", () => {
+    it("Setup Fractal Module w/ ModuleProxyCreationEvent", async () => {
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
+        .to.emit(moduleFactory, "ModuleProxyCreation")
+        .withArgs(predictedFractalModule, moduleImpl.address);
+
+      expect(await fractalModule.avatar()).eq(gnosisSafe.address);
+      expect(await fractalModule.target()).eq(gnosisSafe.address);
+      expect(await fractalModule.owner()).eq(owner1.address);
+    });
+
     it("Setup VetoGuard w/ ModuleProxyCreationEvent", async () => {
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      )
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(predictedVetoGuard, vetoImpl.address);
       expect(await vetoGuard.executionDelayBlocks()).eq(10);
@@ -190,111 +232,357 @@ describe("Gnosis Safe", () => {
       expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
     });
 
+    it("Setup Usul Module w/ ModuleProxyCreationEvent", async () => {
+      const VOTING_STRATEGIES_TO_DEPLOY: string[] = [];
+      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+        ["address", "address", "address", "address[]"],
+        [
+          gnosisSafe.address,
+          gnosisSafe.address,
+          gnosisSafe.address,
+          VOTING_STRATEGIES_TO_DEPLOY,
+        ]
+      );
+      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
+        encodedInitUsulData,
+      ]);
+      const predictedUsulModule = await calculateProxyAddress(
+        moduleFactory,
+        "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
+        encodedSetupUsulData,
+        "10031021"
+      );
+
+      const usulContract = new ethers.Contract(
+        predictedUsulModule,
+        // eslint-disable-next-line camelcase
+        abiUsul,
+        deployer
+      );
+
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [
+            "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
+            encodedSetupUsulData,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
+        .to.emit(moduleFactory, "ModuleProxyCreation")
+        .withArgs(
+          predictedUsulModule,
+          "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1"
+        );
+
+      expect(await usulContract.avatar()).eq(gnosisSafe.address);
+      expect(await usulContract.target()).eq(gnosisSafe.address);
+      expect(await usulContract.owner()).eq(gnosisSafe.address);
+    });
+
+    it("Setup Module w/ enabledModule event", async () => {
+      const internalTxs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisSafe,
+          "enableModule",
+          [fractalModule.address],
+          0,
+          false
+        ),
+      ];
+      const safeInternalTx = encodeMultiSend(internalTxs);
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "execTransaction",
+          [
+            multiSend.address, // to
+            "0", // value
+            // eslint-disable-next-line camelcase
+            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            "1", // operation
+            "0", // tx gas
+            "0", // base gas
+            "0", // gas price
+            ethers.constants.AddressZero, // gas token
+            ethers.constants.AddressZero, // receiver
+            sigs, // sigs
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
+        .to.emit(gnosisSafe, "EnabledModule")
+        .withArgs(fractalModule.address);
+      expect(await gnosisSafe.isModuleEnabled(fractalModule.address)).to.eq(
+        true
+      );
+    });
+
+    it("Setup UsulModule w/ enabledModule event", async () => {
+      const VOTING_STRATEGIES_TO_DEPLOY: string[] = []; // @todo pass expected addresses for voting strategies
+      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+        ["address", "address", "address", "address[]"],
+        [
+          gnosisSafe.address,
+          gnosisSafe.address,
+          gnosisSafe.address,
+          VOTING_STRATEGIES_TO_DEPLOY,
+        ]
+      );
+      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
+        encodedInitUsulData,
+      ]);
+      const predictedUsulModule = await calculateProxyAddress(
+        moduleFactory,
+        "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
+        encodedSetupUsulData,
+        "10031021"
+      );
+
+      const usulContract = new ethers.Contract(
+        predictedUsulModule,
+        // eslint-disable-next-line camelcase
+        abiUsul,
+        deployer
+      );
+      const internalTxs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisSafe,
+          "enableModule",
+          [fractalModule.address],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "enableModule",
+          [usulContract.address],
+          0,
+          false
+        ),
+      ];
+      const safeInternalTx = encodeMultiSend(internalTxs);
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [
+            "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
+            encodedSetupUsulData,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "execTransaction",
+          [
+            multiSend.address, // to
+            "0", // value
+            // eslint-disable-next-line camelcase
+            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            "1", // operation
+            "0", // tx gas
+            "0", // base gas
+            "0", // gas price
+            ethers.constants.AddressZero, // gas token
+            ethers.constants.AddressZero, // receiver
+            sigs, // sigs
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
+        .to.emit(gnosisSafe, "EnabledModule")
+        .withArgs(usulContract.address);
+      expect(await gnosisSafe.isModuleEnabled(usulContract.address)).to.eq(
+        true
+      );
+    });
+
     it("Setup Guard w/ changeGuard event", async () => {
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      )
+      const internalTxs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisSafe,
+          "setGuard",
+          [vetoGuard.address],
+          0,
+          false
+        ),
+      ];
+      const safeInternalTx = encodeMultiSend(internalTxs);
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "execTransaction",
+          [
+            multiSend.address, // to
+            "0", // value
+            // eslint-disable-next-line camelcase
+            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            "1", // operation
+            "0", // tx gas
+            "0", // base gas
+            "0", // gas price
+            ethers.constants.AddressZero, // gas token
+            ethers.constants.AddressZero, // receiver
+            sigs, // sigs
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "ChangedGuard")
         .withArgs(vetoGuard.address);
     });
 
     it("Setup Gnosis Safe w/ removedOwner event", async () => {
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      )
+      const internalTxs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisSafe,
+          "removeOwner",
+          [owner3.address, multiSend.address, threshold],
+          0,
+          false
+        ),
+      ];
+      const safeInternalTx = encodeMultiSend(internalTxs);
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "execTransaction",
+          [
+            multiSend.address, // to
+            "0", // value
+            // eslint-disable-next-line camelcase
+            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            "1", // operation
+            "0", // tx gas
+            "0", // base gas
+            "0", // gas price
+            ethers.constants.AddressZero, // gas token
+            ethers.constants.AddressZero, // receiver
+            sigs, // sigs
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "RemovedOwner")
-        .withArgs(callback.address);
+        .withArgs(multiSend.address);
+
       expect(await gnosisSafe.isOwner(owner1.address)).eq(true);
       expect(await gnosisSafe.isOwner(owner2.address)).eq(true);
       expect(await gnosisSafe.isOwner(owner3.address)).eq(true);
-      expect(await gnosisSafe.isOwner(callback.address)).eq(false);
+      expect(await gnosisSafe.isOwner(multiSend.address)).eq(false);
       expect(await gnosisSafe.getThreshold()).eq(threshold);
-    });
-
-    it("Tx Fails w/ incorrect txCall", async () => {
-      const badData = ifaceSafe.encodeFunctionData("setup", [
-        [ethers.constants.AddressZero],
-        1,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        0,
-        ethers.constants.AddressZero,
-      ]);
-      const sigs =
-        "0x000000000000000000000000" +
-        callback.address.slice(2) +
-        "0000000000000000000000000000000000000000000000000000000000000000" +
-        "01";
-
-      const txdata = abiCoder.encode(
-        ["address[][]", "bytes[][]", "bool[]"],
-        [
-          [
-            [ethers.constants.AddressZero], // SetupGnosis + Deploy Guard
-          ],
-          [[badData]],
-          [false, true],
-        ]
-      );
-      bytecode = abiCoder.encode(["bytes", "bytes"], [txdata, sigs]);
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      ).to.be.revertedWith("CB001");
-    });
-
-    it("Tx Fails w/ incorrect GnosisTxCall", async () => {
-      const badData = ifaceSafe.encodeFunctionData("setup", [
-        [ethers.constants.AddressZero],
-        1,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        0,
-        ethers.constants.AddressZero,
-      ]);
-      const sigs =
-        "0x000000000000000000000000" +
-        callback.address.slice(2) +
-        "0000000000000000000000000000000000000000000000000000000000000000" +
-        "01";
-
-      const txdata = abiCoder.encode(
-        ["address[][]", "bytes[][]", "bool[]"],
-        [
-          [
-            [ethers.constants.AddressZero], // SetupGnosis + Deploy Guard
-          ],
-          [[badData]],
-          [true],
-        ]
-      );
-      bytecode = abiCoder.encode(["bytes", "bytes"], [txdata, sigs]);
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      ).to.be.revertedWith("CB000");
     });
   });
 });
