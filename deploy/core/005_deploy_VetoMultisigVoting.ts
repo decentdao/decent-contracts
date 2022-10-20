@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { deployNonUpgradeable } from "../helpers/deployNonUpgradeable";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  await deployNonUpgradeable(hre, "CallbackGnosis", []);
+  await deployNonUpgradeable(hre, "VetoERC20Voting", []);
 };
 
 export default func;
