@@ -3,35 +3,43 @@ import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
 import {
-  FractalModule,
-  IFractalModule__factory,
   VotesToken__factory,
+  IFractalModule__factory,
+  FractalModule,
+  FractalModule__factory,
+  VetoGuard,
+  VetoGuard__factory,
 } from "../typechain-types";
-import { CallbackGnosis } from "../typechain-types/contracts/CallbackGnosis";
-import { CallbackGnosis__factory } from "../typechain-types/factories/contracts/CallbackGnosis__factory";
-import { FractalModule__factory } from "../typechain-types/factories/contracts/FractalModule__factory";
 import getInterfaceSelector from "./getInterfaceSelector";
-
 import {
   ifaceSafe,
   abi,
   abiSafe,
-  predictGnosisSafeCallbackAddress,
-  ifaceFactory,
   calculateProxyAddress,
   abiFactory,
+  predictGnosisSafeAddress,
+  buildContractCall,
+  MetaTransaction,
+  multisendABI,
+  encodeMultiSend,
+  ifaceMultiSend,
 } from "./helpers";
 
-describe("Fractal-Module Integration", () => {
+describe("Fractal Module Tests", () => {
   // Factories
   let gnosisFactory: Contract;
 
   // Deployed contracts
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
+  let multiSend: Contract;
+  let vetoGuard: VetoGuard;
+  let vetoImpl: VetoGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
-  let callback: CallbackGnosis;
+
+  // Predicted Contracts
+  let predictedFractalModule: string;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -39,17 +47,16 @@ describe("Fractal-Module Integration", () => {
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
 
-  // Predicted Contracts
-  let predictedFractalModule: string;
+  const abiCoder = new ethers.utils.AbiCoder(); // encode data
+  let createGnosisSetupCalldata: string;
+  let vetoGuardFactoryInit: string;
+  let setModuleCalldata: string;
+  let sigs: string;
 
-  // Encode Data
-  const abiCoder = new ethers.utils.AbiCoder();
-
-  // Reused Vars
-  let bytecode: string;
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
+  let predictedVetoGuard: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -72,7 +79,11 @@ describe("Fractal-Module Integration", () => {
     });
 
     [deployer, owner1, owner2, owner3] = await ethers.getSigners();
-
+    multiSend = new ethers.Contract(
+      "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
+      multisendABI,
+      deployer
+    );
     gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer); // Gnosis Factory
     moduleFactory = new ethers.Contract(
       "0x00000000000DC7F163742Eb4aBEf650037b1f588",
@@ -81,11 +92,10 @@ describe("Fractal-Module Integration", () => {
       deployer
     );
 
-    callback = await new CallbackGnosis__factory(deployer).deploy(); // Gnosis Callback
-
-    // Setup GNOSIS
-    const createGnosisCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [owner1.address, owner2.address, owner3.address, callback.address],
+    /// ////////////////// GNOSIS //////////////////
+    // SETUP GnosisSafe
+    createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
+      [owner1.address, owner2.address, owner3.address, multiSend.address],
       1,
       ethers.constants.AddressZero,
       ethers.constants.HashZero,
@@ -94,91 +104,10 @@ describe("Fractal-Module Integration", () => {
       0,
       ethers.constants.AddressZero,
     ]);
-
-    // DEPLOY Module
-    moduleImpl = await new FractalModule__factory(deployer).deploy();
-    const fractalModuleInit =
-      // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("avatar");
-
-    predictedFractalModule = await calculateProxyAddress(
-      moduleFactory,
-      moduleImpl.address,
-      fractalModuleInit,
-      "10031021"
-    );
-
-    fractalModule = await ethers.getContractAt(
-      "FractalModule",
-      predictedFractalModule
-    );
-
-    const moduleData = ifaceFactory.encodeFunctionData("deployModule", [
-      moduleImpl.address,
-      fractalModuleInit,
-      "10031021",
-    ]);
-
-    // SETUP Module
-    const setModuleCalldata =
-      // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
-        abiCoder.encode(
-          ["address", "address", "address", "address[]"],
-          [
-            owner1.address,
-            ethers.constants.AddressZero,
-            ethers.constants.AddressZero,
-            [owner2.address],
-          ]
-        ),
-      ]);
-
-    // ADD Module To Safe
-    const enableModuleCalldata = ifaceSafe.encodeFunctionData("enableModule", [
-      fractalModule.address,
-    ]);
-
-    // REMOVE OWNER
-    const removeCalldata = ifaceSafe.encodeFunctionData("removeOwner", [
-      owner3.address,
-      callback.address,
-      threshold,
-    ]);
-
-    // TX Array
-    const sigs =
-      "0x000000000000000000000000" +
-      callback.address.slice(2) +
-      "0000000000000000000000000000000000000000000000000000000000000000" +
-      "01";
-
-    const txdata = abiCoder.encode(
-      ["address[][]", "bytes[][]", "bool[]"],
-      [
-        [
-          [ethers.constants.AddressZero, moduleFactory.address], // SetupGnosis + Deploy Guard
-          [
-            fractalModule.address, // setup Module
-            ethers.constants.AddressZero, // enable Module GS
-            ethers.constants.AddressZero, // remove owner + threshold
-          ],
-        ],
-        [
-          [createGnosisCalldata, moduleData],
-          [setModuleCalldata, enableModuleCalldata, removeCalldata],
-        ],
-        [false, true],
-      ]
-    );
-    bytecode = abiCoder.encode(["bytes", "bytes"], [txdata, sigs]);
-
-    // Predidct Gnosis Safe
-    const predictedGnosisSafeAddress = await predictGnosisSafeCallbackAddress(
+    const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       gnosisFactory.address,
-      bytecode,
+      createGnosisSetupCalldata,
       saltNum,
-      callback.address,
       gnosisSingletonAddress,
       gnosisFactory
     );
@@ -189,34 +118,90 @@ describe("Fractal-Module Integration", () => {
       abiSafe,
       deployer
     );
+
+    /// /////////////  GUARD ///////////////////
+    // DEPLOY GUARD
+    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
+    vetoGuardFactoryInit =
+      // eslint-disable-next-line camelcase
+      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["uint256", "address", "address", "address"],
+          [10, owner1.address, owner1.address, gnosisSafe.address]
+        ),
+      ]);
+
+    predictedVetoGuard = await calculateProxyAddress(
+      moduleFactory,
+      vetoImpl.address,
+      vetoGuardFactoryInit,
+      "10031021"
+    );
+
+    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
+
+    /// /////////////// MODULE ////////////////
+    // DEPLOY Fractal Module
+    moduleImpl = await new FractalModule__factory(deployer).deploy();
+
+    // SETUP Module
+    setModuleCalldata =
+      // eslint-disable-next-line camelcase
+      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["address", "address", "address", "address[]"],
+          [
+            owner1.address,
+            gnosisSafe.address,
+            gnosisSafe.address,
+            [owner2.address],
+          ]
+        ),
+      ]);
+
+    predictedFractalModule = await calculateProxyAddress(
+      moduleFactory,
+      moduleImpl.address,
+      setModuleCalldata,
+      "10031021"
+    );
+
+    fractalModule = await ethers.getContractAt(
+      "FractalModule",
+      predictedFractalModule
+    );
+
+    // TX Array
+    sigs =
+      "0x000000000000000000000000" +
+      multiSend.address.slice(2) +
+      "0000000000000000000000000000000000000000000000000000000000000000" +
+      "01";
   });
 
   describe("Fractal Module", () => {
-    it("Setup Fractal Module w/ ModuleProxyCreationEvent", async () => {
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      )
-        .to.emit(moduleFactory, "ModuleProxyCreation")
-        .withArgs(predictedFractalModule, moduleImpl.address);
-      expect(await fractalModule.owner()).eq(owner1.address);
-      expect(await fractalModule.target()).eq(gnosisSafe.address);
-      expect(await fractalModule.avatar()).eq(gnosisSafe.address);
-      expect(await fractalModule.controllers(owner2.address)).eq(true);
-      expect(await fractalModule.controllers(owner3.address)).eq(false);
-    });
-
     it("Supports the expected ERC165 interface", async () => {
-      await gnosisFactory.createProxyWithCallback(
-        gnosisSingletonAddress,
-        bytecode,
-        saltNum,
-        callback.address
-      );
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await expect(multiSend.multiSend(safeTx))
+        .to.emit(gnosisFactory, "ProxyCreation")
+        .withArgs(gnosisSafe.address, gnosisSingletonAddress);
+
       // Supports Fractal Module
       expect(
         await fractalModule.supportsInterface(
@@ -226,26 +211,26 @@ describe("Fractal-Module Integration", () => {
       ).to.eq(true);
     });
 
-    it("Setup Module w/ enabledModule event", async () => {
-      await expect(
-        gnosisFactory.createProxyWithCallback(
-          gnosisSingletonAddress,
-          bytecode,
-          saltNum,
-          callback.address
-        )
-      )
-        .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(fractalModule.address);
-    });
-
     it("Owner may add/remove controllers", async () => {
-      await gnosisFactory.createProxyWithCallback(
-        gnosisSingletonAddress,
-        bytecode,
-        saltNum,
-        callback.address
-      );
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await multiSend.multiSend(safeTx);
+
       // ADD Controller
       await expect(
         fractalModule.connect(owner3).addControllers([owner3.address])
@@ -268,14 +253,62 @@ describe("Fractal-Module Integration", () => {
     });
 
     it("Authorized users may exec txs => GS", async () => {
-      await gnosisFactory.createProxyWithCallback(
-        gnosisSingletonAddress,
-        bytecode,
-        saltNum,
-        callback.address
-      );
-      // FUND SAFE
+      const internalTxs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisSafe,
+          "enableModule",
+          [fractalModule.address],
+          0,
+          false
+        ),
+      ];
+      const safeInternalTx = encodeMultiSend(internalTxs);
+      const txs: MetaTransaction[] = [
+        buildContractCall(
+          gnosisFactory,
+          "createProxyWithNonce",
+          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [moduleImpl.address, setModuleCalldata, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          moduleFactory,
+          "deployModule",
+          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          0,
+          false
+        ),
+        buildContractCall(
+          gnosisSafe,
+          "execTransaction",
+          [
+            multiSend.address, // to
+            "0", // value
+            // eslint-disable-next-line camelcase
+            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            "1", // operation
+            "0", // tx gas
+            "0", // base gas
+            "0", // gas price
+            ethers.constants.AddressZero, // gas token
+            ethers.constants.AddressZero, // receiver
+            sigs, // sigs
+          ],
+          0,
+          false
+        ),
+      ];
+      const safeTx = encodeMultiSend(txs);
+      await multiSend.multiSend(safeTx);
 
+      // FUND SAFE
       const abiCoder = new ethers.utils.AbiCoder(); // encode data
       const votesTokenSetupData = abiCoder.encode(
         ["string", "string", "address[]", "uint256[]"],
