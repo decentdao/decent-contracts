@@ -41,6 +41,12 @@ interface IVetoGuard {
         bytes memory signatures
     ) external;
 
+    /// @notice Updates the execution delay blocks
+    /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
+    function updateExecutionDelayBlocks(
+        uint256 _executionDelayBlocks
+    ) external;
+
     /// @notice Gets the block number that the transaction was queued at
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number

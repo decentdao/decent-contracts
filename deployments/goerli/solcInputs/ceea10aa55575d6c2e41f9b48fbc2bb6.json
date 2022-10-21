@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/FractalNameRegistry.sol": {
+      "content": "//SPDX-License-Identifier: Unlicense\r\npragma solidity ^0.8.0;\r\n\r\nimport \"./interfaces/IFractalNameRegistry.sol\";\r\n\r\n/// @notice A contract for registering Fractal DAO name strings\r\n/// @notice These names are non-unique, and should not be used as the identifer of a DAO\r\ncontract FractalNameRegistry is IFractalNameRegistry {\r\n    /// @notice Updates the DAO's registered aname\r\n    /// @param _name The new DAO name\r\n    function updateDAOName(string memory _name) external {\r\n        emit FractalNameUpdated(msg.sender, _name);\r\n    }\r\n}\r\n"
+    },
+    "contracts/interfaces/IFractalNameRegistry.sol": {
+      "content": "//SPDX-License-Identifier: Unlicense\r\npragma solidity ^0.8.0;\r\n\r\ninterface IFractalNameRegistry {\r\n    event FractalNameUpdated(address indexed daoAddress, string daoName);\r\n\r\n    /// @notice Updates the DAO's registered aname\r\n    /// @param _name The new DAO name\r\n    function updateDAOName(string memory _name) external;\r\n}\r\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "storageLayout",
+          "devdoc",
+          "userdoc",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

@@ -114,12 +114,20 @@ describe("Gnosis Safe", () => {
     );
 
     // Deploy token, allocate supply to two token vetoers and Gnosis Safe
-    votesToken = await new VotesToken__factory(deployer).deploy(
-      "DCNT",
-      "DCNT",
-      [tokenVetoer1.address, tokenVetoer2.address, gnosisSafe.address],
-      [500, 600, 1000]
+    votesToken = await new VotesToken__factory(deployer).deploy();
+
+    const abiCoder = new ethers.utils.AbiCoder(); // encode data
+    const votesTokenSetupData = abiCoder.encode(
+      ["string", "string", "address[]", "uint256[]"],
+      [
+        "DCNT",
+        "DCNT",
+        [tokenVetoer1.address, tokenVetoer2.address, gnosisSafe.address],
+        [500, 600, 1000],
+      ]
     );
+
+    await votesToken.setUp(votesTokenSetupData);
 
     // Vetoers delegate their votes to themselves
     await votesToken.connect(tokenVetoer1).delegate(tokenVetoer1.address);
@@ -129,24 +137,35 @@ describe("Gnosis Safe", () => {
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
 
     // Deploy VetoGuard contract with a 10 block delay between queuing and execution
-    const abiCoder = new ethers.utils.AbiCoder(); // encode data
-    const setupData = abiCoder.encode(
+    const vetoGuardSetupData = abiCoder.encode(
       ["uint256", "address", "address", "address"],
       [10, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
     );
     vetoGuard = await new VetoGuard__factory(deployer).deploy();
-    await vetoGuard.setUp(setupData);
+    await vetoGuard.setUp(vetoGuardSetupData);
 
     // Initialize VetoERC20Voting contract
-    await vetoERC20Voting.initialize(
-      vetoGuardOwner.address,
-      1000, // veto votes threshold
-      1090, // freeze votes threshold
-      10, // proposal block length
-      100, // freeze duration
-      votesToken.address,
-      vetoGuard.address
+    const vetoERC20VotingSetupData = abiCoder.encode(
+      [
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "uint256",
+        "address",
+        "address",
+      ],
+      [
+        vetoGuardOwner.address,
+        1000, // veto votes threshold
+        1090, // freeze votes threshold
+        10, // proposal block length
+        100, // freeze duration
+        votesToken.address,
+        vetoGuard.address,
+      ]
     );
+    await vetoERC20Voting.setUp(vetoERC20VotingSetupData);
 
     // Create transaction to set the guard address
     const setGuardData = gnosisSafe.interface.encodeFunctionData("setGuard", [
@@ -188,7 +207,7 @@ describe("Gnosis Safe", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0x4877b8b2")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0xfac0f7cd")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
@@ -423,33 +442,9 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
 
       // 500 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(500);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(500);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(false);
+      expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(false);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -525,33 +520,9 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash, false);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -644,33 +615,9 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, false);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
 
       // Mine blocks to surpass the execution delay
       for (let i = 0; i < 9; i++) {
@@ -884,36 +831,12 @@ describe("Gnosis Safe", () => {
       await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, true);
 
       // 1100 veto votes have been cast
-      expect(
-        await vetoERC20Voting.getVetoVotes(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(1100);
+      expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
 
       // 1100 freeze votes have been cast
       expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
 
-      expect(
-        await vetoERC20Voting.getIsVetoed(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver
-        )
-      ).to.eq(true);
+      expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
 
       // Check that the DAO has been frozen
       expect(await vetoERC20Voting.isFrozen()).to.eq(true);
