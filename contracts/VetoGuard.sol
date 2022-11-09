@@ -169,19 +169,7 @@ contract VetoGuard is
         );
 
         require(
-            !vetoVoting.getIsVetoed(
-                getTransactionHash(
-                    to,
-                    value,
-                    data,
-                    operation,
-                    safeTxGas,
-                    baseGas,
-                    gasPrice,
-                    gasToken,
-                    refundReceiver
-                )
-            ),
+            !vetoVoting.getIsVetoed(transactionHash),
             "Transaction has been vetoed"
         );
 
