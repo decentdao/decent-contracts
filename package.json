@@ -1,6 +1,14 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "files": [
+    "dist",
+    "contracts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/decent-dao/fractal-contracts.git"
+  },
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
@@ -45,5 +53,17 @@
     "ts-node": "^10.4.0",
     "typechain": "^8.0.0",
     "typescript": "^4.5.4"
+  },
+  "description": "A Gnosis Module framework",
+  "homepage": "https://github.com/decent-dao/fractal-contracts/blob/develop/README.md",
+  "author": "fractal-contributors",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bugs": {
+    "url": "https://github.com/decent-dao/fractal-contracts/issues"
+  },
+  "directories": {
+    "test": "test"
   }
 }
