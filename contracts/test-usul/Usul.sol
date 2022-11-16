@@ -223,6 +223,7 @@ contract Usul is Module {
             "voting strategy is not enabled for proposal"
         );
         require(txHashes.length > 0, "proposal must contain transactions");
+
         proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].strategy = strategy;
         totalProposalCount++;
@@ -295,6 +296,7 @@ contract Usul is Module {
             "proposal is not in execution state"
         );
         bytes32 txHash = getTransactionHash(target, value, data, operation);
+
         require(
             proposals[proposalId].txHashes[
                 proposals[proposalId].executionCounter
