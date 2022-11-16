@@ -8,7 +8,6 @@ import "@typechain/hardhat";
 import "hardhat-tracer";
 import "solidity-coverage";
 import "hardhat-dependency-compiler";
-import { gnosisPm } from "./typechain-types/factories";
 
 dotenv.config();
 
