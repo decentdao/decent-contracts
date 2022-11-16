@@ -15,7 +15,7 @@ interface IUsulVetoGuard {
         uint256 indexed proposalId
     );
 
-    /// @notice Queues a transaction for execution
+    /// @notice Queues a proposal for execution
     /// @param proposalId The ID of the proposal to queue
     function queueProposal(
         uint256 proposalId
