@@ -67,10 +67,10 @@ The core contracts in this repository are published in an NPM package for easy u
 To install the npm package, run:
 
 ```shell
-npm i @fractal-framework/core-contracts
+npm i @fractal-framework/fractal-contracts
 ```
 
-Including un-compiled contracts within typechain-types. Follow theses steps hardhat plug-in https://www.npmjs.com/package/hardhat-dependency-compiler
+Including un-compiled contracts within typechain-types. Follow (these steps) hardhat plug-in [https://www.npmjs.com/package/hardhat-dependency-compiler]
 
 ## Publishing new versions of these core contracts to NPM
 Update the version in package.json
@@ -86,4 +86,7 @@ to fully clean the project, compile contracts, create typechain directory, and c
 npm publish 
 ```
 to publish the compiled typechain files and solidity contracts to NPM
-git commit and push
+```shell
+git commit
+git push
+```
