@@ -2,13 +2,12 @@
 pragma solidity ^0.8.0;
 
 interface IUsul {
-    struct Proposal {
-        bool canceled;
-        uint256 timeLockPeriod; // queue period for safety
-        bytes32[] txHashes;
-        uint256 executionCounter;
-        address strategy; // the module that is allowed to vote on this
-    }
-
-    function proposals(uint256 proposaldId) external view returns (Proposal memory);
+    /// @dev Returns the hash of a transaction in a proposal.
+    /// @param proposalId the proposal to inspect.
+    /// @param index the transaction to inspect.
+    /// @return transaction hash.
+    function getTxHash(uint256 proposalId, uint256 index)
+        external
+        view
+        returns (bytes32);
 }
