@@ -1,15 +1,12 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber, Contract } from "ethers";
+import { BigNumber } from "ethers";
 import { ethers, network } from "hardhat";
-import { TASK_ETHERSCAN_VERIFY } from "hardhat-deploy";
 import time from "./time";
 
 import {
   GnosisSafe,
-  GnosisSafe__factory,
   GnosisSafeProxyFactory,
-  GnosisSafeProxyFactory__factory,
   OZLinearVoting,
   OZLinearVoting__factory,
   Usul,
@@ -27,17 +24,11 @@ import {
   buildSafeTransaction,
   safeSignTypedData,
   ifaceSafe,
-  abi,
   predictGnosisSafeAddress,
-  abiSafe,
 } from "./helpers";
 
-describe.only("Child DAO with Usul", () => {
-  // Factories
-  let gnosisFactory: Contract;
-
+describe("Child DAO with Usul", () => {
   // Deployed contracts
-  let gnosisSafeSingleton: GnosisSafe;
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
   let usulModule: Usul;
@@ -339,6 +330,78 @@ describe.only("Child DAO with Usul", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        100
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await usulModule.executeProposalByIndex(
+        0,
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        90
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+    });
+
+    it("A proposal can be created and executed, queuing the proposal also calls finalize strategy if necessary", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
 
@@ -457,8 +520,8 @@ describe.only("Child DAO with Usul", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Attempt to queue the proposal
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
+      // Attempt to finalize the proposal
+      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -500,8 +563,8 @@ describe.only("Child DAO with Usul", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Attempt to queue the proposal
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
+      // Attempt to finalize proposal
+      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -540,11 +603,8 @@ describe.only("Child DAO with Usul", () => {
       await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
       await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      // Increase time so that voting period has ended
-      // await time.increase(time.duration.seconds(60));
-
-      // Queue the proposal
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
+      // Attempt to finalize the strategy
+      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
         "voting period has not passed yet"
       );
     });
@@ -585,6 +645,9 @@ describe.only("Child DAO with Usul", () => {
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -641,6 +704,9 @@ describe.only("Child DAO with Usul", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
 
@@ -655,13 +721,87 @@ describe.only("Child DAO with Usul", () => {
         .connect(parentTokenHolder2)
         .castVetoVote(txHash, false);
 
-      expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
+      // expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
       expect(await usulModule.state(0)).to.eq(4);
+
+      // Execute the transaction
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData,
+          0
+        )
+      ).to.be.revertedWith("Transaction has been vetoed");
+    });
+
+    it("A proposal can be executed if it has received some veto votes, but not more than the threshold", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Cast veto votes
+      await vetoERC20Voting
+        .connect(parentTokenHolder1)
+        .castVetoVote(txHash, false);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        100
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await usulModule.executeProposalByIndex(
@@ -671,757 +811,901 @@ describe.only("Child DAO with Usul", () => {
         tokenTransferData,
         0
       );
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        90
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
     });
 
-    // it("A transaction cannot be executed if it has received more veto votes than the threshold", async () => {
-    //   // Create transaction to set the guard address
-    //   const tokenTransferData = votesToken.interface.encodeFunctionData(
-    //     "transfer",
-    //     [deployer.address, 1000]
-    //   );
-    //   const tx = buildSafeTransaction({
-    //     to: votesToken.address,
-    //     data: tokenTransferData,
-    //     safeTxGas: 1000000,
-    //     nonce: await gnosisSafe.nonce(),
-    //   });
-    //   const sigs = [
-    //     await safeSignTypedData(owner1, gnosisSafe, tx),
-    //     await safeSignTypedData(owner2, gnosisSafe, tx),
-    //   ];
-    //   const signatureBytes = buildSignatureBytes(sigs);
-    //   await vetoGuard.queueTransaction(
-    //     tx.to,
-    //     tx.value,
-    //     tx.data,
-    //     tx.operation,
-    //     tx.safeTxGas,
-    //     tx.baseGas,
-    //     tx.gasPrice,
-    //     tx.gasToken,
-    //     tx.refundReceiver,
-    //     signatureBytes
-    //   );
-    //   const txHash = await vetoERC20Voting.getTransactionHash(
-    //     tx.to,
-    //     tx.value,
-    //     tx.data,
-    //     tx.operation,
-    //     tx.safeTxGas,
-    //     tx.baseGas,
-    //     tx.gasPrice,
-    //     tx.gasToken,
-    //     tx.refundReceiver
-    //   );
-    //   // Vetoer 1 casts 500 veto votes
-    //   await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
-    //   // Vetoer 2 casts 600 veto votes
-    //   await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash, false);
-    //   // 1100 veto votes have been cast
-    //   expect(await vetoERC20Voting.transactionVetoVotes(txHash)).to.eq(1100);
-    //   expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
-    //   // Mine blocks to surpass the execution delay
-    //   for (let i = 0; i < 9; i++) {
-    //     await network.provider.send("evm_mine");
-    //   }
-    //   await expect(
-    //     gnosisSafe.execTransaction(
-    //       tx.to,
-    //       tx.value,
-    //       tx.data,
-    //       tx.operation,
-    //       tx.safeTxGas,
-    //       tx.baseGas,
-    //       tx.gasPrice,
-    //       tx.gasToken,
-    //       tx.refundReceiver,
-    //       signatureBytes
-    //     )
-    //   ).to.be.revertedWith("Transaction has been vetoed");
-    // });
-    // it("A vetoed transaction does not prevent another transaction from being executed", async () => {
-    //   // Create transaction to set the guard address
-    //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-    //     "transfer",
-    //     [deployer.address, 1000]
-    //   );
-    //   const tokenTransferData2 = votesToken.interface.encodeFunctionData(
-    //     "transfer",
-    //     [deployer.address, 999]
-    //   );
-    //   const tx1 = buildSafeTransaction({
-    //     to: votesToken.address,
-    //     data: tokenTransferData1,
-    //     safeTxGas: 1000000,
-    //     nonce: await gnosisSafe.nonce(),
-    //   });
-    //   const tx2 = buildSafeTransaction({
-    //     to: votesToken.address,
-    //     data: tokenTransferData2,
-    //     safeTxGas: 1000000,
-    //     nonce: await gnosisSafe.nonce(),
-    //   });
-    //   const sigs1 = [
-    //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-    //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-    //   ];
-    //   const signatureBytes1 = buildSignatureBytes(sigs1);
-    //   const sigs2 = [
-    //     await safeSignTypedData(owner1, gnosisSafe, tx2),
-    //     await safeSignTypedData(owner2, gnosisSafe, tx2),
-    //   ];
-    //   const signatureBytes2 = buildSignatureBytes(sigs2);
-    //   await vetoGuard.queueTransaction(
-    //     tx1.to,
-    //     tx1.value,
-    //     tx1.data,
-    //     tx1.operation,
-    //     tx1.safeTxGas,
-    //     tx1.baseGas,
-    //     tx1.gasPrice,
-    //     tx1.gasToken,
-    //     tx1.refundReceiver,
-    //     signatureBytes1
-    //   );
-    //   const txHash1 = await vetoERC20Voting.getTransactionHash(
-    //     tx1.to,
-    //     tx1.value,
-    //     tx1.data,
-    //     tx1.operation,
-    //     tx1.safeTxGas,
-    //     tx1.baseGas,
-    //     tx1.gasPrice,
-    //     tx1.gasToken,
-    //     tx1.refundReceiver
-    //   );
-    //   // Vetoer 1 casts 500 veto votes
-    //   await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash1, false);
-    //   // Vetoer 2 casts 600 veto votes
-    //   await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, false);
-    //   // 1100 veto votes have been cast
-    //   expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
-    //   expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
-    //   // Mine blocks to surpass the execution delay
-    //   for (let i = 0; i < 9; i++) {
-    //     await network.provider.send("evm_mine");
-    //   }
-    //   await expect(
-    //     gnosisSafe.execTransaction(
-    //       tx1.to,
-    //       tx1.value,
-    //       tx1.data,
-    //       tx1.operation,
-    //       tx1.safeTxGas,
-    //       tx1.baseGas,
-    //       tx1.gasPrice,
-    //       tx1.gasToken,
-    //       tx1.refundReceiver,
-    //       signatureBytes1
-    //     )
-    //   ).to.be.revertedWith("Transaction has been vetoed");
-    //   // Tx1 has been vetoed, now try to queue and execute tx2
-    //   await vetoGuard.queueTransaction(
-    //     tx2.to,
-    //     tx2.value,
-    //     tx2.data,
-    //     tx2.operation,
-    //     tx2.safeTxGas,
-    //     tx2.baseGas,
-    //     tx2.gasPrice,
-    //     tx2.gasToken,
-    //     tx2.refundReceiver,
-    //     signatureBytes2
-    //   );
-    //   // Mine blocks to surpass the execution delay
-    //   for (let i = 0; i < 9; i++) {
-    //     await network.provider.send("evm_mine");
-    //   }
-    //   await gnosisSafe.execTransaction(
-    //     tx2.to,
-    //     tx2.value,
-    //     tx2.data,
-    //     tx2.operation,
-    //     tx2.safeTxGas,
-    //     tx2.baseGas,
-    //     tx2.gasPrice,
-    //     tx2.gasToken,
-    //     tx2.refundReceiver,
-    //     signatureBytes2
-    //   );
-    //   expect(await votesToken.balanceOf(deployer.address)).to.eq(999);
-    //   expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1);
-    // });
-    // it("A vetoer cannot cast veto votes more than once", async () => {
-    //   // Create transaction to set the guard address
-    //   const tokenTransferData = votesToken.interface.encodeFunctionData(
-    //     "transfer",
-    //     [deployer.address, 1000]
-    //   );
-    //   const tx = buildSafeTransaction({
-    //     to: votesToken.address,
-    //     data: tokenTransferData,
-    //     safeTxGas: 1000000,
-    //     nonce: await gnosisSafe.nonce(),
-    //   });
-    //   const sigs = [
-    //     await safeSignTypedData(owner1, gnosisSafe, tx),
-    //     await safeSignTypedData(owner2, gnosisSafe, tx),
-    //   ];
-    //   const signatureBytes = buildSignatureBytes(sigs);
-    //   await vetoGuard.queueTransaction(
-    //     tx.to,
-    //     tx.value,
-    //     tx.data,
-    //     tx.operation,
-    //     tx.safeTxGas,
-    //     tx.baseGas,
-    //     tx.gasPrice,
-    //     tx.gasToken,
-    //     tx.refundReceiver,
-    //     signatureBytes
-    //   );
-    //   const txHash = await vetoERC20Voting.getTransactionHash(
-    //     tx.to,
-    //     tx.value,
-    //     tx.data,
-    //     tx.operation,
-    //     tx.safeTxGas,
-    //     tx.baseGas,
-    //     tx.gasPrice,
-    //     tx.gasToken,
-    //     tx.refundReceiver
-    //   );
-    //   // Vetoer 1 casts 500 veto votes
-    //   await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false);
-    //   await expect(
-    //     vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false)
-    //   ).to.be.revertedWith("User has already voted");
-    // });
-    // it("A veto vote cannot be cast if the transaction has not been queued yet", async () => {
-    //   // Create transaction to set the guard address
-    //   const tokenTransferData = votesToken.interface.encodeFunctionData(
-    //     "transfer",
-    //     [deployer.address, 1000]
-    //   );
-    //   const tx = buildSafeTransaction({
-    //     to: votesToken.address,
-    //     data: tokenTransferData,
-    //     safeTxGas: 1000000,
-    //     nonce: await gnosisSafe.nonce(),
-    //   });
-    //   const txHash = await vetoERC20Voting.getTransactionHash(
-    //     tx.to,
-    //     tx.value,
-    //     tx.data,
-    //     tx.operation,
-    //     tx.safeTxGas,
-    //     tx.baseGas,
-    //     tx.gasPrice,
-    //     tx.gasToken,
-    //     tx.refundReceiver
-    //   );
-    //   await expect(
-    //     vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false)
-    //   ).to.be.revertedWith("Transaction has not yet been queued");
-    // });
+    it("A vetoed transaction does not prevent another transaction from being executed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 5]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash1 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      );
+
+      const txHash2 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+      expect(await usulModule.state(1)).to.eq(5);
+
+      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.state(1)).to.eq(0);
+
+      // Both users vote in support of proposals
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategies
+      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.finalizeStrategy(1);
+
+      // Queue the proposals
+      await usulVetoGuard.queueProposal(0);
+      await usulVetoGuard.queueProposal(1);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.state(1)).to.eq(2);
+
+      // Voters both cast veto votes on the first proposal
+      await vetoERC20Voting
+        .connect(parentTokenHolder1)
+        .castVetoVote(txHash1, false);
+
+      await vetoERC20Voting
+        .connect(parentTokenHolder2)
+        .castVetoVote(txHash1, false);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.state(1)).to.eq(4);
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        100
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+      // This proposal should fail due to veto
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData1,
+          0
+        )
+      ).to.be.revertedWith("Transaction has been vetoed");
+
+      // Execute the transaction
+      await usulModule.executeProposalByIndex(
+        1,
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      );
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        95
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(5);
+    });
+
+    it("A vetoer cannot cast veto votes more than once", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Cast veto votes
+      await vetoERC20Voting
+        .connect(parentTokenHolder1)
+        .castVetoVote(txHash, false);
+
+      // User attempts to vote twice
+      await expect(
+        vetoERC20Voting.connect(parentTokenHolder1).castVetoVote(txHash, false)
+      ).to.be.revertedWith("User has already voted");
+    });
+
+    it("A veto vote cannot be cast if the transaction has not been queued yet", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Cast veto votes
+      await expect(
+        vetoERC20Voting.connect(parentTokenHolder1).castVetoVote(txHash, false)
+      ).to.be.revertedWith("Transaction has not yet been queued");
+    });
+
+    it("A frozen DAO cannot execute any transaction", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 5]
+      );
+
+      const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 4]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash1 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      );
+
+      const txHash2 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      );
+
+      const txHash3 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+      expect(await usulModule.state(1)).to.eq(5);
+      expect(await usulModule.state(2)).to.eq(5);
+
+      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.state(1)).to.eq(0);
+      expect(await usulModule.state(2)).to.eq(0);
+
+      // Both users vote in support of proposals
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+
+      await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategies
+      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.finalizeStrategy(1);
+      await ozLinearVoting.finalizeStrategy(2);
+
+      // Queue the proposals
+      await usulVetoGuard.queueProposal(0);
+      await usulVetoGuard.queueProposal(1);
+      await usulVetoGuard.queueProposal(2);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.state(1)).to.eq(2);
+      expect(await usulModule.state(2)).to.eq(2);
+
+      expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+      // Voters both cast veto votes on the first proposal, and also cast freeze votes
+      await vetoERC20Voting
+        .connect(parentTokenHolder1)
+        .castVetoVote(txHash1, true);
+
+      await vetoERC20Voting
+        .connect(parentTokenHolder2)
+        .castVetoVote(txHash1, true);
+
+      expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.state(1)).to.eq(4);
+      expect(await usulModule.state(2)).to.eq(4);
+
+      // This proposal should fail due to veto
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData1,
+          0
+        )
+      ).to.be.revertedWith("Transaction has been vetoed");
+
+      // This proposal should fail due to freeze
+      await expect(
+        usulModule.executeProposalByIndex(
+          1,
+          childVotesToken.address,
+          0,
+          tokenTransferData2,
+          0
+        )
+      ).to.be.revertedWith("DAO is frozen");
+
+      // This proposal should fail due to freeze
+      await expect(
+        usulModule.executeProposalByIndex(
+          2,
+          childVotesToken.address,
+          0,
+          tokenTransferData3,
+          0
+        )
+      ).to.be.revertedWith("DAO is frozen");
+    });
   });
 
-  // describe("Frozen Functionality", () => {
-  // it("A frozen DAO cannot execute any transactions", async () => {
-  //   // Create transaction to set the guard address
-  //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 1000]
-  //   );
-
-  //   const tokenTransferData2 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 999]
-  //   );
-
-  //   const tx1 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData1,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const tx2 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData2,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const sigs1 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-  //   ];
-  //   const signatureBytes1 = buildSignatureBytes(sigs1);
-
-  //   const sigs2 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx2),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx2),
-  //   ];
-  //   const signatureBytes2 = buildSignatureBytes(sigs2);
-
-  //   await vetoGuard.queueTransaction(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver,
-  //     signatureBytes1
-  //   );
-
-  //   const txHash1 = await vetoERC20Voting.getTransactionHash(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver
-  //   );
-
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash1, true);
-
-  //   // Vetoer 2 casts 600 veto votes
-  //   await vetoERC20Voting.connect(tokenVetoer2).castVetoVote(txHash1, true);
-
-  //   // 1100 veto votes have been cast
-  //   expect(await vetoERC20Voting.transactionVetoVotes(txHash1)).to.eq(1100);
-
-  //   // 1100 freeze votes have been cast
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
-
-  //   expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
-
-  //   // Check that the DAO has been frozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.be.revertedWith("Transaction has been vetoed");
-
-  //   // Queue tx2
-  //   await vetoGuard.queueTransaction(
-  //     tx2.to,
-  //     tx2.value,
-  //     tx2.data,
-  //     tx2.operation,
-  //     tx2.safeTxGas,
-  //     tx2.baseGas,
-  //     tx2.gasPrice,
-  //     tx2.gasToken,
-  //     tx2.refundReceiver,
-  //     signatureBytes2
-  //   );
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx2.to,
-  //       tx2.value,
-  //       tx2.data,
-  //       tx2.operation,
-  //       tx2.safeTxGas,
-  //       tx2.baseGas,
-  //       tx2.gasPrice,
-  //       tx2.gasToken,
-  //       tx2.refundReceiver,
-  //       signatureBytes2
-  //     )
-  //   ).to.be.revertedWith("DAO is frozen");
-  // });
-
-  // it("A DAO may be frozen ind. of a veto ", async () => {
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   // Vetoer 2 casts 600 veto votes
-  //   await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
-
-  //   // 1100 freeze votes have been cast
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(1100);
-
-  //   // Check that the DAO has been frozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-
-  //   // Create transaction to set the guard address
-  //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 1000]
-  //   );
-
-  //   const tx1 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData1,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const sigs1 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-  //   ];
-  //   const signatureBytes1 = buildSignatureBytes(sigs1);
-
-  //   await vetoGuard.queueTransaction(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver,
-  //     signatureBytes1
-  //   );
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.be.revertedWith("DAO is frozen");
-  // });
-
-  // it("A DAO may execute txs during a the freeze proposal period if the freeze threshold is not met", async () => {
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-
-  //   // Check that the DAO has been frozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-
-  //   // Create transaction to set the guard address
-  //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 1000]
-  //   );
-
-  //   const tx1 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData1,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const sigs1 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-  //   ];
-  //   const signatureBytes1 = buildSignatureBytes(sigs1);
-
-  //   await vetoGuard.queueTransaction(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver,
-  //     signatureBytes1
-  //   );
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.emit(gnosisSafe, "ExecutionSuccess");
-  // });
-
-  // it("Freeze vars set properly during init", async () => {
-  //   // Frozen Params init correctly
-  //   expect(await vetoERC20Voting.freezeVotesThreshold()).to.eq(1090);
-  //   expect(await vetoERC20Voting.freezeProposalBlockDuration()).to.eq(10);
-  //   expect(await vetoERC20Voting.freezeBlockDuration()).to.eq(100);
-  //   expect(await vetoERC20Voting.owner()).to.eq(vetoGuardOwner.address);
-  // });
-
-  // it("updates state properly due to freeze actions", async () => {
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(0);
-  //   expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(0);
-
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
-  //   const latestBlock = await ethers.provider.getBlock("latest");
-  //   expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
-  //     latestBlock.number
-  //   );
-
-  //   await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-  // });
-
-  // it("Casting a vote after the freeze voting period resets state", async () => {
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(0);
-  //   expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(0);
-
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
-  //   let latestBlock = await ethers.provider.getBlock("latest");
-  //   expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
-  //     latestBlock.number
-  //   );
-
-  //   for (let i = 0; i < 10; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
-  //   latestBlock = await ethers.provider.getBlock("latest");
-  //   expect(await vetoERC20Voting.freezeProposalCreatedBlock()).to.eq(
-  //     latestBlock.number
-  //   );
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-  // });
-
-  // it("A user cannot vote twice to freeze a dao during the same voting period", async () => {
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   await expect(
-  //     vetoERC20Voting.connect(tokenVetoer1).castFreezeVote()
-  //   ).to.be.revertedWith("User has already voted");
-  //   expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
-  // });
-
-  // it("Prev. Frozen DAOs may execute txs after the frozen period", async () => {
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   // Vetoer 2 casts 600 veto votes
-  //   await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
-
-  //   // Check that the DAO has been frozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-
-  //   // Create transaction to set the guard address
-  //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 1000]
-  //   );
-
-  //   const tx1 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData1,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const sigs1 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-  //   ];
-  //   const signatureBytes1 = buildSignatureBytes(sigs1);
-
-  //   await vetoGuard.queueTransaction(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver,
-  //     signatureBytes1
-  //   );
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.be.revertedWith("DAO is frozen");
-
-  //   for (let i = 0; i < 100; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   // Check that the DAO has been unFrozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.emit(gnosisSafe, "ExecutionSuccess");
-  // });
-
-  // it("Defrosted DAOs may execute txs", async () => {
-  //   // Vetoer 1 casts 500 veto votes and 500 freeze votes
-  //   await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   // Vetoer 2 casts 600 veto votes
-  //   await vetoERC20Voting.connect(tokenVetoer2).castFreezeVote();
-
-  //   // Check that the DAO has been frozen
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(true);
-  //   await vetoERC20Voting.connect(vetoGuardOwner).defrost();
-  //   expect(await vetoERC20Voting.isFrozen()).to.eq(false);
-
-  //   // Create transaction to set the guard address
-  //   const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-  //     "transfer",
-  //     [deployer.address, 1000]
-  //   );
-
-  //   const tx1 = buildSafeTransaction({
-  //     to: votesToken.address,
-  //     data: tokenTransferData1,
-  //     safeTxGas: 1000000,
-  //     nonce: await gnosisSafe.nonce(),
-  //   });
-
-  //   const sigs1 = [
-  //     await safeSignTypedData(owner1, gnosisSafe, tx1),
-  //     await safeSignTypedData(owner2, gnosisSafe, tx1),
-  //   ];
-  //   const signatureBytes1 = buildSignatureBytes(sigs1);
-
-  //   await vetoGuard.queueTransaction(
-  //     tx1.to,
-  //     tx1.value,
-  //     tx1.data,
-  //     tx1.operation,
-  //     tx1.safeTxGas,
-  //     tx1.baseGas,
-  //     tx1.gasPrice,
-  //     tx1.gasToken,
-  //     tx1.refundReceiver,
-  //     signatureBytes1
-  //   );
-
-  //   // Mine blocks to surpass the execution delay
-  //   for (let i = 0; i < 9; i++) {
-  //     await network.provider.send("evm_mine");
-  //   }
-
-  //   // Check that the DAO has been unFrozen
-  //   await expect(
-  //     gnosisSafe.execTransaction(
-  //       tx1.to,
-  //       tx1.value,
-  //       tx1.data,
-  //       tx1.operation,
-  //       tx1.safeTxGas,
-  //       tx1.baseGas,
-  //       tx1.gasPrice,
-  //       tx1.gasToken,
-  //       tx1.refundReceiver,
-  //       signatureBytes1
-  //     )
-  //   ).to.emit(gnosisSafe, "ExecutionSuccess");
-  // });
-
-  // it("You must have voting weight to cast a freeze vote", async () => {
-  //   await expect(
-  //     vetoERC20Voting.connect(vetoGuardOwner).castFreezeVote()
-  //   ).to.be.revertedWith("User has no votes");
-  //   vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
-  //   await expect(
-  //     vetoERC20Voting.connect(vetoGuardOwner).castFreezeVote()
-  //   ).to.be.revertedWith("User has no votes");
-  // });
-
-  // it("Only owner methods must be called by vetoGuard owner", async () => {
-  //   await expect(
-  //     vetoERC20Voting.connect(tokenVetoer1).defrost()
-  //   ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   await expect(
-  //     vetoERC20Voting.connect(tokenVetoer1).updateVetoVotesThreshold(0)
-  //   ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   await expect(
-  //     vetoERC20Voting.connect(tokenVetoer1).updateFreezeVotesThreshold(0)
-  //   ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   await expect(
-  //     vetoERC20Voting
-  //       .connect(tokenVetoer1)
-  //       .updateFreezeProposalBlockDuration(0)
-  //   ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   await expect(
-  //     vetoERC20Voting.connect(tokenVetoer1).updateFreezeBlockDuration(0)
-  //   ).to.be.revertedWith("Ownable: caller is not the owner");
-  // });
-  // });
+  it("A DAO can be frozen independently of a veto", async () => {
+    // Create transaction to transfer tokens to the deployer
+    const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 10]
+    );
+
+    const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 5]
+    );
+
+    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 4]
+    );
+
+    // Get the tx hash to submit within the proposal
+    const txHash1 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData1,
+      0
+    );
+
+    const txHash2 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData2,
+      0
+    );
+
+    const txHash3 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData3,
+      0
+    );
+
+    // Proposal is uninitialized
+    expect(await usulModule.state(0)).to.eq(5);
+    expect(await usulModule.state(1)).to.eq(5);
+    expect(await usulModule.state(2)).to.eq(5);
+
+    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+
+    // 0 => Active
+    // 1 => Canceled,
+    // 2 => TimeLocked,
+    // 3 => Executed,
+    // 4 => Executing,
+    // 5 => Uninitialized
+
+    // Proposal is active
+    expect(await usulModule.state(0)).to.eq(0);
+    expect(await usulModule.state(1)).to.eq(0);
+    expect(await usulModule.state(2)).to.eq(0);
+
+    // Both users vote in support of proposals
+    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+
+    // Increase time so that voting period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Finalize the strategies
+    await ozLinearVoting.finalizeStrategy(0);
+    await ozLinearVoting.finalizeStrategy(1);
+    await ozLinearVoting.finalizeStrategy(2);
+
+    // Queue the proposals
+    await usulVetoGuard.queueProposal(0);
+    await usulVetoGuard.queueProposal(1);
+    await usulVetoGuard.queueProposal(2);
+
+    // Proposal is timelocked
+    expect(await usulModule.state(0)).to.eq(2);
+    expect(await usulModule.state(1)).to.eq(2);
+    expect(await usulModule.state(2)).to.eq(2);
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    // Voters both cast veto votes on the first proposal, and also cast freeze votes
+    await vetoERC20Voting.connect(parentTokenHolder1).castFreezeVote();
+
+    await vetoERC20Voting.connect(parentTokenHolder2).castFreezeVote();
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+
+    // Increase time so that timelock period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Proposal is ready to execute
+    expect(await usulModule.state(0)).to.eq(4);
+    expect(await usulModule.state(1)).to.eq(4);
+    expect(await usulModule.state(2)).to.eq(4);
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        0,
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        1,
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        2,
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+  });
+
+  it("A proposal can still be executed if a freeze proposal has been created, but threshold has not been met", async () => {
+    // Create transaction to transfer tokens to the deployer
+    const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 10]
+    );
+
+    // Get the tx hash to submit within the proposal
+    const txHash = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData,
+      0
+    );
+
+    // Proposal is uninitialized
+    expect(await usulModule.state(0)).to.eq(5);
+
+    await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+    // 0 => Active
+    // 1 => Canceled,
+    // 2 => TimeLocked,
+    // 3 => Executed,
+    // 4 => Executing,
+    // 5 => Uninitialized
+
+    // Proposal is active
+    expect(await usulModule.state(0)).to.eq(0);
+
+    // Both users vote in support of proposal
+    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+    // Increase time so that voting period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Finalize the strategy
+    await ozLinearVoting.finalizeStrategy(0);
+
+    // Queue the proposal
+    await usulVetoGuard.queueProposal(0);
+
+    // Proposal is timelocked
+    expect(await usulModule.state(0)).to.eq(2);
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    // Voters both cast veto votes on the first proposal, and also cast freeze votes
+    await vetoERC20Voting.connect(parentTokenHolder1).castFreezeVote();
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    // Increase time so that timelock period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Proposal is ready to execute
+    expect(await usulModule.state(0)).to.eq(4);
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+    // Execute the transaction
+    await usulModule.executeProposalByIndex(
+      0,
+      childVotesToken.address,
+      0,
+      tokenTransferData,
+      0
+    );
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+  });
+
+  it("A frozen DAO automatically is unfrozen after the freeze duration is over", async () => {
+    // Create transaction to transfer tokens to the deployer
+    const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 10]
+    );
+
+    const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 5]
+    );
+
+    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 4]
+    );
+
+    // Get the tx hash to submit within the proposal
+    const txHash1 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData1,
+      0
+    );
+
+    const txHash2 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData2,
+      0
+    );
+
+    const txHash3 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData3,
+      0
+    );
+
+    // Proposal is uninitialized
+    expect(await usulModule.state(0)).to.eq(5);
+    expect(await usulModule.state(1)).to.eq(5);
+    expect(await usulModule.state(2)).to.eq(5);
+
+    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+
+    // 0 => Active
+    // 1 => Canceled,
+    // 2 => TimeLocked,
+    // 3 => Executed,
+    // 4 => Executing,
+    // 5 => Uninitialized
+
+    // Proposal is active
+    expect(await usulModule.state(0)).to.eq(0);
+    expect(await usulModule.state(1)).to.eq(0);
+    expect(await usulModule.state(2)).to.eq(0);
+
+    // Both users vote in support of proposals
+    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+
+    // Increase time so that voting period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Finalize the strategies
+    await ozLinearVoting.finalizeStrategy(0);
+    await ozLinearVoting.finalizeStrategy(1);
+    await ozLinearVoting.finalizeStrategy(2);
+
+    // Queue the proposals
+    await usulVetoGuard.queueProposal(0);
+    await usulVetoGuard.queueProposal(1);
+    await usulVetoGuard.queueProposal(2);
+
+    // Proposal is timelocked
+    expect(await usulModule.state(0)).to.eq(2);
+    expect(await usulModule.state(1)).to.eq(2);
+    expect(await usulModule.state(2)).to.eq(2);
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    // Voters both cast veto votes on the first proposal, and also cast freeze votes
+    await vetoERC20Voting.connect(parentTokenHolder1).castFreezeVote();
+
+    await vetoERC20Voting.connect(parentTokenHolder2).castFreezeVote();
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+
+    // Increase time so that timelock period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Proposal is ready to execute
+    expect(await usulModule.state(0)).to.eq(4);
+    expect(await usulModule.state(1)).to.eq(4);
+    expect(await usulModule.state(2)).to.eq(4);
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        0,
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        1,
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        2,
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // Increase time so that freeze has ended
+    for (let i = 0; i <= 100; i++) {
+      await network.provider.send("evm_mine");
+    }
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+    // Execute the transaction
+    await usulModule.executeProposalByIndex(
+      0,
+      childVotesToken.address,
+      0,
+      tokenTransferData1,
+      0
+    );
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+  });
+
+  it("A frozen DAO can be defrosted by its owner, and continue to execute TX's", async () => {
+    // Create transaction to transfer tokens to the deployer
+    const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 10]
+    );
+
+    const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 5]
+    );
+
+    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 4]
+    );
+
+    // Get the tx hash to submit within the proposal
+    const txHash1 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData1,
+      0
+    );
+
+    const txHash2 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData2,
+      0
+    );
+
+    const txHash3 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData3,
+      0
+    );
+
+    // Proposal is uninitialized
+    expect(await usulModule.state(0)).to.eq(5);
+    expect(await usulModule.state(1)).to.eq(5);
+    expect(await usulModule.state(2)).to.eq(5);
+
+    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+
+    // 0 => Active
+    // 1 => Canceled,
+    // 2 => TimeLocked,
+    // 3 => Executed,
+    // 4 => Executing,
+    // 5 => Uninitialized
+
+    // Proposal is active
+    expect(await usulModule.state(0)).to.eq(0);
+    expect(await usulModule.state(1)).to.eq(0);
+    expect(await usulModule.state(2)).to.eq(0);
+
+    // Both users vote in support of proposals
+    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+
+    // Increase time so that voting period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Finalize the strategies
+    await ozLinearVoting.finalizeStrategy(0);
+    await ozLinearVoting.finalizeStrategy(1);
+    await ozLinearVoting.finalizeStrategy(2);
+
+    // Queue the proposals
+    await usulVetoGuard.queueProposal(0);
+    await usulVetoGuard.queueProposal(1);
+    await usulVetoGuard.queueProposal(2);
+
+    // Proposal is timelocked
+    expect(await usulModule.state(0)).to.eq(2);
+    expect(await usulModule.state(1)).to.eq(2);
+    expect(await usulModule.state(2)).to.eq(2);
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    // Voters both cast veto votes on the first proposal, and also cast freeze votes
+    await vetoERC20Voting.connect(parentTokenHolder1).castFreezeVote();
+
+    await vetoERC20Voting.connect(parentTokenHolder2).castFreezeVote();
+
+    expect(await vetoERC20Voting.isFrozen()).to.eq(true);
+
+    // Increase time so that timelock period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Proposal is ready to execute
+    expect(await usulModule.state(0)).to.eq(4);
+    expect(await usulModule.state(1)).to.eq(4);
+    expect(await usulModule.state(2)).to.eq(4);
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        0,
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        1,
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // This proposal should fail due to freeze
+    await expect(
+      usulModule.executeProposalByIndex(
+        2,
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      )
+    ).to.be.revertedWith("DAO is frozen");
+
+    // Parent DAO defrosts the child
+    await vetoERC20Voting.connect(mockParentDAO).defrost();
+
+    // Child DAO is now unfrozen
+    expect(await vetoERC20Voting.isFrozen()).to.eq(false);
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+    // Execute the transaction
+    await usulModule.executeProposalByIndex(
+      0,
+      childVotesToken.address,
+      0,
+      tokenTransferData1,
+      0
+    );
+
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+  });
 });
