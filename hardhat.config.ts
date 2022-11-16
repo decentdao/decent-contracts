@@ -38,6 +38,7 @@ const config: HardhatUserConfig = {
     paths: [
       "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
       "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
+      "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol",
     ],
   },
   namedAccounts: {
