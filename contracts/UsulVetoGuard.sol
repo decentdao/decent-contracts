@@ -55,13 +55,23 @@ contract UsulVetoGuard is
     ) external {
         ozLinearVoting.finalizeStrategy(proposalId);
 
-        bytes32[] memory txHashes = usul.proposals(proposalId).txHashes;
+        uint256 txIndex;
 
-        for (uint256 i; i < txHashes.length; i++) {
-          transactionHashToProposalId[txHashes[i]] = proposalId;
+        // While look is used since the Usul interface does not support getting the quantity of TX hashes
+        // stored within a given proposal. This loops through and gets the hash from each index until the call 
+        // reverts, and then the function is exited
+        while (true) {
+          try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
+            transactionHashToProposalId[txHash] = proposalId;
+            txIndex++;
+          } catch {
+            require(txIndex > 0, "Invalid proposal ID");
+
+            emit ProposalQueued(msg.sender, proposalId);
+
+            return;
+          }
         }
-
-        emit ProposalQueued(msg.sender, proposalId);
     }
 
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
