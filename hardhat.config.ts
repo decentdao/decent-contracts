@@ -21,6 +21,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+const hardhatNetworkConfig = process.env.GOERLI_PROVIDER ?
+  {
+    forking: {
+      url: process.env.GOERLI_PROVIDER,
+      blockNumber: 7387621,
+    },
+  } : {};
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -70,12 +78,7 @@ const config: HardhatUserConfig = {
       url: process.env.SEPOLIA_PROVIDER || "",
       accounts: process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY ? [process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY] : [],
     },
-    hardhat: {
-      forking: {
-        url: process.env.GOERLI_PROVIDER ? process.env.GOERLI_PROVIDER : "",
-        blockNumber: 7387621,
-      },
-    },
+    hardhat: hardhatNetworkConfig,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
