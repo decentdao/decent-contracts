@@ -1,6 +1,6 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "files": [
     "dist",
     "contracts"
@@ -12,7 +12,8 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "publish:prepare": "npm run clean && npx rimraf dist && npm run compile && npx tsc"
   },
   "devDependencies": {
     "@gnosis.pm/safe-contracts": "^1.3.0",
