@@ -21,7 +21,7 @@ contract UsulVetoGuard is
     IVetoVoting public vetoVoting;
     IOZLinearVoting public ozLinearVoting;
     IUsul public usul;
-    mapping(bytes32 => uint256) transactionHashToProposalId;
+    mapping(bytes32 => uint256) transactionQueuedBlock;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -50,27 +50,30 @@ contract UsulVetoGuard is
 
     /// @notice Queues a transaction for execution
     /// @param proposalId The ID of the proposal to queue
-    function queueProposal(
-        uint256 proposalId
-    ) external {
-        ozLinearVoting.finalizeStrategy(proposalId);
+    function queueProposal(uint256 proposalId) external {
+        // If proposal is not yet timelocked, then finalize the strategy
+        if(usul.state(proposalId) == 0) ozLinearVoting.finalizeStrategy(proposalId);
+        
+        require(usul.state(proposalId) == 2, "Proposal must be timelocked before queuing");
 
         uint256 txIndex;
 
         // While look is used since the Usul interface does not support getting the quantity of TX hashes
-        // stored within a given proposal. This loops through and gets the hash from each index until the call 
+        // stored within a given proposal. This loops through and gets the hash from each index until the call
         // reverts, and then the function is exited
         while (true) {
-          try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
-            transactionHashToProposalId[txHash] = proposalId;
-            txIndex++;
-          } catch {
-            require(txIndex > 0, "Invalid proposal ID");
+            try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
+                // transactionHashToProposalId[txHash] = proposalId;
+                // transactionQueued[txHash] = true;
+                transactionQueuedBlock[txHash] = block.number;
+                txIndex++;
+            } catch {
+                require(txIndex > 0, "Invalid proposal ID");
 
-            emit ProposalQueued(msg.sender, proposalId);
+                emit ProposalQueued(msg.sender, proposalId);
 
-            return;
-          }
+                return;
+            }
         }
     }
 
@@ -98,22 +101,14 @@ contract UsulVetoGuard is
         bytes memory,
         address
     ) external view override {
+        bytes32 txHash = usul.getTransactionHash(to, value, data, operation);
+
         require(
-            !vetoVoting.getIsVetoed(
-                getTransactionHash(
-                    to,
-                    value,
-                    data,
-                    operation,
-                    safeTxGas,
-                    baseGas,
-                    gasPrice,
-                    gasToken,
-                    refundReceiver
-                )
-            ),
-            "Transaction has been vetoed"
+            transactionQueuedBlock[txHash] > 0,
+            "Transaction has not been queued yet"
         );
+
+        require(!vetoVoting.getIsVetoed(txHash), "Transaction has been vetoed");
 
         require(!vetoVoting.isFrozen(), "DAO is frozen");
     }
@@ -129,13 +124,16 @@ contract UsulVetoGuard is
 
     // / @notice Gets the block number that the transaction was queued at
     // / @param _transactionHash The hash of the transaction data
-    // / @return uint256 startBlock The block number
+    // / @return uint256 The block number the transaction was queued at
     function getTransactionQueuedBlock(bytes32 _transactionHash)
         public
         view
-        returns (uint256 startBlock)
+        returns (uint256)
     {
-        (,,,, startBlock) = ozLinearVoting.proposals(transactionHashToProposalId[_transactionHash]);
+        // (, , , , startBlock) = ozLinearVoting.proposals(
+        //     transactionHashToProposalId[_transactionHash]
+        // );
+        return transactionQueuedBlock[_transactionHash];
     }
 
     /// @notice Can be used to check if this contract supports the specified interface
