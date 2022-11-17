@@ -56,11 +56,10 @@ contract UsulVetoGuard is
         
         require(usul.state(proposalId) == 2, "Proposal must be timelocked before queuing");
 
-        uint256 txIndex;
-
-        // While look is used since the Usul interface does not support getting the quantity of TX hashes
+        // While loop is used since the Usul interface does not support getting the quantity of TX hashes
         // stored within a given proposal. This loops through and gets the hash from each index until the call
         // reverts, and then the function is exited
+        uint256 txIndex;
         while (true) {
             try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
                 transactionQueuedBlock[txHash] = block.number;
