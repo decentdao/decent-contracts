@@ -64,5 +64,6 @@
   },
   "directories": {
     "test": "test"
+
   }
 }
