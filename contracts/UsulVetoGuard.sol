@@ -63,8 +63,6 @@ contract UsulVetoGuard is
         // reverts, and then the function is exited
         while (true) {
             try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
-                // transactionHashToProposalId[txHash] = proposalId;
-                // transactionQueued[txHash] = true;
                 transactionQueuedBlock[txHash] = block.number;
                 txIndex++;
             } catch {
@@ -130,9 +128,6 @@ contract UsulVetoGuard is
         view
         returns (uint256)
     {
-        // (, , , , startBlock) = ozLinearVoting.proposals(
-        //     transactionHashToProposalId[_transactionHash]
-        // );
         return transactionQueuedBlock[_transactionHash];
     }
 
