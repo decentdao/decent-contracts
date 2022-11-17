@@ -1,10 +1,8 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "files": [
-    "dist",
-    "typechain-types/contracts",
-    "typechain-types/factories/contracts"
+    "dist/typechain-types"
   ],
   "repository": {
     "type": "git",
