@@ -434,6 +434,69 @@ describe("Child DAO with Usul", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
     });
 
+    it("A proposal cannot be executed if it has been finalized, but not queued", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // The proposal is not queued
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      // Execute the transaction
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData,
+          0
+        )
+      ).to.be.revertedWith("Transaction has not been queued yet");
+    });
+
     it("A transaction cannot be executed if it hasn't yet been queued", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
