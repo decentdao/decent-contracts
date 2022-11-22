@@ -24,4 +24,14 @@ interface IUsul {
     /// @param proposalId the identifier of the proposal
     /// @return ProposalState the enum of the state of the proposal
     function state(uint256 proposalId) external view returns (uint256);
+
+    function proposals(uint256 proposalId)
+        external
+        view
+        returns (
+            bool canceled,
+            uint256 timeLockPeriod,
+            uint256 executionCounter,
+            address strategy
+        );
 }
