@@ -21,7 +21,8 @@ contract UsulVetoGuard is
     IVetoVoting public vetoVoting;
     IOZLinearVoting public ozLinearVoting;
     IUsul public usul;
-    mapping(bytes32 => uint256) transactionQueuedBlock;
+    uint256 public executionPeriod;
+    mapping(bytes32 => Transaction) internal transactions;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -31,13 +32,15 @@ contract UsulVetoGuard is
             address _owner,
             address _vetoVoting,
             address _ozLinearVoting,
-            address _usul
-        ) = abi.decode(initializeParams, (address, address, address, address));
+            address _usul,
+            uint256 _exeuctionPeriod
+        ) = abi.decode(initializeParams, (address, address, address, address, uint256));
 
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
         ozLinearVoting = IOZLinearVoting(_ozLinearVoting);
         usul = IUsul(_usul);
+        executionPeriod = _exeuctionPeriod;
 
         emit UsulVetoGuardSetup(
             msg.sender,
@@ -56,13 +59,17 @@ contract UsulVetoGuard is
         
         require(usul.state(proposalId) == 2, "Proposal must be timelocked before queuing");
 
+        (, uint256 timelockDeadline, , ) = usul.proposals(proposalId);
+
         // While loop is used since the Usul interface does not support getting the quantity of TX hashes
         // stored within a given proposal. This loops through and gets the hash from each index until the call
         // reverts, and then the function is exited
         uint256 txIndex;
         while (true) {
             try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
-                transactionQueuedBlock[txHash] = block.number;
+                transactions[txHash].queuedBlock = block.number;
+                transactions[txHash].proposalId = proposalId;
+                transactions[txHash].executionDeadline = timelockDeadline + executionPeriod;
                 txIndex++;
             } catch {
                 require(txIndex > 0, "Invalid proposal ID");
@@ -101,9 +108,11 @@ contract UsulVetoGuard is
         bytes32 txHash = usul.getTransactionHash(to, value, data, operation);
 
         require(
-            transactionQueuedBlock[txHash] > 0,
+            transactions[txHash].queuedBlock > 0,
             "Transaction has not been queued yet"
         );
+
+        require(block.timestamp <= transactions[txHash].executionDeadline, "Transaction execution period has ended");
 
         require(!vetoVoting.getIsVetoed(txHash), "Transaction has been vetoed");
 
@@ -119,15 +128,37 @@ contract UsulVetoGuard is
         override
     {}
 
-    // / @notice Gets the block number that the transaction was queued at
-    // / @param _transactionHash The hash of the transaction data
-    // / @return uint256 The block number the transaction was queued at
-    function getTransactionQueuedBlock(bytes32 _transactionHash)
+    /// @notice Gets the block number that the transaction was queued at
+    /// @param _txHash The hash of the transaction data
+    /// @return uint256 The proposal ID the tx is associated with
+    function getTransactionProposalId(bytes32 _txHash)
         public
         view
         returns (uint256)
     {
-        return transactionQueuedBlock[_transactionHash];
+        return transactions[_txHash].proposalId;
+    }
+
+    /// @notice Gets the block number that the transaction was queued at
+    /// @param _txHash The hash of the transaction data
+    /// @return uint256 The block number the transaction was queued at
+    function getTransactionQueuedBlock(bytes32 _txHash)
+        public
+        view
+        returns (uint256)
+    {
+        return transactions[_txHash].queuedBlock;
+    }
+
+    /// @notice Gets the block number that the transaction was queued at
+    /// @param _txHash The hash of the transaction data
+    /// @return uint256 The timestamp the transaction must be executed by
+    function getTransactionExecutionDeadline(bytes32 _txHash)
+        public
+        view
+        returns (uint256)
+    {
+        return transactions[_txHash].executionDeadline;
     }
 
     /// @notice Can be used to check if this contract supports the specified interface
