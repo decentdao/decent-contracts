@@ -435,7 +435,7 @@ describe("Child DAO with Usul", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
     });
 
-    it.only("A proposal cannot be executed if its execution deadline has elapsed", async () => {
+    it("A proposal cannot be executed if its execution deadline has elapsed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
