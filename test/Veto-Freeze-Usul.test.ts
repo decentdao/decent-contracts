@@ -27,7 +27,7 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Child DAO with Usul", () => {
+describe.only("Child DAO with Usul", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
@@ -202,12 +202,13 @@ describe("Child DAO with Usul", () => {
 
     await usulVetoGuard.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "address"],
+        ["address", "address", "address", "address", "uint256"],
         [
           mockParentDAO.address, // owner
           vetoERC20Voting.address, // veto voting contract
           ozLinearVoting.address, // OZ linear voting contract
           usulModule.address, // Usul
+          60, // Execution period in seconds
         ]
       )
     );
@@ -283,8 +284,8 @@ describe("Child DAO with Usul", () => {
 
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
-      // Supports IVetoGuard interface
-      expect(await usulVetoGuard.supportsInterface("0x213fabef")).to.eq(true);
+      // Supports IUsulVetoGuard interface
+      expect(await usulVetoGuard.supportsInterface("0x74547816")).to.eq(true);
       // Supports IGuard interface
       expect(await usulVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
       // Supports IERC-165 interface
@@ -1453,7 +1454,7 @@ describe("Child DAO with Usul", () => {
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
   });
 
-  it("A frozen DAO automatically is unfrozen after the freeze duration is over", async () => {
+  it("A frozen DAO is automatically unfrozen after the freeze duration is over", async () => {
     // Create transaction to transfer tokens to the deployer
     const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
       "transfer",
@@ -1463,11 +1464,6 @@ describe("Child DAO with Usul", () => {
     const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 5]
-    );
-
-    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
-      "transfer",
-      [deployer.address, 4]
     );
 
     // Get the tx hash to submit within the proposal
@@ -1485,21 +1481,12 @@ describe("Child DAO with Usul", () => {
       0
     );
 
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
-    );
-
     // Proposal is uninitialized
     expect(await usulModule.state(0)).to.eq(5);
     expect(await usulModule.state(1)).to.eq(5);
-    expect(await usulModule.state(2)).to.eq(5);
 
     await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
     await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
 
     // 0 => Active
     // 1 => Canceled,
@@ -1511,7 +1498,6 @@ describe("Child DAO with Usul", () => {
     // Proposal is active
     expect(await usulModule.state(0)).to.eq(0);
     expect(await usulModule.state(1)).to.eq(0);
-    expect(await usulModule.state(2)).to.eq(0);
 
     // Both users vote in support of proposals
     await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1520,26 +1506,16 @@ describe("Child DAO with Usul", () => {
     await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
     await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
-
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
-
-    // Finalize the strategies
-    await ozLinearVoting.finalizeStrategy(0);
-    await ozLinearVoting.finalizeStrategy(1);
-    await ozLinearVoting.finalizeStrategy(2);
 
     // Queue the proposals
     await usulVetoGuard.queueProposal(0);
     await usulVetoGuard.queueProposal(1);
-    await usulVetoGuard.queueProposal(2);
 
     // Proposal is timelocked
     expect(await usulModule.state(0)).to.eq(2);
     expect(await usulModule.state(1)).to.eq(2);
-    expect(await usulModule.state(2)).to.eq(2);
 
     expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -1556,7 +1532,6 @@ describe("Child DAO with Usul", () => {
     // Proposal is ready to execute
     expect(await usulModule.state(0)).to.eq(4);
     expect(await usulModule.state(1)).to.eq(4);
-    expect(await usulModule.state(2)).to.eq(4);
 
     // This proposal should fail due to freeze
     await expect(
@@ -1580,36 +1555,62 @@ describe("Child DAO with Usul", () => {
       )
     ).to.be.revertedWith("DAO is frozen");
 
-    // This proposal should fail due to freeze
-    await expect(
-      usulModule.executeProposalByIndex(
-        2,
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
-      )
-    ).to.be.revertedWith("DAO is frozen");
-
     // Increase time so that freeze has ended
     for (let i = 0; i <= 100; i++) {
       await network.provider.send("evm_mine");
     }
+
+    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      "transfer",
+      [deployer.address, 4]
+    );
+
+    const txHash3 = await usulModule.getTransactionHash(
+      childVotesToken.address,
+      0,
+      tokenTransferData3,
+      0
+    );
+
+    // Proposal is uninitialized
+    expect(await usulModule.state(2)).to.eq(5);
+
+    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+
+    expect(await usulModule.state(2)).to.eq(0);
+
+    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+
+    // Increase time so that voting period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Queue the proposal
+    await usulVetoGuard.queueProposal(2);
+
+    // Proposal is timelocked
+    expect(await usulModule.state(2)).to.eq(2);
+
+    // Increase time so that timelock period has ended
+    await time.increase(time.duration.seconds(60));
+
+    // Proposal is ready to execute
+    expect(await usulModule.state(2)).to.eq(4);
 
     expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
     await usulModule.executeProposalByIndex(
-      0,
+      2,
       childVotesToken.address,
       0,
-      tokenTransferData1,
+      tokenTransferData3,
       0
     );
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(96);
+    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(4);
   });
 
   it("A frozen DAO can be defrosted by its owner, and continue to execute TX's", async () => {
