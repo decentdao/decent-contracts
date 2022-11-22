@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IUsulVetoGuard {
-    struct Transaction {
-      uint256 proposalId;
+    struct Proposal {
       uint256 queuedBlock;
       uint256 executionDeadline;
     }
@@ -35,18 +34,18 @@ interface IUsulVetoGuard {
         view
         returns (uint256);
 
-    /// @notice Gets the block number that the transaction was queued at
-    /// @param _txHash The hash of the transaction data
+    /// @notice Gets the block number that the proposal was queued at
+    /// @param _proposalId The ID of the proposal
     /// @return uint256 The block number the transaction was queued at
-    function getTransactionQueuedBlock(bytes32 _txHash)
+    function getProposalQueuedBlock(uint256 _proposalId)
         external
         view
         returns (uint256);
 
-    /// @notice Gets the block number that the transaction was queued at
-    /// @param _txHash The hash of the transaction data
+    /// @notice Gets the block number that the proposal was queued at
+    /// @param _proposalId The ID of the proposal
     /// @return uint256 The timestamp the transaction must be executed by
-    function getTransactionExecutionDeadline(bytes32 _txHash)
+    function getProposalExecutionDeadline(uint256 _proposalId)
         external
         view
         returns (uint256);
