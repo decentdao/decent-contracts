@@ -366,6 +366,111 @@ describe("Child DAO with Usul", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
     });
 
+    it("A proposal containing multiple transactions can be created and executed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 1]
+      );
+
+      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 2]
+      );
+
+      const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 3]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash1 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      );
+
+      const txHash2 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      );
+
+      const txHash3 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal(
+        [txHash1, txHash2, txHash3],
+        ozLinearVoting.address,
+        [0]
+      );
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        100
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await usulModule.executeProposalBatch(
+        0,
+        [
+          childVotesToken.address,
+          childVotesToken.address,
+          childVotesToken.address,
+        ],
+        [0, 0, 0],
+        [tokenTransferData1, tokenTransferData2, tokenTransferData3],
+        [0, 0, 0]
+      );
+
+      // Check that all three token transfer TX's were executed
+      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+        94
+      );
+      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(6);
+    });
+
     it("A proposal can be created and executed, queuing the proposal also calls finalize strategy if necessary", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
@@ -986,6 +1091,110 @@ describe("Child DAO with Usul", () => {
           0,
           tokenTransferData,
           0
+        )
+      ).to.be.revertedWith("Transaction has been vetoed");
+    });
+
+    it("A proposal containing multiple transactions cannot be executed if one of the tx's has been vetoed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 1]
+      );
+
+      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 2]
+      );
+
+      const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 3]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash1 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData1,
+        0
+      );
+
+      const txHash2 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData2,
+        0
+      );
+
+      const txHash3 = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData3,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal(
+        [txHash1, txHash2, txHash3],
+        ozLinearVoting.address,
+        [0]
+      );
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Finalize the strategy
+      await ozLinearVoting.finalizeStrategy(0);
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Cast veto votes
+      await vetoERC20Voting
+        .connect(parentTokenHolder1)
+        .castVetoVote(txHash1, false);
+      await vetoERC20Voting
+        .connect(parentTokenHolder2)
+        .castVetoVote(txHash1, false);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      // Execute the transaction
+      await expect(
+        usulModule.executeProposalBatch(
+          0,
+          [
+            childVotesToken.address,
+            childVotesToken.address,
+            childVotesToken.address,
+          ],
+          [0, 0, 0],
+          [tokenTransferData1, tokenTransferData2, tokenTransferData3],
+          [0, 0, 0]
         )
       ).to.be.revertedWith("Transaction has been vetoed");
     });
