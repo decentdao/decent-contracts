@@ -27,7 +27,7 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe.only("Child DAO with Usul", () => {
+describe("Child DAO with Usul", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
@@ -285,7 +285,7 @@ describe.only("Child DAO with Usul", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IUsulVetoGuard interface
-      expect(await usulVetoGuard.supportsInterface("0x74547816")).to.eq(true);
+      expect(await usulVetoGuard.supportsInterface("0x8fc0183c")).to.eq(true);
       // Supports IGuard interface
       expect(await usulVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
       // Supports IERC-165 interface
@@ -433,6 +433,191 @@ describe.only("Child DAO with Usul", () => {
         90
       );
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+    });
+
+    it.only("A proposal cannot be executed if its execution deadline has elapsed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Increase time so that execution period has ended
+      await time.increase(time.duration.seconds(130));
+
+      // Execute the transaction
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData,
+          0
+        )
+      ).to.be.revertedWith("Transaction execution period has ended");
+    });
+
+    it("A proposal cannot be queued again before its execution deadline has elapsed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Attempt to queue the proposal again
+      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
+        "Proposal has already been queued"
+      );
+    });
+
+    it("A proposal cannot be re-queued if its execution deadline has elapsed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 10]
+      );
+
+      // Get the tx hash to submit within the proposal
+      const txHash = await usulModule.getTransactionHash(
+        childVotesToken.address,
+        0,
+        tokenTransferData,
+        0
+      );
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+
+      // 0 => Active
+      // 1 => Canceled,
+      // 2 => TimeLocked,
+      // 3 => Executed,
+      // 4 => Executing,
+      // 5 => Uninitialized
+
+      // Proposal is active
+      expect(await usulModule.state(0)).to.eq(0);
+
+      // Both users vote in support of proposal
+      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Queue the proposal
+      await usulVetoGuard.queueProposal(0);
+
+      // Proposal execution deadline should equal current time + timelockPeriod + executionPeriod
+      expect(await usulVetoGuard.getProposalExecutionDeadline(0)).to.eq(
+        (await time.latest()) + 60 + 60
+      );
+
+      // Proposal queued block has been updated
+      expect((await ethers.provider.getBlock("latest")).number).to.eq(
+        (await usulVetoGuard.getProposalQueuedBlock(0)).toNumber()
+      );
+
+      // // Proposal is timelocked
+      expect(await usulModule.state(0)).to.eq(2);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(121));
+
+      // Proposal is ready to execute
+      expect(await usulModule.state(0)).to.eq(4);
+
+      // Execution deadline should now be in the past
+      expect(await time.latest()).to.gt(
+        await (await usulVetoGuard.getProposalExecutionDeadline(0)).toNumber()
+      );
+
+      // Execute the transaction
+      await expect(
+        usulModule.executeProposalByIndex(
+          0,
+          childVotesToken.address,
+          0,
+          tokenTransferData,
+          0
+        )
+      ).to.be.revertedWith("Transaction execution period has ended");
+
+      // Attempt to re-queue the proposal
+      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
+        "Proposal must be timelocked before queuing"
+      );
     });
 
     it("A proposal cannot be executed if it has been finalized, but not queued", async () => {
