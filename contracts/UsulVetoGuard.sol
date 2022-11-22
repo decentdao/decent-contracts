@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IUsulVetoGuard.sol";
 import "./interfaces/IVetoVoting.sol";
-import "./interfaces/IOZLinearVoting.sol";
+import "./interfaces/IBaseStrategy.sol";
 import "./interfaces/IUsul.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
@@ -11,7 +11,7 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /// @notice A guard contract that prevents transactions that have been vetoed from being executed a Gnosis Safe
-/// @notice through a Usul module with an attached OZLinearVoting strategy
+/// @notice through a Usul module with an attached voting strategy
 contract UsulVetoGuard is
     IUsulVetoGuard,
     TransactionHasher,
@@ -19,7 +19,7 @@ contract UsulVetoGuard is
     FractalBaseGuard
 {
     IVetoVoting public vetoVoting;
-    IOZLinearVoting public ozLinearVoting;
+    IBaseStrategy public baseStrategy;
     IUsul public usul;
     uint256 public executionPeriod;
     mapping(uint256 => Proposal) internal proposals;
@@ -32,7 +32,7 @@ contract UsulVetoGuard is
         (
             address _owner,
             address _vetoVoting,
-            address _ozLinearVoting,
+            address _baseStrategy,
             address _usul,
             uint256 _exeuctionPeriod
         ) = abi.decode(
@@ -42,7 +42,7 @@ contract UsulVetoGuard is
 
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
-        ozLinearVoting = IOZLinearVoting(_ozLinearVoting);
+        baseStrategy = IBaseStrategy(_baseStrategy);
         usul = IUsul(_usul);
         executionPeriod = _exeuctionPeriod;
 
@@ -50,7 +50,7 @@ contract UsulVetoGuard is
             msg.sender,
             _owner,
             _vetoVoting,
-            _ozLinearVoting,
+            _baseStrategy,
             _usul
         );
     }
@@ -60,7 +60,7 @@ contract UsulVetoGuard is
     function queueProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
         if (usul.state(proposalId) == 0)
-            ozLinearVoting.finalizeStrategy(proposalId);
+            baseStrategy.finalizeStrategy(proposalId);
 
         require(
             usul.state(proposalId) == 2,
