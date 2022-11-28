@@ -4,8 +4,10 @@ coverage
 coverage.json
 typechain
 typechain-types
+.idea/
+dist/
 
 #Hardhat files
 cache
 artifacts
-
+deployments/localhost
