@@ -60,3 +60,33 @@ npx hardhat deploy --network <network>
 To deploy the Fractal contracts open a terminal and run:
 ```shell
 npx hardhat node
+```
+## NPM Package
+The core contracts in this repository are published in an NPM package for easy use within other repositories.
+
+To install the npm package, run:
+
+```shell
+npm i @fractal-framework/fractal-contracts
+```
+
+Including un-compiled contracts within typechain-types. Follow (these steps) hardhat plug-in [https://www.npmjs.com/package/hardhat-dependency-compiler]
+
+## Publishing new versions of these core contracts to NPM
+Update the version in package.json
+```shell
+npm install
+```
+to get those version updates into package-lock.json
+```shell
+npm run publish:prepare 
+```
+to fully clean the project, compile contracts, create typechain directory, and compile the typechain directory
+```shell
+npm publish 
+```
+to publish the compiled typechain files and solidity contracts to NPM
+```shell
+git commit
+git push
+```
