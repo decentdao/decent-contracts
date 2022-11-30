@@ -11,4 +11,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   ]);
 };
 
+func.tags = ["usul"];
+
 export default func;
