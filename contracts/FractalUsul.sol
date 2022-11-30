@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 // Usul was previously named "Seele" and SekerDAO was TokenWalk
 // that's where this naming differences are coming from
 import "@tokenwalk/seele/contracts/Usul.sol";
+import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 
 contract FractalUsul is Usul {
   struct Transaction {
@@ -21,12 +22,19 @@ contract FractalUsul is Usul {
     string documentationUrl
   );
 
+  constructor(
+    address _owner,
+    address _avatar,
+    address _target,
+    address[] memory _strategies
+  ) Usul(_owner, _avatar, _target, _strategies) {}
+
   /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
   /// but then - it also emits metadata of the proposal in ProposalMetadataCreated event.
   function submitProposalWithMetaData(
         address strategy,
         bytes memory data,
-        Transaction[] memory transactions,
+        Transaction[] calldata transactions,
         string calldata title,
         string calldata description,
         string calldata documentationUrl
