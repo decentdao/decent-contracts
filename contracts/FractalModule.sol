@@ -34,6 +34,7 @@ contract FractalModule is IFractalModule, Module {
         setTarget(_target);
         addControllers(_controllers);
         transferOwnership(_owner);
+        emit FractalCreated(msg.sender, _owner, _avatar);
     }
 
     /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
