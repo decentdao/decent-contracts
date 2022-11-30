@@ -5,6 +5,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 interface IFractalModule {
+    event FractalCreated(address creator, address owner, address safeCreated);
     event ControllersAdded(address[] controllers);
     event ControllersRemoved(address[] controllers);
 
