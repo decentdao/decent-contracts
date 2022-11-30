@@ -1,6 +1,6 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "files": [
     "dist",
     "deployments",
@@ -62,8 +62,8 @@
   "homepage": "https://github.com/decent-dao/fractal-contracts/blob/develop/README.md",
   "author": "fractal-contributors",
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/typechain-types/index.js",
+  "types": "dist/typechain-types/index.d.ts",
   "bugs": {
     "url": "https://github.com/decent-dao/fractal-contracts/issues"
   },
