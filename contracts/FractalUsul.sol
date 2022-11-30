@@ -24,10 +24,9 @@ contract FractalUsul is Usul {
   /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
   /// but then - it also emits metadata of the proposal in ProposalMetadataCreated event.
   function submitProposalWithMetaData(
-        Transaction[] memory transactions,
-        bytes32[] memory txHashes,
         address strategy,
         bytes memory data,
+        Transaction[] memory transactions,
         string calldata title,
         string calldata description,
         string calldata documentationUrl
@@ -36,7 +35,20 @@ contract FractalUsul is Usul {
           isStrategyEnabled(strategy),
           "voting strategy is not enabled for proposal"
       );
-      require(txHashes.length > 0, "proposal must contain transactions");
+      require(transactions.length > 0, "proposal must contain transactions");
+
+      bytes32[] memory txHashes;
+      for (uint256 i = 0; i < transactions.length; i++) {
+        Transaction memory currentTx = transactions[i];
+        bytes32 txHash = getTransactionHash(
+          currentTx.to, 
+          currentTx.value,
+          currentTx.data, 
+          currentTx.operation
+        );
+
+        txHashes[i] = txHash;
+      }
 
       proposals[totalProposalCount].txHashes = txHashes;
       proposals[totalProposalCount].strategy = strategy;
