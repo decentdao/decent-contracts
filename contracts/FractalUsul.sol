@@ -47,15 +47,12 @@ contract FractalUsul is Usul {
 
       bytes32[] memory txHashes;
       for (uint256 i = 0; i < transactions.length; i++) {
-        Transaction memory currentTx = transactions[i];
-        bytes32 txHash = getTransactionHash(
-          currentTx.to, 
-          currentTx.value,
-          currentTx.data, 
-          currentTx.operation
+        txHashes[i] = getTransactionHash(
+          transactions[i].to, 
+          transactions[i].value,
+          transactions[i].data, 
+          transactions[i].operation
         );
-
-        txHashes[i] = txHash;
       }
 
       proposals[totalProposalCount].txHashes = txHashes;
