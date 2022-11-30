@@ -73,4 +73,11 @@ contract FractalUsul is Usul {
         documentationUrl
       );
   }
+
+  /// @notice Gets the transaction hashes associated with a given proposald
+  /// @param proposalId The ID of the proposal to get the tx hashes for
+  /// @return bytes32[] The array of tx hashes
+  function getProposalTxHashes(uint256 proposalId) external view returns (bytes32[] memory) {
+    return proposals[proposalId].txHashes;
+  }
 }
