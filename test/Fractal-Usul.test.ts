@@ -353,6 +353,14 @@ describe("Fractal Usul", () => {
         proposalDescription,
         proposalDocumentationUrl
       )
-    ).to.emit(usulContract, "ProposalMetadataCreated");
+    )
+      .to.emit(usulContract, "ProposalMetadataCreated")
+      .withArgs(
+        0,
+        [proposalTransaction],
+        proposalTitle,
+        proposalDescription,
+        proposalDocumentationUrl
+      );
   });
 });
