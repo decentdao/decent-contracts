@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 // Usul was previously named "Seele" and SekerDAO was TokenWalk
 // that's where this naming differences are coming from
 import "@tokenwalk/seele/contracts/Usul.sol";
-import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 
 contract FractalUsul is Usul {
   struct Transaction {
