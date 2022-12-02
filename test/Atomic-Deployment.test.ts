@@ -227,7 +227,7 @@ describe("Gnosis Safe", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(predictedVetoGuard, vetoImpl.address);
-      expect(await vetoGuard.executionDelayBlocks()).eq(10);
+      expect(await vetoGuard.timelockPeriod()).eq(10);
       expect(await vetoGuard.vetoVoting()).eq(owner1.address);
       expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
     });

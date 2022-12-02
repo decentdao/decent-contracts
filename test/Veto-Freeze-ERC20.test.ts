@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
+import time from "./time";
 
 import {
   VotesToken,
@@ -22,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("Gnosis Safe", () => {
+describe.only("VetoGuard with ERC20 Veto Voting", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -136,10 +137,10 @@ describe("Gnosis Safe", () => {
     // Deploy VetoERC20Voting contract
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
 
-    // Deploy VetoGuard contract with a 10 block delay between queuing and execution
+    // Deploy VetoGuard contract with a 60 second timelock period
     const vetoGuardSetupData = abiCoder.encode(
       ["uint256", "address", "address", "address"],
-      [10, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
+      [60, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
     );
     vetoGuard = await new VetoGuard__factory(deployer).deploy();
     await vetoGuard.setUp(vetoGuardSetupData);
@@ -252,10 +253,8 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await gnosisSafe.execTransaction(
         tx.to,
@@ -344,7 +343,7 @@ describe("Gnosis Safe", () => {
       ).to.be.revertedWith("GS020");
     });
 
-    it("A transaction cannot be executed if the delay period has not been reached yet", async () => {
+    it("A transaction cannot be executed if the timelock period has not ended yet", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -390,7 +389,7 @@ describe("Gnosis Safe", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction delay period has not completed yet");
+      ).to.be.revertedWith("Transaction timelock period has not completed yet");
     });
 
     it("A transaction can be executed if it has received some veto votes, but not above the threshold", async () => {
@@ -446,10 +445,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(false);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await gnosisSafe.execTransaction(
         tx.to,
@@ -524,10 +521,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoERC20Voting.getIsVetoed(txHash)).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -619,10 +614,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoERC20Voting.getIsVetoed(txHash1)).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -653,10 +646,8 @@ describe("Gnosis Safe", () => {
         signatureBytes2
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await gnosisSafe.execTransaction(
         tx2.to,
@@ -841,10 +832,8 @@ describe("Gnosis Safe", () => {
       // Check that the DAO has been frozen
       expect(await vetoERC20Voting.isFrozen()).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -875,10 +864,8 @@ describe("Gnosis Safe", () => {
         signatureBytes2
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -940,10 +927,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -1000,10 +985,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -1121,10 +1104,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         gnosisSafe.execTransaction(
@@ -1206,10 +1187,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       // Check that the DAO has been unFrozen
       await expect(

@@ -27,7 +27,7 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe.only("Child DAO with Usul", () => {
+describe("Child DAO with Usul", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
