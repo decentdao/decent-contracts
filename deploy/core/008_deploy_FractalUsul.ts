@@ -11,6 +11,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   ]);
 };
 
-func.tags = ["usul"];
+func.tags = ["FractalUsul"];
 
 export default func;
