@@ -17,9 +17,12 @@ import {
   usuliface,
   getRandomBytes,
 } from "./helpers";
-import FractalUsul from "../deployments/goerli/FractalUsul.json";
-import VotesToken from "../deployments/goerli/VotesToken.json";
-import LinearVoting from "@tokenwalk/seele/deployments/kovan/OZLinearVoting.json";
+import {
+  FractalUsul__factory,
+  VotesToken__factory,
+  OZLinearVoting__factory,
+  OZLinearVoting,
+} from "../typechain-types";
 
 const { solidityKeccak256, getCreate2Address } = ethers.utils;
 
@@ -32,7 +35,7 @@ describe("Fractal Usul", () => {
   let moduleFactory: Contract;
   let multiSend: Contract;
   let votesMasterCopy: Contract;
-  let linearVotingMasterCopyContract: Contract;
+  let linearVotingMasterCopyContract: OZLinearVoting;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -81,18 +84,18 @@ describe("Fractal Usul", () => {
     gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer); // Gnosis Factory
     moduleFactory = new ethers.Contract(
       "0x00000000000DC7F163742Eb4aBEf650037b1f588",
-      // eslint-disable-next-line camelcase
       abiFactory,
       deployer
     );
-    votesMasterCopy = new ethers.Contract(
+
+    // eslint-disable-next-line camelcase
+    votesMasterCopy = VotesToken__factory.connect(
       votesMasterCopyAddress,
-      VotesToken.abi,
       deployer
     );
-    linearVotingMasterCopyContract = new ethers.Contract(
+    // eslint-disable-next-line camelcase
+    linearVotingMasterCopyContract = OZLinearVoting__factory.connect(
       linearVotingMasterCopyAddress,
-      LinearVoting.abi,
       deployer
     );
 
@@ -237,16 +240,15 @@ describe("Fractal Usul", () => {
       "10031021"
     );
 
-    const usulContract = new ethers.Contract(
+    // eslint-disable-next-line camelcase
+    const usulContract = FractalUsul__factory.connect(
       predictedUsulModule,
-      // eslint-disable-next-line camelcase
-      FractalUsul.abi,
       deployer
     );
 
-    const linearVotingContract = new ethers.Contract(
+    // eslint-disable-next-line camelcase
+    const linearVotingContract = OZLinearVoting__factory.connect(
       predictedStrategyAddress,
-      LinearVoting.abi,
       deployer
     );
 
