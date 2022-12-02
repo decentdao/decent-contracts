@@ -63,17 +63,17 @@ contract FractalUsul is Usul {
 
       proposals[totalProposalCount].txHashes = txHashes;
       proposals[totalProposalCount].strategy = strategy;
-      totalProposalCount++;
       IStrategy(strategy).receiveProposal(
-          abi.encode(totalProposalCount - 1, txHashes, data)
+          abi.encode(totalProposalCount, txHashes, data)
       );
-      emit ProposalCreated(strategy, totalProposalCount - 1, msg.sender);
+      emit ProposalCreated(strategy, totalProposalCount, msg.sender);
       emit ProposalMetadataCreated(
-        totalProposalCount - 1, 
+        totalProposalCount, 
         transactions, 
         title, 
         description, 
         documentationUrl
       );
+      totalProposalCount++;
   }
 }

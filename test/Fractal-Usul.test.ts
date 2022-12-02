@@ -24,6 +24,7 @@ import {
   OZLinearVoting__factory,
   OZLinearVoting,
 } from "../typechain-types";
+import VotesMasterCopyDeployment from "../deployments/goerli/VotesToken.json";
 
 const { solidityKeccak256, getCreate2Address } = ethers.utils;
 
@@ -50,9 +51,7 @@ describe("Fractal Usul", () => {
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
-  const fractalUsulMastercopyAddress =
-    "0x1B26345a4A41d9f588E1B161b6e8f21D27547184";
-  const votesMasterCopyAddress = "0x0697DCa73151da93D18CDdF5DB52f9A8363c9Ba9";
+  const votesMasterCopyAddress = VotesMasterCopyDeployment.address;
   const linearVotingMasterCopyAddress =
     "0x948db5691cc97AEcb4fF5FfcAEb72594B74D9D52";
 
