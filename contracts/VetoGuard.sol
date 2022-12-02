@@ -16,23 +16,24 @@ contract VetoGuard is
     FractalBaseGuard,
     IVetoGuard
 {
-    uint256 public executionDelayBlocks;
+    uint256 public timelockPeriod;
     IVetoVoting public vetoVoting;
     IGnosisSafe public gnosisSafe;
     mapping(bytes32 => uint256) transactionQueuedBlock;
+    mapping(bytes32 => uint256) transactionQueuedTimestamp;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
-            uint256 _executionDelayBlocks,
+            uint256 _timelockPeriod,
             address _owner,
             address _vetoVoting,
             address _gnosisSafe // Address(0) == msg.sender
         ) = abi.decode(initializeParams, (uint256, address, address, address));
 
-        executionDelayBlocks = _executionDelayBlocks;
+        timelockPeriod = _timelockPeriod;
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
         gnosisSafe = IGnosisSafe(
@@ -41,7 +42,7 @@ contract VetoGuard is
 
         emit VetoGuardSetup(
             msg.sender,
-            _executionDelayBlocks,
+            _timelockPeriod,
             _owner,
             _vetoVoting
         );
@@ -108,17 +109,18 @@ contract VetoGuard is
         );
 
         transactionQueuedBlock[transactionHash] = block.number;
+        transactionQueuedTimestamp[transactionHash] = block.timestamp;
 
         emit TransactionQueued(msg.sender, transactionHash, signatures);
     }
 
-    /// @notice Updates the execution delay blocks, only callable by the owner
-    /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
-    function updateExecutionDelayBlocks(uint256 _executionDelayBlocks)
+    /// @notice Updates the timelock period in seconds, only callable by the owner
+    /// @param _timelockPeriod The number of seconds between when a transaction is queued and can be executed
+    function updateTimelockPeriod(uint256 _timelockPeriod)
         external
         onlyOwner
     {
-        executionDelayBlocks = _executionDelayBlocks;
+        timelockPeriod = _timelockPeriod;
     }
 
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
@@ -163,9 +165,9 @@ contract VetoGuard is
         );
 
         require(
-            block.number >=
-                transactionQueuedBlock[transactionHash] + executionDelayBlocks,
-            "Transaction delay period has not completed yet"
+            block.timestamp >=
+                transactionQueuedTimestamp[transactionHash] + timelockPeriod,
+            "Transaction timelock period has not completed yet"
         );
 
         require(
