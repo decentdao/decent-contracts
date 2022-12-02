@@ -18,6 +18,7 @@ import {
   getRandomBytes,
 } from "./helpers";
 import {
+  FractalUsul,
   FractalUsul__factory,
   VotesToken__factory,
   OZLinearVoting__factory,
@@ -35,6 +36,7 @@ describe("Fractal Usul", () => {
   let moduleFactory: Contract;
   let multiSend: Contract;
   let votesMasterCopy: Contract;
+  let fractalUsulMasterCopy: FractalUsul;
   let linearVotingMasterCopyContract: OZLinearVoting;
 
   // Wallets
@@ -97,6 +99,13 @@ describe("Fractal Usul", () => {
     linearVotingMasterCopyContract = OZLinearVoting__factory.connect(
       linearVotingMasterCopyAddress,
       deployer
+    );
+    // eslint-disable-next-line camelcase
+    fractalUsulMasterCopy = await new FractalUsul__factory(deployer).deploy(
+      "0x0000000000000000000000000000000000000001",
+      "0x0000000000000000000000000000000000000001",
+      "0x0000000000000000000000000000000000000001",
+      ["0x0000000000000000000000000000000000000002"]
     );
 
     /// ////////////////// GNOSIS //////////////////
@@ -235,7 +244,7 @@ describe("Fractal Usul", () => {
     ]);
     const predictedUsulModule = await calculateProxyAddress(
       moduleFactory,
-      fractalUsulMastercopyAddress,
+      fractalUsulMasterCopy.address,
       encodedSetupUsulData,
       "10031021"
     );
@@ -300,7 +309,7 @@ describe("Fractal Usul", () => {
     const deployUsulTx = buildContractCall(
       moduleFactory,
       "deployModule",
-      [fractalUsulMastercopyAddress, encodedSetupUsulData, "10031021"],
+      [fractalUsulMasterCopy.address, encodedSetupUsulData, "10031021"],
       0,
       false
     );
@@ -346,23 +355,35 @@ describe("Fractal Usul", () => {
     const proposalDescription = "And this is my super amazing description";
     const proposalDocumentationUrl = "https://example.com/amazing-proposal";
 
-    await expect(
-      usulContract.submitProposalWithMetaData(
-        predictedStrategyAddress,
-        "0x",
-        [proposalTransaction],
-        proposalTitle,
-        proposalDescription,
-        proposalDocumentationUrl
-      )
-    )
-      .to.emit(usulContract, "ProposalMetadataCreated")
-      .withArgs(
-        0,
-        [proposalTransaction],
-        proposalTitle,
-        proposalDescription,
-        proposalDocumentationUrl
-      );
+    const tx = await usulContract.submitProposalWithMetaData(
+      predictedStrategyAddress,
+      "0x",
+      [proposalTransaction],
+      proposalTitle,
+      proposalDescription,
+      proposalDocumentationUrl
+    );
+    const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+    const data = receipt.logs[2].data;
+    const topics = receipt.logs[2].topics;
+    const event = usulContract.interface.decodeEventLog(
+      "ProposalMetadataCreated",
+      data,
+      topics
+    );
+
+    expect(event.proposalId).to.be.equal(BigNumber.from(0));
+
+    // Have to test transactions this way, cause TypeScript yells on tuple signature
+    expect(event.transactions[0].to).to.be.equal(proposalTransaction.to);
+    expect(event.transactions[0].value).to.be.equal(proposalTransaction.value);
+    expect(event.transactions[0].data).to.be.equal(proposalTransaction.data);
+    expect(event.transactions[0].operation).to.be.equal(
+      proposalTransaction.operation
+    );
+
+    expect(event.title).to.be.equal(proposalTitle);
+    expect(event.description).to.be.equal(proposalDescription);
+    expect(event.documentationUrl).to.be.equal(proposalDocumentationUrl);
   });
 });

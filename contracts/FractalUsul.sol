@@ -30,6 +30,13 @@ contract FractalUsul is Usul {
 
   /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
   /// but then - it also emits metadata of the proposal in ProposalMetadataCreated event.
+  /// @param strategy Address of Voting Strategy, under which proposal submitted
+  /// @param data - any additional data, which would be passed into IStrategy.receiveProposal
+  /// @param transactions - array of transactions to execute
+  /// @param title - proposal title, emitted in ProposalMetadataCreated
+  /// @param description - proposal description, emitted in ProposalMetadataCreated
+  /// @param documentationUrl - proposal documentation/discussion URL, emitted in ProposalMetadataCreated. 
+  /// Supposed to be link to Discord/Slack/Whatever chat discussion
   function submitProposalWithMetaData(
         address strategy,
         bytes memory data,
@@ -44,7 +51,7 @@ contract FractalUsul is Usul {
       );
       require(transactions.length > 0, "proposal must contain transactions");
 
-      bytes32[] memory txHashes;
+      bytes32[] memory txHashes = new bytes32[](transactions.length);
       for (uint256 i = 0; i < transactions.length; i++) {
         txHashes[i] = getTransactionHash(
           transactions[i].to, 
