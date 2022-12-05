@@ -17,6 +17,7 @@ contract VetoGuard is
     IVetoGuard
 {
     uint256 public timelockPeriod;
+    uint256 public executionPeriod;
     IVetoVoting public vetoVoting;
     IGnosisSafe public gnosisSafe;
     mapping(bytes32 => uint256) transactionQueuedBlock;
@@ -28,12 +29,17 @@ contract VetoGuard is
         __Ownable_init();
         (
             uint256 _timelockPeriod,
+            uint256 _executionPeriod,
             address _owner,
             address _vetoVoting,
             address _gnosisSafe // Address(0) == msg.sender
-        ) = abi.decode(initializeParams, (uint256, address, address, address));
+        ) = abi.decode(
+                initializeParams,
+                (uint256, uint256, address, address, address)
+            );
 
         timelockPeriod = _timelockPeriod;
+        executionPeriod = _executionPeriod;
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
         gnosisSafe = IGnosisSafe(
@@ -43,6 +49,7 @@ contract VetoGuard is
         emit VetoGuardSetup(
             msg.sender,
             _timelockPeriod,
+            _executionPeriod,
             _owner,
             _vetoVoting
         );
@@ -84,8 +91,11 @@ contract VetoGuard is
         );
 
         require(
-            transactionQueuedBlock[transactionHash] == 0,
-            "Transaction has already been queued"
+            block.timestamp >=
+                transactionQueuedTimestamp[transactionHash] +
+                    timelockPeriod +
+                    executionPeriod,
+            "Transaction has already been queued recently"
         );
 
         bytes memory gnosisTransactionHash = gnosisSafe.encodeTransactionData(
@@ -116,11 +126,17 @@ contract VetoGuard is
 
     /// @notice Updates the timelock period in seconds, only callable by the owner
     /// @param _timelockPeriod The number of seconds between when a transaction is queued and can be executed
-    function updateTimelockPeriod(uint256 _timelockPeriod)
+    function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
+        timelockPeriod = _timelockPeriod;
+    }
+
+    /// @notice Updates the execution period in seconds, only callable by the owner
+    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    function updateExecutionPeriod(uint256 _executionPeriod)
         external
         onlyOwner
     {
-        timelockPeriod = _timelockPeriod;
+        executionPeriod = _executionPeriod;
     }
 
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
@@ -168,6 +184,14 @@ contract VetoGuard is
             block.timestamp >=
                 transactionQueuedTimestamp[transactionHash] + timelockPeriod,
             "Transaction timelock period has not completed yet"
+        );
+
+        require(
+            block.timestamp <=
+                transactionQueuedTimestamp[transactionHash] +
+                    timelockPeriod +
+                    executionPeriod,
+            "Transaction execution period has ended"
         );
 
         require(
