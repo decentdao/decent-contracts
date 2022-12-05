@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 // Usul was previously named "Seele" and SekerDAO was TokenWalk
 // that's where this naming differences are coming from
 import "@tokenwalk/seele/contracts/Usul.sol";
-import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 
 contract FractalUsul is Usul {
   struct Transaction {
@@ -31,6 +30,13 @@ contract FractalUsul is Usul {
 
   /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
   /// but then - it also emits metadata of the proposal in ProposalMetadataCreated event.
+  /// @param strategy Address of Voting Strategy, under which proposal submitted
+  /// @param data - any additional data, which would be passed into IStrategy.receiveProposal
+  /// @param transactions - array of transactions to execute
+  /// @param title - proposal title, emitted in ProposalMetadataCreated
+  /// @param description - proposal description, emitted in ProposalMetadataCreated
+  /// @param documentationUrl - proposal documentation/discussion URL, emitted in ProposalMetadataCreated. 
+  /// Supposed to be link to Discord/Slack/Whatever chat discussion
   function submitProposalWithMetaData(
         address strategy,
         bytes memory data,
@@ -45,33 +51,30 @@ contract FractalUsul is Usul {
       );
       require(transactions.length > 0, "proposal must contain transactions");
 
-      bytes32[] memory txHashes;
+      bytes32[] memory txHashes = new bytes32[](transactions.length);
       for (uint256 i = 0; i < transactions.length; i++) {
-        Transaction memory currentTx = transactions[i];
-        bytes32 txHash = getTransactionHash(
-          currentTx.to, 
-          currentTx.value,
-          currentTx.data, 
-          currentTx.operation
+        txHashes[i] = getTransactionHash(
+          transactions[i].to, 
+          transactions[i].value,
+          transactions[i].data, 
+          transactions[i].operation
         );
-
-        txHashes[i] = txHash;
       }
 
       proposals[totalProposalCount].txHashes = txHashes;
       proposals[totalProposalCount].strategy = strategy;
-      totalProposalCount++;
       IStrategy(strategy).receiveProposal(
-          abi.encode(totalProposalCount - 1, txHashes, data)
+          abi.encode(totalProposalCount, txHashes, data)
       );
-      emit ProposalCreated(strategy, totalProposalCount - 1, msg.sender);
+      emit ProposalCreated(strategy, totalProposalCount, msg.sender);
       emit ProposalMetadataCreated(
-        totalProposalCount - 1, 
+        totalProposalCount, 
         transactions, 
         title, 
         description, 
         documentationUrl
       );
+      totalProposalCount++;
   }
 
   /// @notice Gets the transaction hashes associated with a given proposald
