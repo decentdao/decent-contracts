@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe.only("VetoGuard with ERC20 Veto Voting", () => {
+describe("VetoGuard with ERC20 Veto Voting", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -137,10 +137,16 @@ describe.only("VetoGuard with ERC20 Veto Voting", () => {
     // Deploy VetoERC20Voting contract
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
 
-    // Deploy VetoGuard contract with a 60 second timelock period
+    // Deploy VetoGuard contract with a 60 second timelock period, and a 60 second execution period
     const vetoGuardSetupData = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
-      [60, vetoGuardOwner.address, vetoERC20Voting.address, gnosisSafe.address]
+      ["uint256", "uint256", "address", "address", "address"],
+      [
+        60,
+        60,
+        vetoGuardOwner.address,
+        vetoERC20Voting.address,
+        gnosisSafe.address,
+      ]
     );
     vetoGuard = await new VetoGuard__factory(deployer).deploy();
     await vetoGuard.setUp(vetoGuardSetupData);
@@ -208,7 +214,7 @@ describe.only("VetoGuard with ERC20 Veto Voting", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0xfac0f7cd")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0xf5194769")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
@@ -1063,7 +1069,7 @@ describe.only("VetoGuard with ERC20 Veto Voting", () => {
       expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
     });
 
-    it("Prev. Frozen DAOs may execute txs after the frozen period", async () => {
+    it("A defrosted DAO may not execute a previously passed transaction", async () => {
       // Vetoer 1 casts 500 veto votes and 500 freeze votes
       await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
       // Vetoer 2 casts 600 veto votes
@@ -1141,7 +1147,7 @@ describe.only("VetoGuard with ERC20 Veto Voting", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.emit(gnosisSafe, "ExecutionSuccess");
+      ).to.be.revertedWith("Transaction execution period has ended");
     });
 
     it("Defrosted DAOs may execute txs", async () => {

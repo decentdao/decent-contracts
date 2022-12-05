@@ -33,7 +33,6 @@ describe("Fractal Module Tests", () => {
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
   let multiSend: Contract;
-  let vetoGuard: VetoGuard;
   let vetoImpl: VetoGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
@@ -55,8 +54,6 @@ describe("Fractal Module Tests", () => {
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
-  const threshold = 2;
-  let predictedVetoGuard: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -124,21 +121,12 @@ describe("Fractal Module Tests", () => {
     vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
     vetoGuardFactoryInit =
       // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+      VetoGuard__factory.createInterface().encodeFunctionData("setUp", [
         abiCoder.encode(
-          ["uint256", "address", "address", "address"],
-          [10, owner1.address, owner1.address, gnosisSafe.address]
+          ["uint256", "uint256", "address", "address", "address"],
+          [10, 10, owner1.address, owner1.address, gnosisSafe.address]
         ),
       ]);
-
-    predictedVetoGuard = await calculateProxyAddress(
-      moduleFactory,
-      vetoImpl.address,
-      vetoGuardFactoryInit,
-      "10031021"
-    );
-
-    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
 
     /// /////////////// MODULE ////////////////
     // DEPLOY Fractal Module
@@ -252,7 +240,7 @@ describe("Fractal Module Tests", () => {
       expect(await fractalModule.controllers(owner3.address)).eq(false);
     });
 
-    it("Authorized users may exec txs => GS", async () => {
+    it("Authorized users may exec TXs", async () => {
       const internalTxs: MetaTransaction[] = [
         buildContractCall(
           gnosisSafe,
