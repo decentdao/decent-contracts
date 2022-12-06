@@ -168,7 +168,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
     /// @notice Returns true if the DAO is currently frozen, false otherwise
     /// @return bool Indicates whether the DAO is currently frozen
-    function isFrozen() public view returns (bool) {
+    function isFrozen() external view returns (bool) {
         if (
             freezeProposalVoteCount >= freezeVotesThreshold &&
             block.number < freezeProposalCreatedBlock + freezeBlockDuration
