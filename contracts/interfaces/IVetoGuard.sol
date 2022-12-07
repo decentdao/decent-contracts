@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
@@ -8,7 +8,7 @@ interface IVetoGuard {
         address creator,
         uint256 executionDelayBlocks,
         address indexed owner,
-        address indexed vetoERC20Voting
+        address indexed vetoVoting
     );
 
     event TransactionQueued(

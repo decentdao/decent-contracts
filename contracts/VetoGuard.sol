@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "./interfaces/IVetoGuard.sol";
@@ -169,19 +169,7 @@ contract VetoGuard is
         );
 
         require(
-            !vetoVoting.getIsVetoed(
-                getTransactionHash(
-                    to,
-                    value,
-                    data,
-                    operation,
-                    safeTxGas,
-                    baseGas,
-                    gasPrice,
-                    gasToken,
-                    refundReceiver
-                )
-            ),
+            !vetoVoting.getIsVetoed(transactionHash),
             "Transaction has been vetoed"
         );
 
