@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
+import time from "./time";
 
 import {
   VotesToken,
@@ -174,11 +175,12 @@ describe("Gnosis Safe", () => {
       deployer
     ).deploy();
 
-    // Deploy VetoGuard contract with a 10 block delay between queuing and execution
+    // Deploy VetoGuard contract with a 60 second timelock period and 60 second execution period
     const vetoGuardSetupData = abiCoder.encode(
-      ["uint256", "address", "address", "address"],
+      ["uint256", "uint256", "address", "address", "address"],
       [
-        10,
+        60,
+        60,
         vetoGuardOwner.address,
         vetoMultisigVoting.address,
         childGnosisSafe.address,
@@ -248,10 +250,10 @@ describe("Gnosis Safe", () => {
     expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(1000);
   });
 
-  describe("VetoGuard Functionality", () => {
+  describe("VetoGuard with Multisig Veto Voting", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0xfac0f7cd")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0xf5194769")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
@@ -296,10 +298,8 @@ describe("Gnosis Safe", () => {
         signatureBytes
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await childGnosisSafe.execTransaction(
         tx.to,
@@ -390,7 +390,7 @@ describe("Gnosis Safe", () => {
       ).to.be.revertedWith("GS020");
     });
 
-    it("A transaction cannot be executed if the delay period has not been reached yet", async () => {
+    it("A transaction cannot be executed if the timelock period has not ended yet", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -436,7 +436,7 @@ describe("Gnosis Safe", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction delay period has not completed yet");
+      ).to.be.revertedWith("Transaction timelock period has not completed yet");
     });
 
     it("A transaction can be executed if it has received some veto votes, but not above the threshold", async () => {
@@ -494,10 +494,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(false);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await childGnosisSafe.execTransaction(
         tx.to,
@@ -576,10 +574,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -675,10 +671,8 @@ describe("Gnosis Safe", () => {
 
       expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -709,10 +703,8 @@ describe("Gnosis Safe", () => {
         signatureBytes2
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await childGnosisSafe.execTransaction(
         tx2.to,
@@ -907,10 +899,8 @@ describe("Gnosis Safe", () => {
       // Check that the DAO has been frozen
       expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -941,10 +931,8 @@ describe("Gnosis Safe", () => {
         signatureBytes2
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -1006,10 +994,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -1066,10 +1052,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -1146,7 +1130,7 @@ describe("Gnosis Safe", () => {
       expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
     });
 
-    it("Previously Frozen DAOs may execute TXs after the freeze period has elapsed", async () => {
+    it("Previously Frozen DAOs may not execute TXs after execution period has elapsed", async () => {
       // Vetoer 1 casts 1 freeze vote
       await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
       // Vetoer 2 casts 1 freeze vote
@@ -1187,10 +1171,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -1213,6 +1195,8 @@ describe("Gnosis Safe", () => {
 
       // Check that the DAO has been unFrozen
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+
+      // Transaction cannot be executed now, since transaction execution period has ended
       await expect(
         childGnosisSafe.execTransaction(
           tx1.to,
@@ -1226,7 +1210,7 @@ describe("Gnosis Safe", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.emit(childGnosisSafe, "ExecutionSuccess");
+      ).to.be.revertedWith("Transaction execution period has ended");
     });
 
     it("Defrosted DAOs may execute txs", async () => {
@@ -1272,10 +1256,8 @@ describe("Gnosis Safe", () => {
         signatureBytes1
       );
 
-      // Mine blocks to surpass the execution delay
-      for (let i = 0; i < 9; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
 
       // Check that the DAO has been unFrozen
       await expect(

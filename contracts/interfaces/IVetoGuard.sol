@@ -6,7 +6,8 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 interface IVetoGuard {
     event VetoGuardSetup(
         address creator,
-        uint256 executionDelayBlocks,
+        uint256 timelockPeriod,
+        uint256 executionPeriod,
         address indexed owner,
         address indexed vetoVoting
     );
@@ -41,11 +42,15 @@ interface IVetoGuard {
         bytes memory signatures
     ) external;
 
-    /// @notice Updates the execution delay blocks
-    /// @param _executionDelayBlocks The number of blocks between when a transaction is queued and can be executed
-    function updateExecutionDelayBlocks(
-        uint256 _executionDelayBlocks
-    ) external;
+    /// @notice Updates the timelock period in seconds, only callable by the owner
+    /// @param _timelockPeriod The number of seconds between when a transaction is queued and can be executed
+    function updateTimelockPeriod(uint256 _timelockPeriod)
+        external;
+
+    /// @notice Updates the execution period in seconds, only callable by the owner
+    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    function updateExecutionPeriod(uint256 _executionPeriod)
+        external;
 
     /// @notice Gets the block number that the transaction was queued at
     /// @param _transactionHash The hash of the transaction data

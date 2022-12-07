@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
-interface IUsul {
+interface IFractalUsul {
     /// @dev Returns the hash of a transaction in a proposal.
     /// @param proposalId the proposal to inspect.
     /// @param index the transaction to inspect.
@@ -34,4 +34,12 @@ interface IUsul {
             uint256 executionCounter,
             address strategy
         );
+
+    /// @notice Gets the transaction hashes associated with a given proposald
+    /// @param proposalId The ID of the proposal to get the tx hashes for
+    /// @return bytes32[] The array of tx hashes
+    function getProposalTxHashes(uint256 proposalId)
+        external
+        view
+        returns (bytes32[] memory);
 }

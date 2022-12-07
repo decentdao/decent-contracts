@@ -142,7 +142,7 @@ describe("Fractal Usul", () => {
       "01";
   });
 
-  it.only("Submit Proposal with MetaData emits ProposalMetadataCreated event", async () => {
+  it("Submit Proposal with MetaData emits ProposalMetadataCreated event", async () => {
     const tokenGovernanceDaoData = {
       tokenName: "FractalUsulToken",
       tokenSymbol: "FRUT",

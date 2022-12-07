@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import "./interfaces/IUsulVetoGuard.sol";
 import "./interfaces/IVetoVoting.sol";
 import "./interfaces/IBaseStrategy.sol";
-import "./interfaces/IUsul.sol";
+import "./interfaces/IFractalUsul.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /// @notice A guard contract that prevents transactions that have been vetoed from being executed a Gnosis Safe
-/// @notice through a Usul module with an attached voting strategy
+/// @notice through a FractalUsul module with an attached voting strategy
 contract UsulVetoGuard is
     IUsulVetoGuard,
     TransactionHasher,
@@ -20,7 +20,7 @@ contract UsulVetoGuard is
 {
     IVetoVoting public vetoVoting;
     IBaseStrategy public baseStrategy;
-    IUsul public usul;
+    IFractalUsul public fractalUsul;
     uint256 public executionPeriod;
     mapping(uint256 => Proposal) internal proposals;
     mapping(bytes32 => uint256) internal transactionToProposal;
@@ -33,7 +33,7 @@ contract UsulVetoGuard is
             address _owner,
             address _vetoVoting,
             address _baseStrategy,
-            address _usul,
+            address _fractalUsul,
             uint256 _exeuctionPeriod
         ) = abi.decode(
                 initializeParams,
@@ -43,7 +43,7 @@ contract UsulVetoGuard is
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
         baseStrategy = IBaseStrategy(_baseStrategy);
-        usul = IUsul(_usul);
+        fractalUsul = IFractalUsul(_fractalUsul);
         executionPeriod = _exeuctionPeriod;
 
         emit UsulVetoGuardSetup(
@@ -51,7 +51,7 @@ contract UsulVetoGuard is
             _owner,
             _vetoVoting,
             _baseStrategy,
-            _usul
+            _fractalUsul
         );
     }
 
@@ -59,15 +59,15 @@ contract UsulVetoGuard is
     /// @param proposalId The ID of the proposal to queue
     function queueProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
-        if (usul.state(proposalId) == 0)
+        if (fractalUsul.state(proposalId) == 0)
             baseStrategy.finalizeStrategy(proposalId);
 
         require(
-            usul.state(proposalId) == 2,
+            fractalUsul.state(proposalId) == 2,
             "Proposal must be timelocked before queuing"
         );
 
-        (, uint256 timelockDeadline, , ) = usul.proposals(proposalId);
+        (, uint256 timelockDeadline, , ) = fractalUsul.proposals(proposalId);
 
         uint256 executionDeadline = timelockDeadline + executionPeriod;
 
@@ -79,22 +79,12 @@ contract UsulVetoGuard is
         proposals[proposalId].executionDeadline = executionDeadline;
         proposals[proposalId].queuedBlock = block.number;
 
-        // While loop is used since the Usul interface does not support getting the quantity of TX hashes
-        // stored within a given proposal. This loops through and gets the hash from each index until the call
-        // reverts, and then the function is exited
-        uint256 txIndex;
-        while (true) {
-            try usul.getTxHash(proposalId, txIndex) returns (bytes32 txHash) {
-                transactionToProposal[txHash] = proposalId;
-                txIndex++;
-            } catch {
-                require(txIndex > 0, "Invalid proposal ID");
-
-                emit ProposalQueued(msg.sender, proposalId);
-
-                return;
-            }
+        bytes32[] memory txHashes = fractalUsul.getProposalTxHashes(proposalId);
+        for(uint256 i; i < txHashes.length; i++) {
+          transactionToProposal[txHashes[i]] = proposalId;
         }
+
+        emit ProposalQueued(msg.sender, proposalId);
     }
 
     function updateExeuctionPeriod(uint256 _executionPeriod)
@@ -128,7 +118,7 @@ contract UsulVetoGuard is
         bytes memory,
         address
     ) external view override {
-        bytes32 txHash = usul.getTransactionHash(to, value, data, operation);
+        bytes32 txHash = fractalUsul.getTransactionHash(to, value, data, operation);
 
         uint256 proposalId = transactionToProposal[txHash];
 

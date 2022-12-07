@@ -24,7 +24,7 @@ import {
   abiUsul,
 } from "./helpers";
 
-describe("Gnosis Safe", () => {
+describe("Atomic Gnosis Safe Deployment", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -123,10 +123,10 @@ describe("Gnosis Safe", () => {
     vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
     vetoGuardFactoryInit =
       // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
+      VetoGuard__factory.createInterface().encodeFunctionData("setUp", [
         abiCoder.encode(
-          ["uint256", "address", "address", "address"],
-          [10, owner1.address, owner1.address, gnosisSafe.address]
+          ["uint256", "uint256", "address", "address", "address"],
+          [10, 20, owner1.address, owner1.address, gnosisSafe.address]
         ),
       ]);
 
@@ -227,7 +227,7 @@ describe("Gnosis Safe", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(predictedVetoGuard, vetoImpl.address);
-      expect(await vetoGuard.executionDelayBlocks()).eq(10);
+      expect(await vetoGuard.timelockPeriod()).eq(10);
       expect(await vetoGuard.vetoVoting()).eq(owner1.address);
       expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
     });

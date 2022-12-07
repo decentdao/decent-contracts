@@ -9,8 +9,8 @@ import {
   GnosisSafeProxyFactory,
   OZLinearVoting,
   OZLinearVoting__factory,
-  Usul,
-  Usul__factory,
+  FractalUsul,
+  FractalUsul__factory,
   UsulVetoGuard,
   UsulVetoGuard__factory,
   VetoERC20Voting,
@@ -31,7 +31,7 @@ describe("Child DAO with Usul", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
-  let usulModule: Usul;
+  let usulModule: FractalUsul;
   let ozLinearVoting: OZLinearVoting;
   let vetoERC20Voting: VetoERC20Voting;
   let parentVotesToken: VotesToken;
@@ -171,7 +171,7 @@ describe("Child DAO with Usul", () => {
       .delegate(parentTokenHolder2.address);
 
     // Deploy Usul module
-    usulModule = await new Usul__factory(deployer).deploy(
+    usulModule = await new FractalUsul__factory(deployer).deploy(
       mockParentDAO.address,
       childGnosisSafe.address,
       childGnosisSafe.address,
