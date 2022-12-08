@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe.only("VetoGuard with ERC20 Veto Voting", () => {
+describe("VetoGuard with ERC20 Veto Voting", () => {
   // Factories
   let gnosisFactory: Contract;
 
