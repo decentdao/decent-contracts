@@ -13,7 +13,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     uint256 public vetoVotesThreshold; // Number of votes required to veto a transaction
     uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
     uint256 public freezeProposalCreatedBlock; // Block number the freeze proposal was created at
-    uint256 public freezeProposalCreatedTime; // Timestsamp the freeze proposal was created at
+    uint256 public freezeProposalCreatedTime; // Timestamp the freeze proposal was created at
     uint256 public freezeProposalVoteCount; // Number of accrued freeze votes
     uint256 public freezeProposalPeriod; // Number of seconds a freeze proposal has to succeed
     uint256 public freezePeriod; // Number of seconds a freeze lasts, from time of freeze proposal creation
