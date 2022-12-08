@@ -59,4 +59,12 @@ interface IVetoGuard {
         external
         view
         returns (uint256);
+
+    /// @notice Gets the timestamp that the transaction was queued at
+    /// @param _transactionHash The hash of the transaction data
+    /// @return uint256 The timestamp the transaction was queued at
+    function getTransactionQueuedTimestamp(bytes32 _transactionHash)
+        external
+        view
+        returns (uint256);
 }
