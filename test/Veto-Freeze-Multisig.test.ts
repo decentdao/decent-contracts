@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe.only("Gnosis Safe", () => {
+describe("Gnosis Safe", () => {
   // Factories
   let gnosisFactory: Contract;
 

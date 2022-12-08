@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("VetoGuard with ERC20 Veto Voting", () => {
+describe.only("VetoGuard with ERC20 Veto Voting", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -167,7 +167,7 @@ describe("VetoGuard with ERC20 Veto Voting", () => {
         1000, // veto votes threshold
         1090, // freeze votes threshold
         10, // proposal block length
-        100, // freeze duration
+        200, // freeze duration
         votesToken.address,
         vetoGuard.address,
       ]
@@ -1013,8 +1013,8 @@ describe("VetoGuard with ERC20 Veto Voting", () => {
     it("Freeze vars set properly during init", async () => {
       // Frozen Params init correctly
       expect(await vetoERC20Voting.freezeVotesThreshold()).to.eq(1090);
-      expect(await vetoERC20Voting.freezeProposalBlockDuration()).to.eq(10);
-      expect(await vetoERC20Voting.freezeBlockDuration()).to.eq(100);
+      expect(await vetoERC20Voting.freezeProposalPeriod()).to.eq(10);
+      expect(await vetoERC20Voting.freezePeriod()).to.eq(200);
       expect(await vetoERC20Voting.owner()).to.eq(vetoGuardOwner.address);
     });
 
@@ -1048,9 +1048,8 @@ describe("VetoGuard with ERC20 Veto Voting", () => {
         latestBlock.number
       );
 
-      for (let i = 0; i < 10; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse freeze proposal period
+      await time.increase(time.duration.seconds(10));
 
       await vetoERC20Voting.connect(tokenVetoer1).castFreezeVote();
       expect(await vetoERC20Voting.freezeProposalVoteCount()).to.eq(500);
@@ -1128,9 +1127,8 @@ describe("VetoGuard with ERC20 Veto Voting", () => {
         )
       ).to.be.revertedWith("DAO is frozen");
 
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse freeze period
+      await time.increase(time.duration.seconds(140));
 
       // Check that the DAO has been unFrozen
       expect(await vetoERC20Voting.isFrozen()).to.eq(false);
@@ -1234,12 +1232,10 @@ describe("VetoGuard with ERC20 Veto Voting", () => {
         vetoERC20Voting.connect(tokenVetoer1).updateFreezeVotesThreshold(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting
-          .connect(tokenVetoer1)
-          .updateFreezeProposalBlockDuration(0)
+        vetoERC20Voting.connect(tokenVetoer1).updateFreezeProposalPeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoERC20Voting.connect(tokenVetoer1).updateFreezeBlockDuration(0)
+        vetoERC20Voting.connect(tokenVetoer1).updateFreezePeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
