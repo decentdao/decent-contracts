@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("Gnosis Safe", () => {
+describe.only("Gnosis Safe", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -204,8 +204,8 @@ describe("Gnosis Safe", () => {
         vetoGuardOwner.address,
         2, // veto votes threshold
         2, // freeze votes threshold
-        10, // proposal block length
-        100, // freeze duration
+        10, // freeze proposal duration in seconds
+        200, // freeze duration in seconds
         parentGnosisSafe.address,
         vetoGuard.address,
       ]
@@ -950,6 +950,149 @@ describe("Gnosis Safe", () => {
       ).to.be.revertedWith("DAO is frozen");
     });
 
+    it("A frozen DAO automatically defrosts after the freeze period has ended", async () => {
+      // Create transaction to set the guard address
+      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 1000]
+      );
+
+      const tokenTransferData2 = votesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 999]
+      );
+
+      const tx1 = buildSafeTransaction({
+        to: votesToken.address,
+        data: tokenTransferData1,
+        safeTxGas: 1000000,
+        nonce: await childGnosisSafe.nonce(),
+      });
+
+      const tx2 = buildSafeTransaction({
+        to: votesToken.address,
+        data: tokenTransferData2,
+        safeTxGas: 1000000,
+        nonce: await childGnosisSafe.nonce(),
+      });
+
+      const sigs1 = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
+      ];
+      const signatureBytes1 = buildSignatureBytes(sigs1);
+
+      const sigs2 = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx2),
+      ];
+      const signatureBytes2 = buildSignatureBytes(sigs2);
+
+      await vetoGuard.queueTransaction(
+        tx1.to,
+        tx1.value,
+        tx1.data,
+        tx1.operation,
+        tx1.safeTxGas,
+        tx1.baseGas,
+        tx1.gasPrice,
+        tx1.gasToken,
+        tx1.refundReceiver,
+        signatureBytes1
+      );
+
+      const txHash1 = await vetoMultisigVoting.getTransactionHash(
+        tx1.to,
+        tx1.value,
+        tx1.data,
+        tx1.operation,
+        tx1.safeTxGas,
+        tx1.baseGas,
+        tx1.gasPrice,
+        tx1.gasToken,
+        tx1.refundReceiver
+      );
+
+      // Vetoer 1 casts 1 veto vote and 1 freeze vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner1)
+        .castVetoVote(txHash1, true);
+
+      // Vetoer 2 casts 1 veto vote and 1 freeze vote
+      await vetoMultisigVoting
+        .connect(parentMultisigOwner2)
+        .castVetoVote(txHash1, true);
+
+      // 2 veto votes have been cast
+      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
+
+      // 2 freeze votes have been cast
+      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
+
+      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
+
+      // Check that the DAO has been frozen
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
+
+      await expect(
+        childGnosisSafe.execTransaction(
+          tx1.to,
+          tx1.value,
+          tx1.data,
+          tx1.operation,
+          tx1.safeTxGas,
+          tx1.baseGas,
+          tx1.gasPrice,
+          tx1.gasToken,
+          tx1.refundReceiver,
+          signatureBytes1
+        )
+      ).to.be.revertedWith("Transaction has been vetoed");
+
+      // Queue tx2
+      await vetoGuard.queueTransaction(
+        tx2.to,
+        tx2.value,
+        tx2.data,
+        tx2.operation,
+        tx2.safeTxGas,
+        tx2.baseGas,
+        tx2.gasPrice,
+        tx2.gasToken,
+        tx2.refundReceiver,
+        signatureBytes2
+      );
+
+      // Move time forward to elapse timelock period
+      await time.increase(time.duration.seconds(60));
+
+      await expect(
+        childGnosisSafe.execTransaction(
+          tx2.to,
+          tx2.value,
+          tx2.data,
+          tx2.operation,
+          tx2.safeTxGas,
+          tx2.baseGas,
+          tx2.gasPrice,
+          tx2.gasToken,
+          tx2.refundReceiver,
+          signatureBytes2
+        )
+      ).to.be.revertedWith("DAO is frozen");
+
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+
+      // Move time forward to elapse freeze period
+      await time.increase(time.duration.seconds(140));
+
+      // Check that the DAO isn't frozen now
+      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+    });
+
     it("A DAO may be frozen independently of a veto ", async () => {
       // Vetoer 1 casts 1 freeze vote
       await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
@@ -1074,8 +1217,8 @@ describe("Gnosis Safe", () => {
     it("Freeze vars set properly during init", async () => {
       // Frozen Params init correctly
       expect(await vetoMultisigVoting.freezeVotesThreshold()).to.eq(2);
-      expect(await vetoMultisigVoting.freezeProposalBlockDuration()).to.eq(10);
-      expect(await vetoMultisigVoting.freezeBlockDuration()).to.eq(100);
+      expect(await vetoMultisigVoting.freezeProposalPeriod()).to.eq(10);
+      expect(await vetoMultisigVoting.freezePeriod()).to.eq(200);
       expect(await vetoMultisigVoting.owner()).to.eq(vetoGuardOwner.address);
     });
 
@@ -1189,9 +1332,8 @@ describe("Gnosis Safe", () => {
         )
       ).to.be.revertedWith("DAO is frozen");
 
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse freeze period
+      await time.increase(time.duration.seconds(140));
 
       // Check that the DAO has been unFrozen
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
@@ -1299,12 +1441,10 @@ describe("Gnosis Safe", () => {
       await expect(
         vetoMultisigVoting
           .connect(childMultisigOwner1)
-          .updateFreezeProposalBlockDuration(0)
+          .updateFreezeProposalPeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoMultisigVoting
-          .connect(childMultisigOwner1)
-          .updateFreezeBlockDuration(0)
+        vetoMultisigVoting.connect(childMultisigOwner1).updateFreezePeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
