@@ -214,7 +214,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0xf5194769")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0x0959eafd")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
