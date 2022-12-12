@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("VetoGuard with ERC20 Veto Voting", () => {
+describe("Child Multisig DAO with Usul Parent", () => {
   // Factories
   let gnosisFactory: Contract;
 
