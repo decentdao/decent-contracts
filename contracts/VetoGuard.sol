@@ -20,8 +20,8 @@ contract VetoGuard is
     uint256 public executionPeriod;
     IVetoVoting public vetoVoting;
     IGnosisSafe public gnosisSafe;
-    mapping(bytes32 => uint256) transactionQueuedBlock;
-    mapping(bytes32 => uint256) transactionQueuedTimestamp;
+    mapping(bytes32 => uint256) internal transactionQueuedBlock;
+    mapping(bytes32 => uint256) internal transactionQueuedTimestamp;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -220,6 +220,17 @@ contract VetoGuard is
         returns (uint256)
     {
         return transactionQueuedBlock[_transactionHash];
+    }
+
+    /// @notice Gets the timestamp that the transaction was queued at
+    /// @param _transactionHash The hash of the transaction data
+    /// @return uint256 The timestamp the transaction was queued at
+    function getTransactionQueuedTimestamp(bytes32 _transactionHash)
+        public
+        view
+        returns (uint256)
+    {
+        return transactionQueuedTimestamp[_transactionHash];
     }
 
     /// @notice Can be used to check if this contract supports the specified interface

@@ -13,9 +13,10 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     uint256 public vetoVotesThreshold; // Number of votes required to veto a transaction
     uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
     uint256 public freezeProposalCreatedBlock; // Block number the freeze proposal was created at
+    uint256 public freezeProposalCreatedTime; // Timestamp the freeze proposal was created at
     uint256 public freezeProposalVoteCount; // Number of accrued freeze votes
-    uint256 public freezeProposalBlockDuration; // Number of blocks a freeze proposal has to succeed
-    uint256 public freezeBlockDuration; // Number of blocks a freeze lasts, from time of freeze proposal creation
+    uint256 public freezeProposalPeriod; // Number of seconds a freeze proposal has to succeed
+    uint256 public freezePeriod; // Number of seconds a freeze lasts, from time of freeze proposal creation
     IGnosisSafe public gnosisSafe;
     IVetoGuard public vetoGuard;
     mapping(bytes32 => uint256) public transactionVetoVotes;
@@ -30,8 +31,8 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
             address _owner,
             uint256 _vetoVotesThreshold,
             uint256 _freezeVotesThreshold,
-            uint256 _freezeProposalBlockDuration,
-            uint256 _freezeBlockDuration,
+            uint256 _freezeProposalPeriod,
+            uint256 _freezePeriod,
             address _parentGnosisSafe,
             address _vetoGuard
         ) = abi.decode(
@@ -42,8 +43,8 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
         _transferOwnership(_owner);
         vetoVotesThreshold = _vetoVotesThreshold;
         freezeVotesThreshold = _freezeVotesThreshold;
-        freezeProposalBlockDuration = _freezeProposalBlockDuration;
-        freezeBlockDuration = _freezeBlockDuration;
+        freezeProposalPeriod = _freezeProposalPeriod;
+        freezePeriod = _freezePeriod;
         gnosisSafe = IGnosisSafe(_parentGnosisSafe);
         vetoGuard = IVetoGuard(_vetoGuard);
     }
@@ -90,11 +91,12 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
     function _castFreezeVote() internal {
         if (
-            block.number >
-            freezeProposalCreatedBlock + freezeProposalBlockDuration
+            block.timestamp >
+            freezeProposalCreatedTime + freezeProposalPeriod
         ) {
             // Create freeze proposal, count user's vote
             freezeProposalCreatedBlock = block.number;
+            freezeProposalCreatedTime = block.timestamp;
 
             freezeProposalVoteCount = 1;
 
@@ -117,6 +119,7 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
     /// @notice Unfreezes the DAO, only callable by the owner
     function defrost() public onlyOwner {
         freezeProposalCreatedBlock = 0;
+        freezeProposalCreatedTime = 0;
         freezeProposalVoteCount = 0;
     }
 
@@ -138,21 +141,21 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
         freezeVotesThreshold = _freezeVotesThreshold;
     }
 
-    /// @notice Updates the freeze proposal blocks duration, only callable by the owner
-    /// @param _freezeProposalBlockDuration The number of blocks a freeze proposal has to succeed
-    function updateFreezeProposalBlockDuration(
-        uint256 _freezeProposalBlockDuration
+    /// @notice Updates the freeze proposal period, only callable by the owner
+    /// @param _freezeProposalPeriod The number of seconds a freeze proposal has to succeed
+    function updateFreezeProposalPeriod(
+        uint256 _freezeProposalPeriod
     ) external onlyOwner {
-        freezeProposalBlockDuration = _freezeProposalBlockDuration;
+        freezeProposalPeriod = _freezeProposalPeriod;
     }
 
-    /// @notice Updates the freeze block duration, only callable by the owner
-    /// @param _freezeBlockDuration The number of blocks a freeze last, from time of freeze proposal creation
-    function updateFreezeBlockDuration(uint256 _freezeBlockDuration)
+    /// @notice Updates the freeze period, only callable by the owner
+    /// @param _freezePeriod The number of seconds a freeze lasts, from time of freeze proposal creation
+    function updateFreezePeriod(uint256 _freezePeriod)
         external
         onlyOwner
     {
-        freezeBlockDuration = _freezeBlockDuration;
+        freezePeriod = _freezePeriod;
     }
 
     /// @notice Returns whether the specified transaction has been vetoed
@@ -168,10 +171,10 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
     /// @notice Returns true if the DAO is currently frozen, false otherwise
     /// @return bool Indicates whether the DAO is currently frozen
-    function isFrozen() public view returns (bool) {
+    function isFrozen() external view returns (bool) {
         if (
             freezeProposalVoteCount >= freezeVotesThreshold &&
-            block.number < freezeProposalCreatedBlock + freezeBlockDuration
+            block.timestamp < freezeProposalCreatedTime + freezePeriod
         ) {
             return true;
         }
