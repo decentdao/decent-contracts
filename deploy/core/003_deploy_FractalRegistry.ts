@@ -6,4 +6,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   await deployNonUpgradeable(hre, "FractalRegistry", []);
 };
 
+func.tags = ["FractalRegistry"];
+
 export default func;

@@ -1,0 +1,124 @@
+{
+  "address": "0xC0E08581b70cF745770154f3E9a9A8890198b024",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "daoAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "daoName",
+          "type": "string"
+        }
+      ],
+      "name": "FractalNameUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "parentDAOAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "subDAOAddress",
+          "type": "address"
+        }
+      ],
+      "name": "FractalSubDAODeclared",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_subDAOAddress",
+          "type": "address"
+        }
+      ],
+      "name": "declareSubDAO",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        }
+      ],
+      "name": "updateDAOName",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x464474ba6f19826c8766dd648691c20fb5053f2f3652f5e582445d6f310a87a5",
+  "receipt": {
+    "to": null,
+    "from": "0x637366C372a9096b262bd2fe6c40D7BCc6239976",
+    "contractAddress": "0xC0E08581b70cF745770154f3E9a9A8890198b024",
+    "transactionIndex": 57,
+    "gasUsed": "184963",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x80c576e2e4979e0a44ab4175a4e69a3f93733413bda66391ebdba15256f7cb60",
+    "transactionHash": "0x464474ba6f19826c8766dd648691c20fb5053f2f3652f5e582445d6f310a87a5",
+    "logs": [],
+    "blockNumber": 8284493,
+    "cumulativeGasUsed": "12504567",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "ceb27ee28f0aa8ea18f7bfdab2ee2a74",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"daoAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"daoName\",\"type\":\"string\"}],\"name\":\"FractalNameUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"parentDAOAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"subDAOAddress\",\"type\":\"address\"}],\"name\":\"FractalSubDAODeclared\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_subDAOAddress\",\"type\":\"address\"}],\"name\":\"declareSubDAO\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"}],\"name\":\"updateDAOName\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"declareSubDAO(address)\":{\"params\":{\"_subDAOAddress\":\"Address of subDAO to declare as child of parentDAO.\"}},\"updateDAOName(string)\":{\"params\":{\"_name\":\"The new DAO name\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"declareSubDAO(address)\":{\"notice\":\"Declares certain address as subDAO of parentDAO.\"},\"updateDAOName(string)\":{\"notice\":\"Updates the DAO's registered name\"}},\"notice\":\"A contract for registering Fractal DAO name stringsThese names are non-unique, and should not be used as the identifer of a DAO\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/FractalRegistry.sol\":\"FractalRegistry\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/FractalRegistry.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport \\\"./interfaces/IFractalRegistry.sol\\\";\\n\\n/// @notice A contract for registering Fractal DAO name strings\\n/// @notice These names are non-unique, and should not be used as the identifer of a DAO\\ncontract FractalRegistry is IFractalRegistry {\\n    /// @notice Updates the DAO's registered name\\n    /// @param _name The new DAO name\\n    function updateDAOName(string memory _name) external {\\n        emit FractalNameUpdated(msg.sender, _name);\\n    }\\n\\n    /// @notice Declares certain address as subDAO of parentDAO.\\n    /// @param _subDAOAddress Address of subDAO to declare as child of parentDAO.\\n    function declareSubDAO(address _subDAOAddress) external {\\n        emit FractalSubDAODeclared(msg.sender, _subDAOAddress);\\n    }\\n}\\n\",\"keccak256\":\"0x9044fdfdae07769c99fc71b6685374935141263457fecae3f148ca3c75857c1a\",\"license\":\"MIT\"},\"contracts/interfaces/IFractalRegistry.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IFractalRegistry {\\n    event FractalNameUpdated(address indexed daoAddress, string daoName);\\n    event FractalSubDAODeclared(address indexed parentDAOAddress, address indexed subDAOAddress);\\n\\n    /// @notice Updates the DAO's registered name\\n    /// @param _name The new DAO name\\n    function updateDAOName(string memory _name) external;\\n\\n    /// @notice Declares certain address as subDAO of parentDAO.\\n    /// @param _subDAOAddress Address of subDAO to declare as child of parentDAO.\\n    function declareSubDAO(address _subDAOAddress) external;\\n}\\n\",\"keccak256\":\"0xe7066ac78a0e0eeceb563b846bb61f6cd778febfdb86651f13eaa531b57d3ce7\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610262806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063ad25ee4a1461003b578063b7d0e69114610050575b600080fd5b61004e6100493660046100f6565b610063565b005b61004e61005e3660046101a7565b6100a7565b336001600160a01b03167f3c7e9162ed121fd2c775c8c39886daeaede693a6e24ac0fa81e50c47833a9e088260405161009c91906101d7565b60405180910390a250565b6040516001600160a01b0382169033907f099c708754e573857f5a1999a474653fd72d617a0619e740e41bd3b882b64bb890600090a350565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561010857600080fd5b813567ffffffffffffffff8082111561012057600080fd5b818401915084601f83011261013457600080fd5b813581811115610146576101466100e0565b604051601f8201601f19908116603f0116810190838211818310171561016e5761016e6100e0565b8160405282815287602084870101111561018757600080fd5b826020860160208301376000928101602001929092525095945050505050565b6000602082840312156101b957600080fd5b81356001600160a01b03811681146101d057600080fd5b9392505050565b600060208083528351808285015260005b81811015610204578581018301518582016040015282016101e8565b81811115610216576000604083870101525b50601f01601f191692909201604001939250505056fea2646970667358221220b1a589fc1dc6eb427e1166d6fbc8bda85553f9020858525c7324d072809f0d4564736f6c634300080d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c8063ad25ee4a1461003b578063b7d0e69114610050575b600080fd5b61004e6100493660046100f6565b610063565b005b61004e61005e3660046101a7565b6100a7565b336001600160a01b03167f3c7e9162ed121fd2c775c8c39886daeaede693a6e24ac0fa81e50c47833a9e088260405161009c91906101d7565b60405180910390a250565b6040516001600160a01b0382169033907f099c708754e573857f5a1999a474653fd72d617a0619e740e41bd3b882b64bb890600090a350565b634e487b7160e01b600052604160045260246000fd5b60006020828403121561010857600080fd5b813567ffffffffffffffff8082111561012057600080fd5b818401915084601f83011261013457600080fd5b813581811115610146576101466100e0565b604051601f8201601f19908116603f0116810190838211818310171561016e5761016e6100e0565b8160405282815287602084870101111561018757600080fd5b826020860160208301376000928101602001929092525095945050505050565b6000602082840312156101b957600080fd5b81356001600160a01b03811681146101d057600080fd5b9392505050565b600060208083528351808285015260005b81811015610204578581018301518582016040015282016101e8565b81811115610216576000604083870101525b50601f01601f191692909201604001939250505056fea2646970667358221220b1a589fc1dc6eb427e1166d6fbc8bda85553f9020858525c7324d072809f0d4564736f6c634300080d0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "declareSubDAO(address)": {
+        "params": {
+          "_subDAOAddress": "Address of subDAO to declare as child of parentDAO."
+        }
+      },
+      "updateDAOName(string)": {
+        "params": {
+          "_name": "The new DAO name"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "declareSubDAO(address)": {
+        "notice": "Declares certain address as subDAO of parentDAO."
+      },
+      "updateDAOName(string)": {
+        "notice": "Updates the DAO's registered name"
+      }
+    },
+    "notice": "A contract for registering Fractal DAO name stringsThese names are non-unique, and should not be used as the identifer of a DAO",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
