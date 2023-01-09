@@ -9,9 +9,9 @@ The VetoGuard is a Gnosis Guard contract that enables a Fractal parent DAO to bl
 
 The VetoERC20Voting contract enables token holders of a parent DAO governance ERC-20 token to vote on vetoing child DAO transactions, and vote on freezing a child DAO. This implements a "one-token-one-vote" vote counting schema.
 
-### FractalNameRegistry.sol
+### FractalRegistry.sol
 
-The FractalNameRegistry is a global contract for all Fractal DAOs which enables DAOs to configure a human-readable string that represents their DAO's name. These name strings are non-unique, and not used for identifying a DAO. They are purely utilized for UX purposes.
+The FractalRegistry is a global utility contract for all Fractal DAOs which enables DAOs to configure a human-readable string that represents their DAO's name. These name strings are non-unique, and not used for identifying a DAO. They are purely utilized for UX purposes. Also, this contract allows to DAOs to declare their subDAOs via event.
 
 ### FractalModule.sol
 
