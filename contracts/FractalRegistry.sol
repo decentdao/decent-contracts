@@ -3,11 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IFractalRegistry.sol";
 
-/// @notice A contract for registering Fractal DAO name strings
-/// @notice These names are non-unique, and should not be used as the identifer of a DAO
+/// @notice An utility contract for settling DAO's name and declaring parent->child relationships.
+/// @notice Might be extended in future to handle more Fractal-specific utility stuff
+/// @notice The name of the DAO and child->parent relationships are not stored and not verified anyhow.
+/// @notice So those events should be used only for visual representation and not actual business logic.
 contract FractalRegistry is IFractalRegistry {
-    /// @notice Updates the DAO's registered name
-    /// @param _name The new DAO name
+    /// @notice Updates the DAO's registered name. It's not unique so shouldn't be used for differentiating DAOs anyhow
+    /// @param _name The new DAO name. 
     function updateDAOName(string memory _name) external {
         emit FractalNameUpdated(msg.sender, _name);
     }
