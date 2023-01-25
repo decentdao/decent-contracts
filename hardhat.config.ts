@@ -58,8 +58,7 @@ const config: HardhatUserConfig = {
       default: 0,
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
       goerli: `privatekey://${process.env.GOERLI_DEPLOYER_PRIVATE_KEY}`,
-      rinkeby: `privatekey://${process.env.RINKEBY_DEPLOYER_PRIVATE_KEY}`,
-      sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
+      polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
     },
   },
   networks: {
@@ -77,18 +76,11 @@ const config: HardhatUserConfig = {
         ? [process.env.GOERLI_DEPLOYER_PRIVATE_KEY]
         : [],
     },
-    rinkeby: {
-      chainId: 4,
-      url: process.env.RINKEBY_PROVIDER || "",
-      accounts: process.env.RINKEBY_DEPLOYER_PRIVATE_KEY
-        ? [process.env.RINKEBY_DEPLOYER_PRIVATE_KEY]
-        : [],
-    },
-    sepolia: {
-      chainId: 11155111,
-      url: process.env.SEPOLIA_PROVIDER || "",
-      accounts: process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY
-        ? [process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY]
+    polygon: {
+      chainId: 137,
+      url: process.env.POLYGON_PROVIDER || "",
+      accounts: process.env.POLYGON_DEPLOYER_PRIVATE_KEY
+        ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
         : [],
     },
     hardhat: hardhatNetworkConfig,
