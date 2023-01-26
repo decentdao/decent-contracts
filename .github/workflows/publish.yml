@@ -44,6 +44,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Compile and publish
-        run: pnpm run publish-packages
+        run: npm run publish-packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
