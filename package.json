@@ -14,7 +14,8 @@
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "publish:prepare": "npm run clean && npx rimraf dist && npm run compile && npx tsc"
+    "publish:prepare": "npm run clean && npx rimraf dist && npm run compile && npx tsc",
+    "publish-packages": "npm run publish:prepare && npm publish --no-git-checks"
   },
   "devDependencies": {
     "@gnosis.pm/safe-contracts": "^1.3.0",
