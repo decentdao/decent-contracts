@@ -149,8 +149,7 @@ contract FractalUsul is Module {
         emit EnabledStrategy(strategy);
     }
 
-  /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
-  /// but then - it also emits metadata of the proposal in ProposalMetadataCreated event.
+  /// @dev This method submits a proposal which includes metadata strings to describe the proposal
   /// @param strategy Address of Voting Strategy, under which proposal submitted
   /// @param data - any additional data, which would be passed into IStrategy.receiveProposal
   /// @param transactions - array of transactions to execute
