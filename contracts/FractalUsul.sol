@@ -46,9 +46,7 @@ contract FractalUsul is Module {
     uint256 public totalProposalCount; // total number of submitted proposals
     address internal constant SENTINEL_STRATEGY = address(0x1);
 
-    // mapping of proposal id to proposal
-    mapping(uint256 => Proposal) public proposals;
-    // Mapping of modules
+    mapping(uint256 => Proposal) public proposals; // Proposals by proposal ID
     mapping(address => address) internal strategies;
 
     event ProposalCreated(
@@ -149,75 +147,6 @@ contract FractalUsul is Module {
         strategies[strategy] = strategies[SENTINEL_STRATEGY];
         strategies[SENTINEL_STRATEGY] = strategy;
         emit EnabledStrategy(strategy);
-    }
-
-    /// @dev Returns if a strategy is enabled
-    /// @return True if the strategy is enabled
-    function isStrategyEnabled(address _strategy) public view returns (bool) {
-        return
-            SENTINEL_STRATEGY != _strategy &&
-            strategies[_strategy] != address(0);
-    }
-
-    /// @dev Returns array of strategy.
-    /// @param start Start of the page.
-    /// @param pageSize Maximum number of strategy that should be returned.
-    /// @return array Array of strategy.
-    /// @return next Start of the next page.
-    function getStrategiesPaginated(address start, uint256 pageSize)
-        external
-        view
-        returns (address[] memory array, address next)
-    {
-        // Init array with max page size
-        array = new address[](pageSize);
-
-        // Populate return array
-        uint256 strategyCount = 0;
-        address currentStrategy = strategies[start];
-        while (
-            currentStrategy != address(0x0) &&
-            currentStrategy != SENTINEL_STRATEGY &&
-            strategyCount < pageSize
-        ) {
-            array[strategyCount] = currentStrategy;
-            currentStrategy = strategies[currentStrategy];
-            strategyCount++;
-        }
-        next = currentStrategy;
-        // Set correct size of returned array
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            mstore(array, strategyCount)
-        }
-    }
-
-    /// @dev Returns true if a proposal transaction by index is exectuted.
-    /// @param proposalId the proposal to inspect.
-    /// @param index the transaction to inspect.
-    /// @return boolean.
-    function isTxExecuted(uint256 proposalId, uint256 index)
-        public
-        view
-        returns (bool)
-    {
-        require(
-            proposals[proposalId].txHashes.length > 0,
-            "no executions in this proposal"
-        );
-        return proposals[proposalId].executionCounter > index;
-    }
-
-    /// @dev Returns the hash of a transaction in a proposal.
-    /// @param proposalId the proposal to inspect.
-    /// @param index the transaction to inspect.
-    /// @return transaction hash.
-    function getTxHash(uint256 proposalId, uint256 index)
-        public
-        view
-        returns (bytes32)
-    {
-        return proposals[proposalId].txHashes[index];
     }
 
   /// @dev This method is used instead of Usul.submitProposal. Essentially - it just implements same behavior
@@ -391,6 +320,75 @@ contract FractalUsul is Module {
             proposals[proposalId].executionCounter,
             proposals[proposalId].executionCounter + targets.length
         );
+    }
+
+    /// @dev Returns if a strategy is enabled
+    /// @return True if the strategy is enabled
+    function isStrategyEnabled(address _strategy) public view returns (bool) {
+        return
+            SENTINEL_STRATEGY != _strategy &&
+            strategies[_strategy] != address(0);
+    }
+
+    /// @dev Returns array of strategy.
+    /// @param start Start of the page.
+    /// @param pageSize Maximum number of strategy that should be returned.
+    /// @return array Array of strategy.
+    /// @return next Start of the next page.
+    function getStrategiesPaginated(address start, uint256 pageSize)
+        external
+        view
+        returns (address[] memory array, address next)
+    {
+        // Init array with max page size
+        array = new address[](pageSize);
+
+        // Populate return array
+        uint256 strategyCount = 0;
+        address currentStrategy = strategies[start];
+        while (
+            currentStrategy != address(0x0) &&
+            currentStrategy != SENTINEL_STRATEGY &&
+            strategyCount < pageSize
+        ) {
+            array[strategyCount] = currentStrategy;
+            currentStrategy = strategies[currentStrategy];
+            strategyCount++;
+        }
+        next = currentStrategy;
+        // Set correct size of returned array
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            mstore(array, strategyCount)
+        }
+    }
+
+    /// @dev Returns true if a proposal transaction by index is exectuted.
+    /// @param proposalId the proposal to inspect.
+    /// @param index the transaction to inspect.
+    /// @return boolean.
+    function isTxExecuted(uint256 proposalId, uint256 index)
+        public
+        view
+        returns (bool)
+    {
+        require(
+            proposals[proposalId].txHashes.length > 0,
+            "no executions in this proposal"
+        );
+        return proposals[proposalId].executionCounter > index;
+    }
+
+    /// @dev Returns the hash of a transaction in a proposal.
+    /// @param proposalId the proposal to inspect.
+    /// @param index the transaction to inspect.
+    /// @return transaction hash.
+    function getTxHash(uint256 proposalId, uint256 index)
+        public
+        view
+        returns (bytes32)
+    {
+        return proposals[proposalId].txHashes[index];
     }
 
     /// @dev Get the state of a proposal
