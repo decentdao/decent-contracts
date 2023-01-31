@@ -301,14 +301,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -395,28 +387,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 3]
-      );
-
-      // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData1,
-        0
-      );
-
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
-      );
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
       );
 
       const proposalTransactions = [
@@ -516,14 +486,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -599,14 +561,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -671,14 +625,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -729,14 +675,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
-      );
-
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
       );
 
       const proposalTransaction = {
@@ -826,14 +764,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -903,14 +833,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -966,14 +888,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -1021,14 +935,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
-      );
-
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
       );
 
       const proposalTransaction = {
@@ -1080,14 +986,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
-      );
-
       const proposalTransaction = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
@@ -1132,14 +1030,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
-      );
-
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
       );
 
       const proposalTransaction = {
@@ -1309,20 +1199,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         childVotesToken.address,
         0,
         tokenTransferData1,
-        0
-      );
-
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
-      );
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
         0
       );
 
@@ -1532,13 +1408,6 @@ describe("Usul Child DAO with Usul Parent", () => {
         data: tokenTransferData1,
         operation: 0,
       };
-
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
-      );
 
       const proposalTransaction2 = {
         to: childVotesToken.address,
@@ -1808,26 +1677,12 @@ describe("Usul Child DAO with Usul Parent", () => {
         operation: 0,
       };
 
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
-      );
-
       const proposalTransaction2 = {
         to: childVotesToken.address,
         value: BigNumber.from(0),
         data: tokenTransferData2,
         operation: 0,
       };
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
-      );
 
       const proposalTransaction3 = {
         to: childVotesToken.address,
@@ -1979,14 +1834,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 4]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
-    );
-
     const proposalTransaction1 = {
       to: childVotesToken.address,
       value: BigNumber.from(0),
@@ -1994,26 +1841,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       operation: 0,
     };
 
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
-    );
-
     const proposalTransaction2 = {
       to: childVotesToken.address,
       value: BigNumber.from(0),
       data: tokenTransferData2,
       operation: 0,
     };
-
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
-    );
 
     const proposalTransaction3 = {
       to: childVotesToken.address,
@@ -2150,14 +1983,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 10]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData,
-      0
-    );
-
     const proposalTransaction = {
       to: childVotesToken.address,
       value: BigNumber.from(0),
@@ -2244,27 +2069,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 5]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
-    );
-
     const proposalTransaction1 = {
       to: childVotesToken.address,
       value: BigNumber.from(0),
       data: tokenTransferData1,
       operation: 0,
     };
-
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
-    );
 
     const proposalTransaction2 = {
       to: childVotesToken.address,
@@ -2371,13 +2181,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 4]
     );
 
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
-    );
-
     const proposalTransaction3 = {
       to: childVotesToken.address,
       value: BigNumber.from(0),
@@ -2448,28 +2251,6 @@ describe("Usul Child DAO with Usul Parent", () => {
     const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 4]
-    );
-
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
-    );
-
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
-    );
-
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
     );
 
     const proposalTransaction1 = {
