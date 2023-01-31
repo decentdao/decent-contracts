@@ -363,10 +363,10 @@ describe("Fractal Usul", () => {
       proposalDocumentationUrl
     );
     const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-    const data = receipt.logs[2].data;
-    const topics = receipt.logs[2].topics;
+    const data = receipt.logs[1].data;
+    const topics = receipt.logs[1].topics;
     const event = usulContract.interface.decodeEventLog(
-      "ProposalMetadataCreated",
+      "ProposalCreated",
       data,
       topics
     );
