@@ -27,7 +27,7 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Usul Child DAO with Usul Parent", () => {
+describe.only("Usul Child DAO with Usul Parent", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
@@ -309,10 +309,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -405,13 +419,37 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransactions = [
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData1,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData2,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData3,
+          operation: 0,
+        },
+      ];
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        [txHash1, txHash2, txHash3],
         ozLinearVoting.address,
-        [0]
+        "0x",
+        proposalTransactions,
+        "",
+        "",
+        ""
       );
 
       // 0 => Active
@@ -486,10 +524,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -555,10 +607,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -613,10 +679,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -659,10 +739,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -740,10 +834,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -803,10 +911,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -852,10 +974,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -895,10 +1031,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -938,10 +1088,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -978,10 +1142,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1036,10 +1214,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1134,13 +1326,37 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransactions = [
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData1,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData2,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData3,
+          operation: 0,
+        },
+      ];
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        [txHash1, txHash2, txHash3],
         ozLinearVoting.address,
-        [0]
+        "0x",
+        proposalTransactions,
+        "",
+        "",
+        ""
       );
 
       // 0 => Active
@@ -1214,10 +1430,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1296,6 +1526,13 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction1 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
       const txHash2 = await usulModule.getTransactionHash(
         childVotesToken.address,
         0,
@@ -1303,12 +1540,33 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction2 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData2,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
       expect(await usulModule.state(1)).to.eq(5);
 
-      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction1],
+        "",
+        "",
+        ""
+      );
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction2],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1405,10 +1663,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1462,10 +1734,24 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1515,12 +1801,26 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction1 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
       const txHash2 = await usulModule.getTransactionHash(
         childVotesToken.address,
         0,
         tokenTransferData2,
         0
       );
+
+      const proposalTransaction2 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData2,
+        operation: 0,
+      };
 
       const txHash3 = await usulModule.getTransactionHash(
         childVotesToken.address,
@@ -1529,14 +1829,42 @@ describe("Usul Child DAO with Usul Parent", () => {
         0
       );
 
+      const proposalTransaction3 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData3,
+        operation: 0,
+      };
+
       // Proposal is uninitialized
       expect(await usulModule.state(0)).to.eq(5);
       expect(await usulModule.state(1)).to.eq(5);
       expect(await usulModule.state(2)).to.eq(5);
 
-      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction1],
+        "",
+        "",
+        ""
+      );
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction2],
+        "",
+        "",
+        ""
+      );
+      await usulModule.submitProposal(
+        ozLinearVoting.address,
+        "0x",
+        [proposalTransaction3],
+        "",
+        "",
+        ""
+      );
 
       // 0 => Active
       // 1 => Canceled,
@@ -1659,12 +1987,26 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
     const txHash2 = await usulModule.getTransactionHash(
       childVotesToken.address,
       0,
       tokenTransferData2,
       0
     );
+
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
 
     const txHash3 = await usulModule.getTransactionHash(
       childVotesToken.address,
@@ -1673,14 +2015,42 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
     // Proposal is uninitialized
     expect(await usulModule.state(0)).to.eq(5);
     expect(await usulModule.state(1)).to.eq(5);
     expect(await usulModule.state(2)).to.eq(5);
 
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction1],
+      "",
+      "",
+      ""
+    );
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction2],
+      "",
+      "",
+      ""
+    );
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction3],
+      "",
+      "",
+      ""
+    );
 
     // 0 => Active
     // 1 => Canceled,
@@ -1788,10 +2158,24 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData,
+      operation: 0,
+    };
+
     // Proposal is uninitialized
     expect(await usulModule.state(0)).to.eq(5);
 
-    await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction],
+      "",
+      "",
+      ""
+    );
 
     // 0 => Active
     // 1 => Canceled,
@@ -1868,6 +2252,13 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
     const txHash2 = await usulModule.getTransactionHash(
       childVotesToken.address,
       0,
@@ -1875,12 +2266,33 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
+
     // Proposal is uninitialized
     expect(await usulModule.state(0)).to.eq(5);
     expect(await usulModule.state(1)).to.eq(5);
 
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction1],
+      "",
+      "",
+      ""
+    );
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction2],
+      "",
+      "",
+      ""
+    );
 
     // 0 => Active
     // 1 => Canceled,
@@ -1966,10 +2378,24 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
     // Proposal is uninitialized
     expect(await usulModule.state(2)).to.eq(5);
 
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction3],
+      "",
+      "",
+      ""
+    );
 
     expect(await usulModule.state(2)).to.eq(0);
 
@@ -2046,14 +2472,58 @@ describe("Usul Child DAO with Usul Parent", () => {
       0
     );
 
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
+
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
     // Proposal is uninitialized
     expect(await usulModule.state(0)).to.eq(5);
     expect(await usulModule.state(1)).to.eq(5);
     expect(await usulModule.state(2)).to.eq(5);
 
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction1],
+      "",
+      "",
+      ""
+    );
+
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction2],
+      "",
+      "",
+      ""
+    );
+
+    await usulModule.submitProposal(
+      ozLinearVoting.address,
+      "0x",
+      [proposalTransaction3],
+      "",
+      "",
+      ""
+    );
 
     // 0 => Active
     // 1 => Canceled,

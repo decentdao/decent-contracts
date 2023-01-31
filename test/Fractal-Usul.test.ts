@@ -354,7 +354,7 @@ describe("Fractal Usul", () => {
     const proposalDescription = "And this is my super amazing description";
     const proposalDocumentationUrl = "https://example.com/amazing-proposal";
 
-    const tx = await usulContract.submitProposalWithMetaData(
+    const tx = await usulContract.submitProposal(
       predictedStrategyAddress,
       "0x",
       [proposalTransaction],
