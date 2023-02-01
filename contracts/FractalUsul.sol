@@ -24,7 +24,7 @@ contract FractalUsul is Module {
         Canceled,
         TimeLocked,
         Executed,
-        Executing,
+        Executable,
         Uninitialized
     }
 
@@ -51,9 +51,8 @@ contract FractalUsul is Module {
 
     event ProposalCreated(
         address strategy,
-        uint256 proposalNumber,
+        uint256 proposalId,
         address proposer,
-        uint256 proposalId, 
         Transaction[] transactions,
         string title,
         string description, 
@@ -190,7 +189,6 @@ contract FractalUsul is Module {
         strategy, 
         totalProposalCount, 
         msg.sender,
-        totalProposalCount, 
         transactions, 
         title, 
         description, 
@@ -259,7 +257,7 @@ contract FractalUsul is Module {
     ) public {
         // force calls from strat so we can scope
         require(
-            state(proposalId) == ProposalState.Executing,
+            state(proposalId) == ProposalState.Executable,
             "proposal is not in execution state"
         );
         bytes32 txHash = getTransactionHash(target, value, data, operation);
@@ -406,7 +404,7 @@ contract FractalUsul is Module {
         } else if (block.timestamp < _proposal.timeLockPeriod) {
             return ProposalState.TimeLocked;
         } else if (block.timestamp >= _proposal.timeLockPeriod) {
-            return ProposalState.Executing;
+            return ProposalState.Executable;
         } else {
             revert("unknown proposal id state");
         }
