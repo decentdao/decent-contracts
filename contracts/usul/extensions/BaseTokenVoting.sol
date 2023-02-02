@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
@@ -125,7 +124,7 @@ abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
     /// @param proposalId the proposal to vote for.
     function finalizeStrategy(uint256 proposalId) public virtual override {
         if (isPassed(proposalId)) {
-            IProposal(UsulModule).receiveStrategy(proposalId, timeLockPeriod);
+            IProposal(usulModule).receiveStrategy(proposalId, timeLockPeriod);
         }
         emit VoteFinalized(proposalId, block.timestamp);
     }

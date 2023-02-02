@@ -10,19 +10,20 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
     event UsulSet(address indexed previousUsul, address indexed newUsul);
     event StrategySetup(address indexed UsulModule, address indexed owner);
 
-    address public UsulModule;
+    address public usulModule;
 
     modifier onlyUsul() {
-        require(msg.sender == UsulModule, "only Usul module may enter");
+        require(msg.sender == usulModule, "only Usul module may enter");
         _;
     }
 
     /// @dev Sets the executor to a new account (`newExecutor`).
     /// @notice Can only be called by the current owner.
-    function setUsul(address _Usul) public onlyOwner {
-        address previousUsul = UsulModule;
-        UsulModule = _Usul;
-        emit UsulSet(previousUsul, _Usul);
+    function setUsul(address _usulModule) public onlyOwner {
+        address previousUsul = usulModule;
+        usulModule = _usulModule;
+
+        emit UsulSet(previousUsul, _usulModule);
     }
 
     /// @dev Called by the proposal module, this notifes the strategy of a new proposal.

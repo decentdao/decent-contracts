@@ -65,7 +65,7 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
         transferOwnership(_owner);
         // call setUsul
         votingPeriod = _votingPeriod * 1 seconds; // switch to hours in prod
-        UsulModule = _UsulModule;
+        usulModule = _UsulModule;
         timeLockPeriod = _timeLockPeriod * 1 seconds;
         name = name_;
         emit StrategySetup(_UsulModule, _owner);
