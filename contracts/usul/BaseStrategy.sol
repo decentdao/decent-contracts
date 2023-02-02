@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IProposal.sol";
-import "./common/FactoryFriendly.sol";
+import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
