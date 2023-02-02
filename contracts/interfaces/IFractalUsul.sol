@@ -8,12 +8,12 @@ interface IFractalUsul {
     /// @param proposalId the proposal to inspect.
     /// @param index the transaction to inspect.
     /// @return transaction hash.
-    function getTxHash(uint256 proposalId, uint256 index)
+    function getProposalTxHash(uint256 proposalId, uint256 index)
         external
         view
         returns (bytes32);
 
-    function getTransactionHash(
+    function getTxHash(
         address to,
         uint256 value,
         bytes memory data,
