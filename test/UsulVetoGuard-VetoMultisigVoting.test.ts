@@ -904,7 +904,7 @@ describe("Usul Child DAO with Multisig parent", () => {
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("proposal is not in execution state");
+      ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
     it("A proposal cannot be queued if quorum hasn't been reached", async () => {
@@ -1108,7 +1108,7 @@ describe("Usul Child DAO with Multisig parent", () => {
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("proposal is not in execution state");
+      ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
     it("A transaction cannot be executed if it has been vetoed", async () => {
