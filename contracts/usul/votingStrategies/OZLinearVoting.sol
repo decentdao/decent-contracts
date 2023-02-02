@@ -14,7 +14,7 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
     constructor(
         address _owner,
         ERC20Votes _governanceToken,
-        address _UsulModule,
+        address _usulModule,
         uint256 _votingPeriod,
         uint256 quorumNumerator_,
         uint256 _timeLockPeriod,
@@ -23,7 +23,7 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
         bytes memory initParams = abi.encode(
             _owner,
             _governanceToken,
-            _UsulModule,
+            _usulModule,
             _votingPeriod,
             quorumNumerator_,
             _timeLockPeriod,
@@ -36,7 +36,7 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
         (
             address _owner,
             ERC20Votes _governanceToken,
-            address _UsulModule,
+            address _usulModule,
             uint256 _votingPeriod,
             uint256 quorumNumerator_,
             uint256 _timeLockPeriod,
@@ -55,7 +55,7 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
             );
         require(_votingPeriod > 1, "votingPeriod must be greater than 1");
         require(
-            _governanceToken != ERC20Votes(address(0)),
+            address(_governanceToken) != address(0),
             "invalid governance token address"
         );
         governanceToken = _governanceToken;
@@ -63,12 +63,11 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
         __EIP712_init_unchained(name_, version());
         updateQuorumNumerator(quorumNumerator_);
         transferOwnership(_owner);
-        // call setUsul
-        votingPeriod = _votingPeriod * 1 seconds; // switch to hours in prod
-        usulModule = _UsulModule;
-        timeLockPeriod = _timeLockPeriod * 1 seconds;
+        votingPeriod = _votingPeriod;
+        usulModule = _usulModule;
+        timeLockPeriod = _timeLockPeriod;
         name = name_;
-        emit StrategySetup(_UsulModule, _owner);
+        emit StrategySetup(_usulModule, _owner);
     }
 
     /// @dev Submits a vote for a proposal.

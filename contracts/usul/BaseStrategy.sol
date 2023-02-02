@@ -6,7 +6,6 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
-    /// @dev Emitted each time the avatar is set.
     event UsulSet(address indexed previousUsul, address indexed newUsul);
     event StrategySetup(address indexed UsulModule, address indexed owner);
 
