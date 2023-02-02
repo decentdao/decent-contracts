@@ -118,7 +118,7 @@ contract UsulVetoGuard is
         bytes memory,
         address
     ) external view override {
-        bytes32 txHash = fractalUsul.getTransactionHash(to, value, data, operation);
+        bytes32 txHash = fractalUsul.getTxHash(to, value, data, operation);
 
         uint256 proposalId = transactionToProposal[txHash];
 
