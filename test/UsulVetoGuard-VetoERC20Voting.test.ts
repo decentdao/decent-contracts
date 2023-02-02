@@ -1097,7 +1097,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1195,7 +1195,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
@@ -1299,7 +1299,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1395,7 +1395,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
@@ -1525,7 +1525,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1596,7 +1596,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1663,7 +1663,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await usulModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
