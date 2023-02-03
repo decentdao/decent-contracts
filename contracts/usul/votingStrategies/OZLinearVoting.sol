@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-
 pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "../extensions/BaseTokenVoting.sol";
 import "../extensions/BaseQuorumPercent.sol";
 
-/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables compound like voting.
-/// @author Nathan Ginnever - <team@hyphal.xyz>
+/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables compound like voting
 contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
     ERC20Votes public governanceToken;
 
@@ -84,25 +82,6 @@ contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
             support,
             calculateWeight(msg.sender, proposalId)
         );
-    }
-
-    /// @dev Submits a vote for a proposal by ERC712 signature.
-    /// @param proposalId the proposal to vote for.
-    /// @param support against, for, or abstain.
-    /// @param signature 712 signed vote.
-    function voteSignature(
-        uint256 proposalId,
-        uint8 support,
-        bytes memory signature,
-        bytes memory
-    ) external {
-        address voter = ECDSA.recover(
-            _hashTypedDataV4(
-                keccak256(abi.encode(VOTE_TYPEHASH, proposalId, support))
-            ),
-            signature
-        );
-        _vote(proposalId, voter, support, calculateWeight(voter, proposalId));
     }
 
     /// @dev Determines if a proposal has succeeded.
