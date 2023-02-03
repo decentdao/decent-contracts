@@ -2,11 +2,11 @@
 pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "../extensions/BaseTokenVoting.sol";
-import "../extensions/BaseQuorumPercent.sol";
+import "./BaseTokenVoting.sol";
+import "./BaseQuorumPercent.sol";
 
-/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables compound like voting
-contract OZLinearVoting is BaseTokenVoting, BaseQuorumPercent {
+/// @title A Usul strategy that enables linear token voting
+contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     ERC20Votes public governanceToken;
 
     constructor(
