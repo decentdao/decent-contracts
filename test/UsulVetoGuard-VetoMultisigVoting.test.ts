@@ -364,7 +364,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -466,7 +466,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -827,7 +827,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // The proposal is not queued
 
@@ -947,7 +947,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize the proposal
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
+      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -996,7 +996,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize proposal
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
+      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -1042,7 +1042,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Attempt to finalize the strategy
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
+      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
         "voting period has not passed yet"
       );
     });
@@ -1091,7 +1091,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1163,7 +1163,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1275,7 +1275,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1365,7 +1365,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1482,8 +1482,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
+      await ozLinearVoting.queueProposal(0);
+      await ozLinearVoting.queueProposal(1);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
@@ -1592,7 +1592,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1774,9 +1774,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
-      await ozLinearVoting.finalizeStrategy(2);
+      await ozLinearVoting.queueProposal(0);
+      await ozLinearVoting.queueProposal(1);
+      await ozLinearVoting.queueProposal(2);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
@@ -1939,9 +1939,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
-      await ozLinearVoting.finalizeStrategy(2);
+      await ozLinearVoting.queueProposal(0);
+      await ozLinearVoting.queueProposal(1);
+      await ozLinearVoting.queueProposal(2);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
@@ -2048,7 +2048,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await ozLinearVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -2367,9 +2367,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
-      await ozLinearVoting.finalizeStrategy(2);
+      await ozLinearVoting.queueProposal(0);
+      await ozLinearVoting.queueProposal(1);
+      await ozLinearVoting.queueProposal(2);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
