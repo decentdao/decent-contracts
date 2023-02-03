@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IUsulVetoGuard.sol";
 import "./interfaces/IVetoVoting.sol";
-import "./interfaces/IBaseStrategy.sol";
+import "./usul/interfaces/IStrategy.sol";
 import "./interfaces/IFractalUsul.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
@@ -19,7 +19,7 @@ contract UsulVetoGuard is
     FractalBaseGuard
 {
     IVetoVoting public vetoVoting;
-    IBaseStrategy public baseStrategy;
+    IStrategy public strategy;
     IFractalUsul public fractalUsul;
     uint256 public executionPeriod;
     mapping(uint256 => Proposal) internal proposals;
@@ -32,7 +32,7 @@ contract UsulVetoGuard is
         (
             address _owner,
             address _vetoVoting,
-            address _baseStrategy,
+            address _strategy,
             address _fractalUsul,
             uint256 _exeuctionPeriod
         ) = abi.decode(
@@ -42,7 +42,7 @@ contract UsulVetoGuard is
 
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
-        baseStrategy = IBaseStrategy(_baseStrategy);
+        strategy = IStrategy(_strategy);
         fractalUsul = IFractalUsul(_fractalUsul);
         executionPeriod = _exeuctionPeriod;
 
@@ -50,7 +50,7 @@ contract UsulVetoGuard is
             msg.sender,
             _owner,
             _vetoVoting,
-            _baseStrategy,
+            _strategy,
             _fractalUsul
         );
     }
@@ -60,7 +60,7 @@ contract UsulVetoGuard is
     function queueProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
         if (fractalUsul.state(proposalId) == 0)
-            baseStrategy.finalizeStrategy(proposalId);
+            strategy.queueProposal(proposalId);
 
         require(
             fractalUsul.state(proposalId) == 2,
