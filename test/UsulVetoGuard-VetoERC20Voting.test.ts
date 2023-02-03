@@ -7,8 +7,8 @@ import time from "./time";
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
-  OZLinearVoting,
-  OZLinearVoting__factory,
+  LinearTokenVoting,
+  LinearTokenVoting__factory,
   FractalUsul,
   FractalUsul__factory,
   UsulVetoGuard,
@@ -32,7 +32,7 @@ describe("Usul Child DAO with Usul Parent", () => {
   let childGnosisSafe: GnosisSafe;
   let usulVetoGuard: UsulVetoGuard;
   let usulModule: FractalUsul;
-  let ozLinearVoting: OZLinearVoting;
+  let linearTokenVoting: LinearTokenVoting;
   let vetoERC20Voting: VetoERC20Voting;
   let parentVotesToken: VotesToken;
   let childVotesToken: VotesToken;
@@ -179,7 +179,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     );
 
     // Deploy OZ Linear Voting Strategy
-    ozLinearVoting = await new OZLinearVoting__factory(deployer).deploy(
+    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       mockParentDAO.address, // owner
       childVotesToken.address, // governance token
       usulModule.address, // usul module
@@ -192,7 +192,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     // Enable the OZ Linear Voting strategy on Usul
     await usulModule
       .connect(mockParentDAO)
-      .enableStrategy(ozLinearVoting.address);
+      .enableStrategy(linearTokenVoting.address);
 
     // Deploy VetoERC20Voting contract
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
@@ -206,7 +206,7 @@ describe("Usul Child DAO with Usul Parent", () => {
         [
           mockParentDAO.address, // owner
           vetoERC20Voting.address, // veto voting contract
-          ozLinearVoting.address, // OZ linear voting contract
+          linearTokenVoting.address, // Linear token voting contract
           usulModule.address, // Usul
           60, // Execution period in seconds
         ]
@@ -312,7 +312,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -331,14 +331,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -414,7 +414,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         proposalTransactions,
         "",
@@ -433,14 +433,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -497,7 +497,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -516,8 +516,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -572,7 +572,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -591,8 +591,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -636,7 +636,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -655,8 +655,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -688,7 +688,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -707,8 +707,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -775,7 +775,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -794,14 +794,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // The proposal is not queued
 
@@ -844,7 +844,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -863,8 +863,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -899,7 +899,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -918,14 +918,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      // await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      // await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      // await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      // await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize the proposal
-      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -948,7 +948,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -967,14 +967,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 0, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 0, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 0, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 0, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize proposal
-      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
         "majority yesVotes not reached"
       );
     });
@@ -997,7 +997,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1016,11 +1016,11 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Attempt to finalize the strategy
-      await expect(ozLinearVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
         "voting period has not passed yet"
       );
     });
@@ -1043,7 +1043,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1062,14 +1062,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1115,7 +1115,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1134,14 +1134,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1227,7 +1227,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         proposalTransactions,
         "",
@@ -1246,14 +1246,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1317,7 +1317,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1336,14 +1336,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1421,7 +1421,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(1)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         "",
@@ -1429,7 +1429,7 @@ describe("Usul Child DAO with Usul Parent", () => {
         ""
       );
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
         "",
@@ -1449,18 +1449,18 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(1)).to.eq(0);
 
       // Both users vote in support of proposals
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.queueProposal(0);
-      await ozLinearVoting.queueProposal(1);
+      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(1);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
@@ -1543,7 +1543,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1562,14 +1562,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(0);
 
       // Queue the proposal
       await usulVetoGuard.queueProposal(0);
@@ -1614,7 +1614,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction],
         "",
@@ -1633,8 +1633,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -1697,7 +1697,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(2)).to.eq(5);
 
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         "",
@@ -1705,7 +1705,7 @@ describe("Usul Child DAO with Usul Parent", () => {
         ""
       );
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
         "",
@@ -1713,7 +1713,7 @@ describe("Usul Child DAO with Usul Parent", () => {
         ""
       );
       await usulModule.submitProposal(
-        ozLinearVoting.address,
+        linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
         "",
@@ -1734,22 +1734,22 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await usulModule.state(2)).to.eq(0);
 
       // Both users vote in support of proposals
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.queueProposal(0);
-      await ozLinearVoting.queueProposal(1);
-      await ozLinearVoting.queueProposal(2);
+      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.queueProposal(1);
+      await linearTokenVoting.queueProposal(2);
 
       // Queue the proposals
       await usulVetoGuard.queueProposal(0);
@@ -1861,7 +1861,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(2)).to.eq(5);
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction1],
       "",
@@ -1869,7 +1869,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ""
     );
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction2],
       "",
@@ -1877,7 +1877,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ""
     );
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction3],
       "",
@@ -1898,22 +1898,22 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(2)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await ozLinearVoting.queueProposal(0);
-    await ozLinearVoting.queueProposal(1);
-    await ozLinearVoting.queueProposal(2);
+    await linearTokenVoting.queueProposal(0);
+    await linearTokenVoting.queueProposal(1);
+    await linearTokenVoting.queueProposal(2);
 
     // Queue the proposals
     await usulVetoGuard.queueProposal(0);
@@ -1994,7 +1994,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(0)).to.eq(5);
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction],
       "",
@@ -2013,14 +2013,14 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(0)).to.eq(0);
 
     // Both users vote in support of proposal
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategy
-    await ozLinearVoting.queueProposal(0);
+    await linearTokenVoting.queueProposal(0);
 
     // Queue the proposal
     await usulVetoGuard.queueProposal(0);
@@ -2088,7 +2088,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(1)).to.eq(5);
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction1],
       "",
@@ -2096,7 +2096,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ""
     );
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction2],
       "",
@@ -2116,11 +2116,11 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(1)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
@@ -2192,7 +2192,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(2)).to.eq(5);
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction3],
       "",
@@ -2202,8 +2202,8 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     expect(await usulModule.state(2)).to.eq(0);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
@@ -2280,7 +2280,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(2)).to.eq(5);
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction1],
       "",
@@ -2289,7 +2289,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     );
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction2],
       "",
@@ -2298,7 +2298,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     );
 
     await usulModule.submitProposal(
-      ozLinearVoting.address,
+      linearTokenVoting.address,
       "0x",
       [proposalTransaction3],
       "",
@@ -2319,22 +2319,22 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await usulModule.state(2)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await ozLinearVoting.queueProposal(0);
-    await ozLinearVoting.queueProposal(1);
-    await ozLinearVoting.queueProposal(2);
+    await linearTokenVoting.queueProposal(0);
+    await linearTokenVoting.queueProposal(1);
+    await linearTokenVoting.queueProposal(2);
 
     // Queue the proposals
     await usulVetoGuard.queueProposal(0);

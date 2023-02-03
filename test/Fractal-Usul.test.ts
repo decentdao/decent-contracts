@@ -21,8 +21,8 @@ import {
   FractalUsul,
   FractalUsul__factory,
   VotesToken__factory,
-  OZLinearVoting__factory,
-  OZLinearVoting,
+  LinearTokenVoting__factory,
+  LinearTokenVoting,
 } from "../typechain-types";
 import VotesMasterCopyDeployment from "../deployments/goerli/VotesToken.json";
 
@@ -38,7 +38,7 @@ describe("Fractal Usul", () => {
   let multiSend: Contract;
   let votesMasterCopy: Contract;
   let fractalUsulMasterCopy: FractalUsul;
-  let linearVotingMasterCopyContract: OZLinearVoting;
+  let linearVotingMasterCopyContract: LinearTokenVoting;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -95,7 +95,7 @@ describe("Fractal Usul", () => {
       deployer
     );
     // eslint-disable-next-line camelcase
-    linearVotingMasterCopyContract = OZLinearVoting__factory.connect(
+    linearVotingMasterCopyContract = LinearTokenVoting__factory.connect(
       linearVotingMasterCopyAddress,
       deployer
     );
@@ -255,7 +255,7 @@ describe("Fractal Usul", () => {
     );
 
     // eslint-disable-next-line camelcase
-    const linearVotingContract = OZLinearVoting__factory.connect(
+    const linearVotingContract = LinearTokenVoting__factory.connect(
       predictedStrategyAddress,
       deployer
     );

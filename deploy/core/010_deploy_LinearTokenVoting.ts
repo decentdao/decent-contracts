@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { deployNonUpgradeable } from "../helpers/deployNonUpgradeable";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  await deployNonUpgradeable(hre, "OZLinearVoting", [
+  await deployNonUpgradeable(hre, "LinearTokenVoting", [
     "0x0000000000000000000000000000000000000001",
     "0x0000000000000000000000000000000000000001",
     "0x0000000000000000000000000000000000000001",

@@ -11,7 +11,7 @@ interface IUsulVetoGuard {
         address creator,
         address owner,
         address indexed vetoVoting,
-        address indexed ozLinearVoting,
+        address indexed votingStrategy,
         address indexed usul
     );
 
