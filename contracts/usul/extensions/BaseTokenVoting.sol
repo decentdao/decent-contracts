@@ -5,8 +5,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgra
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../BaseStrategy.sol";
 
-/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables compound like voting.
-/// @author Nathan Ginnever - <team@hyphal.xyz>
+/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables token voting
 abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
     bytes32 public constant VOTE_TYPEHASH =
         keccak256("Vote(uint256 proposalId,uint8 vote)");
@@ -122,9 +121,9 @@ abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
 
     /// @dev Calls the proposal module to notify that a quorum has been reached.
     /// @param proposalId the proposal to vote for.
-    function finalizeStrategy(uint256 proposalId) public virtual override {
+    function queueProposal(uint256 proposalId) public virtual override {
         if (isPassed(proposalId)) {
-            IProposal(usulModule).receiveStrategy(proposalId, timeLockPeriod);
+            IProposal(usulModule).queueProposal(proposalId, timeLockPeriod);
         }
         emit VoteFinalized(proposalId, block.timestamp);
     }
