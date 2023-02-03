@@ -206,7 +206,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       childVotesToken.address, // governance token
       usulModule.address, // usul module
       60, // voting period in seconds
-      50, // quorom numerator, denominator is 100
+      500000, // quorom numerator, denominator is 1,000,000
       60, // timelock period in seconds
       "Voting" // name
     );

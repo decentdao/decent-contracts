@@ -18,7 +18,7 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     }
 
     function quorumDenominator() public pure virtual returns (uint256) {
-        return 100;
+        return 1_000_000;
     }
 
     function quorum(uint256 blockNumber) public view virtual returns (uint256);
@@ -37,7 +37,7 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     {
         require(
             newQuorumNumerator <= quorumDenominator(),
-            "quorumNumerator over quorumDenominator"
+            "quorumNumerator cannot be greater than quorumDenominator"
         );
 
         uint256 oldQuorumNumerator = _quorumNumerator;
