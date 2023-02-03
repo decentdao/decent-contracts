@@ -301,7 +301,7 @@ contract FractalUsul is Module {
     function setupStrategies(address[] memory _strategies) internal {
         require(
             strategies[SENTINEL_STRATEGY] == address(0),
-            "setUpModules has already been called"
+            "setupStrategies has already been called"
         );
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
         for (uint256 i = 0; i < _strategies.length; i++) {
