@@ -12,7 +12,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
     address public usulModule;
 
     modifier onlyUsul() {
-        require(msg.sender == usulModule, "only Usul module may enter");
+        require(msg.sender == usulModule, "Only callable by Usul module");
         _;
     }
 
@@ -31,7 +31,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
 
     /// @dev Calls the proposal module to notify that a quorum has been reached.
     /// @param proposalId the proposal to vote for.
-    function finalizeStrategy(uint256 proposalId) external virtual;
+    function queueProposal(uint256 proposalId) external virtual;
 
     /// @dev Determines if a proposal has succeeded.
     /// @param proposalId the proposal to vote for.
