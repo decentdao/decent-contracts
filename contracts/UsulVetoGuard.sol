@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IUsulVetoGuard.sol";
 import "./interfaces/IVetoVoting.sol";
-import "./usul/interfaces/IStrategy.sol";
+import "./usul/IBaseStrategy.sol";
 import "./interfaces/IFractalUsul.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
@@ -19,7 +19,7 @@ contract UsulVetoGuard is
     FractalBaseGuard
 {
     IVetoVoting public vetoVoting;
-    IStrategy public strategy;
+    IBaseStrategy public strategy;
     IFractalUsul public fractalUsul;
     uint256 public executionPeriod;
     mapping(uint256 => Proposal) internal proposals;
@@ -42,7 +42,7 @@ contract UsulVetoGuard is
 
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
-        strategy = IStrategy(_strategy);
+        strategy = IBaseStrategy(_strategy);
         fractalUsul = IFractalUsul(_fractalUsul);
         executionPeriod = _exeuctionPeriod;
 
@@ -67,7 +67,7 @@ contract UsulVetoGuard is
             "Proposal must be timelocked before queuing"
         );
 
-        (, uint256 timelockDeadline, , ) = fractalUsul.proposals(proposalId);
+        (, uint256 timelockDeadline, , , ) = fractalUsul.getProposal(proposalId);
 
         uint256 executionDeadline = timelockDeadline + executionPeriod;
 

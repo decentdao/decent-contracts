@@ -123,7 +123,7 @@ abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
     /// @param proposalId the proposal to vote for.
     function queueProposal(uint256 proposalId) public virtual override {
         if (isPassed(proposalId)) {
-            IProposal(usulModule).queueProposal(proposalId, timeLockPeriod);
+            usulModule.queueProposal(proposalId, timeLockPeriod);
         }
         emit VoteFinalized(proposalId, block.timestamp);
     }

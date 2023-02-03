@@ -62,7 +62,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         updateQuorumNumerator(quorumNumerator_);
         transferOwnership(_owner);
         votingPeriod = _votingPeriod;
-        usulModule = _usulModule;
+        usulModule = IFractalUsul(_usulModule);
         timeLockPeriod = _timeLockPeriod;
         name = name_;
         emit StrategySetup(_usulModule, _owner);

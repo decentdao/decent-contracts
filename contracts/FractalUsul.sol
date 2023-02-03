@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@gnosis.pm/zodiac/contracts/core/Module.sol";
-import "./usul/interfaces/IStrategy.sol";
+import "./usul/IBaseStrategy.sol";
+import "./interfaces/IFractalUsul.sol";
 
 /// @title FractalUsul - A Zodiac module that enables a voting agnostic proposal mechanism
 contract FractalUsul is Module {
@@ -36,7 +37,7 @@ contract FractalUsul is Module {
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
     uint256 public totalProposalCount; // total number of submitted proposals
     address internal constant SENTINEL_STRATEGY = address(0x1);
-    mapping(uint256 => Proposal) public proposals; // Proposals by proposal ID
+    mapping(uint256 => Proposal) internal proposals; // Proposals by proposal ID
     mapping(address => address) internal strategies;
 
     event ProposalCreated(
@@ -158,7 +159,7 @@ contract FractalUsul is Module {
 
         proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].strategy = strategy;
-        IStrategy(strategy).receiveProposal(
+        IBaseStrategy(strategy).receiveProposal(
             abi.encode(totalProposalCount, txHashes, data)
         );
         emit ProposalCreated(
@@ -457,5 +458,25 @@ contract FractalUsul is Module {
         uint256 proposalId
     ) external view returns (bytes32[] memory) {
         return proposals[proposalId].txHashes;
+    }
+
+    function getProposal(
+        uint256 proposalId
+    )
+        external
+        view
+        returns (
+            bool canceled,
+            uint256 timelockPeriod,
+            bytes32[] memory txHashes,
+            uint256 executionCounter,
+            address strategy
+        )
+    {
+        canceled = proposals[proposalId].canceled;
+        timelockPeriod = proposals[proposalId].timeLockPeriod;
+        txHashes = proposals[proposalId].txHashes;
+        executionCounter = proposals[proposalId].executionCounter;
+        strategy = proposals[proposalId].strategy;
     }
 }

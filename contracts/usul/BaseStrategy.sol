@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import "./interfaces/IProposal.sol";
+import "../interfaces/IFractalUsul.sol";
+import "./IBaseStrategy.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -9,18 +10,18 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly {
     event UsulSet(address indexed previousUsul, address indexed newUsul);
     event StrategySetup(address indexed UsulModule, address indexed owner);
 
-    address public usulModule;
+    IFractalUsul public usulModule;
 
     modifier onlyUsul() {
-        require(msg.sender == usulModule, "Only callable by Usul module");
+        require(msg.sender == address(usulModule), "Only callable by Usul module");
         _;
     }
 
     /// @dev Sets the executor to a new account (`newExecutor`).
     /// @notice Can only be called by the current owner.
     function setUsul(address _usulModule) public onlyOwner {
-        address previousUsul = usulModule;
-        usulModule = _usulModule;
+        address previousUsul = address(usulModule);
+        usulModule = IFractalUsul(_usulModule);
 
         emit UsulSet(previousUsul, _usulModule);
     }
