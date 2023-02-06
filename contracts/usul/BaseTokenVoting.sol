@@ -5,11 +5,8 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgra
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./BaseStrategy.sol";
 
-/// @title OpenZeppelin Linear Voting Strategy - A Usul strategy that enables token voting
-abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
-    bytes32 public constant VOTE_TYPEHASH =
-        keccak256("Vote(uint256 proposalId,uint8 vote)");
-
+/// @title An abstract contract used as a base for ERC-20 token voting strategies
+abstract contract BaseTokenVoting is BaseStrategy {
     enum VoteType {
         Against,
         For,
@@ -31,11 +28,8 @@ abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
 
     mapping(uint256 => ProposalVoting) public proposals;
 
-    event TimeLockUpdated(uint256 previousTimeLock, uint256 newTimeLockPeriod);
-    event VotingPeriodUpdated(
-        uint256 previousVotingPeriod,
-        uint256 newVotingPeriod
-    );
+    event TimelockPeriodUpdated(uint256 newTimeLockPeriod);
+    event VotingPeriodUpdated(uint256 newVotingPeriod);
     event ProposalReceived(uint256 proposalId, uint256 timestamp);
     event VoteFinalized(uint256 proposalId, uint256 timestamp);
     event Voted(
@@ -45,28 +39,30 @@ abstract contract BaseTokenVoting is BaseStrategy, EIP712Upgradeable {
         uint256 weight
     );
 
-    ///@dev ERC712 version.
-    function version() public view virtual returns (string memory) {
-        return "1";
-    }
-
     /// @dev Updates the time that proposals are active for voting.
-    /// @param newPeriod the voting window.
-    function updateVotingPeriod(uint256 newPeriod) external onlyOwner {
-        uint256 previousVotingPeriod = votingPeriod;
-        votingPeriod = newPeriod;
-        emit VotingPeriodUpdated(previousVotingPeriod, newPeriod);
+    /// @param _newVotingPeriod the voting window.
+    function updateVotingPeriod(uint256 _newVotingPeriod) external onlyOwner {
+        _updateVotingPeriod(_newVotingPeriod);
     }
 
     /// @dev Updates the grace period time after a proposal passed before it can execute.
-    /// @param newTimeLockPeriod the new delay before execution.
-    function updateTimeLockPeriod(uint256 newTimeLockPeriod)
+    /// @param _newTimelockPeriod the new delay before execution.
+    function updateTimelockPeriod(uint256 _newTimelockPeriod)
         external
         onlyOwner
     {
-        uint256 previousTimeLock = timeLockPeriod;
-        timeLockPeriod = newTimeLockPeriod;
-        emit TimeLockUpdated(previousTimeLock, newTimeLockPeriod);
+      _updateTimelockPeriod(_newTimelockPeriod);
+    }
+
+    function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
+        timeLockPeriod = _newTimelockPeriod;
+        emit TimelockPeriodUpdated(_newTimelockPeriod);
+    }
+
+    function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
+        votingPeriod = _newVotingPeriod;
+
+        emit VotingPeriodUpdated(_newVotingPeriod);
     }
 
     /// @dev Returns true if an account has voted on a specific proposal.
