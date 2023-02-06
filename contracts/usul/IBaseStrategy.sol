@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.0;
 
 interface IBaseStrategy {
     /// @notice Sets the address of the Usul contract, only callable by owner
