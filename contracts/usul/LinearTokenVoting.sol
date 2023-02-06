@@ -54,16 +54,18 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         require(_votingPeriod > 1, "votingPeriod must be greater than 1");
         require(
             address(_governanceToken) != address(0),
-            "invalid governance token address"
+            "Invalid governance token address"
         );
+
+        name = name_;
         governanceToken = _governanceToken;
         __Ownable_init();
         _updateQuorumNumerator(quorumNumerator_);
         transferOwnership(_owner);
-        votingPeriod = _votingPeriod;
         _setUsul(_usulModule);
-        timeLockPeriod = _timeLockPeriod;
-        name = name_;
+        _updateVotingPeriod(_votingPeriod);
+        _updateTimelockPeriod(_timeLockPeriod);
+
         emit StrategySetup(_usulModule, _owner);
     }
 

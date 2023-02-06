@@ -56,6 +56,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
     function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
         timeLockPeriod = _newTimelockPeriod;
+
         emit TimelockPeriodUpdated(_newTimelockPeriod);
     }
 
