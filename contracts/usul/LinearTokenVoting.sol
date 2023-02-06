@@ -58,11 +58,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         );
         governanceToken = _governanceToken;
         __Ownable_init();
-        __EIP712_init_unchained(name_, version());
-        updateQuorumNumerator(quorumNumerator_);
+        _updateQuorumNumerator(quorumNumerator_);
         transferOwnership(_owner);
         votingPeriod = _votingPeriod;
-        usulModule = IFractalUsul(_usulModule);
+        _setUsul(_usulModule);
         timeLockPeriod = _timeLockPeriod;
         name = name_;
         emit StrategySetup(_usulModule, _owner);
@@ -113,7 +112,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     {
         return
             (governanceToken.getPastTotalSupply(blockNumber) *
-                quorumNumerator()) / quorumDenominator();
+                quorumNumerator) / quorumDenominator;
     }
 
     function calculateWeight(address delegatee, uint256 proposalId)
