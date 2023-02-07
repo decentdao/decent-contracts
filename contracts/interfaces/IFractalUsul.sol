@@ -5,6 +5,15 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "../FractalUsul.sol";
 
 interface IFractalUsul {
+    enum ProposalState {
+        Active,
+        Canceled,
+        Timelocked,
+        Executed,
+        Executable,
+        Uninitialized
+    }
+
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
     /// @param strategy Address of the strategy to be enabled
     function enableStrategy(address strategy) external;
@@ -96,7 +105,7 @@ interface IFractalUsul {
     /// @return ProposalState the uint256 representing of the state of the proposal
     function state(
         uint256 proposalId
-    ) external view returns (uint256);
+    ) external view returns (ProposalState);
 
     /// @notice Generates the data for the module transaction hash (required for signing)
     /// @param to The target address of the transaction

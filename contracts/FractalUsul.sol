@@ -6,16 +6,7 @@ import "./usul/IBaseStrategy.sol";
 import "./interfaces/IFractalUsul.sol";
 
 /// @title FractalUsul - A Zodiac module that enables a voting agnostic proposal mechanism
-contract FractalUsul is Module {
-    enum ProposalState {
-        Active,
-        Canceled,
-        TimeLocked,
-        Executed,
-        Executable,
-        Uninitialized
-    }
-
+contract FractalUsul is Module, IFractalUsul {
     struct Transaction {
         address to;
         uint256 value;
@@ -25,7 +16,7 @@ contract FractalUsul is Module {
 
     struct Proposal {
         bool canceled;
-        uint256 timeLockPeriod; // queue period for safety
+        uint256 timelockPeriod; // queue period for safety
         bytes32[] txHashes;
         uint256 executionCounter;
         address strategy; // the module that is allowed to vote on this
@@ -195,10 +186,10 @@ contract FractalUsul is Module {
 
     /// @notice Called by the strategy contract when the proposal vote has succeeded
     /// @param proposalId the identifier of the proposal
-    /// @param timeLockPeriod the optional delay time
+    /// @param timelockPeriod the optional delay time
     function queueProposal(
         uint256 proposalId,
-        uint256 timeLockPeriod
+        uint256 timelockPeriod
     ) external {
         require(
             strategies[msg.sender] != address(0),
@@ -213,11 +204,11 @@ contract FractalUsul is Module {
             "Incorrect strategy for proposal"
         );
 
-        proposals[proposalId].timeLockPeriod = block.timestamp + timeLockPeriod;
+        proposals[proposalId].timelockPeriod = block.timestamp + timelockPeriod;
 
         emit StrategyFinalized(
             proposalId,
-            proposals[proposalId].timeLockPeriod
+            proposals[proposalId].timelockPeriod
         );
     }
 
@@ -377,11 +368,11 @@ contract FractalUsul is Module {
             return ProposalState.Executed;
         } else if (_proposal.canceled) {
             return ProposalState.Canceled;
-        } else if (_proposal.timeLockPeriod == 0) {
+        } else if (_proposal.timelockPeriod == 0) {
             return ProposalState.Active;
-        } else if (block.timestamp < _proposal.timeLockPeriod) {
-            return ProposalState.TimeLocked;
-        } else if (block.timestamp >= _proposal.timeLockPeriod) {
+        } else if (block.timestamp < _proposal.timelockPeriod) {
+            return ProposalState.Timelocked;
+        } else if (block.timestamp >= _proposal.timelockPeriod) {
             return ProposalState.Executable;
         } else {
             revert("unknown proposal id state");
@@ -474,7 +465,7 @@ contract FractalUsul is Module {
         )
     {
         canceled = proposals[proposalId].canceled;
-        timelockPeriod = proposals[proposalId].timeLockPeriod;
+        timelockPeriod = proposals[proposalId].timelockPeriod;
         txHashes = proposals[proposalId].txHashes;
         executionCounter = proposals[proposalId].executionCounter;
         strategy = proposals[proposalId].strategy;
