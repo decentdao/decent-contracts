@@ -95,9 +95,9 @@ abstract contract BaseTokenVoting is BaseStrategy {
     ) internal {
         require(
             block.timestamp <= proposals[_proposalId].deadline,
-            "voting period has passed"
+            "Voting period has passed"
         );
-        require(!hasVoted(_proposalId, _voter), "voter has already voted");
+        require(!proposals[_proposalId].hasVoted[_voter], "Voter has already voted");
 
         proposals[_proposalId].hasVoted[_voter] = true;
 
