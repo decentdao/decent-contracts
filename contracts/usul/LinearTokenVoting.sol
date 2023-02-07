@@ -74,11 +74,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @notice Casts a vote for a proposal
     /// @param proposalId The ID of the proposal to vote for
     /// @param support Proposal support represented as against, for, or abstain
-    function vote(
-        uint256 proposalId,
-        uint8 support,
-        bytes memory
-    ) external {
+    function vote(uint256 proposalId, uint8 support, bytes memory) external {
         _vote(
             proposalId,
             msg.sender,
@@ -96,8 +92,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             "Majority yesVotes not reached"
         );
         require(
-            proposals[proposalId].yesVotes +
-                proposals[proposalId].abstainVotes >=
+            proposals[proposalId].yesVotes >=
                 quorum(proposals[proposalId].startBlock),
             "Quorum has not been reached for the proposal"
         );
@@ -112,12 +107,9 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @notice Calculates the number of token votes needed for quorum at a specific block number
     /// @param blockNumber The block number to calculate quorum at
     /// @return uint256 The number of token votes needed for quorum
-    function quorum(uint256 blockNumber)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function quorum(
+        uint256 blockNumber
+    ) public view override returns (uint256) {
         return
             (governanceToken.getPastTotalSupply(blockNumber) *
                 quorumNumerator) / quorumDenominator;
@@ -127,11 +119,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @param voter Address of the voter
     /// @param proposalId The ID of the proposal
     /// @return uint256 The user's vote count
-    function getVotingWeight(address voter, uint256 proposalId)
-        public
-        view
-        returns (uint256)
-    {
+    function getVotingWeight(
+        address voter,
+        uint256 proposalId
+    ) public view returns (uint256) {
         return
             governanceToken.getPastVotes(
                 voter,
