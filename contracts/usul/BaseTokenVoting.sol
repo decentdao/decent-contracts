@@ -47,11 +47,10 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
     /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
     /// @param _newTimelockPeriod The new timelock period in seconds
-    function updateTimelockPeriod(uint256 _newTimelockPeriod)
-        external
-        onlyOwner
-    {
-      _updateTimelockPeriod(_newTimelockPeriod);
+    function updateTimelockPeriod(
+        uint256 _newTimelockPeriod
+    ) external onlyOwner {
+        _updateTimelockPeriod(_newTimelockPeriod);
     }
 
     /// @notice Updates the voting time period
@@ -74,11 +73,10 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @param _proposalId The ID of the proposal to check
     /// @param _account The account address to check
     /// @return bool Returns true if the account has already voted on the proposal
-    function hasVoted(uint256 _proposalId, address _account)
-        public
-        view
-        returns (bool)
-    {
+    function hasVoted(
+        uint256 _proposalId,
+        address _account
+    ) public view returns (bool) {
         return proposals[_proposalId].hasVoted[_account];
     }
 
@@ -97,7 +95,10 @@ abstract contract BaseTokenVoting is BaseStrategy {
             block.timestamp <= proposals[_proposalId].deadline,
             "Voting period has passed"
         );
-        require(!proposals[_proposalId].hasVoted[_voter], "Voter has already voted");
+        require(
+            !proposals[_proposalId].hasVoted[_voter],
+            "Voter has already voted"
+        );
 
         proposals[_proposalId].hasVoted[_voter] = true;
 
@@ -108,7 +109,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         } else if (_support == uint8(VoteType.Abstain)) {
             proposals[_proposalId].abstainVotes += _weight;
         } else {
-            revert("invalid value for enum VoteType");
+            revert("Invalid value for enum VoteType");
         }
 
         emit Voted(_voter, _proposalId, _support, _weight);
@@ -116,12 +117,9 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
     /// @notice Notifies the strategy of a new proposal, only callable by the Usul Module
     /// @param _data Encoded proposal data, in this implementation only includes proposal ID
-    function receiveProposal(bytes memory _data)
-        external
-        virtual
-        override
-        onlyUsul
-    {
+    function receiveProposal(
+        bytes memory _data
+    ) external virtual override onlyUsul {
         uint256 proposalId = abi.decode(_data, (uint256));
 
         proposals[proposalId].deadline = votingPeriod + block.timestamp;
@@ -137,7 +135,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         require(isPassed(_proposalId));
 
         usulModule.queueProposal(_proposalId, timeLockPeriod);
-        
+
         emit VoteFinalized(_proposalId, block.timestamp);
     }
 }

@@ -6,14 +6,21 @@ import "./IBaseStrategy.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
+abstract contract BaseStrategy is
+    OwnableUpgradeable,
+    FactoryFriendly,
+    IBaseStrategy
+{
     event UsulSet(address indexed newUsul);
     event StrategySetup(address indexed UsulModule, address indexed owner);
 
     IFractalUsul public usulModule;
 
     modifier onlyUsul() {
-        require(msg.sender == address(usulModule), "Only callable by Usul module");
+        require(
+            msg.sender == address(usulModule),
+            "Only callable by Usul module"
+        );
         _;
     }
 
@@ -34,9 +41,9 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     /// @notice Sets the address of the Usul contract
     /// @param _usulModule The address of the Usul module
     function _setUsul(address _usulModule) internal {
-      usulModule = IFractalUsul(_usulModule);
+        usulModule = IFractalUsul(_usulModule);
 
-      emit UsulSet(_usulModule);
+        emit UsulSet(_usulModule);
     }
 
     /// @notice Retruns if a proposal has succeeded
