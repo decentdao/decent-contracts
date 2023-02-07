@@ -15,7 +15,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         address _usulModule,
         uint256 _votingPeriod,
         uint256 quorumNumerator_,
-        uint256 _timeLockPeriod,
+        uint256 _timelockPeriod,
         string memory name_
     ) {
         bytes memory initParams = abi.encode(
@@ -24,12 +24,14 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             _usulModule,
             _votingPeriod,
             quorumNumerator_,
-            _timeLockPeriod,
+            _timelockPeriod,
             name_
         );
         setUp(initParams);
     }
 
+    /// @notice Sets up the contract with initial parameters
+    /// @param initParams The initial setup parameters encoded as bytes
     function setUp(bytes memory initParams) public override initializer {
         (
             address _owner,
@@ -37,7 +39,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             address _usulModule,
             uint256 _votingPeriod,
             uint256 quorumNumerator_,
-            uint256 _timeLockPeriod,
+            uint256 _timelockPeriod,
             string memory name_
         ) = abi.decode(
                 initParams,
@@ -64,14 +66,14 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         transferOwnership(_owner);
         _setUsul(_usulModule);
         _updateVotingPeriod(_votingPeriod);
-        _updateTimelockPeriod(_timeLockPeriod);
+        _updateTimelockPeriod(_timelockPeriod);
 
         emit StrategySetup(_usulModule, _owner);
     }
 
-    /// @dev Submits a vote for a proposal.
-    /// @param proposalId the proposal to vote for.
-    /// @param support against, for, or abstain.
+    /// @notice Casts a vote for a proposal
+    /// @param proposalId The ID of the proposal to vote for
+    /// @param support Proposal support represented as against, for, or abstain
     function vote(
         uint256 proposalId,
         uint8 support,
@@ -81,31 +83,35 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             proposalId,
             msg.sender,
             support,
-            calculateWeight(msg.sender, proposalId)
+            getVotingWeight(msg.sender, proposalId)
         );
     }
 
-    /// @dev Determines if a proposal has succeeded.
-    /// @param proposalId the proposal to vote for.
-    /// @return boolean.
+    /// @notice Returns if a proposal has succeeded
+    /// @param proposalId The ID of the proposal to vote for
+    /// @return bool True if the proposal has passed
     function isPassed(uint256 proposalId) public view override returns (bool) {
         require(
             proposals[proposalId].yesVotes > proposals[proposalId].noVotes,
-            "majority yesVotes not reached"
+            "Majority yesVotes not reached"
         );
         require(
             proposals[proposalId].yesVotes +
                 proposals[proposalId].abstainVotes >=
                 quorum(proposals[proposalId].startBlock),
-            "a quorum has not been reached for the proposal"
+            "Quorum has not been reached for the proposal"
         );
         require(
             proposals[proposalId].deadline < block.timestamp,
-            "voting period has not passed yet"
+            "Voting period is not over"
         );
+
         return true;
     }
 
+    /// @notice Calculates the number of token votes needed for quorum at a specific block number
+    /// @param blockNumber The block number to calculate quorum at
+    /// @return uint256 The number of token votes needed for quorum
     function quorum(uint256 blockNumber)
         public
         view
@@ -117,14 +123,18 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                 quorumNumerator) / quorumDenominator;
     }
 
-    function calculateWeight(address delegatee, uint256 proposalId)
+    /// @notice Calculates the voting weight an address has for a specific proposal
+    /// @param voter Address of the voter
+    /// @param proposalId The ID of the proposal
+    /// @return uint256 The user's vote count
+    function getVotingWeight(address voter, uint256 proposalId)
         public
         view
         returns (uint256)
     {
         return
             governanceToken.getPastVotes(
-                delegatee,
+                voter,
                 proposals[proposalId].startBlock
             );
     }
