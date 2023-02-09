@@ -14,19 +14,19 @@ abstract contract BaseTokenVoting is BaseStrategy {
     }
 
     struct ProposalVoting {
-        uint256 yesVotes; // the total number of YES votes for this proposal
-        uint256 noVotes; // the total number of NO votes for this proposal
-        uint256 abstainVotes; // introduce abstain votes
-        uint256 deadline; // voting deadline TODO: consider using block number
-        uint256 startBlock; // the starting block of the proposal
+        uint256 yesVotes; // The total number of YES votes for this proposal
+        uint256 noVotes; // The total number of NO votes for this proposal
+        uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
+        uint256 deadline; // The timestamp voting ends for this proposal
+        uint256 startBlock; // The block the proposal voting starts
         mapping(address => bool) hasVoted;
     }
 
     uint256 public votingPeriod; // the length of time voting is valid for a proposal
-    uint256 public timeLockPeriod;
+    uint256 public timelockPeriod;
     string public name;
 
-    mapping(uint256 => ProposalVoting) public proposals;
+    mapping(uint256 => ProposalVoting) internal proposals;
 
     event TimelockPeriodUpdated(uint256 newTimeLockPeriod);
     event VotingPeriodUpdated(uint256 newVotingPeriod);
@@ -64,7 +64,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
     /// @param _newTimelockPeriod The new timelock period in seconds
     function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
-        timeLockPeriod = _newTimelockPeriod;
+        timelockPeriod = _newTimelockPeriod;
 
         emit TimelockPeriodUpdated(_newTimelockPeriod);
     }
@@ -91,6 +91,10 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint8 _support,
         uint256 _weight
     ) internal {
+        require(
+            proposals[_proposalId].deadline != 0,
+            "Proposal has not been submitted yet"
+        );
         require(
             block.timestamp <= proposals[_proposalId].deadline,
             "Voting period has passed"
@@ -134,8 +138,35 @@ abstract contract BaseTokenVoting is BaseStrategy {
     function queueProposal(uint256 _proposalId) public virtual override {
         require(isPassed(_proposalId));
 
-        usulModule.queueProposal(_proposalId, timeLockPeriod);
+        usulModule.queueProposal(_proposalId, timelockPeriod);
 
         emit VoteFinalized(_proposalId, block.timestamp);
+    }
+
+    /// @notice Returns the current state of the specified proposal
+    /// @param _proposalId The ID of the proposal to get
+    /// @return yesVotes The total count of "Yes" votes for the proposal
+    /// @return noVotes The total count of "No" votes for the proposal
+    /// @return abstainVotes The total count of "Abstain" votes for the proposal
+    /// @return deadline The timestamp at which proposal voting ends
+    /// @return startBlock The block number that the proposal voting starts at
+    function getProposal(
+        uint256 _proposalId
+    )
+        external
+        view
+        returns (
+            uint256 yesVotes,
+            uint256 noVotes,
+            uint256 abstainVotes,
+            uint256 deadline,
+            uint256 startBlock
+        )
+    {
+        yesVotes = proposals[_proposalId].yesVotes;
+        noVotes = proposals[_proposalId].noVotes;
+        abstainVotes = proposals[_proposalId].abstainVotes;
+        deadline = proposals[_proposalId].deadline;
+        startBlock = proposals[_proposalId].startBlock;
     }
 }
