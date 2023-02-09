@@ -134,9 +134,9 @@ contract FractalUsul is Module, IFractalUsul {
     ) external {
         require(
             isStrategyEnabled(strategy),
-            "voting strategy is not enabled for proposal"
+            "Voting strategy is not enabled"
         );
-        require(transactions.length > 0, "proposal must contain transactions");
+        require(transactions.length > 0, "Proposal must contain at least one transaction");
 
         bytes32[] memory txHashes = new bytes32[](transactions.length);
         for (uint256 i = 0; i < transactions.length; i++) {
@@ -173,13 +173,15 @@ contract FractalUsul is Module, IFractalUsul {
             Proposal storage _proposal = proposals[proposalIds[i]];
             require(
                 _proposal.executionCounter < _proposal.txHashes.length,
-                "nothing to cancel"
+                "Proposal has already been executed"
             );
             require(
                 _proposal.canceled == false,
-                "proposal is already canceled"
+                "Proposal is already canceled"
             );
+
             _proposal.canceled = true;
+
             emit ProposalCanceled(proposalIds[i]);
         }
     }
@@ -260,18 +262,18 @@ contract FractalUsul is Module, IFractalUsul {
     ) external {
         require(
             targets.length != 0,
-            "no transactions to execute supplied to batch"
+            "No transactions to execute provided"
         );
         require(
             targets.length == values.length &&
                 targets.length == data.length &&
                 targets.length == operations.length,
-            "execution parameters missmatch"
+            "Array length mismatch"
         );
         require(
             proposals[proposalId].executionCounter + targets.length <=
                 proposals[proposalId].txHashes.length,
-            "attempting to execute too many transactions"
+            "Too many transactions to execute provided"
         );
         for (uint256 i = 0; i < targets.length; i++) {
             executeProposalByIndex(
@@ -335,7 +337,6 @@ contract FractalUsul is Module, IFractalUsul {
         }
         next = currentStrategy;
         // Set correct size of returned array
-        // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(array, strategyCount)
         }
@@ -349,11 +350,6 @@ contract FractalUsul is Module, IFractalUsul {
         uint256 proposalId,
         uint256 index
     ) external view returns (bool) {
-        require(
-            proposals[proposalId].txHashes.length > 0,
-            "no executions in this proposal"
-        );
-
         return proposals[proposalId].executionCounter > index;
     }
 
@@ -372,10 +368,8 @@ contract FractalUsul is Module, IFractalUsul {
             return ProposalState.Active;
         } else if (block.timestamp < _proposal.timelockPeriod) {
             return ProposalState.Timelocked;
-        } else if (block.timestamp >= _proposal.timelockPeriod) {
-            return ProposalState.Executable;
         } else {
-            revert("unknown proposal id state");
+            return ProposalState.Executable;
         }
     }
 
