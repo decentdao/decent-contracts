@@ -129,4 +129,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                 proposals[proposalId].startBlock
             );
     }
+
+    /// @notice Returns if the specified address can submit a proposal
+    /// @return bool True if the user can submit a proposal
+    function isProposer(address) public pure override returns (bool) {
+      return true;
+    }
 }

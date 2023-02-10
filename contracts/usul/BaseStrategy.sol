@@ -46,8 +46,13 @@ abstract contract BaseStrategy is
         emit UsulSet(_usulModule);
     }
 
-    /// @notice Retruns if a proposal has succeeded
+    /// @notice Returns if a proposal has succeeded
     /// @param proposalId The proposalId to check
     /// @return bool Returns true if the proposal has passed
     function isPassed(uint256 proposalId) public view virtual returns (bool);
+
+    /// @notice Returns if the specified address can submit a proposal
+    /// @param user The user address to check
+    /// @return bool True if the user can submit a proposal
+    function isProposer(address user) public view virtual returns (bool);
 }

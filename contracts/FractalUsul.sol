@@ -137,6 +137,7 @@ contract FractalUsul is Module, IFractalUsul {
             "Voting strategy is not enabled"
         );
         require(transactions.length > 0, "Proposal must contain at least one transaction");
+        require(IBaseStrategy(strategy).isProposer(msg.sender), "Caller cannot submit proposals");
 
         bytes32[] memory txHashes = new bytes32[](transactions.length);
         for (uint256 i = 0; i < transactions.length; i++) {

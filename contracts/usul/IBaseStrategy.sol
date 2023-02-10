@@ -18,4 +18,9 @@ interface IBaseStrategy {
     /// @param proposalId The proposalId to check
     /// @return bool Returns true if the proposal has passed
     function isPassed(uint256 proposalId) external view returns (bool);
+
+    /// @notice Returns if the specified address can submit a proposal
+    /// @param user The user address to check
+    /// @return bool True if the user can submit a proposal
+    function isProposer(address user) external view returns (bool);
 }
