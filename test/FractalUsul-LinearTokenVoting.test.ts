@@ -748,6 +748,59 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
+    it("Submitting a proposal emits the event with the associated proposal metadata", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      // Proposal is uninitialized
+      expect(await usulModule.state(0)).to.eq(5);
+
+      const proposalTitle = "This is my amazing proposal!";
+      const proposalDescription = "And this is my super amazing description";
+      const proposalDocumentationUrl = "https://example.com/amazing-proposal";
+
+      const tx = await usulModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        proposalTitle,
+        proposalDescription,
+        proposalDocumentationUrl
+      );
+      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const data = receipt.logs[1].data;
+      const topics = receipt.logs[1].topics;
+      const event = usulModule.interface.decodeEventLog(
+        "ProposalCreated",
+        data,
+        topics
+      );
+
+      // Check that the event emits the correct values
+      expect(event.transactions[0].to).to.be.equal(proposalTransaction.to);
+      expect(event.transactions[0].value).to.be.equal(
+        proposalTransaction.value
+      );
+      expect(event.transactions[0].data).to.be.equal(proposalTransaction.data);
+      expect(event.transactions[0].operation).to.be.equal(
+        proposalTransaction.operation
+      );
+
+      expect(event.title).to.be.equal(proposalTitle);
+      expect(event.description).to.be.equal(proposalDescription);
+      expect(event.documentationUrl).to.be.equal(proposalDocumentationUrl);
+    });
+
     it("A proposal can be created and executed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = votesToken.interface.encodeFunctionData(
