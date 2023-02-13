@@ -214,7 +214,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0x0959eafd")).to.eq(true);
+      expect(await vetoGuard.supportsInterface("0x1c4ead2c")).to.eq(true);
 
       // Supports IGuard interface
       expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
@@ -226,7 +226,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       expect(await vetoGuard.supportsInterface("0x00000000")).to.eq(false);
     });
 
-    it("A transaction can be queued and executed", async () => {
+    it("A transaction can be timelocked and executed", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -246,7 +246,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -279,7 +279,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(1000);
     });
 
-    it("A transaction cannot be executed if it hasn't yet been queued", async () => {
+    it("A transaction cannot be executed if it hasn't yet been timelocked", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -312,10 +312,10 @@ describe("Child Multisig DAO with Usul Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction has not been queued yet");
+      ).to.be.revertedWith("Transaction has not been timelocked yet");
     });
 
-    it("A transaction cannot be queued if the signatures aren't valid", async () => {
+    it("A transaction cannot be timelocked if the signatures aren't valid", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -334,7 +334,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       const signatureBytes = buildSignatureBytes(sigs);
 
       await expect(
-        vetoGuard.queueTransaction(
+        vetoGuard.timelockTransaction(
           tx.to,
           tx.value,
           tx.data,
@@ -369,7 +369,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -418,7 +418,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -491,7 +491,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -584,7 +584,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -638,8 +638,8 @@ describe("Child Multisig DAO with Usul Parent", () => {
         )
       ).to.be.revertedWith("Transaction has been vetoed");
 
-      // Tx1 has been vetoed, now try to queue and execute tx2
-      await vetoGuard.queueTransaction(
+      // Tx1 has been vetoed, now try to timelock and execute tx2
+      await vetoGuard.timelockTransaction(
         tx2.to,
         tx2.value,
         tx2.data,
@@ -692,7 +692,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -725,7 +725,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ).to.be.revertedWith("User has already voted");
     });
 
-    it("A veto vote cannot be cast if the transaction has not been queued yet", async () => {
+    it("A veto vote cannot be cast if the transaction has not been timelocked yet", async () => {
       // Create transaction to set the guard address
       const tokenTransferData = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -753,7 +753,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
 
       await expect(
         vetoERC20Voting.connect(tokenVetoer1).castVetoVote(txHash, false)
-      ).to.be.revertedWith("Transaction has not yet been queued");
+      ).to.be.revertedWith("Transaction has not yet been timelocked");
     });
   });
 
@@ -796,7 +796,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -856,8 +856,8 @@ describe("Child Multisig DAO with Usul Parent", () => {
         )
       ).to.be.revertedWith("Transaction has been vetoed");
 
-      // Queue tx2
-      await vetoGuard.queueTransaction(
+      // Timelock tx2
+      await vetoGuard.timelockTransaction(
         tx2.to,
         tx2.value,
         tx2.data,
@@ -920,7 +920,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -978,7 +978,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1096,7 +1096,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1178,7 +1178,7 @@ describe("Child Multisig DAO with Usul Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.queueTransaction(
+      await vetoGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,

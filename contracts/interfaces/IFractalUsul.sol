@@ -46,7 +46,7 @@ interface IFractalUsul {
     /// @notice Called by the strategy contract when the proposal vote has succeeded
     /// @param proposalId the identifier of the proposal
     /// @param timeLockPeriod the optional delay time
-    function queueProposal(uint256 proposalId, uint256 timeLockPeriod) external;
+    function timelockProposal(uint256 proposalId, uint256 timeLockPeriod) external;
 
     /// @notice Executes the specified transaction within a proposal
     /// @notice Transactions must be called in order

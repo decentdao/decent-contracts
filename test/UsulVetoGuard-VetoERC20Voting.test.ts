@@ -285,7 +285,7 @@ describe("Usul Child DAO with Usul Parent", () => {
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
       // Supports IUsulVetoGuard interface
-      expect(await usulVetoGuard.supportsInterface("0x8fc0183c")).to.eq(true);
+      expect(await usulVetoGuard.supportsInterface("0xa04f1a4e")).to.eq(true);
       // Supports IGuard interface
       expect(await usulVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
       // Supports IERC-165 interface
@@ -338,10 +338,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -439,11 +439,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
-
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -522,8 +519,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -597,8 +594,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -618,7 +615,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("Transaction execution period has ended");
     });
 
-    it("A proposal cannot be queued again before its execution deadline has elapsed", async () => {
+    it("A proposal cannot be timelocked again before its execution deadline has elapsed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -661,16 +658,16 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
-      // Attempt to queue the proposal again
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
-        "Proposal has already been queued"
+      // Attempt to timelock the proposal again
+      await expect(usulVetoGuard.timelockProposal(0)).to.be.revertedWith(
+        "Proposal has already been timelocked"
       );
     });
 
-    it("A proposal cannot be re-queued if its execution deadline has elapsed", async () => {
+    it("A proposal cannot be re-timelocked if its execution deadline has elapsed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -713,17 +710,17 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal execution deadline should equal current time + timelockPeriod + executionPeriod
       expect(await usulVetoGuard.getProposalExecutionDeadline(0)).to.eq(
         (await time.latest()) + 60 + 60
       );
 
-      // Proposal queued block has been updated
+      // Proposal timelocked block has been updated
       expect((await ethers.provider.getBlock("latest")).number).to.eq(
-        (await usulVetoGuard.getProposalQueuedBlock(0)).toNumber()
+        (await usulVetoGuard.getProposalTimelockedBlock(0)).toNumber()
       );
 
       // // Proposal is timelocked
@@ -751,13 +748,13 @@ describe("Usul Child DAO with Usul Parent", () => {
         )
       ).to.be.revertedWith("Transaction execution period has ended");
 
-      // Attempt to re-queue the proposal
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
-        "Proposal must be timelocked before queuing"
+      // Attempt to re-timelock the proposal
+      await expect(usulVetoGuard.timelockProposal(0)).to.be.revertedWith(
+        "Proposal timelock failed"
       );
     });
 
-    it("A proposal cannot be executed if it has been finalized, but not queued", async () => {
+    it("A proposal cannot be executed if it has been finalized, but not timelocked", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -801,9 +798,9 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // The proposal is not queued
+      // The proposal is not timelocked
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -823,10 +820,10 @@ describe("Usul Child DAO with Usul Parent", () => {
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("Transaction has not been queued yet");
+      ).to.be.revertedWith("Transaction has not been timelocked yet");
     });
 
-    it("A transaction cannot be executed if it hasn't yet been queued", async () => {
+    it("A transaction cannot be executed if it hasn't yet been timelocked", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -881,7 +878,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
-    it("A proposal cannot be queued if quorum hasn't been reached", async () => {
+    it("A proposal cannot be timelocked if quorum hasn't been reached", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -925,12 +922,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize the proposal
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Majority yesVotes not reached"
       );
     });
 
-    it("A proposal cannot be queued if no votes exceed yes votes", async () => {
+    it("A proposal cannot be timelocked if no votes exceed yes votes", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -974,12 +971,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize proposal
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Majority yesVotes not reached"
       );
     });
 
-    it("A proposal cannot be queued if its voting period hasn't ended yet", async () => {
+    it("A proposal cannot be timelocked if its voting period hasn't ended yet", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -1020,7 +1017,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Attempt to finalize the strategy
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Voting period is not over"
       );
     });
@@ -1069,10 +1066,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1141,10 +1138,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1253,10 +1250,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1343,10 +1340,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1459,12 +1456,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await linearTokenVoting.queueProposal(0);
-      await linearTokenVoting.queueProposal(1);
+      await linearTokenVoting.timelockProposal(0);
+      await linearTokenVoting.timelockProposal(1);
 
-      // Queue the proposals
-      await usulVetoGuard.queueProposal(0);
-      await usulVetoGuard.queueProposal(1);
+      // Timelock the proposals
+      await usulVetoGuard.timelockProposal(0);
+      await usulVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1569,10 +1566,10 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1588,7 +1585,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("User has already voted");
     });
 
-    it("A veto vote cannot be cast if the transaction has not been queued yet", async () => {
+    it("A veto vote cannot be cast if the transaction has not been timelocked yet", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -1642,7 +1639,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Cast veto votes
       await expect(
         vetoERC20Voting.connect(parentTokenHolder1).castVetoVote(txHash, false)
-      ).to.be.revertedWith("Transaction has not yet been queued");
+      ).to.be.revertedWith("Transaction has not yet been timelocked");
     });
 
     it("A frozen DAO cannot execute any transaction", async () => {
@@ -1747,14 +1744,14 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await linearTokenVoting.queueProposal(0);
-      await linearTokenVoting.queueProposal(1);
-      await linearTokenVoting.queueProposal(2);
+      await linearTokenVoting.timelockProposal(0);
+      await linearTokenVoting.timelockProposal(1);
+      await linearTokenVoting.timelockProposal(2);
 
-      // Queue the proposals
-      await usulVetoGuard.queueProposal(0);
-      await usulVetoGuard.queueProposal(1);
-      await usulVetoGuard.queueProposal(2);
+      // Timelock the proposals
+      await usulVetoGuard.timelockProposal(0);
+      await usulVetoGuard.timelockProposal(1);
+      await usulVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1911,14 +1908,14 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await linearTokenVoting.queueProposal(0);
-    await linearTokenVoting.queueProposal(1);
-    await linearTokenVoting.queueProposal(2);
+    await linearTokenVoting.timelockProposal(0);
+    await linearTokenVoting.timelockProposal(1);
+    await linearTokenVoting.timelockProposal(2);
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposals
+    await usulVetoGuard.timelockProposal(0);
+    await usulVetoGuard.timelockProposal(1);
+    await usulVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
     expect(await usulModule.state(0)).to.eq(2);
@@ -2020,10 +2017,10 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategy
-    await linearTokenVoting.queueProposal(0);
+    await linearTokenVoting.timelockProposal(0);
 
-    // Queue the proposal
-    await usulVetoGuard.queueProposal(0);
+    // Timelock the proposal
+    await usulVetoGuard.timelockProposal(0);
 
     // Proposal is timelocked
     expect(await usulModule.state(0)).to.eq(2);
@@ -2125,9 +2122,9 @@ describe("Usul Child DAO with Usul Parent", () => {
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
+    // Timelock the proposals
+    await usulVetoGuard.timelockProposal(0);
+    await usulVetoGuard.timelockProposal(1);
 
     // Proposal is timelocked
     expect(await usulModule.state(0)).to.eq(2);
@@ -2208,8 +2205,8 @@ describe("Usul Child DAO with Usul Parent", () => {
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
-    // Queue the proposal
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposal
+    await usulVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
     expect(await usulModule.state(2)).to.eq(2);
@@ -2332,14 +2329,14 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await linearTokenVoting.queueProposal(0);
-    await linearTokenVoting.queueProposal(1);
-    await linearTokenVoting.queueProposal(2);
+    await linearTokenVoting.timelockProposal(0);
+    await linearTokenVoting.timelockProposal(1);
+    await linearTokenVoting.timelockProposal(2);
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposals
+    await usulVetoGuard.timelockProposal(0);
+    await usulVetoGuard.timelockProposal(1);
+    await usulVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
     expect(await usulModule.state(0)).to.eq(2);

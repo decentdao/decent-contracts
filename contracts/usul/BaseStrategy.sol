@@ -35,8 +35,8 @@ abstract contract BaseStrategy is
     function receiveProposal(bytes memory _data) external virtual;
 
     /// @notice Calls the proposal module to notify that a quorum has been reached
-    /// @param _proposalId The ID of the proposal to queue
-    function queueProposal(uint256 _proposalId) external virtual;
+    /// @param _proposalId The ID of the proposal to timelock
+    function timelockProposal(uint256 _proposalId) external virtual;
 
     /// @notice Sets the address of the Usul contract
     /// @param _usulModule The address of the Usul module

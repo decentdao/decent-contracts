@@ -659,7 +659,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         "Majority yesVotes not reached"
       );
 
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Majority yesVotes not reached"
       );
 
@@ -717,7 +717,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         "Quorum has not been reached for the proposal"
       );
 
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Quorum has not been reached for the proposal"
       );
 
@@ -773,7 +773,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         "Voting period is not over"
       );
 
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Voting period is not over"
       );
 
@@ -878,7 +878,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -966,7 +966,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1054,7 +1054,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1172,7 +1172,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1419,7 +1419,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1485,7 +1485,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await linearTokenVoting.queueProposal(0);
+      await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
       expect(await usulModule.state(0)).to.eq(2);
@@ -1517,7 +1517,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
     });
 
-    it("A proposal cannot be queued if it has been cancelled", async () => {
+    it("A proposal cannot be timelocked if it has been cancelled", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -1557,7 +1557,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await usulModule.connect(gnosisSafeOwner).cancelProposals([0]);
 
       // Attempt to finalize the strategy
-      await expect(linearTokenVoting.queueProposal(0)).to.be.revertedWith(
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
         "Proposal must be in the active state"
       );
     });

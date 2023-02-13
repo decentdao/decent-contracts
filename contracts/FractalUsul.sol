@@ -17,7 +17,7 @@ contract FractalUsul is Module, IFractalUsul {
 
     struct Proposal {
         bool canceled;
-        uint256 timelockPeriod; // queue period for safety
+        uint256 timelockPeriod;
         bytes32[] txHashes;
         uint256 executionCounter;
         address strategy; // the module that is allowed to vote on this
@@ -191,7 +191,7 @@ contract FractalUsul is Module, IFractalUsul {
     /// @notice Called by the strategy contract when the proposal vote has succeeded
     /// @param proposalId the identifier of the proposal
     /// @param timelockPeriod the optional delay time
-    function queueProposal(
+    function timelockProposal(
         uint256 proposalId,
         uint256 timelockPeriod
     ) external {

@@ -61,10 +61,10 @@ contract VetoMultisigVoting is IVetoVoting, TransactionHasher, FactoryFriendly {
 
         require(gnosisSafe.isOwner(msg.sender), "User is not an owner ");
 
-        // Check that the transaction has been queued
+        // Check that the transaction has been timelocked
         require(
-            vetoGuard.getTransactionQueuedBlock(_transactionHash) != 0,
-            "Transaction has not yet been queued"
+            vetoGuard.getTransactionTimelockedBlock(_transactionHash) != 0,
+            "Transaction has not yet been timelocked"
         );
 
         // Add the user votes to the veto vote count for this transaction

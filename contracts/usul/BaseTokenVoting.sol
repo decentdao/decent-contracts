@@ -133,12 +133,12 @@ abstract contract BaseTokenVoting is BaseStrategy {
     }
 
     /// @notice Calls the Usul module to notify that a quorum has been reached
-    /// @notice Queues the proposal and starts timelock period
-    /// @param _proposalId The ID of the proposal to queue
-    function queueProposal(uint256 _proposalId) public virtual override {
+    /// @notice Timelocks the proposal and starts timelock period
+    /// @param _proposalId The ID of the proposal to timelock
+    function timelockProposal(uint256 _proposalId) public virtual override {
         require(isPassed(_proposalId));
 
-        usulModule.queueProposal(_proposalId, timelockPeriod);
+        usulModule.timelockProposal(_proposalId, timelockPeriod);
 
         emit VoteFinalized(_proposalId, block.timestamp);
     }

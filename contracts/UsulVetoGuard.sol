@@ -55,16 +55,16 @@ contract UsulVetoGuard is
         );
     }
 
-    /// @notice Queues a transaction for execution
-    /// @param proposalId The ID of the proposal to queue
-    function queueProposal(uint256 proposalId) external {
+    /// @notice Timelocks a transaction for execution
+    /// @param proposalId The ID of the proposal to timelock
+    function timelockProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
         if (fractalUsul.state(proposalId) == IFractalUsul.ProposalState.Active)
-            strategy.queueProposal(proposalId);
+            strategy.timelockProposal(proposalId);
 
         require(
             fractalUsul.state(proposalId) == IFractalUsul.ProposalState.Timelocked,
-            "Proposal must be timelocked before queuing"
+            "Proposal timelock failed"
         );
 
         (, uint256 timelockDeadline, , , ) = fractalUsul.getProposal(proposalId);
@@ -73,18 +73,18 @@ contract UsulVetoGuard is
 
         require(
             block.timestamp > proposals[proposalId].executionDeadline,
-            "Proposal has already been queued"
+            "Proposal has already been timelocked"
         );
 
         proposals[proposalId].executionDeadline = executionDeadline;
-        proposals[proposalId].queuedBlock = block.number;
+        proposals[proposalId].timelockedBlock = block.number;
 
         bytes32[] memory txHashes = fractalUsul.getProposalTxHashes(proposalId);
         for(uint256 i; i < txHashes.length; i++) {
           transactionToProposal[txHashes[i]] = proposalId;
         }
 
-        emit ProposalQueued(msg.sender, proposalId);
+        emit ProposalTimelocked(msg.sender, proposalId);
     }
 
     function updateExeuctionPeriod(uint256 _executionPeriod)
@@ -123,8 +123,8 @@ contract UsulVetoGuard is
         uint256 proposalId = transactionToProposal[txHash];
 
         require(
-            proposals[proposalId].queuedBlock > 0,
-            "Transaction has not been queued yet"
+            proposals[proposalId].timelockedBlock > 0,
+            "Transaction has not been timelocked yet"
         );
 
         require(
@@ -146,18 +146,18 @@ contract UsulVetoGuard is
         override
     {}
 
-    /// @notice Gets the block number that the transaction was queued at
+    /// @notice Gets the block number that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number
-    function getTransactionQueuedBlock(bytes32 _transactionHash)
+    function getTransactionTimelockedBlock(bytes32 _transactionHash)
         external
         view
         returns (uint256)
     {
-        return proposals[transactionToProposal[_transactionHash]].queuedBlock;
+        return proposals[transactionToProposal[_transactionHash]].timelockedBlock;
     }
 
-    /// @notice Gets the block number that the transaction was queued at
+    /// @notice Gets the block number that the transaction was timelocked at
     /// @param _txHash The hash of the transaction data
     /// @return uint256 The proposal ID the tx is associated with
     function getTransactionProposalId(bytes32 _txHash)
@@ -168,18 +168,18 @@ contract UsulVetoGuard is
         return transactionToProposal[_txHash];
     }
 
-    /// @notice Gets the block number that the proposal was queued at
+    /// @notice Gets the block number that the proposal was timelocked at
     /// @param _proposalId The ID of the proposal
-    /// @return uint256 The block number the transaction was queued at
-    function getProposalQueuedBlock(uint256 _proposalId)
+    /// @return uint256 The block number the transaction was timelocked at
+    function getProposalTimelockedBlock(uint256 _proposalId)
         external
         view
         returns (uint256)
     {
-        return proposals[_proposalId].queuedBlock;
+        return proposals[_proposalId].timelockedBlock;
     }
 
-    /// @notice Gets the block number that the proposal was queued at
+    /// @notice Gets the block number that the proposal was timelocked at
     /// @param _proposalId The ID of the proposal
     /// @return uint256 The timestamp the transaction must be executed by
     function getProposalExecutionDeadline(uint256 _proposalId)

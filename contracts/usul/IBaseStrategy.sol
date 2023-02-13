@@ -11,8 +11,8 @@ interface IBaseStrategy {
     function receiveProposal(bytes memory _data) external;
 
     /// @notice Calls the proposal module to notify that a quorum has been reached
-    /// @param _proposalId The ID of the proposal to queue
-    function queueProposal(uint256 _proposalId) external;
+    /// @param _proposalId The ID of the proposal to timelock
+    function timelockProposal(uint256 _proposalId) external;
 
     /// @notice Retruns if a proposal has succeeded
     /// @param proposalId The proposalId to check
