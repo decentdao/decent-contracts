@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import "./usul/IBaseStrategy.sol";
 import "./interfaces/IFractalUsul.sol";
-import "hardhat/console.sol";
 
 /// @title FractalUsul - A Zodiac module that enables a voting agnostic proposal mechanism
 contract FractalUsul is Module, IFractalUsul {
