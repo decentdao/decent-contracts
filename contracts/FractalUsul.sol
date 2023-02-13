@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import "./usul/IBaseStrategy.sol";
 import "./interfaces/IFractalUsul.sol";
+import "hardhat/console.sol";
 
 /// @title FractalUsul - A Zodiac module that enables a voting agnostic proposal mechanism
 contract FractalUsul is Module, IFractalUsul {
@@ -305,6 +306,7 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Returns if a strategy is enabled
+    /// @param _strategy The address of the strategy to check
     /// @return True if the strategy is enabled
     function isStrategyEnabled(address _strategy) public view returns (bool) {
         return
@@ -313,33 +315,33 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Returns array of strategy contract addresses
-    /// @param start Start of the page
-    /// @param pageSize Maximum number of strategy that should be returned
-    /// @return array Array of strategy
-    /// @return next Start of the next page
-    function getStrategiesPaginated(
-        address start,
-        uint256 pageSize
-    ) external view returns (address[] memory array, address next) {
+    /// @param startAddress Address in the strategy linked list to start with
+    /// @param count Maximum number of strategies that should be returned
+    /// @return strategiesArray Array of strategy
+    /// @return next Next address in the linked list
+    function getStrategies(
+        address startAddress,
+        uint256 count
+    ) external view returns (address[] memory strategiesArray, address next) {
         // Init array with max page size
-        array = new address[](pageSize);
+        strategiesArray = new address[](count);
 
         // Populate return array
         uint256 strategyCount = 0;
-        address currentStrategy = strategies[start];
+        address currentStrategy = strategies[startAddress];
         while (
             currentStrategy != address(0x0) &&
             currentStrategy != SENTINEL_STRATEGY &&
-            strategyCount < pageSize
+            strategyCount < count
         ) {
-            array[strategyCount] = currentStrategy;
+            strategiesArray[strategyCount] = currentStrategy;
             currentStrategy = strategies[currentStrategy];
             strategyCount++;
         }
         next = currentStrategy;
         // Set correct size of returned array
         assembly {
-            mstore(array, strategyCount)
+            mstore(strategiesArray, strategyCount)
         }
     }
 

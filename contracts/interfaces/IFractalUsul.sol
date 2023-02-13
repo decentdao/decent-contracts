@@ -78,18 +78,19 @@ interface IFractalUsul {
     ) external;
 
     /// @notice Returns if a strategy is enabled
+    /// @param _strategy The address of the strategy to check
     /// @return True if the strategy is enabled
     function isStrategyEnabled(address _strategy) external view returns (bool);
 
     /// @notice Returns array of strategy contract addresses
-    /// @param start Start of the page
-    /// @param pageSize Maximum number of strategy that should be returned
-    /// @return array Array of strategy
-    /// @return next Start of the next page
-    function getStrategiesPaginated(
-        address start,
-        uint256 pageSize
-    ) external view returns (address[] memory array, address next);
+    /// @param startAddress Address in the strategy linked list to start with
+    /// @param count Maximum number of strategies that should be returned
+    /// @return strategiesArray Array of strategy
+    /// @return next Next address in the linked list
+    function getStrategies(
+        address startAddress,
+        uint256 count
+    ) external view returns (address[] memory strategiesArray, address next);
 
     /// @notice Returns true if a proposal transaction by index is executed
     /// @param proposalId The ID of the proposal

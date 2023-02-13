@@ -37,6 +37,8 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
   let tokenHolder1: SignerWithAddress;
   let tokenHolder2: SignerWithAddress;
   let tokenHolder3: SignerWithAddress;
+  let mockStrategy1: SignerWithAddress;
+  let mockStrategy2: SignerWithAddress;
 
   // Gnosis
   let createGnosisSetupCalldata: string;
@@ -66,8 +68,15 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     });
 
     // Get the signer accounts
-    [deployer, gnosisSafeOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
-      await ethers.getSigners();
+    [
+      deployer,
+      gnosisSafeOwner,
+      tokenHolder1,
+      tokenHolder2,
+      tokenHolder3,
+      mockStrategy1,
+      mockStrategy2,
+    ] = await ethers.getSigners();
 
     // Deploy Gnosis Safe Proxy factory
     gnosisSafeProxyFactory = await ethers.getContractAt(
@@ -209,6 +218,37 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
       expect(await linearTokenVoting.timelockPeriod()).to.eq(60);
       expect(await linearTokenVoting.name()).to.eq("Voting");
+    });
+
+    it("A strategy cannot be enabled more than once", async () => {
+      await expect(
+        usulModule
+          .connect(gnosisSafeOwner)
+          .enableStrategy(linearTokenVoting.address)
+      ).to.be.revertedWith("Strategy already enabled");
+    });
+
+    it("Multiple strategies can be enabled, disabled, and returned", async () => {
+      await usulModule
+        .connect(gnosisSafeOwner)
+        .enableStrategy(mockStrategy1.address);
+
+      await usulModule
+        .connect(gnosisSafeOwner)
+        .enableStrategy(mockStrategy2.address);
+
+      expect(
+        (
+          await usulModule.getStrategies(
+            "0x0000000000000000000000000000000000000001",
+            3
+          )
+        ).strategiesArray
+      ).to.deep.eq([
+        mockStrategy2.address,
+        mockStrategy1.address,
+        linearTokenVoting.address,
+      ]);
     });
 
     it("The owner can change the Usul Module on the Strategy", async () => {
