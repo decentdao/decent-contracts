@@ -43,7 +43,7 @@ contract FractalUsul is Module, IFractalUsul {
     event ProposalCanceled(uint256 proposalId);
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
-    event StrategyFinalized(uint256 proposalId, uint256 endDate);
+    event ProposalTimelocked(uint256 proposalId, uint256 endDate);
     event ProposalExecuted(uint256 id);
     event UsulSetup(
         address indexed initiator,
@@ -209,7 +209,7 @@ contract FractalUsul is Module, IFractalUsul {
 
         proposals[proposalId].timelockPeriod = block.timestamp + timelockPeriod;
 
-        emit StrategyFinalized(
+        emit ProposalTimelocked(
             proposalId,
             proposals[proposalId].timelockPeriod
         );
