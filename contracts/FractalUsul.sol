@@ -199,7 +199,7 @@ contract FractalUsul is Module, IFractalUsul {
             "Strategy not authorized"
         );
         require(
-            state(proposalId) == ProposalState.Active,
+            state(proposalId) == ProposalState.ACTIVE,
             "Proposal must be in the active state"
         );
         require(
@@ -230,7 +230,7 @@ contract FractalUsul is Module, IFractalUsul {
         Enum.Operation operation
     ) public {
         require(
-            state(proposalId) == ProposalState.Executable,
+            state(proposalId) == ProposalState.EXECUTABLE,
             "Proposal must be in the executable state"
         );
         bytes32 txHash = getTxHash(target, value, data, operation);
@@ -361,17 +361,17 @@ contract FractalUsul is Module, IFractalUsul {
     function state(uint256 proposalId) public view returns (ProposalState) {
         Proposal storage _proposal = proposals[proposalId];
         if (_proposal.strategy == address(0)) {
-            return ProposalState.Uninitialized;
+            return ProposalState.UNINITIALIZED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
-            return ProposalState.Executed;
+            return ProposalState.EXECUTED;
         } else if (_proposal.canceled) {
-            return ProposalState.Canceled;
+            return ProposalState.CANCELED;
         } else if (_proposal.timelockPeriod == 0) {
-            return ProposalState.Active;
+            return ProposalState.ACTIVE;
         } else if (block.timestamp < _proposal.timelockPeriod) {
-            return ProposalState.Timelocked;
+            return ProposalState.TIMELOCKED;
         } else {
-            return ProposalState.Executable;
+            return ProposalState.EXECUTABLE;
         }
     }
 

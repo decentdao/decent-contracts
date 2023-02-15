@@ -6,12 +6,12 @@ import "../FractalUsul.sol";
 
 interface IFractalUsul {
     enum ProposalState {
-        Active,
-        Canceled,
-        Timelocked,
-        Executed,
-        Executable,
-        Uninitialized
+        ACTIVE,
+        CANCELED,
+        TIMELOCKED,
+        EXECUTED,
+        EXECUTABLE,
+        UNINITIALIZED
     }
 
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
