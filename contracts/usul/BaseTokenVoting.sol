@@ -28,7 +28,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
     mapping(uint256 => ProposalVoting) internal proposals;
 
-    event TimelockPeriodUpdated(uint256 newTimeLockPeriod);
+    event TimelockPeriodUpdated(uint256 newTimelockPeriod);
     event VotingPeriodUpdated(uint256 newVotingPeriod);
     event ProposalReceived(uint256 proposalId, uint256 timestamp);
     event VoteFinalized(uint256 proposalId, uint256 timestamp);
