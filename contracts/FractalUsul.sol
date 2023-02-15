@@ -298,14 +298,14 @@ contract FractalUsul is Module, IFractalUsul {
     /// @notice Returns array of strategy contract addresses
     /// @param startAddress Address in the strategy linked list to start with
     /// @param count Maximum number of strategies that should be returned
-    /// @return strategiesArray Array of strategy
+    /// @return _strategies Array of strategy
     /// @return next Next address in the linked list
     function getStrategies(
         address startAddress,
         uint256 count
-    ) external view returns (address[] memory strategiesArray, address next) {
+    ) external view returns (address[] memory _strategies, address next) {
         // Init array with max page size
-        strategiesArray = new address[](count);
+        _strategies = new address[](count);
 
         // Populate return array
         uint256 strategyCount = 0;
@@ -315,14 +315,14 @@ contract FractalUsul is Module, IFractalUsul {
             currentStrategy != SENTINEL_STRATEGY &&
             strategyCount < count
         ) {
-            strategiesArray[strategyCount] = currentStrategy;
+            _strategies[strategyCount] = currentStrategy;
             currentStrategy = strategies[currentStrategy];
             strategyCount++;
         }
         next = currentStrategy;
         // Set correct size of returned array
         assembly {
-            mstore(strategiesArray, strategyCount)
+            mstore(_strategies, strategyCount)
         }
     }
 

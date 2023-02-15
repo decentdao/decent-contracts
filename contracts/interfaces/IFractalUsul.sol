@@ -79,12 +79,12 @@ interface IFractalUsul {
     /// @notice Returns array of strategy contract addresses
     /// @param startAddress Address in the strategy linked list to start with
     /// @param count Maximum number of strategies that should be returned
-    /// @return strategiesArray Array of strategy
+    /// @return _strategies Array of strategy
     /// @return next Next address in the linked list
     function getStrategies(
         address startAddress,
         uint256 count
-    ) external view returns (address[] memory strategiesArray, address next);
+    ) external view returns (address[] memory _strategies, address next);
 
     /// @notice Returns true if a proposal transaction by index is executed
     /// @param proposalId The ID of the proposal
