@@ -119,9 +119,9 @@ abstract contract BaseTokenVoting is BaseStrategy {
         emit Voted(_voter, _proposalId, _support, _weight);
     }
 
-    /// @notice Notifies the strategy of a new proposal, only callable by the Usul Module
-    /// @param _data Encoded proposal data, in this implementation only includes proposal ID
-    function receiveProposal(
+    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
+    /// @param _data Any extra data to pass to the voting strategy
+    function initializeProposal(
         bytes memory _data
     ) external virtual override onlyUsul {
         uint256 proposalId = abi.decode(_data, (uint256));

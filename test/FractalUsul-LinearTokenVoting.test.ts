@@ -342,7 +342,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
     it("Proposal cannot be received by the strategy from address other than UsulModule", async () => {
       // Submit call from address that isn't Usul module
-      await expect(linearTokenVoting.receiveProposal([])).to.be.revertedWith(
+      await expect(linearTokenVoting.initializeProposal([])).to.be.revertedWith(
         "Only callable by Usul module"
       );
     });

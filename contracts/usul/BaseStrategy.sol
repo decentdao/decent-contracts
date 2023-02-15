@@ -30,9 +30,9 @@ abstract contract BaseStrategy is
         _setUsul(_usulModule);
     }
 
-    /// @notice Called by the Usul module, this notifes the strategy of a new proposal
+    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
     /// @param _data Any extra data to pass to the voting strategy
-    function receiveProposal(bytes memory _data) external virtual;
+    function initializeProposal(bytes memory _data) external virtual;
 
     /// @notice Calls the proposal module to notify that a quorum has been reached
     /// @param _proposalId The ID of the proposal to timelock

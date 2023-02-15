@@ -119,7 +119,7 @@ contract FractalUsul is Module, IFractalUsul {
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
     /// @param strategy Address of Voting Strategy, under which proposal submitted
-    /// @param data - any additional data, which would be passed into IStrategy.receiveProposal
+    /// @param data - any additional data, which would be passed to the strategy contract
     /// @param transactions - array of transactions to execute
     /// @param title - proposal title, emitted in ProposalCreated
     /// @param description - proposal description, emitted in ProposalCreated
@@ -151,7 +151,7 @@ contract FractalUsul is Module, IFractalUsul {
 
         proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].strategy = strategy;
-        IBaseStrategy(strategy).receiveProposal(
+        IBaseStrategy(strategy).initializeProposal(
             abi.encode(totalProposalCount, txHashes, data)
         );
         emit ProposalCreated(
