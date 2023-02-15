@@ -39,14 +39,10 @@ interface IFractalUsul {
         string calldata documentationUrl
     ) external;
 
-    /// @notice Cancels an array of proposals
-    /// @param proposalIds Array of proposals to cancel
-    function cancelProposals(uint256[] memory proposalIds) external;
-
     /// @notice Called by the strategy contract when the proposal vote has succeeded
-    /// @param proposalId the identifier of the proposal
-    /// @param timeLockPeriod the optional delay time
-    function timelockProposal(uint256 proposalId, uint256 timeLockPeriod) external;
+    /// @param proposalId The ID of the proposal
+    /// @param timelockPeriod The delay time until a proposal can be executed
+    function timelockProposal(uint256 proposalId, uint256 timelockPeriod) external;
 
     /// @notice Executes the specified transaction within a proposal
     /// @notice Transactions must be called in order
@@ -152,13 +148,18 @@ interface IFractalUsul {
         uint256 proposalId
     ) external view returns (bytes32[] memory);
 
+    /// @notice Gets details about the specified proposal
+    /// @param proposalId The ID of the proposal
+    /// @return timelockPeriod The delay time until a proposal can be executed
+    /// @return txHashes The hashes of the transactions the proposal contains
+    /// @return executionCounter Counter of how many of the proposal transactions have been executed
+    /// @return strategy The address of the strategy contract the proposal is on
     function getProposal(
         uint256 proposalId
     )
         external
         view
         returns (
-            bool canceled,
             uint256 timelockPeriod,
             bytes32[] memory txHashes,
             uint256 executionCounter,

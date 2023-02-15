@@ -347,11 +347,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -449,11 +448,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -532,11 +530,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -607,11 +604,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -671,11 +667,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -723,11 +718,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -810,11 +804,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -879,11 +872,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -934,11 +926,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -979,11 +970,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1028,11 +1018,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1074,11 +1063,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1146,11 +1134,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1258,11 +1245,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1348,11 +1334,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1461,11 +1446,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1575,11 +1559,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1648,11 +1631,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1749,11 +1731,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -1914,11 +1895,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -2031,11 +2011,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -2138,11 +2117,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);
@@ -2342,11 +2320,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      // 1 => TimeLocked,
+      // 2 => Executed,
+      // 3 => Executing,
+      // 4 => Uninitialized
 
       // Proposal is active
       expect(await usulModule.state(0)).to.eq(0);

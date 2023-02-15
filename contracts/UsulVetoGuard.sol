@@ -67,7 +67,7 @@ contract UsulVetoGuard is
             "Proposal timelock failed"
         );
 
-        (, uint256 timelockDeadline, , , ) = fractalUsul.getProposal(proposalId);
+        (uint256 timelockDeadline, , , ) = fractalUsul.getProposal(proposalId);
 
         uint256 executionDeadline = timelockDeadline + executionPeriod;
 

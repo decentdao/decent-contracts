@@ -15,7 +15,6 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     struct Proposal {
-        bool canceled;
         uint256 timelockPeriod;
         bytes32[] txHashes;
         uint256 executionCounter;
@@ -40,7 +39,6 @@ contract FractalUsul is Module, IFractalUsul {
         string description,
         string documentationUrl
     );
-    event ProposalCanceled(uint256 proposalId);
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
     event ProposalTimelocked(uint256 proposalId, uint256 endDate);
@@ -167,29 +165,9 @@ contract FractalUsul is Module, IFractalUsul {
         totalProposalCount++;
     }
 
-    /// @notice Cancels an array of proposals
-    /// @param proposalIds Array of proposals to cancel
-    function cancelProposals(uint256[] memory proposalIds) external onlyOwner {
-        for (uint256 i = 0; i < proposalIds.length; i++) {
-            Proposal storage _proposal = proposals[proposalIds[i]];
-            require(
-                _proposal.executionCounter < _proposal.txHashes.length,
-                "Proposal has already been executed"
-            );
-            require(
-                _proposal.canceled == false,
-                "Proposal is already canceled"
-            );
-
-            _proposal.canceled = true;
-
-            emit ProposalCanceled(proposalIds[i]);
-        }
-    }
-
     /// @notice Called by the strategy contract when the proposal vote has succeeded
-    /// @param proposalId the identifier of the proposal
-    /// @param timelockPeriod the optional delay time
+    /// @param proposalId The ID of the proposal
+    /// @param timelockPeriod The delay time until a proposal can be executed
     function timelockProposal(
         uint256 proposalId,
         uint256 timelockPeriod
@@ -364,8 +342,6 @@ contract FractalUsul is Module, IFractalUsul {
             return ProposalState.UNINITIALIZED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
-        } else if (_proposal.canceled) {
-            return ProposalState.CANCELED;
         } else if (_proposal.timelockPeriod == 0) {
             return ProposalState.ACTIVE;
         } else if (block.timestamp < _proposal.timelockPeriod) {
@@ -447,20 +423,24 @@ contract FractalUsul is Module, IFractalUsul {
         return proposals[proposalId].txHashes;
     }
 
+    /// @notice Gets details about the specified proposal
+    /// @param proposalId The ID of the proposal
+    /// @return timelockPeriod The delay time until a proposal can be executed
+    /// @return txHashes The hashes of the transactions the proposal contains
+    /// @return executionCounter Counter of how many of the proposal transactions have been executed
+    /// @return strategy The address of the strategy contract the proposal is on
     function getProposal(
         uint256 proposalId
     )
         external
         view
         returns (
-            bool canceled,
             uint256 timelockPeriod,
             bytes32[] memory txHashes,
             uint256 executionCounter,
             address strategy
         )
     {
-        canceled = proposals[proposalId].canceled;
         timelockPeriod = proposals[proposalId].timelockPeriod;
         txHashes = proposals[proposalId].txHashes;
         executionCounter = proposals[proposalId].executionCounter;
