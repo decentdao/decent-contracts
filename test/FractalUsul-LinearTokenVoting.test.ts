@@ -243,7 +243,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
             "0x0000000000000000000000000000000000000001",
             3
           )
-        ).strategiesArray
+        )._strategies
       ).to.deep.eq([
         mockStrategy2.address,
         mockStrategy1.address,
