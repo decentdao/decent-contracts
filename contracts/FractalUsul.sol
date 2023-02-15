@@ -90,8 +90,10 @@ contract FractalUsul is Module, IFractalUsul {
             "Invalid strategy"
         );
         require(strategies[strategy] == address(0), "Strategy already enabled");
+
         strategies[strategy] = strategies[SENTINEL_STRATEGY];
         strategies[SENTINEL_STRATEGY] = strategy;
+
         emit EnabledStrategy(strategy);
     }
 
@@ -110,8 +112,10 @@ contract FractalUsul is Module, IFractalUsul {
             strategies[prevStrategy] == strategy,
             "Strategy already disabled"
         );
+
         strategies[prevStrategy] = strategies[strategy];
         strategies[strategy] = address(0);
+
         emit DisabledStrategy(strategy);
     }
 
@@ -177,7 +181,7 @@ contract FractalUsul is Module, IFractalUsul {
             "Strategy not authorized"
         );
         require(
-            state(proposalId) == ProposalState.ACTIVE,
+            proposalState(proposalId) == ProposalState.ACTIVE,
             "Proposal must be in the active state"
         );
         require(
@@ -208,7 +212,7 @@ contract FractalUsul is Module, IFractalUsul {
         Enum.Operation operation
     ) public {
         require(
-            state(proposalId) == ProposalState.EXECUTABLE,
+            proposalState(proposalId) == ProposalState.EXECUTABLE,
             "Proposal must be in the executable state"
         );
         bytes32 txHash = getTxHash(target, value, data, operation);
@@ -336,11 +340,11 @@ contract FractalUsul is Module, IFractalUsul {
     /// @notice Gets the state of a proposal
     /// @param proposalId The ID of the proposal
     /// @return ProposalState the enum of the state of the proposal
-    function state(uint256 proposalId) public view returns (ProposalState) {
-        Proposal storage _proposal = proposals[proposalId];
-        if (_proposal.strategy == address(0)) {
-            return ProposalState.UNINITIALIZED;
-        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
+    function proposalState(uint256 proposalId) public view returns (ProposalState) {
+        Proposal memory _proposal = proposals[proposalId];
+        require(_proposal.strategy != address(0), "Invalid proposal ID");
+
+        if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
         } else if (_proposal.timelockPeriod == 0) {
             return ProposalState.ACTIVE;

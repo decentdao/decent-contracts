@@ -59,11 +59,11 @@ contract UsulVetoGuard is
     /// @param proposalId The ID of the proposal to timelock
     function timelockProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
-        if (fractalUsul.state(proposalId) == IFractalUsul.ProposalState.ACTIVE)
+        if (fractalUsul.proposalState(proposalId) == IFractalUsul.ProposalState.ACTIVE)
             strategy.timelockProposal(proposalId);
 
         require(
-            fractalUsul.state(proposalId) == IFractalUsul.ProposalState.TIMELOCKED,
+            fractalUsul.proposalState(proposalId) == IFractalUsul.ProposalState.TIMELOCKED,
             "Proposal timelock failed"
         );
 

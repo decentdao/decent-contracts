@@ -7,11 +7,9 @@ import "../FractalUsul.sol";
 interface IFractalUsul {
     enum ProposalState {
         ACTIVE,
-        CANCELED,
         TIMELOCKED,
-        EXECUTED,
         EXECUTABLE,
-        UNINITIALIZED
+        EXECUTED
     }
 
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
@@ -100,7 +98,7 @@ interface IFractalUsul {
     /// @notice Gets the state of a proposal
     /// @param proposalId The ID of the proposal
     /// @return ProposalState the uint256 representing of the state of the proposal
-    function state(
+    function proposalState(
         uint256 proposalId
     ) external view returns (ProposalState);
 

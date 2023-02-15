@@ -334,9 +334,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -346,14 +343,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -369,13 +360,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -435,9 +426,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         },
       ];
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -447,14 +435,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -470,13 +452,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -517,9 +499,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -529,14 +508,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -549,13 +522,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -591,9 +564,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -603,14 +573,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -623,7 +587,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that execution period has ended
       await time.increase(time.duration.seconds(130));
@@ -654,9 +618,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -666,14 +627,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -705,9 +660,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -717,14 +669,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -747,13 +693,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(121));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       // Execution deadline should now be in the past
       expect(await time.latest()).to.gt(
@@ -791,9 +737,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -803,14 +746,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -825,13 +762,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       // The proposal is not timelocked
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
@@ -859,9 +796,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -871,14 +805,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -913,9 +841,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -925,14 +850,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -957,9 +876,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -969,14 +885,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 0, [0]);
@@ -1005,9 +915,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1017,14 +924,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1050,9 +951,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1062,14 +960,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1085,7 +977,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Do not wait for timelock to end, but attempt to execute the transaction
       await expect(
@@ -1121,9 +1013,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1133,14 +1022,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1156,7 +1039,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1172,7 +1055,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
@@ -1232,9 +1115,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         },
       ];
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1244,14 +1124,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1267,7 +1141,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1281,7 +1155,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
@@ -1321,9 +1195,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1333,14 +1204,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1356,7 +1221,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1367,7 +1232,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1423,10 +1288,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1445,15 +1306,9 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await usulModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1474,8 +1329,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await usulModule.proposalState(1)).to.eq(1);
 
       // Voters both cast veto votes on the first proposal
       await vetoMultisigVoting
@@ -1490,8 +1345,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await usulModule.proposalState(1)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1546,9 +1401,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1558,14 +1410,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1581,7 +1427,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1618,9 +1464,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1630,14 +1473,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1700,11 +1537,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-      expect(await usulModule.state(2)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1730,16 +1562,10 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
-      expect(await usulModule.state(2)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await usulModule.proposalState(1)).to.eq(0);
+      expect(await usulModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1765,9 +1591,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
-      expect(await usulModule.state(2)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await usulModule.proposalState(1)).to.eq(1);
+      expect(await usulModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1786,9 +1612,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
-      expect(await usulModule.state(2)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await usulModule.proposalState(1)).to.eq(2);
+      expect(await usulModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to veto
       await expect(
@@ -1862,11 +1688,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-      expect(await usulModule.state(2)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -1894,16 +1715,10 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
-      expect(await usulModule.state(2)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await usulModule.proposalState(1)).to.eq(0);
+      expect(await usulModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1929,9 +1744,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
-      expect(await usulModule.state(2)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await usulModule.proposalState(1)).to.eq(1);
+      expect(await usulModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1946,9 +1761,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
-      expect(await usulModule.state(2)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await usulModule.proposalState(1)).to.eq(2);
+      expect(await usulModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
@@ -1998,9 +1813,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -2010,14 +1822,8 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -2033,7 +1839,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -2046,7 +1852,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -2094,10 +1900,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -2116,15 +1918,9 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await usulModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -2141,8 +1937,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await usulModule.proposalState(1)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -2157,8 +1953,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await usulModule.proposalState(1)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
@@ -2199,9 +1995,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(2)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -2211,7 +2004,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      expect(await usulModule.state(2)).to.eq(0);
+      expect(await usulModule.proposalState(2)).to.eq(0);
 
       await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
       await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
@@ -2223,13 +2016,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.state(2)).to.eq(2);
+      expect(await usulModule.proposalState(2)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(2)).to.eq(4);
+      expect(await usulModule.proposalState(2)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -2289,11 +2082,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-      expect(await usulModule.state(2)).to.eq(5);
-
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
@@ -2319,16 +2107,10 @@ describe("Usul Child DAO with Multisig parent", () => {
         ""
       );
 
-      // 0 => Active
-      // 1 => TimeLocked,
-      // 2 => Executed,
-      // 3 => Executing,
-      // 4 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
-      expect(await usulModule.state(2)).to.eq(0);
+      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await usulModule.proposalState(1)).to.eq(0);
+      expect(await usulModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -2354,9 +2136,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await usulVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
-      expect(await usulModule.state(2)).to.eq(2);
+      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await usulModule.proposalState(1)).to.eq(1);
+      expect(await usulModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -2371,9 +2153,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
-      expect(await usulModule.state(2)).to.eq(4);
+      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await usulModule.proposalState(1)).to.eq(2);
+      expect(await usulModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
