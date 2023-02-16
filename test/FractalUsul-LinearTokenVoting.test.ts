@@ -293,6 +293,16 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
+    it("Getting proposal state on an invalid proposal ID reverts", async () => {
+      await expect(usulModule.proposalState(0)).to.be.revertedWith(
+        "Invalid proposal ID"
+      );
+
+      await expect(usulModule.proposalState(0)).to.be.revertedWith(
+        "Invalid proposal ID"
+      );
+    });
+
     it("A proposal cannot be submitted if the specified strategy has not been enabled", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = votesToken.interface.encodeFunctionData(
