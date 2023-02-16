@@ -35,9 +35,7 @@ contract FractalUsul is Module, IFractalUsul {
         uint256 proposalId,
         address proposer,
         Transaction[] transactions,
-        string title,
-        string description,
-        string documentationUrl
+        string metadata
     );
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
@@ -120,19 +118,15 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
-    /// @param strategy Address of Voting Strategy, under which proposal submitted
-    /// @param data - any additional data, which would be passed to the strategy contract
-    /// @param transactions - array of transactions to execute
-    /// @param title - proposal title, emitted in ProposalCreated
-    /// @param description - proposal description, emitted in ProposalCreated
-    /// @param documentationUrl - proposal documentation/discussion URL, emitted in ProposalCreated
+    /// @param strategy Address of the voting strategy which the proposal will be submitted to
+    /// @param data Additional data which will be passed to the strategy contract
+    /// @param transactions Array of transactions to execute
+    /// @param metadata Any additional metadata such as a title or description to submit with the proposal
     function submitProposal(
         address strategy,
         bytes memory data,
         Transaction[] calldata transactions,
-        string calldata title,
-        string calldata description,
-        string calldata documentationUrl
+        string calldata metadata
     ) external {
         require(
             isStrategyEnabled(strategy),
@@ -161,9 +155,7 @@ contract FractalUsul is Module, IFractalUsul {
             totalProposalCount,
             msg.sender,
             transactions,
-            title,
-            description,
-            documentationUrl
+            metadata
         );
 
         totalProposalCount++;

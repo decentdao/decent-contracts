@@ -313,8 +313,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
           votesToken.address,
           "0x",
           [proposalTransaction],
-          "",
-          "",
           ""
         )
       ).to.be.revertedWith("Voting strategy is not enabled");
@@ -323,14 +321,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     it("A proposal cannot be submitted if it contains zero transactions", async () => {
       // Submit transactions as empty array
       await expect(
-        usulModule.submitProposal(
-          linearTokenVoting.address,
-          "0x",
-          [],
-          "",
-          "",
-          ""
-        )
+        usulModule.submitProposal(linearTokenVoting.address, "0x", [], "")
       ).to.be.revertedWith("Proposal must contain at least one transaction");
     });
 
@@ -366,8 +357,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -401,8 +390,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -434,8 +421,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -478,8 +463,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -522,8 +505,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -566,8 +547,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -606,8 +585,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -662,8 +639,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -717,8 +692,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -766,17 +739,13 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      const proposalTitle = "This is my amazing proposal!";
-      const proposalDescription = "And this is my super amazing description";
-      const proposalDocumentationUrl = "https://example.com/amazing-proposal";
+      const proposalMetadata = "This is my amazing proposal!";
 
       const tx = await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        proposalTitle,
-        proposalDescription,
-        proposalDocumentationUrl
+        proposalMetadata
       );
       const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt.logs[1].data;
@@ -797,9 +766,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         proposalTransaction.operation
       );
 
-      expect(event.title).to.be.equal(proposalTitle);
-      expect(event.description).to.be.equal(proposalDescription);
-      expect(event.documentationUrl).to.be.equal(proposalDocumentationUrl);
+      expect(event.metadata).to.be.equal(proposalMetadata);
     });
 
     it("A proposal can be created and executed", async () => {
@@ -820,8 +787,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -905,8 +870,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -990,8 +953,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -1105,8 +1066,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -1349,8 +1308,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 

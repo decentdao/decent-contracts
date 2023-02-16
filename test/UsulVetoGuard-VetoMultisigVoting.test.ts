@@ -338,8 +338,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -430,8 +428,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         proposalTransactions,
-        "",
-        "",
         ""
       );
 
@@ -503,8 +499,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -568,8 +562,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -622,8 +614,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -664,8 +654,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -741,8 +729,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -800,8 +786,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -845,8 +829,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -880,8 +862,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -919,8 +899,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -955,8 +933,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1017,8 +993,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1119,8 +1093,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         proposalTransactions,
-        "",
-        "",
         ""
       );
 
@@ -1199,8 +1171,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1292,8 +1262,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
-        "",
-        "",
         ""
       );
 
@@ -1301,8 +1269,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
-        "",
-        "",
         ""
       );
 
@@ -1405,8 +1371,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1468,8 +1432,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1541,24 +1503,18 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
-        "",
-        "",
         ""
       );
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
-        "",
-        "",
         ""
       );
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -1692,8 +1648,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
-        "",
-        "",
         ""
       );
 
@@ -1701,8 +1655,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
-        "",
-        "",
         ""
       );
 
@@ -1710,8 +1662,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -1817,8 +1767,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
-        "",
-        "",
         ""
       );
 
@@ -1904,8 +1852,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
-        "",
-        "",
         ""
       );
 
@@ -1913,8 +1859,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
-        "",
-        "",
         ""
       );
 
@@ -1999,8 +1943,6 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
-        "",
-        "",
         ""
       );
 
@@ -2086,24 +2028,18 @@ describe("Usul Child DAO with Multisig parent", () => {
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
-        "",
-        "",
         ""
       );
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
-        "",
-        "",
         ""
       );
       await usulModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
-        "",
-        "",
         ""
       );
 
