@@ -15,12 +15,12 @@ interface IBaseStrategy {
     function timelockProposal(uint256 _proposalId) external;
 
     /// @notice Retruns if a proposal has succeeded
-    /// @param proposalId The proposalId to check
+    /// @param _proposalId The proposalId to check
     /// @return bool Returns true if the proposal has passed
-    function isPassed(uint256 proposalId) external view returns (bool);
+    function isPassed(uint256 _proposalId) external view returns (bool);
 
     /// @notice Returns if the specified address can submit a proposal
-    /// @param user The user address to check
+    /// @param _user The user address to check
     /// @return bool True if the user can submit a proposal
-    function isProposer(address user) external view returns (bool);
+    function isProposer(address _user) external view returns (bool);
 }

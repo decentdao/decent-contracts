@@ -81,187 +81,187 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
-    /// @param strategy Address of the strategy to be enabled
-    function enableStrategy(address strategy) public onlyOwner {
+    /// @param _strategy Address of the strategy to be enabled
+    function enableStrategy(address _strategy) public onlyOwner {
         require(
-            strategy != address(0) && strategy != SENTINEL_STRATEGY,
+            _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
             "Invalid strategy"
         );
-        require(strategies[strategy] == address(0), "Strategy already enabled");
+        require(strategies[_strategy] == address(0), "Strategy already enabled");
 
-        strategies[strategy] = strategies[SENTINEL_STRATEGY];
-        strategies[SENTINEL_STRATEGY] = strategy;
+        strategies[_strategy] = strategies[SENTINEL_STRATEGY];
+        strategies[SENTINEL_STRATEGY] = _strategy;
 
-        emit EnabledStrategy(strategy);
+        emit EnabledStrategy(_strategy);
     }
 
     /// @notice Disables a voting strategy on the module, only callable by the owner
-    /// @param prevStrategy Strategy that pointed to the strategy to be removed in the linked list
-    /// @param strategy Strategy to be removed
+    /// @param _prevStrategy Strategy that pointed to the strategy to be removed in the linked list
+    /// @param _strategy Strategy to be removed
     function disableStrategy(
-        address prevStrategy,
-        address strategy
+        address _prevStrategy,
+        address _strategy
     ) public onlyOwner {
         require(
-            strategy != address(0) && strategy != SENTINEL_STRATEGY,
+            _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
             "Invalid strategy"
         );
         require(
-            strategies[prevStrategy] == strategy,
+            strategies[_prevStrategy] == _strategy,
             "Strategy already disabled"
         );
 
-        strategies[prevStrategy] = strategies[strategy];
-        strategies[strategy] = address(0);
+        strategies[_prevStrategy] = strategies[_strategy];
+        strategies[_strategy] = address(0);
 
-        emit DisabledStrategy(strategy);
+        emit DisabledStrategy(_strategy);
     }
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
-    /// @param strategy Address of the voting strategy which the proposal will be submitted to
-    /// @param data Additional data which will be passed to the strategy contract
-    /// @param transactions Array of transactions to execute
-    /// @param metadata Any additional metadata such as a title or description to submit with the proposal
+    /// @param _strategy Address of the voting strategy which the proposal will be submitted to
+    /// @param _data Additional data which will be passed to the strategy contract
+    /// @param _transactions Array of transactions to execute
+    /// @param _metadata Any additional metadata such as a title or description to submit with the proposal
     function submitProposal(
-        address strategy,
-        bytes memory data,
-        Transaction[] calldata transactions,
-        string calldata metadata
+        address _strategy,
+        bytes memory _data,
+        Transaction[] calldata _transactions,
+        string calldata _metadata
     ) external {
         require(
-            isStrategyEnabled(strategy),
+            isStrategyEnabled(_strategy),
             "Voting strategy is not enabled"
         );
-        require(transactions.length > 0, "Proposal must contain at least one transaction");
-        require(IBaseStrategy(strategy).isProposer(msg.sender), "Caller cannot submit proposals");
+        require(_transactions.length > 0, "Proposal must contain at least one transaction");
+        require(IBaseStrategy(_strategy).isProposer(msg.sender), "Caller cannot submit proposals");
 
-        bytes32[] memory txHashes = new bytes32[](transactions.length);
-        for (uint256 i = 0; i < transactions.length; i++) {
+        bytes32[] memory txHashes = new bytes32[](_transactions.length);
+        for (uint256 i = 0; i < _transactions.length; i++) {
             txHashes[i] = getTxHash(
-                transactions[i].to,
-                transactions[i].value,
-                transactions[i].data,
-                transactions[i].operation
+                _transactions[i].to,
+                _transactions[i].value,
+                _transactions[i].data,
+                _transactions[i].operation
             );
         }
 
         proposals[totalProposalCount].txHashes = txHashes;
-        proposals[totalProposalCount].strategy = strategy;
-        IBaseStrategy(strategy).initializeProposal(
-            abi.encode(totalProposalCount, txHashes, data)
+        proposals[totalProposalCount].strategy = _strategy;
+        IBaseStrategy(_strategy).initializeProposal(
+            abi.encode(totalProposalCount, txHashes, _data)
         );
         emit ProposalCreated(
-            strategy,
+            _strategy,
             totalProposalCount,
             msg.sender,
-            transactions,
-            metadata
+            _transactions,
+            _metadata
         );
 
         totalProposalCount++;
     }
 
     /// @notice Called by the strategy contract when the proposal vote has succeeded
-    /// @param proposalId The ID of the proposal
-    /// @param timelockPeriod The delay time until a proposal can be executed
+    /// @param _proposalId The ID of the proposal
+    /// @param _timelockPeriod The delay time until a proposal can be executed
     function timelockProposal(
-        uint256 proposalId,
-        uint256 timelockPeriod
+        uint256 _proposalId,
+        uint256 _timelockPeriod
     ) external {
         require(
             strategies[msg.sender] != address(0),
             "Strategy not authorized"
         );
         require(
-            proposalState(proposalId) == ProposalState.ACTIVE,
+            proposalState(_proposalId) == ProposalState.ACTIVE,
             "Proposal must be in the active state"
         );
         require(
-            msg.sender == proposals[proposalId].strategy,
+            msg.sender == proposals[_proposalId].strategy,
             "Incorrect strategy for proposal"
         );
 
-        proposals[proposalId].timelockPeriod = block.timestamp + timelockPeriod;
+        proposals[_proposalId].timelockPeriod = block.timestamp + _timelockPeriod;
 
         emit ProposalTimelocked(
-            proposalId,
-            proposals[proposalId].timelockPeriod
+            _proposalId,
+            proposals[_proposalId].timelockPeriod
         );
     }
 
     /// @notice Executes the specified transaction within a proposal
     /// @notice Transactions must be called in order
-    /// @param proposalId the identifier of the proposal
-    /// @param target the contract to be called by the avatar
-    /// @param value ether value to pass with the call
-    /// @param data the data to be executed from the call
-    /// @param operation Call or Delegatecall
+    /// @param _proposalId the identifier of the proposal
+    /// @param _target the contract to be called by the avatar
+    /// @param _value ether value to pass with the call
+    /// @param _data the data to be executed from the call
+    /// @param _operation Call or Delegatecall
     function executeProposalByIndex(
-        uint256 proposalId,
-        address target,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
+        uint256 _proposalId,
+        address _target,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation
     ) public {
         require(
-            proposalState(proposalId) == ProposalState.EXECUTABLE,
+            proposalState(_proposalId) == ProposalState.EXECUTABLE,
             "Proposal must be in the executable state"
         );
-        bytes32 txHash = getTxHash(target, value, data, operation);
+        bytes32 txHash = getTxHash(_target, _value, _data, _operation);
         require(
-            proposals[proposalId].txHashes[
-                proposals[proposalId].executionCounter
+            proposals[_proposalId].txHashes[
+                proposals[_proposalId].executionCounter
             ] == txHash,
             "Transaction hash does not match the indexed hash"
         );
-        proposals[proposalId].executionCounter++;
+        proposals[_proposalId].executionCounter++;
         require(
-            exec(target, value, data, operation),
+            exec(_target, _value, _data, _operation),
             "Module transaction failed"
         );
-        emit TransactionExecuted(proposalId, txHash);
+        emit TransactionExecuted(_proposalId, txHash);
     }
 
     /// @notice Executes all the transactions within a proposal
-    /// @param proposalId the identifier of the proposal
-    /// @param targets the contracts to be called by the avatar
-    /// @param values ether values to pass with the calls
-    /// @param data the data to be executed from the calls
-    /// @param operations Calls or Delegatecalls
+    /// @param _proposalId the identifier of the proposal
+    /// @param _targets the contracts to be called by the avatar
+    /// @param _values ether values to pass with the calls
+    /// @param _data the data to be executed from the calls
+    /// @param _operations Calls or Delegatecalls
     function executeProposalBatch(
-        uint256 proposalId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory data,
-        Enum.Operation[] memory operations
+        uint256 _proposalId,
+        address[] memory _targets,
+        uint256[] memory _values,
+        bytes[] memory _data,
+        Enum.Operation[] memory _operations
     ) external {
         require(
-            targets.length != 0,
+            _targets.length != 0,
             "No transactions to execute provided"
         );
         require(
-            targets.length == values.length &&
-                targets.length == data.length &&
-                targets.length == operations.length,
+            _targets.length == _values.length &&
+                _targets.length == _data.length &&
+                _targets.length == _operations.length,
             "Array length mismatch"
         );
         require(
-            proposals[proposalId].executionCounter + targets.length <=
-                proposals[proposalId].txHashes.length,
+            proposals[_proposalId].executionCounter + _targets.length <=
+                proposals[_proposalId].txHashes.length,
             "Too many transactions to execute provided"
         );
-        for (uint256 i = 0; i < targets.length; i++) {
+        for (uint256 i = 0; i < _targets.length; i++) {
             executeProposalByIndex(
-                proposalId,
-                targets[i],
-                values[i],
-                data[i],
-                operations[i]
+                _proposalId,
+                _targets[i],
+                _values[i],
+                _data[i],
+                _operations[i]
             );
         }
         emit TransactionExecutedBatch(
-            proposals[proposalId].executionCounter,
-            proposals[proposalId].executionCounter + targets.length
+            proposals[_proposalId].executionCounter,
+            proposals[_proposalId].executionCounter + _targets.length
         );
     }
 
@@ -288,30 +288,30 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Returns array of strategy contract addresses
-    /// @param startAddress Address in the strategy linked list to start with
-    /// @param count Maximum number of strategies that should be returned
+    /// @param _startAddress Address in the strategy linked list to start with
+    /// @param _count Maximum number of strategies that should be returned
     /// @return _strategies Array of strategy
-    /// @return next Next address in the linked list
+    /// @return _next Next address in the linked list
     function getStrategies(
-        address startAddress,
-        uint256 count
-    ) external view returns (address[] memory _strategies, address next) {
+        address _startAddress,
+        uint256 _count
+    ) external view returns (address[] memory _strategies, address _next) {
         // Init array with max page size
-        _strategies = new address[](count);
+        _strategies = new address[](_count);
 
         // Populate return array
         uint256 strategyCount = 0;
-        address currentStrategy = strategies[startAddress];
+        address currentStrategy = strategies[_startAddress];
         while (
             currentStrategy != address(0x0) &&
             currentStrategy != SENTINEL_STRATEGY &&
-            strategyCount < count
+            strategyCount < _count
         ) {
             _strategies[strategyCount] = currentStrategy;
             currentStrategy = strategies[currentStrategy];
             strategyCount++;
         }
-        next = currentStrategy;
+        _next = currentStrategy;
         // Set correct size of returned array
         assembly {
             mstore(_strategies, strategyCount)
@@ -319,21 +319,21 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Returns true if a proposal transaction by index is executed
-    /// @param proposalId The ID of the proposal
-    /// @param index The index of the transaction within the proposal
+    /// @param _proposalId The ID of the proposal
+    /// @param _index The index of the transaction within the proposal
     /// @return bool True if the transaction has been executed
     function isTxExecuted(
-        uint256 proposalId,
-        uint256 index
+        uint256 _proposalId,
+        uint256 _index
     ) external view returns (bool) {
-        return proposals[proposalId].executionCounter > index;
+        return proposals[_proposalId].executionCounter > _index;
     }
 
     /// @notice Gets the state of a proposal
-    /// @param proposalId The ID of the proposal
+    /// @param _proposalId The ID of the proposal
     /// @return ProposalState the enum of the state of the proposal
-    function proposalState(uint256 proposalId) public view returns (ProposalState) {
-        Proposal memory _proposal = proposals[proposalId];
+    function proposalState(uint256 _proposalId) public view returns (ProposalState) {
+        Proposal memory _proposal = proposals[_proposalId];
         require(_proposal.strategy != address(0), "Invalid proposal ID");
 
         if (_proposal.executionCounter == _proposal.txHashes.length) {
@@ -348,18 +348,18 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Generates the data for the module transaction hash (required for signing)
-    /// @param to The target address of the transaction
-    /// @param value The Ether value to send with the transaction
-    /// @param data The encoded function call data of the transaction
-    /// @param operation The operation to use for the transaction
-    /// @param nonce The Safe nonce of the transaction
+    /// @param _to The target address of the transaction
+    /// @param _value The Ether value to send with the transaction
+    /// @param _data The encoded function call data of the transaction
+    /// @param _operation The operation to use for the transaction
+    /// @param _nonce The Safe nonce of the transaction
     /// @return bytes The hash transaction data
     function generateTxHashData(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 nonce
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation,
+        uint256 _nonce
     ) public view returns (bytes memory) {
         uint256 chainId = block.chainid;
         bytes32 domainSeparator = keccak256(
@@ -368,11 +368,11 @@ contract FractalUsul is Module, IFractalUsul {
         bytes32 transactionHash = keccak256(
             abi.encode(
                 TRANSACTION_TYPEHASH,
-                to,
-                value,
-                keccak256(data),
-                operation,
-                nonce
+                _to,
+                _value,
+                keccak256(_data),
+                _operation,
+                _nonce
             )
         );
         return
@@ -385,61 +385,61 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     /// @notice Returns the hash of a transaction in a proposal
-    /// @param proposalId The ID of the proposal
-    /// @param txIndex The index of the transaction within the proposal
+    /// @param _proposalId The ID of the proposal
+    /// @param _txIndex The index of the transaction within the proposal
     /// @return bytes32 The hash of the specified transaction
     function getProposalTxHash(
-        uint256 proposalId,
-        uint256 txIndex
+        uint256 _proposalId,
+        uint256 _txIndex
     ) external view returns (bytes32) {
-        return proposals[proposalId].txHashes[txIndex];
+        return proposals[_proposalId].txHashes[_txIndex];
     }
 
     /// @notice Returns the keccak256 hash of the specified transaction
-    /// @param to The target address of the transaction
-    /// @param value The Ether value to send with the transaction
-    /// @param data The encoded function call data of the transaction
-    /// @param operation The operation to use for the transaction
+    /// @param _to The target address of the transaction
+    /// @param _value The Ether value to send with the transaction
+    /// @param _data The encoded function call data of the transaction
+    /// @param _operation The operation to use for the transaction
     /// @return bytes32 The transaction hash
     function getTxHash(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation
     ) public view returns (bytes32) {
-        return keccak256(generateTxHashData(to, value, data, operation, 0));
+        return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
     }
 
     /// @notice Gets the transaction hashes associated with a given proposald
-    /// @param proposalId The ID of the proposal to get the tx hashes for
+    /// @param _proposalId The ID of the proposal to get the tx hashes for
     /// @return bytes32[] The array of tx hashes
     function getProposalTxHashes(
-        uint256 proposalId
+        uint256 _proposalId
     ) external view returns (bytes32[] memory) {
-        return proposals[proposalId].txHashes;
+        return proposals[_proposalId].txHashes;
     }
 
     /// @notice Gets details about the specified proposal
-    /// @param proposalId The ID of the proposal
-    /// @return timelockPeriod The delay time until a proposal can be executed
-    /// @return txHashes The hashes of the transactions the proposal contains
-    /// @return executionCounter Counter of how many of the proposal transactions have been executed
-    /// @return strategy The address of the strategy contract the proposal is on
+    /// @param _proposalId The ID of the proposal
+    /// @return _timelockPeriod The delay time until a proposal can be executed
+    /// @return _txHashes The hashes of the transactions the proposal contains
+    /// @return _executionCounter Counter of how many of the proposal transactions have been executed
+    /// @return _strategy The address of the strategy contract the proposal is on
     function getProposal(
-        uint256 proposalId
+        uint256 _proposalId
     )
         external
         view
         returns (
-            uint256 timelockPeriod,
-            bytes32[] memory txHashes,
-            uint256 executionCounter,
-            address strategy
+            uint256 _timelockPeriod,
+            bytes32[] memory _txHashes,
+            uint256 _executionCounter,
+            address _strategy
         )
     {
-        timelockPeriod = proposals[proposalId].timelockPeriod;
-        txHashes = proposals[proposalId].txHashes;
-        executionCounter = proposals[proposalId].executionCounter;
-        strategy = proposals[proposalId].strategy;
+        _timelockPeriod = proposals[_proposalId].timelockPeriod;
+        _txHashes = proposals[_proposalId].txHashes;
+        _executionCounter = proposals[_proposalId].executionCounter;
+        _strategy = proposals[_proposalId].strategy;
     }
 }

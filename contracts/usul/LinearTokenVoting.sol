@@ -72,32 +72,32 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     }
 
     /// @notice Casts a vote for a proposal
-    /// @param proposalId The ID of the proposal to vote for
-    /// @param support Proposal support represented as NO, YES, or ABSTAIN
-    function vote(uint256 proposalId, uint8 support, bytes memory) external {
+    /// @param _proposalId The ID of the proposal to vote for
+    /// @param _support Proposal support represented as NO, YES, or ABSTAIN
+    function vote(uint256 _proposalId, uint8 _support, bytes memory) external {
         _vote(
-            proposalId,
+            _proposalId,
             msg.sender,
-            support,
-            getVotingWeight(msg.sender, proposalId)
+            _support,
+            getVotingWeight(msg.sender, _proposalId)
         );
     }
 
     /// @notice Returns if a proposal has succeeded
-    /// @param proposalId The ID of the proposal to vote for
+    /// @param _proposalId The ID of the proposal to vote for
     /// @return bool True if the proposal has passed
-    function isPassed(uint256 proposalId) public view override returns (bool) {
+    function isPassed(uint256 _proposalId) public view override returns (bool) {
         require(
-            proposals[proposalId].yesVotes > proposals[proposalId].noVotes,
+            proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes,
             "Majority yesVotes not reached"
         );
         require(
-            proposals[proposalId].yesVotes >=
-                quorum(proposals[proposalId].startBlock),
+            proposals[_proposalId].yesVotes >=
+                quorum(proposals[_proposalId].startBlock),
             "Quorum has not been reached for the proposal"
         );
         require(
-            proposals[proposalId].deadline < block.timestamp,
+            proposals[_proposalId].deadline < block.timestamp,
             "Voting period is not over"
         );
 
@@ -105,28 +105,28 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     }
 
     /// @notice Calculates the number of token votes needed for quorum at a specific block number
-    /// @param blockNumber The block number to calculate quorum at
+    /// @param _blockNumber The block number to calculate quorum at
     /// @return uint256 The number of token votes needed for quorum
     function quorum(
-        uint256 blockNumber
+        uint256 _blockNumber
     ) public view override returns (uint256) {
         return
-            (governanceToken.getPastTotalSupply(blockNumber) *
+            (governanceToken.getPastTotalSupply(_blockNumber) *
                 quorumNumerator) / quorumDenominator;
     }
 
     /// @notice Calculates the voting weight an address has for a specific proposal
-    /// @param voter Address of the voter
-    /// @param proposalId The ID of the proposal
+    /// @param _voter Address of the voter
+    /// @param _proposalId The ID of the proposal
     /// @return uint256 The user's vote count
     function getVotingWeight(
-        address voter,
-        uint256 proposalId
+        address _voter,
+        uint256 _proposalId
     ) public view returns (uint256) {
         return
             governanceToken.getPastVotes(
-                voter,
-                proposals[proposalId].startBlock
+                _voter,
+                proposals[_proposalId].startBlock
             );
     }
 
