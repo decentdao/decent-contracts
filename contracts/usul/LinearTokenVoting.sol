@@ -73,7 +73,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
 
     /// @notice Casts a vote for a proposal
     /// @param proposalId The ID of the proposal to vote for
-    /// @param support Proposal support represented as against, for, or abstain
+    /// @param support Proposal support represented as NO, YES, or ABSTAIN
     function vote(uint256 proposalId, uint8 support, bytes memory) external {
         _vote(
             proposalId,

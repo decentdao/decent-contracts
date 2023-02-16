@@ -8,14 +8,14 @@ import "./BaseStrategy.sol";
 /// @title An abstract contract used as a base for ERC-20 token voting strategies
 abstract contract BaseTokenVoting is BaseStrategy {
     enum VoteType {
-        Against,
-        For,
-        Abstain
+        NO,
+        YES,
+        ABSTAIN
     }
 
     struct ProposalVoting {
-        uint256 yesVotes; // The total number of YES votes for this proposal
         uint256 noVotes; // The total number of NO votes for this proposal
+        uint256 yesVotes; // The total number of YES votes for this proposal
         uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
         uint256 deadline; // The timestamp voting ends for this proposal
         uint256 startBlock; // The block the proposal voting starts
@@ -106,11 +106,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
         proposals[_proposalId].hasVoted[_voter] = true;
 
-        if (_support == uint8(VoteType.Against)) {
+        if (_support == uint8(VoteType.NO)) {
             proposals[_proposalId].noVotes += _weight;
-        } else if (_support == uint8(VoteType.For)) {
+        } else if (_support == uint8(VoteType.YES)) {
             proposals[_proposalId].yesVotes += _weight;
-        } else if (_support == uint8(VoteType.Abstain)) {
+        } else if (_support == uint8(VoteType.ABSTAIN)) {
             proposals[_proposalId].abstainVotes += _weight;
         } else {
             revert("Invalid value for enum VoteType");
