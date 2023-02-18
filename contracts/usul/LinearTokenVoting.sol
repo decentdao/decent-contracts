@@ -53,10 +53,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                     string
                 )
             );
-        require(_votingPeriod > 1, "votingPeriod must be greater than 1");
+        require(_votingPeriod > 1, "voting period less than 1");
         require(
             address(_governanceToken) != address(0),
-            "Invalid governance token address"
+            "invalid governance token address"
         );
 
         name = name_;
@@ -89,16 +89,16 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         require(
             proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes,
-            "Majority yesVotes not reached"
+            "majority YES votes not reached"
         );
         require(
             proposals[_proposalId].yesVotes >=
                 quorum(proposals[_proposalId].startBlock),
-            "Quorum has not been reached for the proposal"
+            "quorum not reached"
         );
         require(
             proposals[_proposalId].deadline < block.timestamp,
-            "Voting period is not over"
+            "voting period not over"
         );
 
         return true;
@@ -112,7 +112,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     ) public view override returns (uint256) {
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
-                quorumNumerator) / quorumDenominator;
+                quorumNumerator) / QUORUM_DENOMINATOR;
     }
 
     /// @notice Calculates the voting weight an address has for a specific proposal

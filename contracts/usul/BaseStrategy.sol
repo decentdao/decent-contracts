@@ -12,14 +12,14 @@ abstract contract BaseStrategy is
     IBaseStrategy
 {
     event UsulSet(address indexed newUsul);
-    event StrategySetup(address indexed UsulModule, address indexed owner);
+    event StrategySetup(address indexed usulModule, address indexed owner);
 
     IFractalUsul public usulModule;
 
     modifier onlyUsul() {
         require(
             msg.sender == address(usulModule),
-            "Only callable by Usul module"
+            "only callable by Usul module"
         );
         _;
     }

@@ -85,9 +85,9 @@ contract FractalUsul is Module, IFractalUsul {
     function enableStrategy(address _strategy) public onlyOwner {
         require(
             _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
-            "Invalid strategy"
+            "invalid strategy"
         );
-        require(strategies[_strategy] == address(0), "Strategy already enabled");
+        require(strategies[_strategy] == address(0), "strategy already enabled");
 
         strategies[_strategy] = strategies[SENTINEL_STRATEGY];
         strategies[SENTINEL_STRATEGY] = _strategy;
@@ -104,11 +104,11 @@ contract FractalUsul is Module, IFractalUsul {
     ) public onlyOwner {
         require(
             _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
-            "Invalid strategy"
+            "invalid strategy"
         );
         require(
             strategies[_prevStrategy] == _strategy,
-            "Strategy already disabled"
+            "strategy already disabled"
         );
 
         strategies[_prevStrategy] = strategies[_strategy];
@@ -130,10 +130,10 @@ contract FractalUsul is Module, IFractalUsul {
     ) external {
         require(
             isStrategyEnabled(_strategy),
-            "Voting strategy is not enabled"
+            "voting strategy is not enabled"
         );
-        require(_transactions.length > 0, "Proposal must contain at least one transaction");
-        require(IBaseStrategy(_strategy).isProposer(msg.sender), "Caller cannot submit proposals");
+        require(_transactions.length > 0, "proposal has no transactions");
+        require(IBaseStrategy(_strategy).isProposer(msg.sender), "caller cannot submit proposals");
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
         for (uint256 i = 0; i < _transactions.length; i++) {
@@ -170,15 +170,15 @@ contract FractalUsul is Module, IFractalUsul {
     ) external {
         require(
             strategies[msg.sender] != address(0),
-            "Strategy not authorized"
+            "strategy not authorized"
         );
         require(
             proposalState(_proposalId) == ProposalState.ACTIVE,
-            "Proposal must be in the active state"
+            "proposal is not ACTIVE"
         );
         require(
             msg.sender == proposals[_proposalId].strategy,
-            "Incorrect strategy for proposal"
+            "incorrect strategy for proposal"
         );
 
         proposals[_proposalId].timelockPeriod = block.timestamp + _timelockPeriod;
@@ -205,19 +205,19 @@ contract FractalUsul is Module, IFractalUsul {
     ) public {
         require(
             proposalState(_proposalId) == ProposalState.EXECUTABLE,
-            "Proposal must be in the executable state"
+            "proposal is not EXECUTABLE"
         );
         bytes32 txHash = getTxHash(_target, _value, _data, _operation);
         require(
             proposals[_proposalId].txHashes[
                 proposals[_proposalId].executionCounter
             ] == txHash,
-            "Transaction hash does not match the indexed hash"
+            "tx hash doesn't match index hash"
         );
         proposals[_proposalId].executionCounter++;
         require(
             exec(_target, _value, _data, _operation),
-            "Module transaction failed"
+            "module transaction failed"
         );
         emit TransactionExecuted(_proposalId, txHash);
     }
@@ -237,18 +237,18 @@ contract FractalUsul is Module, IFractalUsul {
     ) external {
         require(
             _targets.length != 0,
-            "No transactions to execute provided"
+            "no transactions to execute"
         );
         require(
             _targets.length == _values.length &&
                 _targets.length == _data.length &&
                 _targets.length == _operations.length,
-            "Array length mismatch"
+            "array length mismatch"
         );
         require(
             proposals[_proposalId].executionCounter + _targets.length <=
                 proposals[_proposalId].txHashes.length,
-            "Too many transactions to execute provided"
+            "too many transactions to execute"
         );
         for (uint256 i = 0; i < _targets.length; i++) {
             executeProposalByIndex(
@@ -270,7 +270,7 @@ contract FractalUsul is Module, IFractalUsul {
     function setupStrategies(address[] memory _strategies) internal {
         require(
             strategies[SENTINEL_STRATEGY] == address(0),
-            "setupStrategies has already been called"
+            "setupStrategies already called"
         );
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
         for (uint256 i = 0; i < _strategies.length; i++) {
@@ -334,7 +334,7 @@ contract FractalUsul is Module, IFractalUsul {
     /// @return ProposalState the enum of the state of the proposal
     function proposalState(uint256 _proposalId) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
-        require(_proposal.strategy != address(0), "Invalid proposal ID");
+        require(_proposal.strategy != address(0), "invalid proposalId");
 
         if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;

@@ -83,7 +83,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @notice Function for counting a vote for a proposal, can only be called internally
     /// @param _proposalId The ID of the proposal
     /// @param _voter The address of the account casting the vote
-    /// @param _support Indicates vote support, which can be "No", "Yes", or "Abstain"
+    /// @param _support Indicates vote support, which can be "NO", "YES", or "ABSTAIN"
     /// @param _weight The amount of voting weight cast
     function _vote(
         uint256 _proposalId,
@@ -93,15 +93,15 @@ abstract contract BaseTokenVoting is BaseStrategy {
     ) internal {
         require(
             proposals[_proposalId].deadline != 0,
-            "Proposal has not been submitted yet"
+            "proposal not yet submitted"
         );
         require(
             block.timestamp <= proposals[_proposalId].deadline,
-            "Voting period has passed"
+            "voting period has passed"
         );
         require(
             !proposals[_proposalId].hasVoted[_voter],
-            "Voter has already voted"
+            "voter has already voted"
         );
 
         proposals[_proposalId].hasVoted[_voter] = true;
@@ -113,7 +113,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         } else if (_support == uint8(VoteType.ABSTAIN)) {
             proposals[_proposalId].abstainVotes += _weight;
         } else {
-            revert("Invalid value for enum VoteType");
+            revert("invalid value for enum VoteType");
         }
 
         emit Voted(_voter, _proposalId, _support, _weight);
@@ -136,7 +136,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @notice Timelocks the proposal and starts timelock period
     /// @param _proposalId The ID of the proposal to timelock
     function timelockProposal(uint256 _proposalId) public virtual override {
-        require(isPassed(_proposalId));
+        require(isPassed(_proposalId), "proposal hasn't passed");
 
         usulModule.timelockProposal(_proposalId, timelockPeriod);
 
