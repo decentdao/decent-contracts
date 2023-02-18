@@ -10,24 +10,24 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
 
     event QuorumNumeratorUpdated(uint256 newQuorumNumerator);
 
-    function quorum(uint256 blockNumber) public view virtual returns (uint256);
+    function quorum(uint256 _blockNumber) public view virtual returns (uint256);
 
     function updateQuorumNumerator(
-        uint256 newQuorumNumerator
+        uint256 _newQuorumNumerator
     ) public virtual onlyOwner {
-        _updateQuorumNumerator(newQuorumNumerator);
+        _updateQuorumNumerator(_newQuorumNumerator);
     }
 
     function _updateQuorumNumerator(
-        uint256 newQuorumNumerator
+        uint256 _newQuorumNumerator
     ) internal virtual {
         require(
-            newQuorumNumerator <= quorumDenominator,
+            _newQuorumNumerator <= quorumDenominator,
             "quorumNumerator cannot be greater than quorumDenominator"
         );
 
-        quorumNumerator = newQuorumNumerator;
+        quorumNumerator = _newQuorumNumerator;
 
-        emit QuorumNumeratorUpdated(newQuorumNumerator);
+        emit QuorumNumeratorUpdated(_newQuorumNumerator);
     }
 }

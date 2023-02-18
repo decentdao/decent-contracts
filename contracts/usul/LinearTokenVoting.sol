@@ -31,8 +31,8 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     }
 
     /// @notice Sets up the contract with initial parameters
-    /// @param initParams The initial setup parameters encoded as bytes
-    function setUp(bytes memory initParams) public override initializer {
+    /// @param _initParams The initial setup parameters encoded as bytes
+    function setUp(bytes memory _initParams) public override initializer {
         (
             address _owner,
             ERC20Votes _governanceToken,
@@ -42,7 +42,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             uint256 _timelockPeriod,
             string memory name_
         ) = abi.decode(
-                initParams,
+                _initParams,
                 (
                     address,
                     ERC20Votes,

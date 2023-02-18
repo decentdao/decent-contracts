@@ -9,36 +9,36 @@ interface IGnosisSafe {
     /// @dev Setup function sets initial storage of contract.
     /// @param _owners List of Safe owners.
     /// @param _threshold Number of required confirmations for a Safe transaction.
-    /// @param to Contract address for optional delegate call.
-    /// @param data Data payload for optional delegate call.
-    /// @param fallbackHandler Handler for fallback calls to this contract
-    /// @param paymentToken Token that should be used for the payment (0 is ETH)
-    /// @param payment Value that should be paid
-    /// @param paymentReceiver Address that should receive the payment (or 0 if tx.origin)
+    /// @param _to Contract address for optional delegate call.
+    /// @param _data Data payload for optional delegate call.
+    /// @param _fallbackHandler Handler for fallback calls to this contract
+    /// @param _paymentToken Token that should be used for the payment (0 is ETH)
+    /// @param _payment Value that should be paid
+    /// @param _paymentReceiver Address that should receive the payment (or 0 if tx.origin)
     function setup(
         address[] calldata _owners,
         uint256 _threshold,
-        address to,
-        bytes calldata data,
-        address fallbackHandler,
-        address paymentToken,
-        uint256 payment,
-        address payable paymentReceiver
+        address _to,
+        bytes calldata _data,
+        address _fallbackHandler,
+        address _paymentToken,
+        uint256 _payment,
+        address payable _paymentReceiver
     ) external;
 
-    function setGuard(address guard) external;
+    function setGuard(address _guard) external;
 
     function execTransaction(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address payable refundReceiver,
-        bytes memory signatures
+        address _to,
+        uint256 _value,
+        bytes calldata _data,
+        Enum.Operation _operation,
+        uint256 _safeTxGas,
+        uint256 _baseGas,
+        uint256 _gasPrice,
+        address _gasToken,
+        address payable _refundReceiver,
+        bytes memory _signatures
     ) external payable returns (bool success);
 
     /**
@@ -48,38 +48,38 @@ interface IGnosisSafe {
      * @param signatures Signature data that should be verified. Can be ECDSA signature, contract signature (EIP-1271) or approved hash.
      */
     function checkSignatures(
-        bytes32 dataHash,
-        bytes memory data,
-        bytes memory signatures
+        bytes32 _dataHash,
+        bytes memory _data,
+        bytes memory _signatures
     ) external view;
 
     /// @dev Returns the bytes that are hashed to be signed by owners.
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
+    /// @param _to Destination address.
+    /// @param _value Ether value.
+    /// @param _data Data payload.
+    /// @param _operation Operation type.
+    /// @param _safeTxGas Gas that should be used for the safe transaction.
+    /// @param _baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
+    /// @param _gasPrice Maximum gas price that should be used for this transaction.
+    /// @param _gasToken Token address (or 0 if ETH) that is used for the payment.
+    /// @param _refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
     /// @param _nonce Transaction nonce.
     /// @return Transaction hash bytes.
     function encodeTransactionData(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address refundReceiver,
+        address _to,
+        uint256 _value,
+        bytes calldata _data,
+        Enum.Operation _operation,
+        uint256 _safeTxGas,
+        uint256 _baseGas,
+        uint256 _gasPrice,
+        address _gasToken,
+        address _refundReceiver,
         uint256 _nonce
     ) external view returns (bytes memory);
 
     /// @notice Returns whether the passed address is an owner
-    /// @param owner The address the check
+    /// @param _owner The address the check
     /// @return bool True if the address is an owner
-    function isOwner(address owner) external view returns (bool);
+    function isOwner(address _owner) external view returns (bool);
 }

@@ -21,9 +21,9 @@ interface IUsulVetoGuard {
     );
 
     /// @notice Timelocks a proposal for execution
-    /// @param proposalId The ID of the proposal to timelock
+    /// @param _proposalId The ID of the proposal to timelock
     function timelockProposal(
-        uint256 proposalId
+        uint256 _proposalId
     ) external;
 
     /// @notice Gets the block number that the transaction was timelocked at

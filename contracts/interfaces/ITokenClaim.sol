@@ -18,11 +18,11 @@ interface ITokenClaim {
     );
 
     /// @notice This function allows pToken holders to claim cTokens
-    /// @param claimer Address which is being claimed for
-    function claimToken(address claimer) external;
+    /// @param _claimer Address which is being claimed for
+    function claimToken(address _claimer) external;
 
     /// @notice Gets a users child token claimable amount
-    /// @param claimer Address which is being claimed for
+    /// @param _claimer Address which is being claimed for
     /// @return cTokenAllocation Users cToken allocation
-    function getClaimAmount(address claimer) external view returns (uint256);
+    function getClaimAmount(address _claimer) external view returns (uint256);
 }

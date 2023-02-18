@@ -9,8 +9,8 @@ interface IFractalModule {
     event ControllersRemoved(address[] controllers);
 
     /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
-    /// @param execTxData Data payload of module transaction.
-    function execTx(bytes memory execTxData) external;
+    /// @param _execTxData Data payload of module transaction.
+    function execTx(bytes memory _execTxData) external;
 
     /// @notice Allows the module owner to add users which may exectxs
     /// @param _controllers Addresses added to the contoller list
