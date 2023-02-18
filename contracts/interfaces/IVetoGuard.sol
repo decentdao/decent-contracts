@@ -39,7 +39,7 @@ interface IVetoGuard {
         uint256 _gasPrice,
         address _gasToken,
         address payable _refundReceiver,
-        bytes memory signatures
+        bytes memory _signatures
     ) external;
 
     /// @notice Updates the timelock period in seconds, only callable by the owner
