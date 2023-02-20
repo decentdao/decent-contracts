@@ -169,4 +169,13 @@ abstract contract BaseTokenVoting is BaseStrategy {
         deadline = proposals[_proposalId].deadline;
         startBlock = proposals[_proposalId].startBlock;
     }
+
+    /// @notice Returns the timestamp that the proposal voting period ends
+    /// @param _proposalId The ID of the proposal to check
+    /// @return uint256 The timestamp that the proposal voring period ends
+    function proposalVotingDeadline(
+        uint256 _proposalId
+    ) public view override returns (uint256) {
+        return proposals[_proposalId].deadline;
+    }
 }

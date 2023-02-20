@@ -55,4 +55,11 @@ abstract contract BaseStrategy is
     /// @param _user The user address to check
     /// @return bool True if the user can submit a proposal
     function isProposer(address _user) public view virtual returns (bool);
+
+    /// @notice Returns the timestamp that the proposal voting period ends
+    /// @param _proposalId The ID of the proposal to check
+    /// @return uint256 The timestamp that the proposal voring period ends
+    function proposalVotingDeadline(
+        uint256 _proposalId
+    ) public view virtual returns (uint256);
 }
