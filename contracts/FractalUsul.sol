@@ -15,10 +15,10 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     struct Proposal {
-        uint256 timelockPeriod;
-        bytes32[] txHashes;
-        uint256 executionCounter;
-        address strategy; // the module that is allowed to vote on this
+        uint256 timelockPeriod; // Time before a passed proposal can be executed
+        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
+        uint256 executionCounter; // The count of transactions that have been executed within the proposal
+        address strategy; // The voting strategy contract this proposal was created on
     }
 
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
