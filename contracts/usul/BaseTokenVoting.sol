@@ -136,7 +136,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @notice Timelocks the proposal and starts timelock period
     /// @param _proposalId The ID of the proposal to timelock
     function timelockProposal(uint256 _proposalId) public virtual override {
-        require(isPassed(_proposalId));
+        require(isPassed(_proposalId), "Proposal is not passed");
 
         usulModule.timelockProposal(_proposalId, timelockPeriod);
 
@@ -170,12 +170,19 @@ abstract contract BaseTokenVoting is BaseStrategy {
         startBlock = proposals[_proposalId].startBlock;
     }
 
-    /// @notice Returns the timestamp that the proposal voting period ends
+    /// @notice Returns if voting is active on a proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The timestamp that the proposal voring period ends
-    function proposalVotingDeadline(
+    /// @return bool True if the voting is active
+    function isVotingActive(
         uint256 _proposalId
-    ) public view override returns (uint256) {
-        return proposals[_proposalId].deadline;
+    ) public view override returns (bool) {
+        if (
+            proposals[_proposalId].deadline != 0 &&
+            proposals[_proposalId].deadline >= block.timestamp
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

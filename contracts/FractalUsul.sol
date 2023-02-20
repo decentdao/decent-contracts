@@ -87,7 +87,10 @@ contract FractalUsul is Module, IFractalUsul {
             _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
             "Invalid strategy"
         );
-        require(strategies[_strategy] == address(0), "Strategy already enabled");
+        require(
+            strategies[_strategy] == address(0),
+            "Strategy already enabled"
+        );
 
         strategies[_strategy] = strategies[SENTINEL_STRATEGY];
         strategies[SENTINEL_STRATEGY] = _strategy;
@@ -128,12 +131,15 @@ contract FractalUsul is Module, IFractalUsul {
         Transaction[] calldata _transactions,
         string calldata _metadata
     ) external {
+        require(isStrategyEnabled(_strategy), "Voting strategy is not enabled");
         require(
-            isStrategyEnabled(_strategy),
-            "Voting strategy is not enabled"
+            _transactions.length > 0,
+            "Proposal must contain at least one transaction"
         );
-        require(_transactions.length > 0, "Proposal must contain at least one transaction");
-        require(IBaseStrategy(_strategy).isProposer(msg.sender), "Caller cannot submit proposals");
+        require(
+            IBaseStrategy(_strategy).isProposer(msg.sender),
+            "Caller cannot submit proposals"
+        );
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
         for (uint256 i = 0; i < _transactions.length; i++) {
@@ -181,7 +187,9 @@ contract FractalUsul is Module, IFractalUsul {
             "Incorrect strategy for proposal"
         );
 
-        proposals[_proposalId].timelockPeriod = block.timestamp + _timelockPeriod;
+        proposals[_proposalId].timelockPeriod =
+            block.timestamp +
+            _timelockPeriod;
 
         emit ProposalTimelocked(
             _proposalId,
@@ -235,10 +243,7 @@ contract FractalUsul is Module, IFractalUsul {
         bytes[] memory _data,
         Enum.Operation[] memory _operations
     ) external {
-        require(
-            _targets.length != 0,
-            "No transactions to execute provided"
-        );
+        require(_targets.length != 0, "No transactions to execute provided");
         require(
             _targets.length == _values.length &&
                 _targets.length == _data.length &&
@@ -332,14 +337,21 @@ contract FractalUsul is Module, IFractalUsul {
     /// @notice Gets the state of a proposal
     /// @param _proposalId The ID of the proposal
     /// @return ProposalState the enum of the state of the proposal
-    function proposalState(uint256 _proposalId) public view returns (ProposalState) {
+    function proposalState(
+        uint256 _proposalId
+    ) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
+
         require(_proposal.strategy != address(0), "Invalid proposal ID");
 
-        if (_proposal.executionCounter == _proposal.txHashes.length) {
-            return ProposalState.EXECUTED;
+        IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
+
+        if (!_strategy.isPassed(_proposalId) && !_strategy.isVotingActive(_proposalId)) {
+            return ProposalState.FAILED;
         } else if (_proposal.timelockPeriod == 0) {
             return ProposalState.ACTIVE;
+        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
+            return ProposalState.EXECUTED;
         } else if (block.timestamp < _proposal.timelockPeriod) {
             return ProposalState.TIMELOCKED;
         } else {

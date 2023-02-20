@@ -840,7 +840,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // Attempt to finalize the proposal
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
+        "Proposal is not passed"
       );
     });
 
@@ -877,7 +877,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // Attempt to finalize proposal
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
+        "Proposal is not passed"
       );
     });
 
@@ -911,7 +911,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // Attempt to finalize the strategy
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Voting period is not over"
+        "Proposal is not passed"
       );
     });
 

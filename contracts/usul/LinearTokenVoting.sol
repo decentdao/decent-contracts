@@ -84,24 +84,19 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     }
 
     /// @notice Returns if a proposal has succeeded
-    /// @param _proposalId The ID of the proposal to vote for
+    /// @param _proposalId The ID of the proposal to check
     /// @return bool True if the proposal has passed
     function isPassed(uint256 _proposalId) public view override returns (bool) {
-        require(
-            proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes,
-            "Majority yesVotes not reached"
-        );
-        require(
+        if (
+            proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
             proposals[_proposalId].yesVotes >=
-                quorum(proposals[_proposalId].startBlock),
-            "Quorum has not been reached for the proposal"
-        );
-        require(
-            proposals[_proposalId].deadline < block.timestamp,
-            "Voting period is not over"
-        );
+            quorum(proposals[_proposalId].startBlock) &&
+            !isVotingActive(_proposalId)
+        ) {
+            return true;
+        }
 
-        return true;
+        return false;
     }
 
     /// @notice Calculates the number of token votes needed for quorum at a specific block number
@@ -133,6 +128,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @notice Returns if the specified address can submit a proposal
     /// @return bool True if the user can submit a proposal
     function isProposer(address) public pure override returns (bool) {
-      return true;
+        return true;
     }
 }

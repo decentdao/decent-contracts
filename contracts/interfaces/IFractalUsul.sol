@@ -9,7 +9,8 @@ interface IFractalUsul {
         ACTIVE,
         TIMELOCKED,
         EXECUTABLE,
-        EXECUTED
+        EXECUTED,
+        FAILED
     }
 
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner

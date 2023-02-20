@@ -563,9 +563,9 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await usulModule.proposalState(0)).to.eq(0);
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+
+      await expect(await linearTokenVoting.isVotingActive(0)).to.be.true;
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -574,7 +574,12 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      expect(await linearTokenVoting.isPassed(0)).to.eq(true);
+      await expect(await linearTokenVoting.isVotingActive(0)).to.be.false;
+
+      await expect(await linearTokenVoting.isPassed(0)).to.be.true;
+
+      // Proposal is in the active state
+      expect(await usulModule.proposalState(0)).to.eq(0);
     });
 
     it("A proposal is not passed if there are more No votes than Yes votes", async () => {
@@ -601,9 +606,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await usulModule.proposalState(0)).to.eq(0);
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       // Users vote against
       await linearTokenVoting.connect(tokenHolder2).vote(0, 0, [0]);
@@ -612,12 +615,10 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
+        "Proposal is not passed"
       );
 
       await expect(
@@ -629,6 +630,9 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
           [0]
         )
       ).to.be.revertedWith("Proposal must be in the executable state");
+
+      // Proposal in the failed state
+      expect(await usulModule.proposalState(0)).to.eq(4);
     });
 
     it("A proposal is not passed if quorum is not reached", async () => {
@@ -655,9 +659,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await usulModule.proposalState(0)).to.eq(0);
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       // User votes "Yes"
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -665,12 +667,10 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Quorum has not been reached for the proposal"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Quorum has not been reached for the proposal"
+        "Proposal is not passed"
       );
 
       await expect(
@@ -682,6 +682,9 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
           [0]
         )
       ).to.be.revertedWith("Proposal must be in the executable state");
+
+      // Proposal in the failed state
+      expect(await usulModule.proposalState(0)).to.eq(4);
     });
 
     it("A proposal is not passed if voting period is not over", async () => {
@@ -708,20 +711,16 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await usulModule.proposalState(0)).to.eq(0);
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       // Users vote "Yes"
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
       await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
 
-      await expect(linearTokenVoting.isPassed(0)).to.be.revertedWith(
-        "Voting period is not over"
-      );
+      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Voting period is not over"
+        "Proposal is not passed"
       );
 
       await expect(
@@ -810,6 +809,9 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
+      // Proposal is in the active state
+      expect(await usulModule.proposalState(0)).to.eq(0);
+
       // Finalize the strategy
       await linearTokenVoting.timelockProposal(0);
 
@@ -836,6 +838,9 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
+
+      // Proposal is in the active state
+      expect(await usulModule.proposalState(0)).to.eq(3);
     });
 
     it("Multiple transactions can be executed from a single proposal", async () => {

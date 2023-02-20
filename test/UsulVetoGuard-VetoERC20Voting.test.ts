@@ -806,16 +806,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Proposal is active
       expect(await usulModule.proposalState(0)).to.eq(0);
 
-      // Both users vote in support of proposal
-      // await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      // await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
-
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize the proposal
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
+        "Proposal is not passed"
       );
     });
 
@@ -852,7 +848,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
       // Attempt to finalize proposal
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Majority yesVotes not reached"
+        "Proposal is not passed"
       );
     });
 
@@ -886,7 +882,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
       // Attempt to finalize the strategy
       await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Voting period is not over"
+        "Proposal is not passed"
       );
     });
 
