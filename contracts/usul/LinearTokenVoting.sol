@@ -14,18 +14,18 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         ERC20Votes _governanceToken,
         address _usulModule,
         uint256 _votingPeriod,
-        uint256 quorumNumerator_,
+        uint256 _quorumNumerator,
         uint256 _timelockPeriod,
-        string memory name_
+        string memory _name
     ) {
         bytes memory initParams = abi.encode(
             _owner,
             _governanceToken,
             _usulModule,
             _votingPeriod,
-            quorumNumerator_,
+            _quorumNumerator,
             _timelockPeriod,
-            name_
+            _name
         );
         setUp(initParams);
     }
@@ -38,9 +38,9 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             ERC20Votes _governanceToken,
             address _usulModule,
             uint256 _votingPeriod,
-            uint256 quorumNumerator_,
+            uint256 _quorumNumerator,
             uint256 _timelockPeriod,
-            string memory name_
+            string memory _name
         ) = abi.decode(
                 initParams,
                 (
@@ -59,10 +59,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             "Invalid governance token address"
         );
 
-        name = name_;
+        name = _name;
         governanceToken = _governanceToken;
         __Ownable_init();
-        _updateQuorumNumerator(quorumNumerator_);
+        _updateQuorumNumerator(_quorumNumerator);
         transferOwnership(_owner);
         _setUsul(_usulModule);
         _updateVotingPeriod(_votingPeriod);
