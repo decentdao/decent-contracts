@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("Child Multisig DAO with Usul Parent", () => {
+describe("Child Multisig DAO with Azorius Parent", () => {
   // Factories
   let gnosisFactory: Contract;
 

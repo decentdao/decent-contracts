@@ -183,7 +183,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       mockParentDAO.address, // owner
       childVotesToken.address, // governance token
-      azoriusModule.address, // usul module
+      azoriusModule.address, // Azorius module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000
       "Voting" // name

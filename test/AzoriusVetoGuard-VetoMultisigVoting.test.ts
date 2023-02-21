@@ -205,7 +205,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       parentGnosisSafe.address, // owner
       childVotesToken.address, // governance token
-      azoriusModule.address, // usul module
+      azoriusModule.address, // Azorius module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000
       "Voting" // name
