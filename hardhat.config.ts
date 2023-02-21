@@ -49,8 +49,6 @@ const config: HardhatUserConfig = {
       "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
       "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
       "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol",
-      "@tokenwalk/seele/contracts/Usul.sol",
-      "@tokenwalk/seele/contracts/votingStrategies/OZLinearVoting.sol",
     ],
   },
   namedAccounts: {

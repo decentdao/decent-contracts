@@ -20,8 +20,8 @@ contract VetoGuard is
     uint256 public executionPeriod;
     IVetoVoting public vetoVoting;
     IGnosisSafe public gnosisSafe;
-    mapping(bytes32 => uint256) internal transactionQueuedBlock;
-    mapping(bytes32 => uint256) internal transactionQueuedTimestamp;
+    mapping(bytes32 => uint256) internal transactionTimelockedBlock;
+    mapping(bytes32 => uint256) internal transactionTimelockedTimestamp;
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -55,7 +55,7 @@ contract VetoGuard is
         );
     }
 
-    /// @notice Allows a user to queue the transaction, requires valid signatures
+    /// @notice Allows a user to timelock the transaction, requires valid signatures
     /// @param to Destination address.
     /// @param value Ether value.
     /// @param data Data payload.
@@ -66,7 +66,7 @@ contract VetoGuard is
     /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
     /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
     /// @param signatures Packed signature data ({bytes32 r}{bytes32 s}{uint8 v})
-    function queueTransaction(
+    function timelockTransaction(
         address to,
         uint256 value,
         bytes memory data,
@@ -92,10 +92,10 @@ contract VetoGuard is
 
         require(
             block.timestamp >=
-                transactionQueuedTimestamp[transactionHash] +
+                transactionTimelockedTimestamp[transactionHash] +
                     timelockPeriod +
                     executionPeriod,
-            "Transaction has already been queued recently"
+            "Transaction has already been timelocked recently"
         );
 
         bytes memory gnosisTransactionHash = gnosisSafe.encodeTransactionData(
@@ -118,14 +118,14 @@ contract VetoGuard is
             signatures
         );
 
-        transactionQueuedBlock[transactionHash] = block.number;
-        transactionQueuedTimestamp[transactionHash] = block.timestamp;
+        transactionTimelockedBlock[transactionHash] = block.number;
+        transactionTimelockedTimestamp[transactionHash] = block.timestamp;
 
-        emit TransactionQueued(msg.sender, transactionHash, signatures);
+        emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
     /// @notice Updates the timelock period in seconds, only callable by the owner
-    /// @param _timelockPeriod The number of seconds between when a transaction is queued and can be executed
+    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         timelockPeriod = _timelockPeriod;
     }
@@ -176,19 +176,19 @@ contract VetoGuard is
         );
 
         require(
-            transactionQueuedBlock[transactionHash] != 0,
-            "Transaction has not been queued yet"
+            transactionTimelockedBlock[transactionHash] != 0,
+            "Transaction has not been timelocked yet"
         );
 
         require(
             block.timestamp >=
-                transactionQueuedTimestamp[transactionHash] + timelockPeriod,
+                transactionTimelockedTimestamp[transactionHash] + timelockPeriod,
             "Transaction timelock period has not completed yet"
         );
 
         require(
             block.timestamp <=
-                transactionQueuedTimestamp[transactionHash] +
+                transactionTimelockedTimestamp[transactionHash] +
                     timelockPeriod +
                     executionPeriod,
             "Transaction execution period has ended"
@@ -211,26 +211,26 @@ contract VetoGuard is
         override
     {}
 
-    /// @notice Gets the block number that the transaction was queued at
+    /// @notice Gets the block number that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number
-    function getTransactionQueuedBlock(bytes32 _transactionHash)
+    function getTransactionTimelockedBlock(bytes32 _transactionHash)
         public
         view
         returns (uint256)
     {
-        return transactionQueuedBlock[_transactionHash];
+        return transactionTimelockedBlock[_transactionHash];
     }
 
-    /// @notice Gets the timestamp that the transaction was queued at
+    /// @notice Gets the timestamp that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The timestamp the transaction was queued at
-    function getTransactionQueuedTimestamp(bytes32 _transactionHash)
+    /// @return uint256 The timestamp the transaction was timelocked at
+    function getTransactionTimelockedTimestamp(bytes32 _transactionHash)
         public
         view
         returns (uint256)
     {
-        return transactionQueuedTimestamp[_transactionHash];
+        return transactionTimelockedTimestamp[_transactionHash];
     }
 
     /// @notice Can be used to check if this contract supports the specified interface

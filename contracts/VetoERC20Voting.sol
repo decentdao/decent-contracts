@@ -59,17 +59,17 @@ contract VetoERC20Voting is IVetoVoting, TransactionHasher, FactoryFriendly {
             "User has already voted"
         );
 
-        // Get the block number the transaction was queued on the VetoGuard
-        uint256 queuedBlockNumber = vetoGuard.getTransactionQueuedBlock(
+        // Get the block number the transaction was timelocked on the VetoGuard
+        uint256 timelockedBlockNumber = vetoGuard.getTransactionTimelockedBlock(
             _transactionHash
         );
 
-        // Check that the transaction has been queued
-        require(queuedBlockNumber != 0, "Transaction has not yet been queued");
+        // Check that the transaction has been timelocked
+        require(timelockedBlockNumber != 0, "Transaction has not yet been timelocked");
 
         uint256 vetoVotes = votesToken.getPastVotes(
             msg.sender,
-            queuedBlockNumber - 1
+            timelockedBlockNumber - 1
         );
 
         require(vetoVotes > 0, "User has no votes");

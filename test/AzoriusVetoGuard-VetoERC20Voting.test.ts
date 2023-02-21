@@ -7,12 +7,12 @@ import time from "./time";
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
-  OZLinearVoting,
-  OZLinearVoting__factory,
-  FractalUsul,
-  FractalUsul__factory,
-  UsulVetoGuard,
-  UsulVetoGuard__factory,
+  LinearTokenVoting,
+  LinearTokenVoting__factory,
+  Azorius,
+  Azorius__factory,
+  AzoriusVetoGuard,
+  AzoriusVetoGuard__factory,
   VetoERC20Voting,
   VetoERC20Voting__factory,
   VotesToken,
@@ -27,12 +27,12 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Usul Child DAO with Usul Parent", () => {
+describe("Azorius Child DAO with Azorius Parent", () => {
   // Deployed contracts
   let childGnosisSafe: GnosisSafe;
-  let usulVetoGuard: UsulVetoGuard;
-  let usulModule: FractalUsul;
-  let ozLinearVoting: OZLinearVoting;
+  let azoriusVetoGuard: AzoriusVetoGuard;
+  let azoriusModule: Azorius;
+  let linearTokenVoting: LinearTokenVoting;
   let vetoERC20Voting: VetoERC20Voting;
   let parentVotesToken: VotesToken;
   let childVotesToken: VotesToken;
@@ -170,51 +170,53 @@ describe("Usul Child DAO with Usul Parent", () => {
       .connect(parentTokenHolder2)
       .delegate(parentTokenHolder2.address);
 
-    // Deploy Usul module
-    usulModule = await new FractalUsul__factory(deployer).deploy(
+    // Deploy Azorius module
+    azoriusModule = await new Azorius__factory(deployer).deploy(
       mockParentDAO.address,
       childGnosisSafe.address,
       childGnosisSafe.address,
-      []
+      [],
+      60 // timelock period in seconds
     );
 
     // Deploy OZ Linear Voting Strategy
-    ozLinearVoting = await new OZLinearVoting__factory(deployer).deploy(
+    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       mockParentDAO.address, // owner
       childVotesToken.address, // governance token
-      usulModule.address, // usul module
+      azoriusModule.address, // Azorius module
       60, // voting period in seconds
-      50, // quorom numerator, denominator is 100
-      60, // timelock period in seconds
+      500000, // quorom numerator, denominator is 1,000,000
       "Voting" // name
     );
 
-    // Enable the OZ Linear Voting strategy on Usul
-    await usulModule
+    // Enable the OZ Linear Voting strategy on Azorius
+    await azoriusModule
       .connect(mockParentDAO)
-      .enableStrategy(ozLinearVoting.address);
+      .enableStrategy(linearTokenVoting.address);
 
     // Deploy VetoERC20Voting contract
     vetoERC20Voting = await new VetoERC20Voting__factory(deployer).deploy();
 
-    // Deploy and setUp Usul Veto Guard contract
-    usulVetoGuard = await new UsulVetoGuard__factory(deployer).deploy();
+    // Deploy and setUp Azorius Veto Guard contract
+    azoriusVetoGuard = await new AzoriusVetoGuard__factory(deployer).deploy();
 
-    await usulVetoGuard.setUp(
+    await azoriusVetoGuard.setUp(
       abiCoder.encode(
         ["address", "address", "address", "address", "uint256"],
         [
           mockParentDAO.address, // owner
           vetoERC20Voting.address, // veto voting contract
-          ozLinearVoting.address, // OZ linear voting contract
-          usulModule.address, // Usul
+          linearTokenVoting.address, // Linear token voting contract
+          azoriusModule.address, // Azorius
           60, // Execution period in seconds
         ]
       )
     );
 
-    // Set the Usul Veto Guard as the Guard on the Usul Module
-    await usulModule.connect(mockParentDAO).setGuard(usulVetoGuard.address);
+    // Set the Azorius Veto Guard as the Guard on the Azorius Module
+    await azoriusModule
+      .connect(mockParentDAO)
+      .setGuard(azoriusVetoGuard.address);
 
     await vetoERC20Voting.setUp(
       abiCoder.encode(
@@ -234,20 +236,20 @@ describe("Usul Child DAO with Usul Parent", () => {
           10, // freeze proposal duration in blocks
           100, // freeze duration in blocks
           parentVotesToken.address,
-          usulVetoGuard.address,
+          azoriusVetoGuard.address,
         ]
       )
     );
 
-    // Create transaction on Gnosis Safe to setup Usul module
-    const enableUsulModuleData = childGnosisSafe.interface.encodeFunctionData(
-      "enableModule",
-      [usulModule.address]
-    );
+    // Create transaction on Gnosis Safe to setup Azorius module
+    const enableAzoriusModuleData =
+      childGnosisSafe.interface.encodeFunctionData("enableModule", [
+        azoriusModule.address,
+      ]);
 
-    const enableUsulModuleTx = buildSafeTransaction({
+    const enableAzoriusModuleTx = buildSafeTransaction({
       to: childGnosisSafe.address,
-      data: enableUsulModuleData,
+      data: enableAzoriusModuleData,
       safeTxGas: 1000000,
       nonce: (await childGnosisSafe.nonce()).toNumber(),
     });
@@ -256,7 +258,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       await safeSignTypedData(
         childSafeOwner,
         childGnosisSafe,
-        enableUsulModuleTx
+        enableAzoriusModuleTx
       ),
     ];
 
@@ -265,15 +267,15 @@ describe("Usul Child DAO with Usul Parent", () => {
     // Execute transaction that adds the veto guard to the Safe
     await expect(
       childGnosisSafe.execTransaction(
-        enableUsulModuleTx.to,
-        enableUsulModuleTx.value,
-        enableUsulModuleTx.data,
-        enableUsulModuleTx.operation,
-        enableUsulModuleTx.safeTxGas,
-        enableUsulModuleTx.baseGas,
-        enableUsulModuleTx.gasPrice,
-        enableUsulModuleTx.gasToken,
-        enableUsulModuleTx.refundReceiver,
+        enableAzoriusModuleTx.to,
+        enableAzoriusModuleTx.value,
+        enableAzoriusModuleTx.data,
+        enableAzoriusModuleTx.operation,
+        enableAzoriusModuleTx.safeTxGas,
+        enableAzoriusModuleTx.baseGas,
+        enableAzoriusModuleTx.gasPrice,
+        enableAzoriusModuleTx.gasToken,
+        enableAzoriusModuleTx.refundReceiver,
         signatureBytes
       )
     ).to.emit(childGnosisSafe, "ExecutionSuccess");
@@ -284,14 +286,22 @@ describe("Usul Child DAO with Usul Parent", () => {
 
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
-      // Supports IUsulVetoGuard interface
-      expect(await usulVetoGuard.supportsInterface("0x8fc0183c")).to.eq(true);
+      // Supports IAzoriusVetoGuard interface
+      expect(await azoriusVetoGuard.supportsInterface("0xa04f1a4e")).to.eq(
+        true
+      );
       // Supports IGuard interface
-      expect(await usulVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
+      expect(await azoriusVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(
+        true
+      );
       // Supports IERC-165 interface
-      expect(await usulVetoGuard.supportsInterface("0x01ffc9a7")).to.eq(true);
+      expect(await azoriusVetoGuard.supportsInterface("0x01ffc9a7")).to.eq(
+        true
+      );
       // Doesn't support random interface
-      expect(await usulVetoGuard.supportsInterface("0x00000000")).to.eq(false);
+      expect(await azoriusVetoGuard.supportsInterface("0x00000000")).to.eq(
+        false
+      );
     });
 
     it("A proposal can be created and executed", async () => {
@@ -301,50 +311,44 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -352,7 +356,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -383,68 +387,55 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 3]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData1,
-        0
+      const proposalTransactions = [
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData1,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData2,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData3,
+          operation: 0,
+        },
+      ];
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        proposalTransactions,
+        ""
       );
-
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
-      );
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
-      );
-
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal(
-        [txHash1, txHash2, txHash3],
-        ozLinearVoting.address,
-        [0]
-      );
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
-
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -452,7 +443,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalBatch(
+      await azoriusModule.executeProposalBatch(
         0,
         [
           childVotesToken.address,
@@ -478,47 +469,41 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -526,7 +511,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -547,48 +532,42 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that execution period has ended
       await time.increase(time.duration.seconds(130));
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -598,119 +577,109 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("Transaction execution period has ended");
     });
 
-    it("A proposal cannot be queued again before its execution deadline has elapsed", async () => {
+    it("A proposal cannot be timelocked again before its execution deadline has elapsed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
-      // Attempt to queue the proposal again
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
-        "Proposal has already been queued"
+      // Attempt to timelock the proposal again
+      await expect(azoriusVetoGuard.timelockProposal(0)).to.be.revertedWith(
+        "Proposal has already been timelocked"
       );
     });
 
-    it("A proposal cannot be re-queued if its execution deadline has elapsed", async () => {
+    it("A proposal cannot be re-timelocked if its execution deadline has elapsed", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal execution deadline should equal current time + timelockPeriod + executionPeriod
-      expect(await usulVetoGuard.getProposalExecutionDeadline(0)).to.eq(
+      expect(await azoriusVetoGuard.getProposalExecutionDeadline(0)).to.eq(
         (await time.latest()) + 60 + 60
       );
 
-      // Proposal queued block has been updated
+      // Proposal timelocked block has been updated
       expect((await ethers.provider.getBlock("latest")).number).to.eq(
-        (await usulVetoGuard.getProposalQueuedBlock(0)).toNumber()
+        (await azoriusVetoGuard.getProposalTimelockedBlock(0)).toNumber()
       );
 
-      // // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      // Proposal is timelocked
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(121));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execution deadline should now be in the past
       expect(await time.latest()).to.gt(
-        await (await usulVetoGuard.getProposalExecutionDeadline(0)).toNumber()
+        await (
+          await azoriusVetoGuard.getProposalExecutionDeadline(0)
+        ).toNumber()
       );
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -719,247 +688,213 @@ describe("Usul Child DAO with Usul Parent", () => {
         )
       ).to.be.revertedWith("Transaction execution period has ended");
 
-      // Attempt to re-queue the proposal
-      await expect(usulVetoGuard.queueProposal(0)).to.be.revertedWith(
-        "Proposal must be timelocked before queuing"
+      // Attempt to re-timelock the proposal
+      await expect(azoriusVetoGuard.timelockProposal(0)).to.be.revertedWith(
+        "Proposal timelock failed"
       );
     });
 
-    it("A proposal cannot be executed if it has been finalized, but not queued", async () => {
+    it("A proposal cannot be executed if it has been finalized, but not timelocked", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // The proposal is not queued
+      // The proposal is not timelocked
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("Transaction has not been queued yet");
+      ).to.be.revertedWith("Transaction has not been timelocked yet");
     });
 
-    it("A transaction cannot be executed if it hasn't yet been queued", async () => {
+    it("A transaction cannot be executed if it hasn't yet been timelocked", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("proposal is not in execution state");
+      ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
-    it("A proposal cannot be queued if quorum hasn't been reached", async () => {
+    it("A proposal cannot be timelocked if quorum hasn't been reached", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-
-      // Both users vote in support of proposal
-      // await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      // await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize the proposal
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
-        "majority yesVotes not reached"
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
+        "Proposal is not passed"
       );
     });
 
-    it("A proposal cannot be queued if no votes exceed yes votes", async () => {
+    it("A proposal cannot be timelocked if no votes exceed yes votes", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 0, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 0, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 0, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 0, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Attempt to finalize proposal
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
-        "majority yesVotes not reached"
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
+        "Proposal is not passed"
       );
     });
 
-    it("A proposal cannot be queued if its voting period hasn't ended yet", async () => {
+    it("A proposal cannot be timelocked if its voting period hasn't ended yet", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Attempt to finalize the strategy
-      await expect(ozLinearVoting.finalizeStrategy(0)).to.be.revertedWith(
-        "voting period has not passed yet"
+      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
+        "Proposal is not passed"
       );
     });
 
@@ -970,55 +905,49 @@ describe("Usul Child DAO with Usul Parent", () => {
         [deployer.address, 10]
       );
 
-      // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Do not wait for timelock to end, but attempt to execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
           tokenTransferData,
           0
         )
-      ).to.be.revertedWith("proposal is not in execution state");
+      ).to.be.revertedWith("Proposal must be in the executable state");
     });
 
     it("A transaction cannot be executed if it has been vetoed", async () => {
@@ -1029,43 +958,45 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
         0
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoERC20Voting
@@ -1080,12 +1011,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1113,61 +1044,59 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
         0
       );
 
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
+      const proposalTransactions = [
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData1,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData2,
+          operation: 0,
+        },
+        {
+          to: childVotesToken.address,
+          value: BigNumber.from(0),
+          data: tokenTransferData3,
+          operation: 0,
+        },
+      ];
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        proposalTransactions,
+        ""
       );
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
-      );
-
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-
-      await usulModule.submitProposal(
-        [txHash1, txHash2, txHash3],
-        ozLinearVoting.address,
-        [0]
-      );
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoERC20Voting
@@ -1180,12 +1109,12 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalBatch(
+        azoriusModule.executeProposalBatch(
           0,
           [
             childVotesToken.address,
@@ -1207,43 +1136,45 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
         0
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoERC20Voting
@@ -1253,8 +1184,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1262,7 +1193,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -1289,59 +1220,65 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
         0
       );
 
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
+      const proposalTransaction1 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
+      const proposalTransaction2 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData2,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction1],
+        ""
+      );
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction2],
+        ""
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-
-      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
-
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
+      await linearTokenVoting.timelockProposal(0);
+      await linearTokenVoting.timelockProposal(1);
 
-      // Queue the proposals
-      await usulVetoGuard.queueProposal(0);
-      await usulVetoGuard.queueProposal(1);
+      // Timelock the proposals
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
 
       // Voters both cast veto votes on the first proposal
       await vetoERC20Voting
@@ -1355,9 +1292,9 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
+      // Proposal is executable
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1366,7 +1303,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
       // This proposal should fail due to veto
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1376,7 +1313,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("Transaction has been vetoed");
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         1,
         childVotesToken.address,
         0,
@@ -1398,43 +1335,45 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
         0
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategy
-      await ozLinearVoting.finalizeStrategy(0);
+      await linearTokenVoting.timelockProposal(0);
 
-      // Queue the proposal
-      await usulVetoGuard.queueProposal(0);
+      // Timelock the proposal
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoERC20Voting
@@ -1447,7 +1386,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       ).to.be.revertedWith("User has already voted");
     });
 
-    it("A veto vote cannot be cast if the transaction has not been queued yet", async () => {
+    it("A veto vote cannot be cast if the transaction has not been timelocked yet", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -1455,31 +1394,33 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTransactionHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
         0
       );
 
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
+      const proposalTransaction = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
 
-      await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -1487,7 +1428,7 @@ describe("Usul Child DAO with Usul Parent", () => {
       // Cast veto votes
       await expect(
         vetoERC20Voting.connect(parentTokenHolder1).castVetoVote(txHash, false)
-      ).to.be.revertedWith("Transaction has not yet been queued");
+      ).to.be.revertedWith("Transaction has not yet been timelocked");
     });
 
     it("A frozen DAO cannot execute any transaction", async () => {
@@ -1508,75 +1449,85 @@ describe("Usul Child DAO with Usul Parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTransactionHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
         0
       );
 
-      const txHash2 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
+      const proposalTransaction1 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
+      const proposalTransaction2 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData2,
+        operation: 0,
+      };
+
+      const proposalTransaction3 = {
+        to: childVotesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData3,
+        operation: 0,
+      };
+
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction1],
+        ""
       );
-
-      const txHash3 = await usulModule.getTransactionHash(
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction2],
+        ""
       );
-
-      // Proposal is uninitialized
-      expect(await usulModule.state(0)).to.eq(5);
-      expect(await usulModule.state(1)).to.eq(5);
-      expect(await usulModule.state(2)).to.eq(5);
-
-      await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-      await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
-
-      // 0 => Active
-      // 1 => Canceled,
-      // 2 => TimeLocked,
-      // 3 => Executed,
-      // 4 => Executing,
-      // 5 => Uninitialized
+      await azoriusModule.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction3],
+        ""
+      );
 
       // Proposal is active
-      expect(await usulModule.state(0)).to.eq(0);
-      expect(await usulModule.state(1)).to.eq(0);
-      expect(await usulModule.state(2)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
-      await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-      await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-      await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
       // Finalize the strategies
-      await ozLinearVoting.finalizeStrategy(0);
-      await ozLinearVoting.finalizeStrategy(1);
-      await ozLinearVoting.finalizeStrategy(2);
+      await linearTokenVoting.timelockProposal(0);
+      await linearTokenVoting.timelockProposal(1);
+      await linearTokenVoting.timelockProposal(2);
 
-      // Queue the proposals
-      await usulVetoGuard.queueProposal(0);
-      await usulVetoGuard.queueProposal(1);
-      await usulVetoGuard.queueProposal(2);
+      // Timelock the proposals
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.state(0)).to.eq(2);
-      expect(await usulModule.state(1)).to.eq(2);
-      expect(await usulModule.state(2)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -1595,13 +1546,13 @@ describe("Usul Child DAO with Usul Parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.state(0)).to.eq(4);
-      expect(await usulModule.state(1)).to.eq(4);
-      expect(await usulModule.state(2)).to.eq(4);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to veto
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1612,7 +1563,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           1,
           childVotesToken.address,
           0,
@@ -1623,7 +1574,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           2,
           childVotesToken.address,
           0,
@@ -1651,76 +1602,78 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 4]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
+
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction1],
+      ""
     );
-
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction2],
+      ""
     );
-
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction3],
+      ""
     );
-
-    // Proposal is uninitialized
-    expect(await usulModule.state(0)).to.eq(5);
-    expect(await usulModule.state(1)).to.eq(5);
-    expect(await usulModule.state(2)).to.eq(5);
-
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
-
-    // 0 => Active
-    // 1 => Canceled,
-    // 2 => TimeLocked,
-    // 3 => Executed,
-    // 4 => Executing,
-    // 5 => Uninitialized
 
     // Proposal is active
-    expect(await usulModule.state(0)).to.eq(0);
-    expect(await usulModule.state(1)).to.eq(0);
-    expect(await usulModule.state(2)).to.eq(0);
+    expect(await azoriusModule.proposalState(0)).to.eq(0);
+    expect(await azoriusModule.proposalState(1)).to.eq(0);
+    expect(await azoriusModule.proposalState(2)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await ozLinearVoting.finalizeStrategy(0);
-    await ozLinearVoting.finalizeStrategy(1);
-    await ozLinearVoting.finalizeStrategy(2);
+    await linearTokenVoting.timelockProposal(0);
+    await linearTokenVoting.timelockProposal(1);
+    await linearTokenVoting.timelockProposal(2);
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposals
+    await azoriusVetoGuard.timelockProposal(0);
+    await azoriusVetoGuard.timelockProposal(1);
+    await azoriusVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
-    expect(await usulModule.state(0)).to.eq(2);
-    expect(await usulModule.state(1)).to.eq(2);
-    expect(await usulModule.state(2)).to.eq(2);
+    expect(await azoriusModule.proposalState(0)).to.eq(1);
+    expect(await azoriusModule.proposalState(1)).to.eq(1);
+    expect(await azoriusModule.proposalState(2)).to.eq(1);
 
     expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -1735,13 +1688,13 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Proposal is ready to execute
-    expect(await usulModule.state(0)).to.eq(4);
-    expect(await usulModule.state(1)).to.eq(4);
-    expect(await usulModule.state(2)).to.eq(4);
+    expect(await azoriusModule.proposalState(0)).to.eq(2);
+    expect(await azoriusModule.proposalState(1)).to.eq(2);
+    expect(await azoriusModule.proposalState(2)).to.eq(2);
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -1752,7 +1705,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         1,
         childVotesToken.address,
         0,
@@ -1763,7 +1716,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         2,
         childVotesToken.address,
         0,
@@ -1780,44 +1733,38 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 10]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData,
-      0
+    const proposalTransaction = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData,
+      operation: 0,
+    };
+
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction],
+      ""
     );
 
-    // Proposal is uninitialized
-    expect(await usulModule.state(0)).to.eq(5);
-
-    await usulModule.submitProposal([txHash], ozLinearVoting.address, [0]);
-
-    // 0 => Active
-    // 1 => Canceled,
-    // 2 => TimeLocked,
-    // 3 => Executed,
-    // 4 => Executing,
-    // 5 => Uninitialized
-
     // Proposal is active
-    expect(await usulModule.state(0)).to.eq(0);
+    expect(await azoriusModule.proposalState(0)).to.eq(0);
 
     // Both users vote in support of proposal
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategy
-    await ozLinearVoting.finalizeStrategy(0);
+    await linearTokenVoting.timelockProposal(0);
 
-    // Queue the proposal
-    await usulVetoGuard.queueProposal(0);
+    // Timelock the proposal
+    await azoriusVetoGuard.timelockProposal(0);
 
     // Proposal is timelocked
-    expect(await usulModule.state(0)).to.eq(2);
+    expect(await azoriusModule.proposalState(0)).to.eq(1);
 
     expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -1830,13 +1777,13 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Proposal is ready to execute
-    expect(await usulModule.state(0)).to.eq(4);
+    expect(await azoriusModule.proposalState(0)).to.eq(2);
 
     expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await usulModule.executeProposalByIndex(
+    await azoriusModule.executeProposalByIndex(
       0,
       childVotesToken.address,
       0,
@@ -1860,56 +1807,54 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 5]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
+
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction1],
+      ""
     );
-
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction2],
+      ""
     );
-
-    // Proposal is uninitialized
-    expect(await usulModule.state(0)).to.eq(5);
-    expect(await usulModule.state(1)).to.eq(5);
-
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-
-    // 0 => Active
-    // 1 => Canceled,
-    // 2 => TimeLocked,
-    // 3 => Executed,
-    // 4 => Executing,
-    // 5 => Uninitialized
 
     // Proposal is active
-    expect(await usulModule.state(0)).to.eq(0);
-    expect(await usulModule.state(1)).to.eq(0);
+    expect(await azoriusModule.proposalState(0)).to.eq(0);
+    expect(await azoriusModule.proposalState(1)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
+    // Timelock the proposals
+    await azoriusVetoGuard.timelockProposal(0);
+    await azoriusVetoGuard.timelockProposal(1);
 
     // Proposal is timelocked
-    expect(await usulModule.state(0)).to.eq(2);
-    expect(await usulModule.state(1)).to.eq(2);
+    expect(await azoriusModule.proposalState(0)).to.eq(1);
+    expect(await azoriusModule.proposalState(1)).to.eq(1);
 
     expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -1924,12 +1869,12 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Proposal is ready to execute
-    expect(await usulModule.state(0)).to.eq(4);
-    expect(await usulModule.state(1)).to.eq(4);
+    expect(await azoriusModule.proposalState(0)).to.eq(2);
+    expect(await azoriusModule.proposalState(1)).to.eq(2);
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -1940,7 +1885,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         1,
         childVotesToken.address,
         0,
@@ -1959,43 +1904,45 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 4]
     );
 
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction3],
+      ""
     );
 
-    // Proposal is uninitialized
-    expect(await usulModule.state(2)).to.eq(5);
+    expect(await azoriusModule.proposalState(2)).to.eq(0);
 
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
-
-    expect(await usulModule.state(2)).to.eq(0);
-
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
-    // Queue the proposal
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposal
+    await azoriusVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
-    expect(await usulModule.state(2)).to.eq(2);
+    expect(await azoriusModule.proposalState(2)).to.eq(1);
 
     // Increase time so that timelock period has ended
     await time.increase(time.duration.seconds(60));
 
     // Proposal is ready to execute
-    expect(await usulModule.state(2)).to.eq(4);
+    expect(await azoriusModule.proposalState(2)).to.eq(2);
 
     expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await usulModule.executeProposalByIndex(
+    await azoriusModule.executeProposalByIndex(
       2,
       childVotesToken.address,
       0,
@@ -2024,76 +1971,80 @@ describe("Usul Child DAO with Usul Parent", () => {
       [deployer.address, 4]
     );
 
-    // Get the tx hash to submit within the proposal
-    const txHash1 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
+    const proposalTransaction1 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData1,
+      operation: 0,
+    };
+
+    const proposalTransaction2 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData2,
+      operation: 0,
+    };
+
+    const proposalTransaction3 = {
+      to: childVotesToken.address,
+      value: BigNumber.from(0),
+      data: tokenTransferData3,
+      operation: 0,
+    };
+
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction1],
+      ""
     );
 
-    const txHash2 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData2,
-      0
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction2],
+      ""
     );
 
-    const txHash3 = await usulModule.getTransactionHash(
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
+    await azoriusModule.submitProposal(
+      linearTokenVoting.address,
+      "0x",
+      [proposalTransaction3],
+      ""
     );
-
-    // Proposal is uninitialized
-    expect(await usulModule.state(0)).to.eq(5);
-    expect(await usulModule.state(1)).to.eq(5);
-    expect(await usulModule.state(2)).to.eq(5);
-
-    await usulModule.submitProposal([txHash1], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash2], ozLinearVoting.address, [0]);
-    await usulModule.submitProposal([txHash3], ozLinearVoting.address, [0]);
-
-    // 0 => Active
-    // 1 => Canceled,
-    // 2 => TimeLocked,
-    // 3 => Executed,
-    // 4 => Executing,
-    // 5 => Uninitialized
 
     // Proposal is active
-    expect(await usulModule.state(0)).to.eq(0);
-    expect(await usulModule.state(1)).to.eq(0);
-    expect(await usulModule.state(2)).to.eq(0);
+    expect(await azoriusModule.proposalState(0)).to.eq(0);
+    expect(await azoriusModule.proposalState(1)).to.eq(0);
+    expect(await azoriusModule.proposalState(2)).to.eq(0);
 
     // Both users vote in support of proposals
-    await ozLinearVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-    await ozLinearVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-    await ozLinearVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
+    await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
 
     // Increase time so that voting period has ended
     await time.increase(time.duration.seconds(60));
 
     // Finalize the strategies
-    await ozLinearVoting.finalizeStrategy(0);
-    await ozLinearVoting.finalizeStrategy(1);
-    await ozLinearVoting.finalizeStrategy(2);
+    await linearTokenVoting.timelockProposal(0);
+    await linearTokenVoting.timelockProposal(1);
+    await linearTokenVoting.timelockProposal(2);
 
-    // Queue the proposals
-    await usulVetoGuard.queueProposal(0);
-    await usulVetoGuard.queueProposal(1);
-    await usulVetoGuard.queueProposal(2);
+    // Timelock the proposals
+    await azoriusVetoGuard.timelockProposal(0);
+    await azoriusVetoGuard.timelockProposal(1);
+    await azoriusVetoGuard.timelockProposal(2);
 
     // Proposal is timelocked
-    expect(await usulModule.state(0)).to.eq(2);
-    expect(await usulModule.state(1)).to.eq(2);
-    expect(await usulModule.state(2)).to.eq(2);
+    expect(await azoriusModule.proposalState(0)).to.eq(1);
+    expect(await azoriusModule.proposalState(1)).to.eq(1);
+    expect(await azoriusModule.proposalState(2)).to.eq(1);
 
     expect(await vetoERC20Voting.isFrozen()).to.eq(false);
 
@@ -2108,13 +2059,13 @@ describe("Usul Child DAO with Usul Parent", () => {
     await time.increase(time.duration.seconds(60));
 
     // Proposal is ready to execute
-    expect(await usulModule.state(0)).to.eq(4);
-    expect(await usulModule.state(1)).to.eq(4);
-    expect(await usulModule.state(2)).to.eq(4);
+    expect(await azoriusModule.proposalState(0)).to.eq(2);
+    expect(await azoriusModule.proposalState(1)).to.eq(2);
+    expect(await azoriusModule.proposalState(2)).to.eq(2);
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -2125,7 +2076,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         1,
         childVotesToken.address,
         0,
@@ -2136,7 +2087,7 @@ describe("Usul Child DAO with Usul Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      usulModule.executeProposalByIndex(
+      azoriusModule.executeProposalByIndex(
         2,
         childVotesToken.address,
         0,
@@ -2155,7 +2106,7 @@ describe("Usul Child DAO with Usul Parent", () => {
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await usulModule.executeProposalByIndex(
+    await azoriusModule.executeProposalByIndex(
       0,
       childVotesToken.address,
       0,

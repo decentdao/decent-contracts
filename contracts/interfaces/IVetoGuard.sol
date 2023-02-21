@@ -12,13 +12,13 @@ interface IVetoGuard {
         address indexed vetoVoting
     );
 
-    event TransactionQueued(
-        address indexed queuer,
+    event TransactionTimelocked(
+        address indexed timelocker,
         bytes32 indexed transactionHash,
         bytes indexed signatures
     );
 
-    /// @notice Allows a user to queue the transaction, requires valid signatures
+    /// @notice Allows a user to timelock the transaction, requires valid signatures
     /// @param to Destination address.
     /// @param value Ether value.
     /// @param data Data payload.
@@ -29,7 +29,7 @@ interface IVetoGuard {
     /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
     /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
     /// @param signatures Packed signature data ({bytes32 r}{bytes32 s}{uint8 v})
-    function queueTransaction(
+    function timelockTransaction(
         address to,
         uint256 value,
         bytes memory data,
@@ -43,7 +43,7 @@ interface IVetoGuard {
     ) external;
 
     /// @notice Updates the timelock period in seconds, only callable by the owner
-    /// @param _timelockPeriod The number of seconds between when a transaction is queued and can be executed
+    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
     function updateTimelockPeriod(uint256 _timelockPeriod)
         external;
 
@@ -52,18 +52,18 @@ interface IVetoGuard {
     function updateExecutionPeriod(uint256 _executionPeriod)
         external;
 
-    /// @notice Gets the block number that the transaction was queued at
+    /// @notice Gets the block number that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number
-    function getTransactionQueuedBlock(bytes32 _transactionHash)
+    function getTransactionTimelockedBlock(bytes32 _transactionHash)
         external
         view
         returns (uint256);
 
-    /// @notice Gets the timestamp that the transaction was queued at
+    /// @notice Gets the timestamp that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The timestamp the transaction was queued at
-    function getTransactionQueuedTimestamp(bytes32 _transactionHash)
+    /// @return uint256 The timestamp the transaction was timelocked at
+    function getTransactionTimelockedTimestamp(bytes32 _transactionHash)
         external
         view
         returns (uint256);

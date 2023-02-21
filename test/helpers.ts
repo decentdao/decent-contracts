@@ -168,7 +168,7 @@ export const ifaceFactory = new Interface([
   "event ModuleProxyCreation(address indexed proxy,address indexed masterCopy)",
 ]);
 
-export const usuliface = new Interface([
+export const azoriusiface = new Interface([
   "function setUp(bytes memory initParams) public",
 ]);
 
@@ -212,7 +212,7 @@ export const abiFactory = [
   "function deployModule(address masterCopy,bytes memory initializer,uint256 saltNonce) public returns (address proxy)",
 ];
 
-export const abiUsul = [
+export const abiAzorius = [
   "function owner() public view returns (address)",
   "function avatar() public view returns (address)",
   "function target() public view returns (address)",
