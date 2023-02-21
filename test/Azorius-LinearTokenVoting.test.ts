@@ -9,8 +9,8 @@ import {
   GnosisSafeProxyFactory,
   LinearTokenVoting,
   LinearTokenVoting__factory,
-  FractalUsul,
-  FractalUsul__factory,
+  Azorius,
+  Azorius__factory,
   VotesToken,
   VotesToken__factory,
 } from "../typechain-types";
@@ -23,10 +23,10 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Safe with FractalUsul module and LinearTokenVoting", () => {
+describe("Safe with Azorius module and LinearTokenVoting", () => {
   // Deployed contracts
   let gnosisSafe: GnosisSafe;
-  let usulModule: FractalUsul;
+  let azorius: Azorius;
   let linearTokenVoting: LinearTokenVoting;
   let votesToken: VotesToken;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
@@ -144,8 +144,8 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     await votesToken.connect(tokenHolder2).delegate(tokenHolder2.address);
     await votesToken.connect(tokenHolder3).delegate(tokenHolder3.address);
 
-    // Deploy Usul module
-    usulModule = await new FractalUsul__factory(deployer).deploy(
+    // Deploy Azorius module
+    azorius = await new Azorius__factory(deployer).deploy(
       gnosisSafeOwner.address,
       gnosisSafe.address,
       gnosisSafe.address,
@@ -157,32 +157,36 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       gnosisSafeOwner.address, // owner
       votesToken.address, // governance token
-      usulModule.address, // usul module
+      azorius.address, // Azorius module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
       "Voting" // name
     );
 
-    // Enable the Linear Voting strategy on Usul
-    await usulModule
+    // Enable the Linear Voting strategy on Azorius
+    await azorius
       .connect(gnosisSafeOwner)
       .enableStrategy(linearTokenVoting.address);
 
-    // Create transaction on Gnosis Safe to setup Usul module
-    const enableUsulModuleData = gnosisSafe.interface.encodeFunctionData(
+    // Create transaction on Gnosis Safe to setup Azorius module
+    const enableAzoriusModuleData = gnosisSafe.interface.encodeFunctionData(
       "enableModule",
-      [usulModule.address]
+      [azorius.address]
     );
 
-    const enableUsulModuleTx = buildSafeTransaction({
+    const enableAzoriusModuleTx = buildSafeTransaction({
       to: gnosisSafe.address,
-      data: enableUsulModuleData,
+      data: enableAzoriusModuleData,
       safeTxGas: 1000000,
       nonce: (await gnosisSafe.nonce()).toNumber(),
     });
 
     const sigs = [
-      await safeSignTypedData(gnosisSafeOwner, gnosisSafe, enableUsulModuleTx),
+      await safeSignTypedData(
+        gnosisSafeOwner,
+        gnosisSafe,
+        enableAzoriusModuleTx
+      ),
     ];
 
     const signatureBytes = buildSignatureBytes(sigs);
@@ -190,15 +194,15 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     // Execute transaction that adds the veto guard to the Safe
     await expect(
       gnosisSafe.execTransaction(
-        enableUsulModuleTx.to,
-        enableUsulModuleTx.value,
-        enableUsulModuleTx.data,
-        enableUsulModuleTx.operation,
-        enableUsulModuleTx.safeTxGas,
-        enableUsulModuleTx.baseGas,
-        enableUsulModuleTx.gasPrice,
-        enableUsulModuleTx.gasToken,
-        enableUsulModuleTx.refundReceiver,
+        enableAzoriusModuleTx.to,
+        enableAzoriusModuleTx.value,
+        enableAzoriusModuleTx.data,
+        enableAzoriusModuleTx.operation,
+        enableAzoriusModuleTx.safeTxGas,
+        enableAzoriusModuleTx.baseGas,
+        enableAzoriusModuleTx.gasPrice,
+        enableAzoriusModuleTx.gasToken,
+        enableAzoriusModuleTx.refundReceiver,
         signatureBytes
       )
     ).to.emit(gnosisSafe, "ExecutionSuccess");
@@ -207,13 +211,13 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
   });
 
-  describe("Safe with FractalUsul module and LinearTokenVoting", () => {
+  describe("Safe with Azorius module and LinearTokenVoting", () => {
     it("Gets correctly initialized", async () => {
       expect(await linearTokenVoting.owner()).to.eq(gnosisSafeOwner.address);
       expect(await linearTokenVoting.governanceToken()).to.eq(
         votesToken.address
       );
-      expect(await linearTokenVoting.usulModule()).to.eq(usulModule.address);
+      expect(await linearTokenVoting.azoriusModule()).to.eq(azorius.address);
       expect(await linearTokenVoting.votingPeriod()).to.eq(60);
       expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
       expect(await linearTokenVoting.name()).to.eq("Voting");
@@ -221,24 +225,24 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
     it("A strategy cannot be enabled more than once", async () => {
       await expect(
-        usulModule
+        azorius
           .connect(gnosisSafeOwner)
           .enableStrategy(linearTokenVoting.address)
       ).to.be.revertedWith("Strategy already enabled");
     });
 
     it("Multiple strategies can be enabled, disabled, and returned", async () => {
-      await usulModule
+      await azorius
         .connect(gnosisSafeOwner)
         .enableStrategy(mockStrategy1.address);
 
-      await usulModule
+      await azorius
         .connect(gnosisSafeOwner)
         .enableStrategy(mockStrategy2.address);
 
       expect(
         (
-          await usulModule.getStrategies(
+          await azorius.getStrategies(
             "0x0000000000000000000000000000000000000001",
             3
           )
@@ -250,17 +254,17 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ]);
     });
 
-    it("The owner can change the Usul Module on the Strategy", async () => {
+    it("The owner can change the Azorius Module on the Strategy", async () => {
       await linearTokenVoting
         .connect(gnosisSafeOwner)
-        .setUsul(deployer.address);
+        .setAzorius(deployer.address);
 
-      expect(await linearTokenVoting.usulModule()).to.eq(deployer.address);
+      expect(await linearTokenVoting.azoriusModule()).to.eq(deployer.address);
     });
 
-    it("A non-owner cannot change the Usul Module on the Strategy", async () => {
+    it("A non-owner cannot change the Azorius Module on the Strategy", async () => {
       await expect(
-        linearTokenVoting.connect(tokenHolder1).setUsul(deployer.address)
+        linearTokenVoting.connect(tokenHolder1).setAzorius(deployer.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -278,24 +282,24 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     });
 
     it("The owner can update the timelock period", async () => {
-      expect(await usulModule.timelockPeriod()).to.eq(60);
-      await usulModule.connect(gnosisSafeOwner).updateTimelockPeriod(120);
+      expect(await azorius.timelockPeriod()).to.eq(60);
+      await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(120);
 
-      expect(await usulModule.timelockPeriod()).to.eq(120);
+      expect(await azorius.timelockPeriod()).to.eq(120);
     });
 
     it("A non-owner cannot update the strategy timelock period", async () => {
       await expect(
-        usulModule.connect(tokenHolder1).updateTimelockPeriod(120)
+        azorius.connect(tokenHolder1).updateTimelockPeriod(120)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("Getting proposal state on an invalid proposal ID reverts", async () => {
-      await expect(usulModule.proposalState(0)).to.be.revertedWith(
+      await expect(azorius.proposalState(0)).to.be.revertedWith(
         "Invalid proposal ID"
       );
 
-      await expect(usulModule.proposalState(0)).to.be.revertedWith(
+      await expect(azorius.proposalState(0)).to.be.revertedWith(
         "Invalid proposal ID"
       );
     });
@@ -316,7 +320,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Use an incorrect address for the strategy
       await expect(
-        usulModule.submitProposal(
+        azorius.submitProposal(
           votesToken.address,
           "0x",
           [proposalTransaction],
@@ -328,14 +332,14 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     it("A proposal cannot be submitted if it contains zero transactions", async () => {
       // Submit transactions as empty array
       await expect(
-        usulModule.submitProposal(linearTokenVoting.address, "0x", [], "")
+        azorius.submitProposal(linearTokenVoting.address, "0x", [], "")
       ).to.be.revertedWith("Proposal must contain at least one transaction");
     });
 
-    it("Proposal cannot be received by the strategy from address other than UsulModule", async () => {
-      // Submit call from address that isn't Usul module
+    it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
+      // Submit call from address that isn't Azorius module
       await expect(linearTokenVoting.initializeProposal([])).to.be.revertedWith(
-        "Only callable by Usul module"
+        "Only callable by Azorius module"
       );
     });
 
@@ -360,7 +364,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -368,7 +372,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -393,7 +397,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -401,7 +405,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -424,7 +428,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -432,7 +436,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       expect((await linearTokenVoting.getProposal(0)).yesVotes).to.eq(0);
 
@@ -466,7 +470,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -474,7 +478,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       expect((await linearTokenVoting.getProposal(0)).noVotes).to.eq(0);
 
@@ -508,7 +512,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -516,7 +520,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       expect((await linearTokenVoting.getProposal(0)).abstainVotes).to.eq(0);
 
@@ -550,7 +554,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -558,7 +562,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
@@ -576,7 +580,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await expect(await linearTokenVoting.isPassed(0)).to.be.true;
 
       // Proposal is in the active state
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
     });
 
     it("A proposal is not passed if there are more No votes than Yes votes", async () => {
@@ -593,7 +597,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -601,7 +605,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
@@ -619,7 +623,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       await expect(
-        usulModule.executeProposalBatch(
+        azorius.executeProposalBatch(
           0,
           [votesToken.address],
           [0],
@@ -629,7 +633,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Proposal must be in the executable state");
 
       // Proposal in the failed state
-      expect(await usulModule.proposalState(0)).to.eq(4);
+      expect(await azorius.proposalState(0)).to.eq(4);
     });
 
     it("A proposal is not passed if quorum is not reached", async () => {
@@ -646,7 +650,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -654,7 +658,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
@@ -671,7 +675,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       await expect(
-        usulModule.executeProposalBatch(
+        azorius.executeProposalBatch(
           0,
           [votesToken.address],
           [0],
@@ -681,7 +685,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Proposal must be in the executable state");
 
       // Proposal in the failed state
-      expect(await usulModule.proposalState(0)).to.eq(4);
+      expect(await azorius.proposalState(0)).to.eq(4);
     });
 
     it("A proposal is not passed if voting period is not over", async () => {
@@ -698,7 +702,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -706,7 +710,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
@@ -721,7 +725,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       await expect(
-        usulModule.executeProposalBatch(
+        azorius.executeProposalBatch(
           0,
           [votesToken.address],
           [0],
@@ -747,7 +751,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       const proposalMetadata = "This is my amazing proposal!";
 
-      const tx = await usulModule.submitProposal(
+      const tx = await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -756,7 +760,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt.logs[1].data;
       const topics = receipt.logs[1].topics;
-      const event = usulModule.interface.decodeEventLog(
+      const event = azorius.interface.decodeEventLog(
         "ProposalCreated",
         data,
         topics
@@ -789,7 +793,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -797,7 +801,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -807,25 +811,25 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is in the active state
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Finalize the strategy
       await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is executable
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalBatch(
+      await azorius.executeProposalBatch(
         0,
         [votesToken.address],
         [0],
@@ -837,7 +841,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
 
       // Proposal is in the active state
-      expect(await usulModule.proposalState(0)).to.eq(3);
+      expect(await azorius.proposalState(0)).to.eq(3);
     });
 
     it("Multiple transactions can be executed from a single proposal", async () => {
@@ -878,7 +882,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
@@ -886,7 +890,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -899,19 +903,19 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is executable
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalBatch(
+      await azorius.executeProposalBatch(
         0,
         [votesToken.address, votesToken.address, votesToken.address],
         [0, 0, 0],
@@ -961,7 +965,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
@@ -969,7 +973,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -982,19 +986,19 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is executable
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the first transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1006,7 +1010,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(100);
 
       // Execute the second transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1018,7 +1022,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(300);
 
       // Execute the third transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1074,7 +1078,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       };
 
       // Submit proposal, transaction 4 is not included
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
@@ -1082,7 +1086,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -1095,20 +1099,20 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is executable
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Attempt to execute the second transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1119,7 +1123,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the third transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1130,7 +1134,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the fourth transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1139,12 +1143,12 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         )
       ).to.be.revertedWith("Transaction hash does not match the indexed hash");
 
-      expect(await usulModule.isTxExecuted(0, 0)).to.eq(false);
-      expect(await usulModule.isTxExecuted(0, 1)).to.eq(false);
-      expect(await usulModule.isTxExecuted(0, 2)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 0)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 1)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 2)).to.eq(false);
 
       // Execute the first transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1152,16 +1156,16 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         0
       );
 
-      expect(await usulModule.isTxExecuted(0, 0)).to.eq(true);
-      expect(await usulModule.isTxExecuted(0, 1)).to.eq(false);
-      expect(await usulModule.isTxExecuted(0, 2)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 0)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 1)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 2)).to.eq(false);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(500);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(100);
 
       // Attempt to execute the first transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1172,7 +1176,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the third transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1183,7 +1187,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the fourth transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1193,7 +1197,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Transaction hash does not match the indexed hash");
 
       // Execute the second transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1201,16 +1205,16 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         0
       );
 
-      expect(await usulModule.isTxExecuted(0, 0)).to.eq(true);
-      expect(await usulModule.isTxExecuted(0, 1)).to.eq(true);
-      expect(await usulModule.isTxExecuted(0, 2)).to.eq(false);
+      expect(await azorius.isTxExecuted(0, 0)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 1)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 2)).to.eq(false);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(300);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(300);
 
       // Attempt to execute the first transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1221,7 +1225,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the second transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1232,7 +1236,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the fourth transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1242,7 +1246,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Transaction hash does not match the indexed hash");
 
       // Execute the third transaction
-      await usulModule.executeProposalByIndex(
+      await azorius.executeProposalByIndex(
         0,
         votesToken.address,
         0,
@@ -1250,16 +1254,16 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         0
       );
 
-      expect(await usulModule.isTxExecuted(0, 0)).to.eq(true);
-      expect(await usulModule.isTxExecuted(0, 1)).to.eq(true);
-      expect(await usulModule.isTxExecuted(0, 2)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 0)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 1)).to.eq(true);
+      expect(await azorius.isTxExecuted(0, 2)).to.eq(true);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
 
       // Attempt to execute the first transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1270,7 +1274,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the second transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1281,7 +1285,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the third transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1292,7 +1296,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
 
       // Attempt to execute the fourth transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azorius.executeProposalByIndex(
           0,
           votesToken.address,
           0,
@@ -1316,7 +1320,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azorius.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -1324,7 +1328,7 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
@@ -1337,20 +1341,20 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is executable
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalBatch(
+        azorius.executeProposalBatch(
           0,
           [votesToken.address],
           [0],

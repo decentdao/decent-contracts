@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IUsulVetoGuard {
+interface IAzoriusVetoGuard {
     struct Proposal {
       uint256 timelockedBlock;
       uint256 executionDeadline;
     }
 
-    event UsulVetoGuardSetup(
+    event AzoriusVetoGuardSetup(
         address creator,
         address owner,
         address indexed vetoVoting,
         address indexed votingStrategy,
-        address indexed usul
+        address indexed azorius
     );
 
     event ProposalTimelocked(

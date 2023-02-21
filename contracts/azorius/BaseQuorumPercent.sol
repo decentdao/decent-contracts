@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-/// @title BaseQuorumPercent - A Usul strategy extension that enables percent based quorums
+/// @title BaseQuorumPercent - A Azorius strategy extension that enables percent based quorums
 abstract contract BaseQuorumPercent is OwnableUpgradeable {
     uint256 public quorumNumerator;
     uint256 public constant quorumDenominator = 1_000_000;

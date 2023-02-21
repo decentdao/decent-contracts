@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import "../interfaces/IFractalUsul.sol";
-import "./IBaseStrategy.sol";
+import "./interfaces/IAzorius.sol";
+import "./interfaces/IBaseStrategy.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -11,23 +11,23 @@ abstract contract BaseStrategy is
     FactoryFriendly,
     IBaseStrategy
 {
-    event UsulSet(address indexed newUsul);
-    event StrategySetup(address indexed UsulModule, address indexed owner);
+    event AzoriusSet(address indexed newAzorius);
+    event StrategySetup(address indexed AzoriusModule, address indexed owner);
 
-    IFractalUsul public usulModule;
+    IAzorius public azoriusModule;
 
-    modifier onlyUsul() {
+    modifier onlyAzorius() {
         require(
-            msg.sender == address(usulModule),
-            "Only callable by Usul module"
+            msg.sender == address(azoriusModule),
+            "Only callable by Azorius module"
         );
         _;
     }
 
-    /// @notice Sets the address of the Usul contract, only callable by owner
-    /// @param _usulModule The address of the Usul module
-    function setUsul(address _usulModule) external onlyOwner {
-        _setUsul(_usulModule);
+    /// @notice Sets the address of the Azorius contract, only callable by owner
+    /// @param _azoriusModule The address of the Azorius module
+    function setAzorius(address _azoriusModule) external onlyOwner {
+        _setAzorius(_azoriusModule);
     }
 
     /// @notice Called by the proposal module, this notifes the strategy of a new proposal
@@ -38,12 +38,12 @@ abstract contract BaseStrategy is
     /// @param _proposalId The ID of the proposal to timelock
     function timelockProposal(uint256 _proposalId) external virtual;
 
-    /// @notice Sets the address of the Usul contract
-    /// @param _usulModule The address of the Usul module
-    function _setUsul(address _usulModule) internal {
-        usulModule = IFractalUsul(_usulModule);
+    /// @notice Sets the address of the Azorius contract
+    /// @param _azoriusModule The address of the Azorius module
+    function _setAzorius(address _azoriusModule) internal {
+        azoriusModule = IAzorius(_azoriusModule);
 
-        emit UsulSet(_usulModule);
+        emit AzoriusSet(_azoriusModule);
     }
 
     /// @notice Returns if a proposal has succeeded

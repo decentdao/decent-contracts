@@ -2,25 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@gnosis.pm/zodiac/contracts/core/Module.sol";
-import "./usul/IBaseStrategy.sol";
-import "./interfaces/IFractalUsul.sol";
+import "./interfaces/IBaseStrategy.sol";
+import "./interfaces/IAzorius.sol";
 
-/// @title FractalUsul - A Zodiac module that enables a voting agnostic proposal mechanism
-contract FractalUsul is Module, IFractalUsul {
-    struct Transaction {
-        address to;
-        uint256 value;
-        bytes data;
-        Enum.Operation operation;
-    }
-
-    struct Proposal {
-        uint256 timelockDeadline; // The timestamp when the proposal timelock period ends
-        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
-        uint256 executionCounter; // The count of transactions that have been executed within the proposal
-        address strategy; // The voting strategy contract this proposal was created on
-    }
-
+/// @title Azorius - A Zodiac module that enables a voting agnostic proposal mechanism
+contract Azorius is Module, IAzorius {
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
     bytes32 public constant TRANSACTION_TYPEHASH =
@@ -41,8 +27,7 @@ contract FractalUsul is Module, IFractalUsul {
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
     event ProposalTimelocked(uint256 proposalId, uint256 timelockDeadline);
-    event ProposalExecuted(uint256 id);
-    event UsulSetup(
+    event AzoriusSetup(
         address indexed initiator,
         address indexed owner,
         address indexed avatar,
@@ -84,7 +69,7 @@ contract FractalUsul is Module, IFractalUsul {
         transferOwnership(_owner);
         _updateTimelockPeriod(_timelockPeriod);
 
-        emit UsulSetup(msg.sender, _owner, _avatar, _target);
+        emit AzoriusSetup(msg.sender, _owner, _avatar, _target);
     }
 
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner

@@ -9,10 +9,10 @@ import {
   GnosisSafeProxyFactory,
   LinearTokenVoting,
   LinearTokenVoting__factory,
-  FractalUsul,
-  FractalUsul__factory,
-  UsulVetoGuard,
-  UsulVetoGuard__factory,
+  Azorius,
+  Azorius__factory,
+  AzoriusVetoGuard,
+  AzoriusVetoGuard__factory,
   VetoMultisigVoting,
   VetoMultisigVoting__factory,
   VotesToken,
@@ -27,12 +27,12 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Usul Child DAO with Multisig parent", () => {
+describe("Azorius Child DAO with Multisig parent", () => {
   // Deployed contracts
   let parentGnosisSafe: Contract;
   let childGnosisSafe: GnosisSafe;
-  let usulVetoGuard: UsulVetoGuard;
-  let usulModule: FractalUsul;
+  let azoriusVetoGuard: AzoriusVetoGuard;
+  let azoriusModule: Azorius;
   let linearTokenVoting: LinearTokenVoting;
   let vetoMultisigVoting: VetoMultisigVoting;
   let childVotesToken: VotesToken;
@@ -46,7 +46,7 @@ describe("Usul Child DAO with Multisig parent", () => {
   let parentMultisigOwner3: SignerWithAddress;
   let childTokenHolder1: SignerWithAddress;
   let childTokenHolder2: SignerWithAddress;
-  let usulModuleOwner: SignerWithAddress;
+  let azoriusModuleOwner: SignerWithAddress;
   let vetoMultisigVotingOwner: SignerWithAddress;
 
   // Gnosis
@@ -87,7 +87,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       parentMultisigOwner3,
       childTokenHolder1,
       childTokenHolder2,
-      usulModuleOwner,
+      azoriusModuleOwner,
       vetoMultisigVotingOwner,
     ] = await ethers.getSigners();
 
@@ -192,9 +192,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       .connect(childTokenHolder2)
       .delegate(childTokenHolder2.address);
 
-    // Deploy Usul module
-    usulModule = await new FractalUsul__factory(deployer).deploy(
-      usulModuleOwner.address,
+    // Deploy Azorius module
+    azoriusModule = await new Azorius__factory(deployer).deploy(
+      azoriusModuleOwner.address,
       childGnosisSafe.address,
       childGnosisSafe.address,
       [],
@@ -205,15 +205,15 @@ describe("Usul Child DAO with Multisig parent", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
       parentGnosisSafe.address, // owner
       childVotesToken.address, // governance token
-      usulModule.address, // usul module
+      azoriusModule.address, // usul module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000
       "Voting" // name
     );
 
-    // Enable the OZ Linear Voting strategy on Usul
-    await usulModule
-      .connect(usulModuleOwner)
+    // Enable the OZ Linear Voting strategy on Azorius
+    await azoriusModule
+      .connect(azoriusModuleOwner)
       .enableStrategy(linearTokenVoting.address);
 
     // Deploy VetoMultisigVoting contract
@@ -221,17 +221,17 @@ describe("Usul Child DAO with Multisig parent", () => {
       deployer
     ).deploy();
 
-    // Deploy and setUp Usul Veto Guard contract
-    usulVetoGuard = await new UsulVetoGuard__factory(deployer).deploy();
+    // Deploy and setUp Azorius Veto Guard contract
+    azoriusVetoGuard = await new AzoriusVetoGuard__factory(deployer).deploy();
 
-    await usulVetoGuard.setUp(
+    await azoriusVetoGuard.setUp(
       abiCoder.encode(
         ["address", "address", "address", "address", "uint256"],
         [
           vetoMultisigVotingOwner.address, // owner
           vetoMultisigVoting.address, // veto voting contract
           linearTokenVoting.address, // OZ linear voting contract
-          usulModule.address, // Usul
+          azoriusModule.address, // Azorius
           60, // Execution period in seconds
         ]
       )
@@ -256,20 +256,20 @@ describe("Usul Child DAO with Multisig parent", () => {
           10, // freeze proposal duration in blocks
           200, // freeze duration in blocks
           parentGnosisSafe.address,
-          usulVetoGuard.address,
+          azoriusVetoGuard.address,
         ]
       )
     );
 
-    // Create transaction on child Gnosis Safe to setup Usul module
-    const enableUsulModuleData = childGnosisSafe.interface.encodeFunctionData(
-      "enableModule",
-      [usulModule.address]
-    );
+    // Create transaction on child Gnosis Safe to setup Azorius module
+    const enableAzoriusModuleData =
+      childGnosisSafe.interface.encodeFunctionData("enableModule", [
+        azoriusModule.address,
+      ]);
 
-    const enableUsulModuleTx = buildSafeTransaction({
+    const enableAzoriusModuleTx = buildSafeTransaction({
       to: childGnosisSafe.address,
-      data: enableUsulModuleData,
+      data: enableAzoriusModuleData,
       safeTxGas: 1000000,
       nonce: (await childGnosisSafe.nonce()).toNumber(),
     });
@@ -278,31 +278,33 @@ describe("Usul Child DAO with Multisig parent", () => {
       await safeSignTypedData(
         childSafeOwner,
         childGnosisSafe,
-        enableUsulModuleTx
+        enableAzoriusModuleTx
       ),
     ];
 
     const signatureBytes = buildSignatureBytes(sigs);
 
-    // Execute transaction that adds the Usul module to the Safe
+    // Execute transaction that adds the Azorius module to the Safe
     await expect(
       childGnosisSafe.execTransaction(
-        enableUsulModuleTx.to,
-        enableUsulModuleTx.value,
-        enableUsulModuleTx.data,
-        enableUsulModuleTx.operation,
-        enableUsulModuleTx.safeTxGas,
-        enableUsulModuleTx.baseGas,
-        enableUsulModuleTx.gasPrice,
-        enableUsulModuleTx.gasToken,
-        enableUsulModuleTx.refundReceiver,
+        enableAzoriusModuleTx.to,
+        enableAzoriusModuleTx.value,
+        enableAzoriusModuleTx.data,
+        enableAzoriusModuleTx.operation,
+        enableAzoriusModuleTx.safeTxGas,
+        enableAzoriusModuleTx.baseGas,
+        enableAzoriusModuleTx.gasPrice,
+        enableAzoriusModuleTx.gasToken,
+        enableAzoriusModuleTx.refundReceiver,
         signatureBytes
       )
     ).to.emit(childGnosisSafe, "ExecutionSuccess");
 
     // todo: set this with gnosis parent tx
-    // Set the Usul Veto Guard as the Guard on the Usul Module
-    await usulModule.connect(usulModuleOwner).setGuard(usulVetoGuard.address);
+    // Set the Azorius Veto Guard as the Guard on the Azorius Module
+    await azoriusModule
+      .connect(azoriusModuleOwner)
+      .setGuard(azoriusVetoGuard.address);
 
     // Gnosis Safe received the 100 tokens
     expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
@@ -310,14 +312,22 @@ describe("Usul Child DAO with Multisig parent", () => {
 
   describe("VetoGuard Functionality", () => {
     it("Supports ERC-165", async () => {
-      // Supports IUsulVetoGuard interface
-      expect(await usulVetoGuard.supportsInterface("0xa04f1a4e")).to.eq(true);
+      // Supports IAzoriusVetoGuard interface
+      expect(await azoriusVetoGuard.supportsInterface("0xa04f1a4e")).to.eq(
+        true
+      );
       // Supports IGuard interface
-      expect(await usulVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
+      expect(await azoriusVetoGuard.supportsInterface("0xe6d7a83a")).to.eq(
+        true
+      );
       // Supports IERC-165 interface
-      expect(await usulVetoGuard.supportsInterface("0x01ffc9a7")).to.eq(true);
+      expect(await azoriusVetoGuard.supportsInterface("0x01ffc9a7")).to.eq(
+        true
+      );
       // Doesn't support random interface
-      expect(await usulVetoGuard.supportsInterface("0x00000000")).to.eq(false);
+      expect(await azoriusVetoGuard.supportsInterface("0x00000000")).to.eq(
+        false
+      );
     });
 
     it("A proposal can be created and executed", async () => {
@@ -334,7 +344,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -342,7 +352,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -355,16 +365,16 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -372,7 +382,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -424,7 +434,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         },
       ];
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         proposalTransactions,
@@ -432,7 +442,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -445,16 +455,16 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -462,7 +472,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalBatch(
+      await azoriusModule.executeProposalBatch(
         0,
         [
           childVotesToken.address,
@@ -495,7 +505,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -503,7 +513,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -513,16 +523,16 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -530,7 +540,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -558,7 +568,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -566,7 +576,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -576,17 +586,17 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that execution period has ended
       await time.increase(time.duration.seconds(130));
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -610,7 +620,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -618,7 +628,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -628,10 +638,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Attempt to timelock the proposal again
-      await expect(usulVetoGuard.timelockProposal(0)).to.be.revertedWith(
+      await expect(azoriusVetoGuard.timelockProposal(0)).to.be.revertedWith(
         "Proposal has already been timelocked"
       );
     });
@@ -650,7 +660,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -658,7 +668,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -668,35 +678,37 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal execution deadline should equal current time + timelockPeriod + executionPeriod
-      expect(await usulVetoGuard.getProposalExecutionDeadline(0)).to.eq(
+      expect(await azoriusVetoGuard.getProposalExecutionDeadline(0)).to.eq(
         (await time.latest()) + 60 + 60
       );
 
       // Proposal timelocked block has been updated
       expect((await ethers.provider.getBlock("latest")).number).to.eq(
-        (await usulVetoGuard.getProposalTimelockedBlock(0)).toNumber()
+        (await azoriusVetoGuard.getProposalTimelockedBlock(0)).toNumber()
       );
 
       // // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(121));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execution deadline should now be in the past
       expect(await time.latest()).to.gt(
-        await (await usulVetoGuard.getProposalExecutionDeadline(0)).toNumber()
+        await (
+          await azoriusVetoGuard.getProposalExecutionDeadline(0)
+        ).toNumber()
       );
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -706,7 +718,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       ).to.be.revertedWith("Transaction execution period has ended");
 
       // Attempt to re-timelocked the proposal
-      await expect(usulVetoGuard.timelockProposal(0)).to.be.revertedWith(
+      await expect(azoriusVetoGuard.timelockProposal(0)).to.be.revertedWith(
         "Proposal timelock failed"
       );
     });
@@ -725,7 +737,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -733,7 +745,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -748,17 +760,17 @@ describe("Usul Child DAO with Multisig parent", () => {
       // The proposal is not timelocked
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -782,7 +794,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -790,7 +802,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -801,7 +813,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -825,7 +837,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -833,7 +845,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
@@ -858,7 +870,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -866,7 +878,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 0, [0]);
@@ -895,7 +907,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -903,7 +915,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -929,7 +941,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -937,7 +949,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -950,14 +962,14 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Do not wait for timelock to end, but attempt to execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -975,7 +987,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTxHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -989,7 +1001,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -997,7 +1009,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1010,10 +1022,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1029,11 +1041,11 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1061,7 +1073,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTxHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
@@ -1089,7 +1101,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         },
       ];
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         proposalTransactions,
@@ -1097,7 +1109,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1110,10 +1122,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1127,11 +1139,11 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       // Execute the transaction
       await expect(
-        usulModule.executeProposalBatch(
+        azoriusModule.executeProposalBatch(
           0,
           [
             childVotesToken.address,
@@ -1153,7 +1165,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTxHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1167,7 +1179,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -1175,7 +1187,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1188,10 +1200,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1202,7 +1214,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1210,7 +1222,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -1237,7 +1249,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTxHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
@@ -1258,14 +1270,14 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
@@ -1273,8 +1285,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
-      expect(await usulModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1291,12 +1303,12 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(1);
 
       // Timelock the proposals
-      await usulVetoGuard.timelockProposal(0);
-      await usulVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
-      expect(await usulModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
 
       // Voters both cast veto votes on the first proposal
       await vetoMultisigVoting
@@ -1311,8 +1323,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
-      expect(await usulModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1321,7 +1333,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to veto
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1331,7 +1343,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       ).to.be.revertedWith("Transaction has been vetoed");
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         1,
         childVotesToken.address,
         0,
@@ -1353,7 +1365,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTxHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1367,7 +1379,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -1375,7 +1387,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1388,10 +1400,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Cast veto votes
       await vetoMultisigVoting
@@ -1414,7 +1426,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash = await usulModule.getTxHash(
+      const txHash = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData,
@@ -1428,7 +1440,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -1436,7 +1448,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1471,7 +1483,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Get the tx hash to submit within the proposal
-      const txHash1 = await usulModule.getTxHash(
+      const txHash1 = await azoriusModule.getTxHash(
         childVotesToken.address,
         0,
         tokenTransferData1,
@@ -1499,19 +1511,19 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
         ""
       );
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
@@ -1519,9 +1531,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
-      expect(await usulModule.proposalState(1)).to.eq(0);
-      expect(await usulModule.proposalState(2)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1542,14 +1554,14 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(2);
 
       // Timelock the proposals
-      await usulVetoGuard.timelockProposal(0);
-      await usulVetoGuard.timelockProposal(1);
-      await usulVetoGuard.timelockProposal(2);
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
-      expect(await usulModule.proposalState(1)).to.eq(1);
-      expect(await usulModule.proposalState(2)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1568,13 +1580,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
-      expect(await usulModule.proposalState(1)).to.eq(2);
-      expect(await usulModule.proposalState(2)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to veto
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1585,7 +1597,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           1,
           childVotesToken.address,
           0,
@@ -1596,7 +1608,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           2,
           childVotesToken.address,
           0,
@@ -1644,21 +1656,21 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
         ""
       );
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
@@ -1666,9 +1678,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
-      expect(await usulModule.proposalState(1)).to.eq(0);
-      expect(await usulModule.proposalState(2)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1689,14 +1701,14 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(2);
 
       // Timelock the proposals
-      await usulVetoGuard.timelockProposal(0);
-      await usulVetoGuard.timelockProposal(1);
-      await usulVetoGuard.timelockProposal(2);
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
-      expect(await usulModule.proposalState(1)).to.eq(1);
-      expect(await usulModule.proposalState(2)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1711,13 +1723,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
-      expect(await usulModule.proposalState(1)).to.eq(2);
-      expect(await usulModule.proposalState(2)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1728,7 +1740,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           1,
           childVotesToken.address,
           0,
@@ -1739,7 +1751,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           2,
           childVotesToken.address,
           0,
@@ -1763,7 +1775,7 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction],
@@ -1771,7 +1783,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1784,10 +1796,10 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(0);
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(0);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1800,7 +1812,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1808,7 +1820,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,
@@ -1848,14 +1860,14 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
@@ -1863,8 +1875,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
-      expect(await usulModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -1877,12 +1889,12 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposals
-      await usulVetoGuard.timelockProposal(0);
-      await usulVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
-      expect(await usulModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -1897,12 +1909,12 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
-      expect(await usulModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -1913,7 +1925,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           1,
           childVotesToken.address,
           0,
@@ -1939,14 +1951,14 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
         ""
       );
 
-      expect(await usulModule.proposalState(2)).to.eq(0);
+      expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
       await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
@@ -1955,16 +1967,16 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Timelock the proposal
-      await usulVetoGuard.timelockProposal(2);
+      await azoriusVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(2)).to.eq(1);
+      expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       // Increase time so that timelock period has ended
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(2)).to.eq(2);
+      expect(await azoriusModule.proposalState(2)).to.eq(2);
 
       expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
         100
@@ -1972,7 +1984,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         2,
         childVotesToken.address,
         0,
@@ -2024,19 +2036,19 @@ describe("Usul Child DAO with Multisig parent", () => {
         operation: 0,
       };
 
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction2],
         ""
       );
-      await usulModule.submitProposal(
+      await azoriusModule.submitProposal(
         linearTokenVoting.address,
         "0x",
         [proposalTransaction3],
@@ -2044,9 +2056,9 @@ describe("Usul Child DAO with Multisig parent", () => {
       );
 
       // Proposal is active
-      expect(await usulModule.proposalState(0)).to.eq(0);
-      expect(await usulModule.proposalState(1)).to.eq(0);
-      expect(await usulModule.proposalState(2)).to.eq(0);
+      expect(await azoriusModule.proposalState(0)).to.eq(0);
+      expect(await azoriusModule.proposalState(1)).to.eq(0);
+      expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
       await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
@@ -2067,14 +2079,14 @@ describe("Usul Child DAO with Multisig parent", () => {
       await linearTokenVoting.timelockProposal(2);
 
       // Timelock the proposals
-      await usulVetoGuard.timelockProposal(0);
-      await usulVetoGuard.timelockProposal(1);
-      await usulVetoGuard.timelockProposal(2);
+      await azoriusVetoGuard.timelockProposal(0);
+      await azoriusVetoGuard.timelockProposal(1);
+      await azoriusVetoGuard.timelockProposal(2);
 
       // Proposal is timelocked
-      expect(await usulModule.proposalState(0)).to.eq(1);
-      expect(await usulModule.proposalState(1)).to.eq(1);
-      expect(await usulModule.proposalState(2)).to.eq(1);
+      expect(await azoriusModule.proposalState(0)).to.eq(1);
+      expect(await azoriusModule.proposalState(1)).to.eq(1);
+      expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
 
@@ -2089,13 +2101,13 @@ describe("Usul Child DAO with Multisig parent", () => {
       await time.increase(time.duration.seconds(60));
 
       // Proposal is ready to execute
-      expect(await usulModule.proposalState(0)).to.eq(2);
-      expect(await usulModule.proposalState(1)).to.eq(2);
-      expect(await usulModule.proposalState(2)).to.eq(2);
+      expect(await azoriusModule.proposalState(0)).to.eq(2);
+      expect(await azoriusModule.proposalState(1)).to.eq(2);
+      expect(await azoriusModule.proposalState(2)).to.eq(2);
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           0,
           childVotesToken.address,
           0,
@@ -2106,7 +2118,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           1,
           childVotesToken.address,
           0,
@@ -2117,7 +2129,7 @@ describe("Usul Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        usulModule.executeProposalByIndex(
+        azoriusModule.executeProposalByIndex(
           2,
           childVotesToken.address,
           0,
@@ -2138,7 +2150,7 @@ describe("Usul Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await usulModule.executeProposalByIndex(
+      await azoriusModule.executeProposalByIndex(
         0,
         childVotesToken.address,
         0,

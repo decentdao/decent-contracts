@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IBaseStrategy {
-    /// @notice Sets the address of the Usul contract, only callable by owner
-    /// @param _usulModule The address of the Usul module
-    function setUsul(address _usulModule) external;
+    /// @notice Sets the address of the Azorius contract, only callable by owner
+    /// @param _azoriusModule The address of the Azorius module
+    function setAzorius(address _azoriusModule) external;
 
     /// @notice Called by the proposal module, this notifes the strategy of a new proposal
     /// @param _data Any extra data to pass to the voting strategy

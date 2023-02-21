@@ -20,8 +20,8 @@ import {
   multisendABI,
   encodeMultiSend,
   ifaceMultiSend,
-  usuliface,
-  abiUsul,
+  azoriusiface,
+  abiAzorius,
 } from "./helpers";
 
 describe("Atomic Gnosis Safe Deployment", () => {
@@ -232,9 +232,9 @@ describe("Atomic Gnosis Safe Deployment", () => {
       expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
     });
 
-    it("Setup Usul Module w/ ModuleProxyCreationEvent", async () => {
+    it("Setup Azorius Module w/ ModuleProxyCreationEvent", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = [];
-      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
         ["address", "address", "address", "address[]"],
         [
           gnosisSafe.address,
@@ -243,20 +243,20 @@ describe("Atomic Gnosis Safe Deployment", () => {
           VOTING_STRATEGIES_TO_DEPLOY,
         ]
       );
-      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
-        encodedInitUsulData,
+      const encodedSetupAzoriusData = azoriusiface.encodeFunctionData("setUp", [
+        encodedInitAzoriusData,
       ]);
-      const predictedUsulModule = await calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleFactory,
         "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-        encodedSetupUsulData,
+        encodedSetupAzoriusData,
         "10031021"
       );
 
-      const usulContract = new ethers.Contract(
-        predictedUsulModule,
+      const azoriusContract = new ethers.Contract(
+        predictedAzoriusModule,
         // eslint-disable-next-line camelcase
-        abiUsul,
+        abiAzorius,
         deployer
       );
 
@@ -273,7 +273,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
           "deployModule",
           [
             "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-            encodedSetupUsulData,
+            encodedSetupAzoriusData,
             "10031021",
           ],
           0,
@@ -284,13 +284,13 @@ describe("Atomic Gnosis Safe Deployment", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(
-          predictedUsulModule,
+          predictedAzoriusModule,
           "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1"
         );
 
-      expect(await usulContract.avatar()).eq(gnosisSafe.address);
-      expect(await usulContract.target()).eq(gnosisSafe.address);
-      expect(await usulContract.owner()).eq(gnosisSafe.address);
+      expect(await azoriusContract.avatar()).eq(gnosisSafe.address);
+      expect(await azoriusContract.target()).eq(gnosisSafe.address);
+      expect(await azoriusContract.owner()).eq(gnosisSafe.address);
     });
 
     it("Setup Module w/ enabledModule event", async () => {
@@ -355,9 +355,9 @@ describe("Atomic Gnosis Safe Deployment", () => {
       );
     });
 
-    it("Setup UsulModule w/ enabledModule event", async () => {
+    it("Setup AzoriusModule w/ enabledModule event", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = []; // @todo pass expected addresses for voting strategies
-      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
         ["address", "address", "address", "address[]"],
         [
           gnosisSafe.address,
@@ -366,20 +366,20 @@ describe("Atomic Gnosis Safe Deployment", () => {
           VOTING_STRATEGIES_TO_DEPLOY,
         ]
       );
-      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
-        encodedInitUsulData,
+      const encodedSetupAzoriusData = azoriusiface.encodeFunctionData("setUp", [
+        encodedInitAzoriusData,
       ]);
-      const predictedUsulModule = await calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleFactory,
         "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-        encodedSetupUsulData,
+        encodedSetupAzoriusData,
         "10031021"
       );
 
-      const usulContract = new ethers.Contract(
-        predictedUsulModule,
+      const azoriusContract = new ethers.Contract(
+        predictedAzoriusModule,
         // eslint-disable-next-line camelcase
-        abiUsul,
+        abiAzorius,
         deployer
       );
       const internalTxs: MetaTransaction[] = [
@@ -393,7 +393,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisSafe,
           "enableModule",
-          [usulContract.address],
+          [azoriusContract.address],
           0,
           false
         ),
@@ -426,7 +426,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
           "deployModule",
           [
             "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-            encodedSetupUsulData,
+            encodedSetupAzoriusData,
             "10031021",
           ],
           0,
@@ -455,8 +455,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(usulContract.address);
-      expect(await gnosisSafe.isModuleEnabled(usulContract.address)).to.eq(
+        .withArgs(azoriusContract.address);
+      expect(await gnosisSafe.isModuleEnabled(azoriusContract.address)).to.eq(
         true
       );
     });

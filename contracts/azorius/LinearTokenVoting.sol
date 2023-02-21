@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "./BaseTokenVoting.sol";
 import "./BaseQuorumPercent.sol";
 
-/// @title A Usul strategy that enables linear token voting
+/// @title An Azorius strategy that enables linear token voting
 contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     ERC20Votes public governanceToken;
 
     constructor(
         address _owner,
         ERC20Votes _governanceToken,
-        address _usulModule,
+        address _azoriusModule,
         uint256 _votingPeriod,
         uint256 _quorumNumerator,
         string memory _name
@@ -20,7 +20,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         bytes memory initParams = abi.encode(
             _owner,
             _governanceToken,
-            _usulModule,
+            _azoriusModule,
             _votingPeriod,
             _quorumNumerator,
             _name
@@ -34,7 +34,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         (
             address _owner,
             ERC20Votes _governanceToken,
-            address _usulModule,
+            address _azoriusModule,
             uint256 _votingPeriod,
             uint256 _quorumNumerator,
             string memory _name
@@ -58,11 +58,11 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         governanceToken = _governanceToken;
         __Ownable_init();
         transferOwnership(_owner);
-        _setUsul(_usulModule);
+        _setAzorius(_azoriusModule);
         _updateQuorumNumerator(_quorumNumerator);
         _updateVotingPeriod(_votingPeriod);
 
-        emit StrategySetup(_usulModule, _owner);
+        emit StrategySetup(_azoriusModule, _owner);
     }
 
     /// @notice Casts a vote for a proposal

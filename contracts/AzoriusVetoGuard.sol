@@ -1,26 +1,26 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IUsulVetoGuard.sol";
+import "./interfaces/IAzoriusVetoGuard.sol";
 import "./interfaces/IVetoVoting.sol";
-import "./usul/IBaseStrategy.sol";
-import "./interfaces/IFractalUsul.sol";
+import "./azorius/interfaces/IBaseStrategy.sol";
+import "./azorius/interfaces/IAzorius.sol";
 import "./TransactionHasher.sol";
 import "./FractalBaseGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /// @notice A guard contract that prevents transactions that have been vetoed from being executed a Gnosis Safe
-/// @notice through a FractalUsul module with an attached voting strategy
-contract UsulVetoGuard is
-    IUsulVetoGuard,
+/// @notice through an Azorius module with an attached voting strategy
+contract AzoriusVetoGuard is
+    IAzoriusVetoGuard,
     TransactionHasher,
     FactoryFriendly,
     FractalBaseGuard
 {
     IVetoVoting public vetoVoting;
     IBaseStrategy public strategy;
-    IFractalUsul public fractalUsul;
+    IAzorius public fractalAzorius;
     uint256 public executionPeriod;
     mapping(uint256 => Proposal) internal proposals;
     mapping(bytes32 => uint256) internal transactionToProposal;
@@ -33,7 +33,7 @@ contract UsulVetoGuard is
             address _owner,
             address _vetoVoting,
             address _strategy,
-            address _fractalUsul,
+            address _fractalAzorius,
             uint256 _exeuctionPeriod
         ) = abi.decode(
                 initializeParams,
@@ -43,15 +43,15 @@ contract UsulVetoGuard is
         transferOwnership(_owner);
         vetoVoting = IVetoVoting(_vetoVoting);
         strategy = IBaseStrategy(_strategy);
-        fractalUsul = IFractalUsul(_fractalUsul);
+        fractalAzorius = IAzorius(_fractalAzorius);
         executionPeriod = _exeuctionPeriod;
 
-        emit UsulVetoGuardSetup(
+        emit AzoriusVetoGuardSetup(
             msg.sender,
             _owner,
             _vetoVoting,
             _strategy,
-            _fractalUsul
+            _fractalAzorius
         );
     }
 
@@ -59,15 +59,15 @@ contract UsulVetoGuard is
     /// @param proposalId The ID of the proposal to timelock
     function timelockProposal(uint256 proposalId) external {
         // If proposal is not yet timelocked, then finalize the strategy
-        if (fractalUsul.proposalState(proposalId) == IFractalUsul.ProposalState.ACTIVE)
+        if (fractalAzorius.proposalState(proposalId) == IAzorius.ProposalState.ACTIVE)
             strategy.timelockProposal(proposalId);
 
         require(
-            fractalUsul.proposalState(proposalId) == IFractalUsul.ProposalState.TIMELOCKED,
+            fractalAzorius.proposalState(proposalId) == IAzorius.ProposalState.TIMELOCKED,
             "Proposal timelock failed"
         );
 
-        (uint256 timelockDeadline, , , ) = fractalUsul.getProposal(proposalId);
+        (uint256 timelockDeadline, , , ) = fractalAzorius.getProposal(proposalId);
 
         uint256 executionDeadline = timelockDeadline + executionPeriod;
 
@@ -79,7 +79,7 @@ contract UsulVetoGuard is
         proposals[proposalId].executionDeadline = executionDeadline;
         proposals[proposalId].timelockedBlock = block.number;
 
-        bytes32[] memory txHashes = fractalUsul.getProposalTxHashes(proposalId);
+        bytes32[] memory txHashes = fractalAzorius.getProposalTxHashes(proposalId);
         for(uint256 i; i < txHashes.length; i++) {
           transactionToProposal[txHashes[i]] = proposalId;
         }
@@ -118,7 +118,7 @@ contract UsulVetoGuard is
         bytes memory,
         address
     ) external view override {
-        bytes32 txHash = fractalUsul.getTxHash(to, value, data, operation);
+        bytes32 txHash = fractalAzorius.getTxHash(to, value, data, operation);
 
         uint256 proposalId = transactionToProposal[txHash];
 
@@ -201,7 +201,7 @@ contract UsulVetoGuard is
         returns (bool)
     {
         return
-            interfaceId == type(IUsulVetoGuard).interfaceId ||
+            interfaceId == type(IAzoriusVetoGuard).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }

@@ -2,9 +2,22 @@
 pragma solidity ^0.8.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
-import "../FractalUsul.sol";
 
-interface IFractalUsul {
+interface IAzorius {
+    struct Transaction {
+        address to;
+        uint256 value;
+        bytes data;
+        Enum.Operation operation;
+    }
+
+    struct Proposal {
+        uint256 timelockDeadline; // The timestamp when the proposal timelock period ends
+        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
+        uint256 executionCounter; // The count of transactions that have been executed within the proposal
+        address strategy; // The voting strategy contract this proposal was created on
+    }
+
     enum ProposalState {
         ACTIVE,
         TIMELOCKED,
@@ -24,9 +37,7 @@ interface IFractalUsul {
 
     /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
     /// @param _newTimelockPeriod The new timelock period in seconds
-    function updateTimelockPeriod(
-        uint256 _newTimelockPeriod
-    ) external;
+    function updateTimelockPeriod(uint256 _newTimelockPeriod) external;
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
     /// @param _strategy Address of the voting strategy which the proposal will be submitted to
@@ -36,7 +47,7 @@ interface IFractalUsul {
     function submitProposal(
         address _strategy,
         bytes memory _data,
-        FractalUsul.Transaction[] calldata _transactions,
+        Transaction[] calldata _transactions,
         string calldata _metadata
     ) external;
 

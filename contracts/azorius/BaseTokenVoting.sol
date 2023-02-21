@@ -43,6 +43,30 @@ abstract contract BaseTokenVoting is BaseStrategy {
         _updateVotingPeriod(_newVotingPeriod);
     }
 
+    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
+    /// @param _data Any extra data to pass to the voting strategy
+    function initializeProposal(
+        bytes memory _data
+    ) external virtual override onlyAzorius {
+        uint256 proposalId = abi.decode(_data, (uint256));
+
+        proposals[proposalId].deadline = votingPeriod + block.timestamp;
+        proposals[proposalId].startBlock = block.number;
+
+        emit ProposalReceived(proposalId, block.timestamp);
+    }
+
+    /// @notice Calls the Azorius module to notify that a quorum has been reached
+    /// @notice Timelocks the proposal and starts timelock period
+    /// @param _proposalId The ID of the proposal to timelock
+    function timelockProposal(uint256 _proposalId) public virtual override {
+        require(isPassed(_proposalId), "Proposal is not passed");
+
+        azoriusModule.timelockProposal(_proposalId);
+
+        emit VoteFinalized(_proposalId, block.timestamp);
+    }
+
     /// @notice Updates the voting time period
     /// @param _newVotingPeriod The voting time period in seconds
     function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
@@ -50,20 +74,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
         emit VotingPeriodUpdated(_newVotingPeriod);
     }
-
-
-
-    /// @notice Returns true if an account has voted on the specified proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @param _account The account address to check
-    /// @return bool Returns true if the account has already voted on the proposal
-    function hasVoted(
-        uint256 _proposalId,
-        address _account
-    ) public view returns (bool) {
-        return proposals[_proposalId].hasVoted[_account];
-    }
-
+    
     /// @notice Function for counting a vote for a proposal, can only be called internally
     /// @param _proposalId The ID of the proposal
     /// @param _voter The address of the account casting the vote
@@ -103,28 +114,15 @@ abstract contract BaseTokenVoting is BaseStrategy {
         emit Voted(_voter, _proposalId, _support, _weight);
     }
 
-    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
-    /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(
-        bytes memory _data
-    ) external virtual override onlyUsul {
-        uint256 proposalId = abi.decode(_data, (uint256));
-
-        proposals[proposalId].deadline = votingPeriod + block.timestamp;
-        proposals[proposalId].startBlock = block.number;
-
-        emit ProposalReceived(proposalId, block.timestamp);
-    }
-
-    /// @notice Calls the Usul module to notify that a quorum has been reached
-    /// @notice Timelocks the proposal and starts timelock period
-    /// @param _proposalId The ID of the proposal to timelock
-    function timelockProposal(uint256 _proposalId) public virtual override {
-        require(isPassed(_proposalId), "Proposal is not passed");
-
-        usulModule.timelockProposal(_proposalId);
-
-        emit VoteFinalized(_proposalId, block.timestamp);
+    /// @notice Returns true if an account has voted on the specified proposal
+    /// @param _proposalId The ID of the proposal to check
+    /// @param _account The account address to check
+    /// @return bool Returns true if the account has already voted on the proposal
+    function hasVoted(
+        uint256 _proposalId,
+        address _account
+    ) public view returns (bool) {
+        return proposals[_proposalId].hasVoted[_account];
     }
 
     /// @notice Returns the current state of the specified proposal
