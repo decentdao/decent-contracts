@@ -23,12 +23,10 @@ abstract contract BaseTokenVoting is BaseStrategy {
     }
 
     uint256 public votingPeriod; // the length of time voting is valid for a proposal
-    uint256 public timelockPeriod;
     string public name;
 
     mapping(uint256 => ProposalVoting) internal proposals;
 
-    event TimelockPeriodUpdated(uint256 newTimelockPeriod);
     event VotingPeriodUpdated(uint256 newVotingPeriod);
     event ProposalReceived(uint256 proposalId, uint256 timestamp);
     event VoteFinalized(uint256 proposalId, uint256 timestamp);
@@ -45,14 +43,6 @@ abstract contract BaseTokenVoting is BaseStrategy {
         _updateVotingPeriod(_newVotingPeriod);
     }
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
-    function updateTimelockPeriod(
-        uint256 _newTimelockPeriod
-    ) external onlyOwner {
-        _updateTimelockPeriod(_newTimelockPeriod);
-    }
-
     /// @notice Updates the voting time period
     /// @param _newVotingPeriod The voting time period in seconds
     function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
@@ -61,13 +51,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         emit VotingPeriodUpdated(_newVotingPeriod);
     }
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
-    function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
-        timelockPeriod = _newTimelockPeriod;
 
-        emit TimelockPeriodUpdated(_newTimelockPeriod);
-    }
 
     /// @notice Returns true if an account has voted on the specified proposal
     /// @param _proposalId The ID of the proposal to check
@@ -138,7 +122,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     function timelockProposal(uint256 _proposalId) public virtual override {
         require(isPassed(_proposalId), "Proposal is not passed");
 
-        usulModule.timelockProposal(_proposalId, timelockPeriod);
+        usulModule.timelockProposal(_proposalId);
 
         emit VoteFinalized(_proposalId, block.timestamp);
     }

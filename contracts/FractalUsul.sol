@@ -15,7 +15,7 @@ contract FractalUsul is Module, IFractalUsul {
     }
 
     struct Proposal {
-        uint256 timelockPeriod; // Time before a passed proposal can be executed
+        uint256 timelockDeadline; // The timestamp when the proposal timelock period ends
         bytes32[] txHashes; // The hashes of the transactions contained within the proposal
         uint256 executionCounter; // The count of transactions that have been executed within the proposal
         address strategy; // The voting strategy contract this proposal was created on
@@ -25,7 +25,8 @@ contract FractalUsul is Module, IFractalUsul {
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
-    uint256 public totalProposalCount; // total number of submitted proposals
+    uint256 public totalProposalCount; // Total number of submitted proposals
+    uint256 public timelockPeriod; // Delay between a proposal is passed and can be executed
     address internal constant SENTINEL_STRATEGY = address(0x1);
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposal ID
     mapping(address => address) internal strategies;
@@ -39,7 +40,7 @@ contract FractalUsul is Module, IFractalUsul {
     );
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
-    event ProposalTimelocked(uint256 proposalId, uint256 endDate);
+    event ProposalTimelocked(uint256 proposalId, uint256 timelockDeadline);
     event ProposalExecuted(uint256 id);
     event UsulSetup(
         address indexed initiator,
@@ -49,18 +50,21 @@ contract FractalUsul is Module, IFractalUsul {
     );
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
+    event TimelockPeriodUpdated(uint256 newTimelockPeriod);
 
     constructor(
         address _owner,
         address _avatar,
         address _target,
-        address[] memory _strategies
+        address[] memory _strategies,
+        uint256 _timelockPeriod
     ) {
         bytes memory initParams = abi.encode(
             _owner,
             _avatar,
             _target,
-            _strategies
+            _strategies,
+            _timelockPeriod
         );
         setUp(initParams);
     }
@@ -70,13 +74,16 @@ contract FractalUsul is Module, IFractalUsul {
             address _owner,
             address _avatar,
             address _target,
-            address[] memory _strategies
-        ) = abi.decode(initParams, (address, address, address, address[]));
+            address[] memory _strategies,
+            uint256 _timelockPeriod
+        ) = abi.decode(initParams, (address, address, address, address[], uint256));
         __Ownable_init();
         avatar = _avatar;
         target = _target;
         setupStrategies(_strategies);
         transferOwnership(_owner);
+        _updateTimelockPeriod(_timelockPeriod);
+
         emit UsulSetup(msg.sender, _owner, _avatar, _target);
     }
 
@@ -118,6 +125,14 @@ contract FractalUsul is Module, IFractalUsul {
         strategies[_strategy] = address(0);
 
         emit DisabledStrategy(_strategy);
+    }
+
+    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
+    /// @param _newTimelockPeriod The new timelock period in seconds
+    function updateTimelockPeriod(
+        uint256 _newTimelockPeriod
+    ) external onlyOwner {
+        _updateTimelockPeriod(_newTimelockPeriod);
     }
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
@@ -169,10 +184,8 @@ contract FractalUsul is Module, IFractalUsul {
 
     /// @notice Called by the strategy contract when the proposal vote has succeeded
     /// @param _proposalId The ID of the proposal
-    /// @param _timelockPeriod The delay time until a proposal can be executed
     function timelockProposal(
-        uint256 _proposalId,
-        uint256 _timelockPeriod
+        uint256 _proposalId
     ) external {
         require(
             strategies[msg.sender] != address(0),
@@ -187,13 +200,13 @@ contract FractalUsul is Module, IFractalUsul {
             "Incorrect strategy for proposal"
         );
 
-        proposals[_proposalId].timelockPeriod =
-            block.timestamp +
-            _timelockPeriod;
+        uint256 _timelockDeadline = block.timestamp + timelockPeriod;
+
+        proposals[_proposalId].timelockDeadline = _timelockDeadline;
 
         emit ProposalTimelocked(
             _proposalId,
-            proposals[_proposalId].timelockPeriod
+            _timelockDeadline
         );
     }
 
@@ -283,6 +296,14 @@ contract FractalUsul is Module, IFractalUsul {
         }
     }
 
+    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
+    /// @param _newTimelockPeriod The new timelock period in seconds
+    function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
+        timelockPeriod = _newTimelockPeriod;
+
+        emit TimelockPeriodUpdated(_newTimelockPeriod);
+    }
+
     /// @notice Returns if a strategy is enabled
     /// @param _strategy The address of the strategy to check
     /// @return True if the strategy is enabled
@@ -348,11 +369,11 @@ contract FractalUsul is Module, IFractalUsul {
 
         if (!_strategy.isPassed(_proposalId) && !_strategy.isVotingActive(_proposalId)) {
             return ProposalState.FAILED;
-        } else if (_proposal.timelockPeriod == 0) {
+        } else if (_proposal.timelockDeadline == 0) {
             return ProposalState.ACTIVE;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
-        } else if (block.timestamp < _proposal.timelockPeriod) {
+        } else if (block.timestamp < _proposal.timelockDeadline) {
             return ProposalState.TIMELOCKED;
         } else {
             return ProposalState.EXECUTABLE;
@@ -433,7 +454,7 @@ contract FractalUsul is Module, IFractalUsul {
 
     /// @notice Gets details about the specified proposal
     /// @param _proposalId The ID of the proposal
-    /// @return _timelockPeriod The delay time until a proposal can be executed
+    /// @return _timelockDeadline Timestamp the proposal deadline ends can be executed
     /// @return _txHashes The hashes of the transactions the proposal contains
     /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     /// @return _strategy The address of the strategy contract the proposal is on
@@ -443,13 +464,13 @@ contract FractalUsul is Module, IFractalUsul {
         external
         view
         returns (
-            uint256 _timelockPeriod,
+            uint256 _timelockDeadline,
             bytes32[] memory _txHashes,
             uint256 _executionCounter,
             address _strategy
         )
     {
-        _timelockPeriod = proposals[_proposalId].timelockPeriod;
+        _timelockDeadline = proposals[_proposalId].timelockDeadline;
         _txHashes = proposals[_proposalId].txHashes;
         _executionCounter = proposals[_proposalId].executionCounter;
         _strategy = proposals[_proposalId].strategy;

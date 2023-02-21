@@ -175,7 +175,8 @@ describe("Usul Child DAO with Usul Parent", () => {
       mockParentDAO.address,
       childGnosisSafe.address,
       childGnosisSafe.address,
-      []
+      [],
+      60 // timelock period in seconds
     );
 
     // Deploy OZ Linear Voting Strategy
@@ -185,7 +186,6 @@ describe("Usul Child DAO with Usul Parent", () => {
       usulModule.address, // usul module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000
-      60, // timelock period in seconds
       "Voting" // name
     );
 

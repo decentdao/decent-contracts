@@ -197,7 +197,8 @@ describe("Usul Child DAO with Multisig parent", () => {
       usulModuleOwner.address,
       childGnosisSafe.address,
       childGnosisSafe.address,
-      []
+      [],
+      60 // timelock period in seconds
     );
 
     // Deploy Linear Token Voting Strategy
@@ -207,7 +208,6 @@ describe("Usul Child DAO with Multisig parent", () => {
       usulModule.address, // usul module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000
-      60, // timelock period in seconds
       "Voting" // name
     );
 

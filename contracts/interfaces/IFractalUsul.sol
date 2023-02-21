@@ -22,6 +22,12 @@ interface IFractalUsul {
     /// @param _strategy Strategy to be removed
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
+    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
+    /// @param _newTimelockPeriod The new timelock period in seconds
+    function updateTimelockPeriod(
+        uint256 _newTimelockPeriod
+    ) external;
+
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
     /// @param _strategy Address of the voting strategy which the proposal will be submitted to
     /// @param _data Additional data which will be passed to the strategy contract
@@ -36,8 +42,7 @@ interface IFractalUsul {
 
     /// @notice Called by the strategy contract when the proposal vote has succeeded
     /// @param _proposalId The ID of the proposal
-    /// @param _timelockPeriod The delay time until a proposal can be executed
-    function timelockProposal(uint256 _proposalId, uint256 _timelockPeriod) external;
+    function timelockProposal(uint256 _proposalId) external;
 
     /// @notice Executes the specified transaction within a proposal
     /// @notice Transactions must be called in order
@@ -145,7 +150,7 @@ interface IFractalUsul {
 
     /// @notice Gets details about the specified proposal
     /// @param _proposalId The ID of the proposal
-    /// @return _timelockPeriod The delay time until a proposal can be executed
+    /// @return _timelockDeadline Timestamp the proposal deadline ends can be executed
     /// @return _txHashes The hashes of the transactions the proposal contains
     /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     /// @return _strategy The address of the strategy contract the proposal is on
@@ -155,7 +160,7 @@ interface IFractalUsul {
         external
         view
         returns (
-            uint256 _timelockPeriod,
+            uint256 _timelockDeadline,
             bytes32[] memory _txHashes,
             uint256 _executionCounter,
             address _strategy

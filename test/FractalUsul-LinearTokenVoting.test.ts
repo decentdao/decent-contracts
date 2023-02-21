@@ -149,7 +149,8 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       gnosisSafeOwner.address,
       gnosisSafe.address,
       gnosisSafe.address,
-      []
+      [],
+      60 // timelock period in seconds
     );
 
     // Deploy Linear Token Voting Strategy
@@ -159,7 +160,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       usulModule.address, // usul module
       60, // voting period in seconds
       500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-      60, // timelock period in seconds
       "Voting" // name
     );
 
@@ -216,7 +216,6 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.usulModule()).to.eq(usulModule.address);
       expect(await linearTokenVoting.votingPeriod()).to.eq(60);
       expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
-      expect(await linearTokenVoting.timelockPeriod()).to.eq(60);
       expect(await linearTokenVoting.name()).to.eq("Voting");
     });
 
@@ -279,17 +278,15 @@ describe("Safe with FractalUsul module and LinearTokenVoting", () => {
     });
 
     it("The owner can update the timelock period", async () => {
-      expect(await linearTokenVoting.timelockPeriod()).to.eq(60);
-      await linearTokenVoting
-        .connect(gnosisSafeOwner)
-        .updateTimelockPeriod(120);
+      expect(await usulModule.timelockPeriod()).to.eq(60);
+      await usulModule.connect(gnosisSafeOwner).updateTimelockPeriod(120);
 
-      expect(await linearTokenVoting.timelockPeriod()).to.eq(120);
+      expect(await usulModule.timelockPeriod()).to.eq(120);
     });
 
     it("A non-owner cannot update the strategy timelock period", async () => {
       await expect(
-        linearTokenVoting.connect(tokenHolder1).updateTimelockPeriod(120)
+        usulModule.connect(tokenHolder1).updateTimelockPeriod(120)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 

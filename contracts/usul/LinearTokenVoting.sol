@@ -15,7 +15,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         address _usulModule,
         uint256 _votingPeriod,
         uint256 _quorumNumerator,
-        uint256 _timelockPeriod,
         string memory _name
     ) {
         bytes memory initParams = abi.encode(
@@ -24,7 +23,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             _usulModule,
             _votingPeriod,
             _quorumNumerator,
-            _timelockPeriod,
             _name
         );
         setUp(initParams);
@@ -39,7 +37,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             address _usulModule,
             uint256 _votingPeriod,
             uint256 _quorumNumerator,
-            uint256 _timelockPeriod,
             string memory _name
         ) = abi.decode(
                 initParams,
@@ -49,11 +46,9 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                     address,
                     uint256,
                     uint256,
-                    uint256,
                     string
                 )
             );
-        require(_votingPeriod > 1, "votingPeriod must be greater than 1");
         require(
             address(_governanceToken) != address(0),
             "Invalid governance token address"
@@ -62,11 +57,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         name = _name;
         governanceToken = _governanceToken;
         __Ownable_init();
-        _updateQuorumNumerator(_quorumNumerator);
         transferOwnership(_owner);
         _setUsul(_usulModule);
+        _updateQuorumNumerator(_quorumNumerator);
         _updateVotingPeriod(_votingPeriod);
-        _updateTimelockPeriod(_timelockPeriod);
 
         emit StrategySetup(_usulModule, _owner);
     }
