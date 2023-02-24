@@ -13,6 +13,7 @@ contract Azorius is Module, IAzorius {
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
     uint256 public totalProposalCount; // Total number of submitted proposals
     uint256 public timelockPeriod; // Delay between a proposal is passed and can be executed
+    uint256 public executionPeriod; // Delay between when timelock ends and proposal expires
     address internal constant SENTINEL_STRATEGY = address(0x1);
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposal ID
     mapping(address => address) internal strategies;
@@ -26,33 +27,16 @@ contract Azorius is Module, IAzorius {
     );
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
-    event ProposalTimelocked(uint256 proposalId, uint256 timelockDeadline);
     event AzoriusSetup(
-        address indexed initiator,
+        address indexed creator,
         address indexed owner,
         address indexed avatar,
         address target
     );
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
-    event TimelockPeriodUpdated(uint256 newTimelockPeriod);
-
-    constructor(
-        address _owner,
-        address _avatar,
-        address _target,
-        address[] memory _strategies,
-        uint256 _timelockPeriod
-    ) {
-        bytes memory initParams = abi.encode(
-            _owner,
-            _avatar,
-            _target,
-            _strategies,
-            _timelockPeriod
-        );
-        setUp(initParams);
-    }
+    event TimelockPeriodUpdated(uint256 timelockPeriod);
+    event ExecutionPeriodUpdated(uint256 executionPeriod);
 
     function setUp(bytes memory initParams) public override initializer {
         (
@@ -60,14 +44,19 @@ contract Azorius is Module, IAzorius {
             address _avatar,
             address _target,
             address[] memory _strategies,
-            uint256 _timelockPeriod
-        ) = abi.decode(initParams, (address, address, address, address[], uint256));
+            uint256 _timelockPeriod,
+            uint256 _executionPeriod
+        ) = abi.decode(
+                initParams,
+                (address, address, address, address[], uint256, uint256)
+            );
         __Ownable_init();
         avatar = _avatar;
         target = _target;
         setupStrategies(_strategies);
         transferOwnership(_owner);
         _updateTimelockPeriod(_timelockPeriod);
+        _updateExecutionPeriod(_executionPeriod);
 
         emit AzoriusSetup(msg.sender, _owner, _avatar, _target);
     }
@@ -120,6 +109,14 @@ contract Azorius is Module, IAzorius {
         _updateTimelockPeriod(_newTimelockPeriod);
     }
 
+    /// @notice Updates the execution period
+    /// @param _newExecutionPeriod The new execution period in seconds
+    function updateExecutionPeriod(
+        uint256 _newExecutionPeriod
+    ) external onlyOwner {
+        _updateExecutionPeriod(_newExecutionPeriod);
+    }
+
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
     /// @param _strategy Address of the voting strategy which the proposal will be submitted to
     /// @param _data Additional data which will be passed to the strategy contract
@@ -151,11 +148,15 @@ contract Azorius is Module, IAzorius {
             );
         }
 
-        proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].strategy = _strategy;
+        proposals[totalProposalCount].txHashes = txHashes;
+        proposals[totalProposalCount].timelockPeriod = timelockPeriod;
+        proposals[totalProposalCount].executionPeriod = executionPeriod;
+
         IBaseStrategy(_strategy).initializeProposal(
             abi.encode(totalProposalCount, txHashes, _data)
         );
+
         emit ProposalCreated(
             _strategy,
             totalProposalCount,
@@ -165,34 +166,6 @@ contract Azorius is Module, IAzorius {
         );
 
         totalProposalCount++;
-    }
-
-    /// @notice Called by the strategy contract when the proposal vote has succeeded
-    /// @param _proposalId The ID of the proposal
-    function timelockProposal(
-        uint256 _proposalId
-    ) external {
-        require(
-            strategies[msg.sender] != address(0),
-            "Strategy not authorized"
-        );
-        require(
-            proposalState(_proposalId) == ProposalState.ACTIVE,
-            "Proposal must be in the active state"
-        );
-        require(
-            msg.sender == proposals[_proposalId].strategy,
-            "Incorrect strategy for proposal"
-        );
-
-        uint256 _timelockDeadline = block.timestamp + timelockPeriod;
-
-        proposals[_proposalId].timelockDeadline = _timelockDeadline;
-
-        emit ProposalTimelocked(
-            _proposalId,
-            _timelockDeadline
-        );
     }
 
     /// @notice Executes the specified transaction within a proposal
@@ -281,12 +254,20 @@ contract Azorius is Module, IAzorius {
         }
     }
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
+    /// @notice Updates the timelock period
     /// @param _newTimelockPeriod The new timelock period in seconds
     function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
         timelockPeriod = _newTimelockPeriod;
 
         emit TimelockPeriodUpdated(_newTimelockPeriod);
+    }
+
+    /// @notice Updates the execution period
+    /// @param _newExecutionPeriod The new execution period in seconds
+    function _updateExecutionPeriod(uint256 _newExecutionPeriod) internal {
+        executionPeriod = _newExecutionPeriod;
+
+        emit ExecutionPeriodUpdated(_newExecutionPeriod);
     }
 
     /// @notice Returns if a strategy is enabled
@@ -352,16 +333,27 @@ contract Azorius is Module, IAzorius {
 
         IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
 
-        if (!_strategy.isPassed(_proposalId) && !_strategy.isVotingActive(_proposalId)) {
-            return ProposalState.FAILED;
-        } else if (_proposal.timelockDeadline == 0) {
+        uint256 votingDeadline = _strategy.votingDeadline(_proposalId);
+
+        if (block.timestamp <= votingDeadline) {
             return ProposalState.ACTIVE;
+        } else if (!_strategy.isPassed(_proposalId)) {
+            return ProposalState.FAILED;
+        } else if (
+            block.timestamp <= votingDeadline + _proposal.timelockPeriod
+        ) {
+            return ProposalState.TIMELOCKED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
-        } else if (block.timestamp < _proposal.timelockDeadline) {
-            return ProposalState.TIMELOCKED;
-        } else {
+        } else if (
+            block.timestamp <=
+            votingDeadline +
+                _proposal.timelockPeriod +
+                _proposal.executionPeriod
+        ) {
             return ProposalState.EXECUTABLE;
+        } else {
+            return ProposalState.EXPIRED;
         }
     }
 
@@ -439,25 +431,28 @@ contract Azorius is Module, IAzorius {
 
     /// @notice Gets details about the specified proposal
     /// @param _proposalId The ID of the proposal
-    /// @return _timelockDeadline Timestamp the proposal deadline ends can be executed
-    /// @return _txHashes The hashes of the transactions the proposal contains
-    /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     /// @return _strategy The address of the strategy contract the proposal is on
+    /// @return _txHashes The hashes of the transactions the proposal contains
+    /// @return _timelockPeriod The time in seconds the proposal is timelocked for
+    /// @return _executionPeriod The time in seconds the proposal has to be executed after timelock ends
+    /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     function getProposal(
         uint256 _proposalId
     )
         external
         view
         returns (
-            uint256 _timelockDeadline,
+            address _strategy,
             bytes32[] memory _txHashes,
-            uint256 _executionCounter,
-            address _strategy
+            uint256 _timelockPeriod,
+            uint256 _executionPeriod,
+            uint256 _executionCounter
         )
     {
-        _timelockDeadline = proposals[_proposalId].timelockDeadline;
-        _txHashes = proposals[_proposalId].txHashes;
-        _executionCounter = proposals[_proposalId].executionCounter;
         _strategy = proposals[_proposalId].strategy;
+        _txHashes = proposals[_proposalId].txHashes;
+        _timelockPeriod = proposals[_proposalId].timelockPeriod;
+        _executionPeriod = proposals[_proposalId].executionPeriod;
+        _executionCounter = proposals[_proposalId].executionCounter;
     }
 }

@@ -12,10 +12,11 @@ interface IAzorius {
     }
 
     struct Proposal {
-        uint256 timelockDeadline; // The timestamp when the proposal timelock period ends
-        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
-        uint256 executionCounter; // The count of transactions that have been executed within the proposal
         address strategy; // The voting strategy contract this proposal was created on
+        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
+        uint256 timelockPeriod; // The time in seconds the proposal is timelocked for
+        uint256 executionPeriod; // The time in seconds the proposal has to be executed after timelock ends
+        uint256 executionCounter; // The count of transactions that have been executed within the proposal
     }
 
     enum ProposalState {
@@ -23,6 +24,7 @@ interface IAzorius {
         TIMELOCKED,
         EXECUTABLE,
         EXECUTED,
+        EXPIRED,
         FAILED
     }
 
@@ -50,10 +52,6 @@ interface IAzorius {
         Transaction[] calldata _transactions,
         string calldata _metadata
     ) external;
-
-    /// @notice Called by the strategy contract when the proposal vote has succeeded
-    /// @param _proposalId The ID of the proposal
-    function timelockProposal(uint256 _proposalId) external;
 
     /// @notice Executes the specified transaction within a proposal
     /// @notice Transactions must be called in order
@@ -161,19 +159,21 @@ interface IAzorius {
 
     /// @notice Gets details about the specified proposal
     /// @param _proposalId The ID of the proposal
-    /// @return _timelockDeadline Timestamp the proposal deadline ends can be executed
-    /// @return _txHashes The hashes of the transactions the proposal contains
-    /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     /// @return _strategy The address of the strategy contract the proposal is on
+    /// @return _txHashes The hashes of the transactions the proposal contains
+    /// @return _timelockPeriod The time in seconds the proposal is timelocked for
+    /// @return _executionPeriod The time in seconds the proposal has to be executed after timelock ends
+    /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     function getProposal(
         uint256 _proposalId
     )
         external
         view
         returns (
-            uint256 _timelockDeadline,
+            address _strategy,
             bytes32[] memory _txHashes,
-            uint256 _executionCounter,
-            address _strategy
+            uint256 _timelockPeriod,
+            uint256 _executionPeriod,
+            uint256 _executionCounter
         );
 }

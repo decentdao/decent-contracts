@@ -15,7 +15,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 noVotes; // The total number of NO votes for this proposal
         uint256 yesVotes; // The total number of YES votes for this proposal
         uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
-        uint256 deadline; // The timestamp voting ends for this proposal
+        uint256 votingDeadline; // The timestamp voting ends for this proposal
         uint256 startBlock; // The block the proposal voting starts
         mapping(address => bool) hasVoted;
     }
@@ -26,8 +26,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     mapping(uint256 => ProposalVoting) internal proposals;
 
     event VotingPeriodUpdated(uint256 newVotingPeriod);
-    event ProposalReceived(uint256 proposalId, uint256 timestamp);
-    event VoteFinalized(uint256 proposalId, uint256 timestamp);
+    event ProposalInitialized(uint256 proposalId, uint256 votingDeadline);
     event Voted(
         address voter,
         uint256 proposalId,
@@ -48,21 +47,12 @@ abstract contract BaseTokenVoting is BaseStrategy {
     ) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
 
-        proposals[proposalId].deadline = votingPeriod + block.timestamp;
+        uint256 _votingDeadline = votingPeriod + block.timestamp;
+
+        proposals[proposalId].votingDeadline = _votingDeadline;
         proposals[proposalId].startBlock = block.number;
 
-        emit ProposalReceived(proposalId, block.timestamp);
-    }
-
-    /// @notice Calls the Azorius module to notify that a quorum has been reached
-    /// @notice Timelocks the proposal and starts timelock period
-    /// @param _proposalId The ID of the proposal to timelock
-    function timelockProposal(uint256 _proposalId) public virtual override {
-        require(isPassed(_proposalId), "Proposal is not passed");
-
-        azoriusModule.timelockProposal(_proposalId);
-
-        emit VoteFinalized(_proposalId, block.timestamp);
+        emit ProposalInitialized(proposalId, _votingDeadline);
     }
 
     /// @notice Updates the voting time period
@@ -85,11 +75,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 _weight
     ) internal {
         require(
-            proposals[_proposalId].deadline != 0,
+            proposals[_proposalId].votingDeadline != 0,
             "Proposal has not been submitted yet"
         );
         require(
-            block.timestamp <= proposals[_proposalId].deadline,
+            block.timestamp <= proposals[_proposalId].votingDeadline,
             "Voting period has passed"
         );
         require(
@@ -128,7 +118,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @return yesVotes The total count of "Yes" votes for the proposal
     /// @return noVotes The total count of "No" votes for the proposal
     /// @return abstainVotes The total count of "Abstain" votes for the proposal
-    /// @return deadline The timestamp at which proposal voting ends
+    /// @return votingDeadline The timestamp at which proposal voting ends
     /// @return startBlock The block number that the proposal voting starts at
     function getProposal(
         uint256 _proposalId
@@ -139,30 +129,23 @@ abstract contract BaseTokenVoting is BaseStrategy {
             uint256 yesVotes,
             uint256 noVotes,
             uint256 abstainVotes,
-            uint256 deadline,
+            uint256 votingDeadline,
             uint256 startBlock
         )
     {
         yesVotes = proposals[_proposalId].yesVotes;
         noVotes = proposals[_proposalId].noVotes;
         abstainVotes = proposals[_proposalId].abstainVotes;
-        deadline = proposals[_proposalId].deadline;
+        votingDeadline = proposals[_proposalId].votingDeadline;
         startBlock = proposals[_proposalId].startBlock;
     }
 
-    /// @notice Returns if voting is active on a proposal
+    /// @notice Returns the timestamp voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return bool True if the voting is active
-    function isVotingActive(
+    /// @return uint256 The timestamp voting ends on the proposal
+    function votingDeadline(
         uint256 _proposalId
-    ) public view override returns (bool) {
-        if (
-            proposals[_proposalId].deadline != 0 &&
-            proposals[_proposalId].deadline >= block.timestamp
-        ) {
-            return true;
-        }
-
-        return false;
+    ) public view override returns (uint256) {
+      return proposals[_proposalId].votingDeadline;
     }
 }

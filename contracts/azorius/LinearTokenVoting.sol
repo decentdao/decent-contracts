@@ -9,25 +9,6 @@ import "./BaseQuorumPercent.sol";
 contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     ERC20Votes public governanceToken;
 
-    constructor(
-        address _owner,
-        ERC20Votes _governanceToken,
-        address _azoriusModule,
-        uint256 _votingPeriod,
-        uint256 _quorumNumerator,
-        string memory _name
-    ) {
-        bytes memory initParams = abi.encode(
-            _owner,
-            _governanceToken,
-            _azoriusModule,
-            _votingPeriod,
-            _quorumNumerator,
-            _name
-        );
-        setUp(initParams);
-    }
-
     /// @notice Sets up the contract with initial parameters
     /// @param initParams The initial setup parameters encoded as bytes
     function setUp(bytes memory initParams) public override initializer {
@@ -85,7 +66,8 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
             proposals[_proposalId].yesVotes >=
             quorum(proposals[_proposalId].startBlock) &&
-            !isVotingActive(_proposalId)
+            proposals[_proposalId].votingDeadline != 0 &&
+            block.timestamp > proposals[_proposalId].votingDeadline
         ) {
             return true;
         }
