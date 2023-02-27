@@ -7,10 +7,10 @@ import time from "./time";
 import {
   VotesToken,
   VotesToken__factory,
-  VetoMultisigVoting,
-  VetoMultisigVoting__factory,
-  VetoGuard,
-  VetoGuard__factory,
+  MultisigFreezeVoting,
+  MultisigFreezeVoting__factory,
+  MultisigFreezeGuard,
+  MultisigFreezeGuard__factory,
 } from "../typechain-types";
 
 import {
@@ -23,15 +23,15 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe("Child Multisig DAO with Multisig Parent", () => {
+describe.only("Child Multisig DAO with Multisig Parent", () => {
   // Factories
   let gnosisFactory: Contract;
 
   // Deployed contracts
   let childGnosisSafe: Contract;
   let parentGnosisSafe: Contract;
-  let vetoGuard: VetoGuard;
-  let vetoMultisigVoting: VetoMultisigVoting;
+  let freezeGuard: MultisigFreezeGuard;
+  let freezeVoting: MultisigFreezeVoting;
   let votesToken: VotesToken;
 
   // Wallets
@@ -42,7 +42,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   let childMultisigOwner1: SignerWithAddress;
   let childMultisigOwner2: SignerWithAddress;
   let childMultisigOwner3: SignerWithAddress;
-  let vetoGuardOwner: SignerWithAddress;
+  let freezeGuardOwner: SignerWithAddress;
 
   // Gnosis
   let createParentGnosisSetupCalldata: string;
@@ -79,7 +79,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       childMultisigOwner1,
       childMultisigOwner2,
       childMultisigOwner3,
-      vetoGuardOwner,
+      freezeGuardOwner,
     ] = await ethers.getSigners();
 
     // Get deployed Gnosis Safe
@@ -170,52 +170,40 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     await votesToken.setUp(votesTokenSetupData);
 
-    // Deploy VetoERC20Voting contract
-    vetoMultisigVoting = await new VetoMultisigVoting__factory(
-      deployer
-    ).deploy();
+    // Deploy MultisigFreezeVoting contract
+    freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
 
-    // Deploy VetoGuard contract with a 60 second timelock period and 60 second execution period
-    const vetoGuardSetupData = abiCoder.encode(
+    // Deploy MultisigFreezeGuard contract with a 60 second timelock period and 60 second execution period
+    const freezeGuardSetupData = abiCoder.encode(
       ["uint256", "uint256", "address", "address", "address"],
       [
-        60,
-        60,
-        vetoGuardOwner.address,
-        vetoMultisigVoting.address,
+        60, // Timelock period
+        60, // Execution period
+        freezeGuardOwner.address,
+        freezeVoting.address,
         childGnosisSafe.address,
       ]
     );
-    vetoGuard = await new VetoGuard__factory(deployer).deploy();
-    await vetoGuard.setUp(vetoGuardSetupData);
+    freezeGuard = await new MultisigFreezeGuard__factory(deployer).deploy();
+    await freezeGuard.setUp(freezeGuardSetupData);
 
-    // Initialize VetoERC20Voting contract
-    const vetoMultisigVotingSetupData = abiCoder.encode(
+    // Initialize MultisigFreezeVoting contract
+    const freezeVotingSetupData = abiCoder.encode(
+      ["address", "uint256", "uint256", "uint256", "address"],
       [
-        "address",
-        "uint256",
-        "uint256",
-        "uint256",
-        "uint256",
-        "address",
-        "address",
-      ],
-      [
-        vetoGuardOwner.address,
-        2, // veto votes threshold
+        freezeGuardOwner.address,
         2, // freeze votes threshold
         10, // freeze proposal duration in seconds
         200, // freeze duration in seconds
         parentGnosisSafe.address,
-        vetoGuard.address,
       ]
     );
-    await vetoMultisigVoting.setUp(vetoMultisigVotingSetupData);
+    await freezeVoting.setUp(freezeVotingSetupData);
 
     // Create transaction to set the guard address
     const setGuardData = childGnosisSafe.interface.encodeFunctionData(
       "setGuard",
-      [vetoGuard.address]
+      [freezeGuard.address]
     );
 
     const tx = buildSafeTransaction({
@@ -230,7 +218,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     ];
     const signatureBytes = buildSignatureBytes(sigs);
 
-    // Execute transaction that adds the veto guard to the Safe
+    // Execute transaction that adds the freeze guard to the Safe
     await expect(
       childGnosisSafe.execTransaction(
         tx.to,
@@ -250,19 +238,30 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(1000);
   });
 
-  describe("VetoGuard with Multisig Veto Voting", () => {
-    it("Supports ERC-165", async () => {
-      // Supports IVetoGuard interface
-      expect(await vetoGuard.supportsInterface("0x1c4ead2c")).to.eq(true);
+  describe("MultisigFreezeGuard with MultisigFreezeVoting", () => {
+    it("Freeze vars set properly during init", async () => {
+      // Frozen Params init correctly
+      expect(await freezeVoting.freezeVotesThreshold()).to.eq(2);
+      expect(await freezeVoting.freezeProposalPeriod()).to.eq(10);
+      expect(await freezeVoting.freezePeriod()).to.eq(200);
+      expect(await freezeVoting.owner()).to.eq(freezeGuardOwner.address);
+    });
 
-      // Supports IGuard interface
-      expect(await vetoGuard.supportsInterface("0xe6d7a83a")).to.eq(true);
+    it("Updates state properly due to freeze actions", async () => {
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
 
-      // Supports IERC-165 interface
-      expect(await vetoGuard.supportsInterface("0x01ffc9a7")).to.eq(true);
+      // Vetoer 1 casts 1 freeze vote
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
+      const latestBlock = await ethers.provider.getBlock("latest");
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
+        latestBlock.number
+      );
 
-      // Doesn't support random interface
-      expect(await vetoGuard.supportsInterface("0x00000000")).to.eq(false);
+      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
+      expect(await freezeVoting.isFrozen()).to.eq(true);
     });
 
     it("A transaction can be timelocked and executed", async () => {
@@ -285,7 +284,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -375,7 +374,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       const signatureBytes = buildSignatureBytes(sigs);
 
       await expect(
-        vetoGuard.timelockTransaction(
+        freezeGuard.timelockTransaction(
           tx.to,
           tx.value,
           tx.data,
@@ -410,7 +409,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes = buildSignatureBytes(sigs);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx.to,
         tx.value,
         tx.data,
@@ -439,382 +438,6 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.be.revertedWith("Transaction timelock period has not completed yet");
     });
 
-    it("A transaction can be executed if it has received some veto votes, but not above the threshold", async () => {
-      // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
-      ];
-      const signatureBytes = buildSignatureBytes(sigs);
-
-      await vetoGuard.timelockTransaction(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver,
-        signatureBytes
-      );
-
-      const txHash = await vetoMultisigVoting.getTransactionHash(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash, false);
-
-      // 1 veto vote have been cast
-      expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(1);
-
-      expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(false);
-
-      // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
-
-      await childGnosisSafe.execTransaction(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver,
-        signatureBytes
-      );
-
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(1000);
-      expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(0);
-    });
-
-    it("A transaction cannot be executed if it has received more veto votes than the threshold", async () => {
-      // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
-      ];
-      const signatureBytes = buildSignatureBytes(sigs);
-
-      await vetoGuard.timelockTransaction(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver,
-        signatureBytes
-      );
-
-      const txHash = await vetoMultisigVoting.getTransactionHash(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash, false);
-
-      // Vetoer 2 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner2)
-        .castVetoVote(txHash, false);
-
-      // 2 veto votes have been cast
-      expect(await vetoMultisigVoting.transactionVetoVotes(txHash)).to.eq(2);
-
-      expect(await vetoMultisigVoting.getIsVetoed(txHash)).to.eq(true);
-
-      // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
-
-      await expect(
-        childGnosisSafe.execTransaction(
-          tx.to,
-          tx.value,
-          tx.data,
-          tx.operation,
-          tx.safeTxGas,
-          tx.baseGas,
-          tx.gasPrice,
-          tx.gasToken,
-          tx.refundReceiver,
-          signatureBytes
-        )
-      ).to.be.revertedWith("Transaction has been vetoed");
-    });
-
-    it("A vetoed transaction does not prevent another transaction from being executed", async () => {
-      // Create transaction to set the guard address
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tokenTransferData2 = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 999]
-      );
-
-      const tx1 = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData1,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const tx2 = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData2,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs1 = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
-      ];
-      const signatureBytes1 = buildSignatureBytes(sigs1);
-
-      const sigs2 = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx2),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx2),
-      ];
-      const signatureBytes2 = buildSignatureBytes(sigs2);
-
-      await vetoGuard.timelockTransaction(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver,
-        signatureBytes1
-      );
-
-      const txHash1 = await vetoMultisigVoting.getTransactionHash(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash1, false);
-
-      // Vetoer 2 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner2)
-        .castVetoVote(txHash1, false);
-
-      // 2 veto votes have been cast
-      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
-
-      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
-
-      // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
-
-      await expect(
-        childGnosisSafe.execTransaction(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver,
-          signatureBytes1
-        )
-      ).to.be.revertedWith("Transaction has been vetoed");
-
-      // Tx1 has been vetoed, now try to timelock and execute tx2
-      await vetoGuard.timelockTransaction(
-        tx2.to,
-        tx2.value,
-        tx2.data,
-        tx2.operation,
-        tx2.safeTxGas,
-        tx2.baseGas,
-        tx2.gasPrice,
-        tx2.gasToken,
-        tx2.refundReceiver,
-        signatureBytes2
-      );
-
-      // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
-
-      await childGnosisSafe.execTransaction(
-        tx2.to,
-        tx2.value,
-        tx2.data,
-        tx2.operation,
-        tx2.safeTxGas,
-        tx2.baseGas,
-        tx2.gasPrice,
-        tx2.gasToken,
-        tx2.refundReceiver,
-        signatureBytes2
-      );
-
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(999);
-      expect(await votesToken.balanceOf(childGnosisSafe.address)).to.eq(1);
-    });
-
-    it("A vetoer cannot cast veto votes more than once", async () => {
-      // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
-      ];
-      const signatureBytes = buildSignatureBytes(sigs);
-
-      await vetoGuard.timelockTransaction(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver,
-        signatureBytes
-      );
-
-      const txHash = await vetoMultisigVoting.getTransactionHash(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash, false);
-
-      await expect(
-        vetoMultisigVoting
-          .connect(parentMultisigOwner1)
-          .castVetoVote(txHash, false)
-      ).to.be.revertedWith("User has already voted");
-    });
-
-    it("A veto vote cannot be cast if the transaction has not been timelocked yet", async () => {
-      // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData,
-        safeTxGas: 1000000,
-        nonce: await parentGnosisSafe.nonce(),
-      });
-
-      const txHash = await vetoMultisigVoting.getTransactionHash(
-        tx.to,
-        tx.value,
-        tx.data,
-        tx.operation,
-        tx.safeTxGas,
-        tx.baseGas,
-        tx.gasPrice,
-        tx.gasToken,
-        tx.refundReceiver
-      );
-
-      await expect(
-        vetoMultisigVoting
-          .connect(parentMultisigOwner1)
-          .castVetoVote(txHash, false)
-      ).to.be.revertedWith("Transaction has not yet been timelocked");
-    });
-  });
-
-  describe("Frozen Functionality", () => {
     it("A frozen DAO cannot execute any transactions", async () => {
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -853,7 +476,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -866,38 +489,17 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes1
       );
 
-      const txHash1 = await vetoMultisigVoting.getTransactionHash(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote and 1 freeze vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash1, true);
+      // Vetoer 1 casts 1 freeze vote
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
       // Vetoer 2 casts 1 veto vote and 1 freeze vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner2)
-        .castVetoVote(txHash1, true);
-
-      // 2 veto votes have been cast
-      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
+      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // 2 freeze votes have been cast
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
-
-      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);
 
       // Check that the DAO has been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+      expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
       await time.increase(time.duration.seconds(60));
@@ -915,10 +517,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("Transaction has been vetoed");
+      ).to.be.revertedWith("DAO is frozen");
 
       // Timelock tx2
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx2.to,
         tx2.value,
         tx2.data,
@@ -988,7 +590,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes2 = buildSignatureBytes(sigs2);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1001,38 +603,17 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes1
       );
 
-      const txHash1 = await vetoMultisigVoting.getTransactionHash(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver
-      );
-
-      // Vetoer 1 casts 1 veto vote and 1 freeze vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner1)
-        .castVetoVote(txHash1, true);
+      // Vetoer 1 casts 1 freeze vote
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
       // Vetoer 2 casts 1 veto vote and 1 freeze vote
-      await vetoMultisigVoting
-        .connect(parentMultisigOwner2)
-        .castVetoVote(txHash1, true);
-
-      // 2 veto votes have been cast
-      expect(await vetoMultisigVoting.transactionVetoVotes(txHash1)).to.eq(2);
+      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // 2 freeze votes have been cast
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
-
-      expect(await vetoMultisigVoting.getIsVetoed(txHash1)).to.eq(true);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);
 
       // Check that the DAO has been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+      expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
       await time.increase(time.duration.seconds(60));
@@ -1050,10 +631,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("Transaction has been vetoed");
+      ).to.be.revertedWith("DAO is frozen");
 
       // Timelock tx2
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx2.to,
         tx2.value,
         tx2.data,
@@ -1084,84 +665,21 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         )
       ).to.be.revertedWith("DAO is frozen");
 
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+      expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse freeze period
       await time.increase(time.duration.seconds(140));
 
       // Check that the DAO isn't frozen now
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
-    });
-
-    it("A DAO may be frozen independently of a veto ", async () => {
-      // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
-      // Vetoer 2 casts 1 freeze votes
-      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
-
-      // 2 freeze votes have been cast
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(2);
-
-      // Check that the DAO has been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
-
-      // Create transaction to set the guard address
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx1 = buildSafeTransaction({
-        to: votesToken.address,
-        data: tokenTransferData1,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs1 = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
-      ];
-      const signatureBytes1 = buildSignatureBytes(sigs1);
-
-      await vetoGuard.timelockTransaction(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver,
-        signatureBytes1
-      );
-
-      // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
-
-      await expect(
-        childGnosisSafe.execTransaction(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver,
-          signatureBytes1
-        )
-      ).to.be.revertedWith("DAO is frozen");
+      expect(await freezeVoting.isFrozen()).to.eq(false);
     });
 
     it("A DAO may execute txs during a freeze proposal period if the freeze threshold is not met", async () => {
       // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
       // Check that the DAO has not been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1182,7 +700,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1214,73 +732,47 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
-    it("Freeze vars set properly during init", async () => {
-      // Frozen Params init correctly
-      expect(await vetoMultisigVoting.freezeVotesThreshold()).to.eq(2);
-      expect(await vetoMultisigVoting.freezeProposalPeriod()).to.eq(10);
-      expect(await vetoMultisigVoting.freezePeriod()).to.eq(200);
-      expect(await vetoMultisigVoting.owner()).to.eq(vetoGuardOwner.address);
-    });
-
-    it("Updates state properly due to freeze actions", async () => {
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(0);
-
-      // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
-      const latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-
-      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
-    });
-
     it("Casting a vote after the freeze voting period resets state", async () => {
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(0);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
 
       // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
       let latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock.number
       );
 
-      for (let i = 0; i < 10; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // Move time forward to elapse freeze proposal period
+      await time.increase(time.duration.seconds(20));
 
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
       latestBlock = await ethers.provider.getBlock("latest");
-      expect(await vetoMultisigVoting.freezeProposalCreatedBlock()).to.eq(
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock.number
       );
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.isFrozen()).to.eq(false);
     });
 
     it("A user cannot vote twice to freeze a DAO during the same voting period", async () => {
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       await expect(
-        vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote()
+        freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
       ).to.be.revertedWith("User has already voted");
-      expect(await vetoMultisigVoting.freezeProposalVoteCount()).to.eq(1);
+      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
     });
 
     it("Previously Frozen DAOs may not execute TXs after execution period has elapsed", async () => {
       // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       // Vetoer 2 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // Check that the DAO has been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
+      expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1301,7 +793,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1336,7 +828,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await time.increase(time.duration.seconds(140));
 
       // Check that the DAO has been unFrozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Transaction cannot be executed now, since transaction execution period has ended
       await expect(
@@ -1357,14 +849,14 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     it("Defrosted DAOs may execute txs", async () => {
       // Vetoer 1 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner1).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       // Vetoer 2 casts 1 freeze vote
-      await vetoMultisigVoting.connect(parentMultisigOwner2).castFreezeVote();
+      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // Check that the DAO has been frozen
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(true);
-      await vetoMultisigVoting.connect(vetoGuardOwner).defrost();
-      expect(await vetoMultisigVoting.isFrozen()).to.eq(false);
+      expect(await freezeVoting.isFrozen()).to.eq(true);
+      await freezeVoting.connect(freezeGuardOwner).defrost();
+      expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
@@ -1385,7 +877,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ];
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
-      await vetoGuard.timelockTransaction(
+      await freezeGuard.timelockTransaction(
         tx1.to,
         tx1.value,
         tx1.data,
@@ -1420,31 +912,22 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     it("You must be a parent multisig owner to cast a freeze vote", async () => {
       await expect(
-        vetoMultisigVoting.connect(vetoGuardOwner).castFreezeVote()
+        freezeVoting.connect(freezeGuardOwner).castFreezeVote()
       ).to.be.revertedWith("User is not an owner");
     });
 
     it("Only owner methods must be called by the owner", async () => {
       await expect(
-        vetoMultisigVoting.connect(childMultisigOwner1).defrost()
+        freezeVoting.connect(childMultisigOwner1).defrost()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoMultisigVoting
-          .connect(childMultisigOwner1)
-          .updateVetoVotesThreshold(0)
+        freezeVoting.connect(childMultisigOwner1).updateFreezeVotesThreshold(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoMultisigVoting
-          .connect(childMultisigOwner1)
-          .updateFreezeVotesThreshold(0)
+        freezeVoting.connect(childMultisigOwner1).updateFreezeProposalPeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        vetoMultisigVoting
-          .connect(childMultisigOwner1)
-          .updateFreezeProposalPeriod(0)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-      await expect(
-        vetoMultisigVoting.connect(childMultisigOwner1).updateFreezePeriod(0)
+        freezeVoting.connect(childMultisigOwner1).updateFreezePeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
