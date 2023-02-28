@@ -7,13 +7,15 @@ import "./interfaces/IGnosisSafe.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /// @notice A guard contract that enables functionality for a Multisig to be frozen,
 /// @notice and unable to execute transactions until it is unfrozen
 contract MultisigFreezeGuard is
     FactoryFriendly,
     IGuard,
-    IMultisigFreezeGuard
+    IMultisigFreezeGuard,
+    BaseGuard
 {
     uint256 public timelockPeriod;
     uint256 public executionPeriod;
@@ -196,7 +198,7 @@ contract MultisigFreezeGuard is
         address payable refundReceiver,
         bytes memory,
         address
-    ) external view override {
+    ) external view override (BaseGuard, IGuard) {
         bytes32 transactionHash = getTransactionHash(
             to,
             value,
@@ -237,7 +239,7 @@ contract MultisigFreezeGuard is
     function checkAfterExecution(bytes32 txHash, bool success)
         external
         view
-        override
+        override (BaseGuard, IGuard)
     {}
 
     /// @notice Gets the block number that the transaction was timelocked at

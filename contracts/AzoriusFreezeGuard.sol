@@ -5,12 +5,14 @@ import "./interfaces/IBaseFreezeVoting.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /// @notice A guard contract that prevents an Azorius module from executing
 /// @notice transactions if the DAO has been frozen by its parent DAO
 contract AzoriusFreezeGuard is
     FactoryFriendly,
-    IGuard
+    IGuard,
+    BaseGuard
 {
     IBaseFreezeVoting public freezeVoting;
 
@@ -56,7 +58,7 @@ contract AzoriusFreezeGuard is
         address payable,
         bytes memory,
         address
-    ) external view override {
+    ) external view override (BaseGuard, IGuard) {
         require(!freezeVoting.isFrozen(), "DAO is frozen");
     }
 
@@ -66,6 +68,6 @@ contract AzoriusFreezeGuard is
     function checkAfterExecution(bytes32 txHash, bool success)
         external
         view
-        override
+        override (BaseGuard, IGuard)
     {}
 }
