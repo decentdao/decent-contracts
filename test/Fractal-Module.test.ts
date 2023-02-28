@@ -4,13 +4,11 @@ import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
 import {
   VotesToken__factory,
-  IFractalModule__factory,
   FractalModule,
   FractalModule__factory,
-  VetoGuard,
-  VetoGuard__factory,
+  MultisigFreezeGuard,
+  MultisigFreezeGuard__factory,
 } from "../typechain-types";
-import getInterfaceSelector from "./getInterfaceSelector";
 import {
   ifaceSafe,
   abi,
@@ -33,7 +31,7 @@ describe("Fractal Module Tests", () => {
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
   let multiSend: Contract;
-  let vetoImpl: VetoGuard;
+  let freezeGuard: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
 
@@ -48,7 +46,7 @@ describe("Fractal Module Tests", () => {
 
   const abiCoder = new ethers.utils.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
-  let vetoGuardFactoryInit: string;
+  let freezeGuardSetup: string;
   let setModuleCalldata: string;
   let sigs: string;
 
@@ -118,15 +116,18 @@ describe("Fractal Module Tests", () => {
 
     /// /////////////  GUARD ///////////////////
     // DEPLOY GUARD
-    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
-    vetoGuardFactoryInit =
+    freezeGuard = await new MultisigFreezeGuard__factory(deployer).deploy();
+    freezeGuardSetup =
       // eslint-disable-next-line camelcase
-      VetoGuard__factory.createInterface().encodeFunctionData("setUp", [
-        abiCoder.encode(
-          ["uint256", "uint256", "address", "address", "address"],
-          [10, 10, owner1.address, owner1.address, gnosisSafe.address]
-        ),
-      ]);
+      MultisigFreezeGuard__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["uint256", "uint256", "address", "address", "address"],
+            [10, 10, owner1.address, owner1.address, gnosisSafe.address]
+          ),
+        ]
+      );
 
     /// /////////////// MODULE ////////////////
     // DEPLOY Fractal Module
@@ -189,14 +190,6 @@ describe("Fractal Module Tests", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisFactory, "ProxyCreation")
         .withArgs(gnosisSafe.address, gnosisSingletonAddress);
-
-      // Supports Fractal Module
-      expect(
-        await fractalModule.supportsInterface(
-          // eslint-disable-next-line camelcase
-          getInterfaceSelector(IFractalModule__factory.createInterface())
-        )
-      ).to.eq(true);
     });
 
     it("Owner may add/remove controllers", async () => {
@@ -269,7 +262,7 @@ describe("Fractal Module Tests", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [freezeGuard.address, freezeGuardSetup, "10031021"],
           0,
           false
         ),

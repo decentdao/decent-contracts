@@ -206,7 +206,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
     const signatureBytes = buildSignatureBytes(sigs);
 
-    // Execute transaction that adds the veto guard to the Safe
+    // Execute transaction that adds the Azorius module to the Safe
     await expect(
       gnosisSafe.execTransaction(
         enableAzoriusModuleTx.to,

@@ -213,7 +213,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
 
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
+      // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
@@ -399,7 +399,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     });
 
     it("A DAO may execute txs during a the freeze proposal period if the freeze threshold is not met", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
+      // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
 
       // Check that the DAO has been frozen
@@ -460,7 +460,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
 
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
+      // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
@@ -490,9 +490,9 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     });
 
     it("A defrosted DAO may not execute a previously passed transaction", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
+      // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 veto votes
+      // Vetoer 2 casts 600 freeze votes
       await freezeVoting.connect(tokenVetoer2).castFreezeVote();
 
       // Check that the DAO has been frozen
@@ -570,9 +570,9 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     });
 
     it("Defrosted DAOs may execute txs", async () => {
-      // Vetoer 1 casts 500 veto votes and 500 freeze votes
+      // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 veto votes
+      // Vetoer 2 casts 600 freeze votes
       await freezeVoting.connect(tokenVetoer2).castFreezeVote();
 
       // Check that the DAO has been frozen

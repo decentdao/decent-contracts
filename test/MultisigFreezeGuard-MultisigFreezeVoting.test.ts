@@ -23,7 +23,7 @@ import {
   abiSafe,
 } from "./helpers";
 
-describe.only("Child Multisig DAO with Multisig Parent", () => {
+describe("Child Multisig DAO with Multisig Parent", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -492,7 +492,7 @@ describe.only("Child Multisig DAO with Multisig Parent", () => {
       // Vetoer 1 casts 1 freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      // Vetoer 2 casts 1 veto vote and 1 freeze vote
+      // Vetoer 2 casts 1 freeze vote
       await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // 2 freeze votes have been cast
@@ -606,7 +606,7 @@ describe.only("Child Multisig DAO with Multisig Parent", () => {
       // Vetoer 1 casts 1 freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      // Vetoer 2 casts 1 veto vote and 1 freeze vote
+      // Vetoer 2 casts 1 freeze vote
       await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       // 2 freeze votes have been cast
