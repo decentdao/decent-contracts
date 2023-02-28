@@ -27,7 +27,7 @@ contract MultisigFreezeGuard is
     event MultisigFreezeGuardSetup(
         address creator,
         address indexed owner,
-        address indexed vetoVoting,
+        address indexed freezeVoting,
         address indexed childGnosisSafe
     );
     event TransactionTimelocked(
