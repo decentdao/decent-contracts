@@ -7,8 +7,8 @@ interface IBaseFreezeVoting {
     /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
     function castFreezeVote() external;
 
-    /// @notice Unfreezes the DAO, only callable by the owner
-    function defrost() external;
+    /// @notice Unfreezes the DAO
+    function unfreeze() external;
 
     /// @notice Updates the freeze votes threshold, only callable by the owner
     /// @param _freezeVotesThreshold Number of freeze votes required to activate a freeze

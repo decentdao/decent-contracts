@@ -552,7 +552,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.be.revertedWith("DAO is frozen");
     });
 
-    it("A frozen DAO automatically defrosts after the freeze period has ended", async () => {
+    it("A frozen DAO automatically unfreezes after the freeze period has ended", async () => {
       // Create transaction to set the guard address
       const tokenTransferData1 = votesToken.interface.encodeFunctionData(
         "transfer",
@@ -847,7 +847,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.be.revertedWith("Transaction execution period has ended");
     });
 
-    it("Defrosted DAOs may execute txs", async () => {
+    it("Unfrozen DAOs may execute txs", async () => {
       // Vetoer 1 casts 1 freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       // Vetoer 2 casts 1 freeze vote
@@ -855,7 +855,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
       // Check that the DAO has been frozen
       expect(await freezeVoting.isFrozen()).to.eq(true);
-      await freezeVoting.connect(freezeGuardOwner).defrost();
+      await freezeVoting.connect(freezeGuardOwner).unfreeze();
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
@@ -918,7 +918,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     it("Only owner methods must be called by the owner", async () => {
       await expect(
-        freezeVoting.connect(childMultisigOwner1).defrost()
+        freezeVoting.connect(childMultisigOwner1).unfreeze()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
         freezeVoting.connect(childMultisigOwner1).updateFreezeVotesThreshold(0)
