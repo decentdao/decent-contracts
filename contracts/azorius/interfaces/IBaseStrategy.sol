@@ -8,11 +8,9 @@ interface IBaseStrategy {
 
     /// @notice Called by the proposal module, this notifes the strategy of a new proposal
     /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(bytes memory _data) external;
-
-    /// @notice Calls the proposal module to notify that a quorum has been reached
-    /// @param _proposalId The ID of the proposal to timelock
-    function timelockProposal(uint256 _proposalId) external;
+    function initializeProposal(
+        bytes memory _data
+    ) external;
 
     /// @notice Retruns if a proposal has succeeded
     /// @param _proposalId The proposalId to check
@@ -24,10 +22,10 @@ interface IBaseStrategy {
     /// @return bool True if the user can submit a proposal
     function isProposer(address _user) external view returns (bool);
 
-    /// @notice Returns if voting is active on a proposal
+    /// @notice Returns the timestamp voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return bool True if the voting is active
-    function isVotingActive(
+    /// @return uint256 The timestamp voting ends on the proposal
+    function votingDeadline(
         uint256 _proposalId
-    ) external view returns (bool);
+    ) external view returns (uint256);
 }

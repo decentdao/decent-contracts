@@ -3,21 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
-interface IVetoGuard {
-    event VetoGuardSetup(
-        address creator,
-        uint256 timelockPeriod,
-        uint256 executionPeriod,
-        address indexed owner,
-        address indexed vetoVoting
-    );
-
-    event TransactionTimelocked(
-        address indexed timelocker,
-        bytes32 indexed transactionHash,
-        bytes indexed signatures
-    );
-
+interface IMultisigFreezeGuard {
     /// @notice Allows a user to timelock the transaction, requires valid signatures
     /// @param to Destination address.
     /// @param value Ether value.

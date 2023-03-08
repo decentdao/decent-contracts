@@ -145,23 +145,38 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     await votesToken.connect(tokenHolder3).delegate(tokenHolder3.address);
 
     // Deploy Azorius module
-    azorius = await new Azorius__factory(deployer).deploy(
-      gnosisSafeOwner.address,
-      gnosisSafe.address,
-      gnosisSafe.address,
-      [],
-      60 // timelock period in seconds
+    azorius = await new Azorius__factory(deployer).deploy();
+
+    const azoriusSetupData = abiCoder.encode(
+      ["address", "address", "address", "address[]", "uint256", "uint256"],
+      [
+        gnosisSafeOwner.address,
+        gnosisSafe.address,
+        gnosisSafe.address,
+        [],
+        60, // timelock period in seconds
+        60, // execution period in seconds
+      ]
     );
 
+    await azorius.setUp(azoriusSetupData);
+
     // Deploy Linear Token Voting Strategy
-    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy(
-      gnosisSafeOwner.address, // owner
-      votesToken.address, // governance token
-      azorius.address, // Azorius module
-      60, // voting period in seconds
-      500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-      "Voting" // name
+    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy();
+
+    const linearTokenVotingSetupData = abiCoder.encode(
+      ["address", "address", "address", "uint256", "uint256", "string"],
+      [
+        gnosisSafeOwner.address, // owner
+        votesToken.address, // governance token
+        azorius.address, // Azorius module
+        60, // voting period in seconds
+        500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+        "Voting", // name
+      ]
     );
+
+    await linearTokenVoting.setUp(linearTokenVotingSetupData);
 
     // Enable the Linear Voting strategy on Azorius
     await azorius
@@ -191,7 +206,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
     const signatureBytes = buildSignatureBytes(sigs);
 
-    // Execute transaction that adds the veto guard to the Safe
+    // Execute transaction that adds the Azorius module to the Safe
     await expect(
       gnosisSafe.execTransaction(
         enableAzoriusModuleTx.to,
@@ -566,8 +581,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
-      await expect(await linearTokenVoting.isVotingActive(0)).to.be.true;
-
       // Users vote in support of proposal
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
       await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
@@ -575,12 +588,10 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      await expect(await linearTokenVoting.isVotingActive(0)).to.be.false;
-
       await expect(await linearTokenVoting.isPassed(0)).to.be.true;
 
-      // Proposal is in the active state
-      expect(await azorius.proposalState(0)).to.eq(0);
+      // Proposal is timelocked
+      await expect(await azorius.proposalState(0)).to.eq(1);
     });
 
     it("A proposal is not passed if there are more No votes than Yes votes", async () => {
@@ -618,9 +629,8 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
-      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Proposal is not passed"
-      );
+      // Proposal is in the failed state
+      expect(await azorius.proposalState(0)).to.eq(5);
 
       await expect(
         azorius.executeProposalBatch(
@@ -631,9 +641,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [0]
         )
       ).to.be.revertedWith("Proposal must be in the executable state");
-
-      // Proposal in the failed state
-      expect(await azorius.proposalState(0)).to.eq(4);
     });
 
     it("A proposal is not passed if quorum is not reached", async () => {
@@ -670,10 +677,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
-      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Proposal is not passed"
-      );
-
       await expect(
         azorius.executeProposalBatch(
           0,
@@ -685,7 +688,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       ).to.be.revertedWith("Proposal must be in the executable state");
 
       // Proposal in the failed state
-      expect(await azorius.proposalState(0)).to.eq(4);
+      expect(await azorius.proposalState(0)).to.eq(5);
     });
 
     it("A proposal is not passed if voting period is not over", async () => {
@@ -720,10 +723,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
-      await expect(linearTokenVoting.timelockProposal(0)).to.be.revertedWith(
-        "Proposal is not passed"
-      );
-
       await expect(
         azorius.executeProposalBatch(
           0,
@@ -733,6 +732,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [0]
         )
       ).to.be.revertedWith("Proposal must be in the executable state");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
     });
 
     it("Submitting a proposal emits the event with the associated proposal metadata", async () => {
@@ -810,12 +812,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Proposal is in the active state
-      expect(await azorius.proposalState(0)).to.eq(0);
-
-      // Finalize the strategy
-      await linearTokenVoting.timelockProposal(0);
-
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
@@ -840,7 +836,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
 
-      // Proposal is in the active state
+      // Proposal is in the executed state
       expect(await azorius.proposalState(0)).to.eq(3);
     });
 
@@ -899,9 +895,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await linearTokenVoting.timelockProposal(0);
-
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
@@ -925,6 +918,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
+
+      // Proposal is executed
+      expect(await azorius.proposalState(0)).to.eq(3);
     });
 
     it("Multiple transactions can be executed from a single proposal one at a time", async () => {
@@ -982,9 +978,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await linearTokenVoting.timelockProposal(0);
-
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
@@ -1006,6 +999,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         0
       );
 
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(500);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(100);
 
@@ -1018,6 +1014,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         0
       );
 
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(300);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(300);
 
@@ -1029,6 +1028,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         tokenTransferData3,
         0
       );
+
+      // Proposal is executed
+      expect(await azorius.proposalState(0)).to.eq(3);
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
@@ -1095,9 +1097,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await linearTokenVoting.timelockProposal(0);
-
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
@@ -1156,6 +1155,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         0
       );
 
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
       expect(await azorius.isTxExecuted(0, 0)).to.eq(true);
       expect(await azorius.isTxExecuted(0, 1)).to.eq(false);
       expect(await azorius.isTxExecuted(0, 2)).to.eq(false);
@@ -1204,6 +1206,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         tokenTransferData2,
         0
       );
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
 
       expect(await azorius.isTxExecuted(0, 0)).to.eq(true);
       expect(await azorius.isTxExecuted(0, 1)).to.eq(true);
@@ -1260,6 +1265,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
+
+      // Proposal is executed
+      expect(await azorius.proposalState(0)).to.eq(3);
 
       // Attempt to execute the first transaction
       await expect(
@@ -1337,9 +1345,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Increase time so that voting period has ended
       await time.increase(time.duration.seconds(60));
 
-      // Finalize the strategy
-      await linearTokenVoting.timelockProposal(0);
-
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
@@ -1363,8 +1368,69 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
         )
       ).to.be.revertedWith("Module transaction failed");
 
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
+    });
+
+    it("If a proposal is not executed during the execution period, it becomes expired", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesToken.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesToken.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearTokenVoting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users vote in support of proposal
+      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      // Increase time so that execution period has ended
+      await time.increase(time.duration.seconds(60));
+
+      // Proposal is expired
+      expect(await azorius.proposalState(0)).to.eq(4);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposalBatch(
+          0,
+          [votesToken.address],
+          [0],
+          [tokenTransferData],
+          [0]
+        )
+      ).to.be.revertedWith("Proposal must be in the executable state");
     });
   });
 });

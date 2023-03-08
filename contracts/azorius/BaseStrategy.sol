@@ -34,10 +34,6 @@ abstract contract BaseStrategy is
     /// @param _data Any extra data to pass to the voting strategy
     function initializeProposal(bytes memory _data) external virtual;
 
-    /// @notice Calls the proposal module to notify that a quorum has been reached
-    /// @param _proposalId The ID of the proposal to timelock
-    function timelockProposal(uint256 _proposalId) external virtual;
-
     /// @notice Sets the address of the Azorius contract
     /// @param _azoriusModule The address of the Azorius module
     function _setAzorius(address _azoriusModule) internal {
@@ -56,10 +52,10 @@ abstract contract BaseStrategy is
     /// @return bool True if the user can submit a proposal
     function isProposer(address _user) public view virtual returns (bool);
 
-    /// @notice Returns if voting is active on a proposal
+    /// @notice Returns the timestamp voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return bool True if the voting is active
-    function isVotingActive(
+    /// @return uint256 The timestamp voting ends on the proposal
+    function votingDeadline(
         uint256 _proposalId
-    ) public view virtual returns (bool);
+    ) public view virtual returns (uint256);
 }

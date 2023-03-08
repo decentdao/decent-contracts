@@ -5,8 +5,8 @@ import { ethers, network } from "hardhat";
 import {
   FractalModule,
   FractalModule__factory,
-  VetoGuard,
-  VetoGuard__factory,
+  MultisigFreezeGuard,
+  MultisigFreezeGuard__factory,
 } from "../typechain-types";
 import {
   ifaceSafe,
@@ -32,8 +32,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
   let multiSend: Contract;
-  let vetoGuard: VetoGuard;
-  let vetoImpl: VetoGuard;
+  let freezeGuard: MultisigFreezeGuard;
+  let freezeGuardImplementation: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
 
@@ -48,14 +48,14 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
   const abiCoder = new ethers.utils.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
-  let vetoGuardFactoryInit: string;
+  let freezeGuardFactoryInit: string;
   let setModuleCalldata: string;
   let sigs: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
-  let predictedVetoGuard: string;
+  let predictedFreezeGuard: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -120,24 +120,32 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
     /// /////////////  GUARD ///////////////////
     // DEPLOY GUARD
-    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
-    vetoGuardFactoryInit =
+    freezeGuardImplementation = await new MultisigFreezeGuard__factory(
+      deployer
+    ).deploy();
+    freezeGuardFactoryInit =
       // eslint-disable-next-line camelcase
-      VetoGuard__factory.createInterface().encodeFunctionData("setUp", [
-        abiCoder.encode(
-          ["uint256", "uint256", "address", "address", "address"],
-          [10, 20, owner1.address, owner1.address, gnosisSafe.address]
-        ),
-      ]);
+      MultisigFreezeGuard__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["uint256", "uint256", "address", "address", "address"],
+            [10, 20, owner1.address, owner1.address, gnosisSafe.address]
+          ),
+        ]
+      );
 
-    predictedVetoGuard = await calculateProxyAddress(
+    predictedFreezeGuard = await calculateProxyAddress(
       moduleFactory,
-      vetoImpl.address,
-      vetoGuardFactoryInit,
+      freezeGuardImplementation.address,
+      freezeGuardFactoryInit,
       "10031021"
     );
 
-    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
+    freezeGuard = await ethers.getContractAt(
+      "MultisigFreezeGuard",
+      predictedFreezeGuard
+    );
 
     /// /////////////// MODULE ////////////////
     // DEPLOY Fractal Module
@@ -206,7 +214,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       expect(await fractalModule.owner()).eq(owner1.address);
     });
 
-    it("Setup VetoGuard w/ ModuleProxyCreationEvent", async () => {
+    it("Setup FreezeGuard w/ ModuleProxyCreationEvent", async () => {
       const txs: MetaTransaction[] = [
         buildContractCall(
           gnosisFactory,
@@ -218,7 +226,11 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -226,10 +238,10 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
-        .withArgs(predictedVetoGuard, vetoImpl.address);
-      expect(await vetoGuard.timelockPeriod()).eq(10);
-      expect(await vetoGuard.vetoVoting()).eq(owner1.address);
-      expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
+        .withArgs(predictedFreezeGuard, freezeGuardImplementation.address);
+      expect(await freezeGuard.timelockPeriod()).eq(10);
+      expect(await freezeGuard.freezeVoting()).eq(owner1.address);
+      expect(await freezeGuard.childGnosisSafe()).eq(gnosisSafe.address);
     });
 
     it("Setup Azorius Module w/ ModuleProxyCreationEvent", async () => {
@@ -322,7 +334,11 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -417,7 +433,11 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -466,7 +486,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisSafe,
           "setGuard",
-          [vetoGuard.address],
+          [freezeGuard.address],
           0,
           false
         ),
@@ -490,7 +510,11 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -517,7 +541,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "ChangedGuard")
-        .withArgs(vetoGuard.address);
+        .withArgs(freezeGuard.address);
     });
 
     it("Setup Gnosis Safe w/ removedOwner event", async () => {
@@ -549,7 +573,11 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),

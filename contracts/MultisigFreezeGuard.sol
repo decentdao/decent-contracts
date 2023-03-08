@@ -1,27 +1,46 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IVetoGuard.sol";
-import "./interfaces/IVetoVoting.sol";
+import "./interfaces/IMultisigFreezeGuard.sol";
+import "./interfaces/IBaseFreezeVoting.sol";
 import "./interfaces/IGnosisSafe.sol";
-import "./TransactionHasher.sol";
-import "./FractalBaseGuard.sol";
+import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
-/// @notice A guard contract that prevents transactions that have been vetoed from being executed on the Gnosis Safe
-contract VetoGuard is
-    TransactionHasher,
+/// @notice A guard contract that enables functionality for a Multisig to be frozen,
+/// @notice and unable to execute transactions until it is unfrozen
+contract MultisigFreezeGuard is
     FactoryFriendly,
-    FractalBaseGuard,
-    IVetoGuard
+    IGuard,
+    IMultisigFreezeGuard,
+    BaseGuard
 {
     uint256 public timelockPeriod;
     uint256 public executionPeriod;
-    IVetoVoting public vetoVoting;
-    IGnosisSafe public gnosisSafe;
+    IBaseFreezeVoting public freezeVoting;
+    IGnosisSafe public childGnosisSafe;
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
     mapping(bytes32 => uint256) internal transactionTimelockedTimestamp;
+
+    event MultisigFreezeGuardSetup(
+        address creator,
+        address indexed owner,
+        address indexed freezeVoting,
+        address indexed childGnosisSafe
+    );
+    event TransactionTimelocked(
+        address indexed timelocker,
+        bytes32 indexed transactionHash,
+        bytes indexed signatures
+    );
+    event TimelockPeriodUpdated(
+      uint256 timelockPeriod
+    );
+    event ExecutionPeriodUpdated(
+      uint256 executionPeriod
+    );
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -31,27 +50,26 @@ contract VetoGuard is
             uint256 _timelockPeriod,
             uint256 _executionPeriod,
             address _owner,
-            address _vetoVoting,
-            address _gnosisSafe // Address(0) == msg.sender
+            address _freezeVoting,
+            address _childGnosisSafe
         ) = abi.decode(
                 initializeParams,
                 (uint256, uint256, address, address, address)
             );
 
-        timelockPeriod = _timelockPeriod;
-        executionPeriod = _executionPeriod;
+        _updateTimelockPeriod(_timelockPeriod);
+        _updateExecutionPeriod(_executionPeriod);
         transferOwnership(_owner);
-        vetoVoting = IVetoVoting(_vetoVoting);
-        gnosisSafe = IGnosisSafe(
-            _gnosisSafe == address(0) ? msg.sender : _gnosisSafe
+        freezeVoting = IBaseFreezeVoting(_freezeVoting);
+        childGnosisSafe = IGnosisSafe(
+            _childGnosisSafe == address(0) ? msg.sender : _childGnosisSafe // todo: can we remove this?
         );
 
-        emit VetoGuardSetup(
+        emit MultisigFreezeGuardSetup(
             msg.sender,
-            _timelockPeriod,
-            _executionPeriod,
             _owner,
-            _vetoVoting
+            _freezeVoting,
+            _childGnosisSafe
         );
     }
 
@@ -95,10 +113,10 @@ contract VetoGuard is
                 transactionTimelockedTimestamp[transactionHash] +
                     timelockPeriod +
                     executionPeriod,
-            "Transaction has already been timelocked recently"
+            "Transaction is in timelock or execution period"
         );
 
-        bytes memory gnosisTransactionHash = gnosisSafe.encodeTransactionData(
+        bytes memory gnosisTransactionHash = childGnosisSafe.encodeTransactionData(
             to,
             value,
             data,
@@ -108,11 +126,11 @@ contract VetoGuard is
             gasPrice,
             gasToken,
             refundReceiver,
-            gnosisSafe.nonce()
+            childGnosisSafe.nonce()
         );
 
         // If signatures are not valid, this will revert
-        gnosisSafe.checkSignatures(
+        childGnosisSafe.checkSignatures(
             keccak256(gnosisTransactionHash),
             gnosisTransactionHash,
             signatures
@@ -127,7 +145,7 @@ contract VetoGuard is
     /// @notice Updates the timelock period in seconds, only callable by the owner
     /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
-        timelockPeriod = _timelockPeriod;
+        _updateTimelockPeriod(_timelockPeriod);
     }
 
     /// @notice Updates the execution period in seconds, only callable by the owner
@@ -137,6 +155,24 @@ contract VetoGuard is
         onlyOwner
     {
         executionPeriod = _executionPeriod;
+    }
+
+    /// @notice Updates the timelock period in seconds
+    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
+    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+        timelockPeriod = _timelockPeriod;
+
+        emit TimelockPeriodUpdated(_timelockPeriod);
+    }
+
+    /// @notice Updates the execution period in seconds
+    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    function _updateExecutionPeriod(uint256 _executionPeriod)
+        internal
+    {
+        executionPeriod = _executionPeriod;
+
+        emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
@@ -162,7 +198,7 @@ contract VetoGuard is
         address payable refundReceiver,
         bytes memory,
         address
-    ) external view override {
+    ) external view override (BaseGuard, IGuard) {
         bytes32 transactionHash = getTransactionHash(
             to,
             value,
@@ -194,12 +230,7 @@ contract VetoGuard is
             "Transaction execution period has ended"
         );
 
-        require(
-            !vetoVoting.getIsVetoed(transactionHash),
-            "Transaction has been vetoed"
-        );
-
-        require(!vetoVoting.isFrozen(), "DAO is frozen");
+        require(!freezeVoting.isFrozen(), "DAO is frozen");
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe
@@ -208,7 +239,7 @@ contract VetoGuard is
     function checkAfterExecution(bytes32 txHash, bool success)
         external
         view
-        override
+        override (BaseGuard, IGuard)
     {}
 
     /// @notice Gets the block number that the transaction was timelocked at
@@ -233,18 +264,43 @@ contract VetoGuard is
         return transactionTimelockedTimestamp[_transactionHash];
     }
 
-    /// @notice Can be used to check if this contract supports the specified interface
-    /// @param interfaceId The bytes representing the interfaceId being checked
-    /// @return bool True if this contract supports the checked interface
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(FractalBaseGuard)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IVetoGuard).interfaceId ||
-            super.supportsInterface(interfaceId);
+    /// @dev Returns the hash of all the transaction data
+    /// @dev It is important to note that this implementation is different than that in the Gnosis Safe contract
+    /// @dev This implementation does not use the nonce, as this is not part of the Guard contract checkTransaction interface
+    /// @dev This implementation also omits the EIP-712 related values, since these hashes are not being signed by users
+    /// @param to Destination address.
+    /// @param value Ether value.
+    /// @param data Data payload.
+    /// @param operation Operation type.
+    /// @param safeTxGas Gas that should be used for the safe transaction.
+    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
+    /// @param gasPrice Maximum gas price that should be used for this transaction.
+    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
+    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
+    /// @return Transaction hash bytes.
+    function getTransactionHash(
+        address to,
+        uint256 value,
+        bytes memory data,
+        Enum.Operation operation,
+        uint256 safeTxGas,
+        uint256 baseGas,
+        uint256 gasPrice,
+        address gasToken,
+        address refundReceiver
+    ) public pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                to,
+                value,
+                keccak256(data),
+                operation,
+                safeTxGas,
+                baseGas,
+                gasPrice,
+                gasToken,
+                refundReceiver
+            )
+        );
     }
 }
