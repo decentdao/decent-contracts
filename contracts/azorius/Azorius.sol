@@ -98,8 +98,8 @@ contract Azorius is Module, IAzorius {
     }
 
     /** Implemented from IAzorius */
-    function updateTimelockPeriod(uint256 _newTimelockPeriod) external onlyOwner {
-        _updateTimelockPeriod(_newTimelockPeriod);
+    function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
+        _updateTimelockPeriod(_timelockPeriod);
     }
 
     /// @notice Updates the execution period
@@ -231,7 +231,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @notice Updates the timelock period
-    /// @param _newTimelockPeriod The new timelock period in seconds
+    /// @param _timelockPeriod The new timelock period in seconds
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
 

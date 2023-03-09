@@ -93,7 +93,7 @@ interface IAzorius {
     /**
      * Updates the timelockPeriod for newly created Proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
-     * @param _newTimelockPeriod The timelockPeriod (in seconds) to be used for new Proposals.
+     * @param _timelockPeriod The timelockPeriod (in seconds) to be used for new Proposals.
      */
     function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
