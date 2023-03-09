@@ -14,7 +14,7 @@ contract Azorius is Module, IAzorius {
     uint256 public timelockPeriod; // Delay between a proposal is passed and can be executed
     uint256 public executionPeriod; // Delay between when timelock ends and proposal expires
     address internal constant SENTINEL_STRATEGY = address(0x1);
-    mapping(uint256 => Proposal) internal proposals; // Proposals by proposal ID
+    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
     mapping(address => address) internal strategies;
 
     event ProposalCreated(
@@ -232,10 +232,10 @@ contract Azorius is Module, IAzorius {
 
     /// @notice Updates the timelock period
     /// @param _newTimelockPeriod The new timelock period in seconds
-    function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
-        timelockPeriod = _newTimelockPeriod;
+    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+        timelockPeriod = _timelockPeriod;
 
-        emit TimelockPeriodUpdated(_newTimelockPeriod);
+        emit TimelockPeriodUpdated(_timelockPeriod);
     }
 
     /// @notice Updates the execution period

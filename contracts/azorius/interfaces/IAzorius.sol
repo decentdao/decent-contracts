@@ -13,14 +13,13 @@ interface IAzorius {
      * A struct which represents a transaction to perform on the blockchain.
      */
     struct Transaction {
-        // recipient address of the transaction TODO should this be named recipient?
-        // https://ethereum.org/en/developers/docs/transactions/#whats-a-transaction
+        // destination address of the transaction
         address to;
         // amount of ETH to transfer with the transaction
         uint256 value;
         // encoded function call data of the transaction
         bytes data;
-        // Operation type. TODO what's this?
+        // Operation type, Call or DelegateCall
         Enum.Operation operation;
     }
 
@@ -48,7 +47,7 @@ interface IAzorius {
      * the EXECUTED, EXPIRED, or FAILED state.
      *
      * ACTIVE - a new proposal begins in this state, and stays in this state
-     *          for the duration of its voting period. TODO
+     *          for the duration of its voting period.
      * TIMELOCKED - A proposal that passes enters the TIMELOCKED state, during which
      *          it cannot yet be executed.  This is to allow time for token holders
      *          to potentially exit their position, as well as parent DAOs time to
@@ -87,7 +86,6 @@ interface IAzorius {
      * This has no effect on existing Proposals, either ACTIVE or completed.
      *
      * @param _prevStrategy BaseStrategy that pointed to the strategy to be removed in the linked list
-     *          TODO we should find a way to remove this _prevStrategy
      * @param _strategy BaseStrategy implementation to be removed
      */
     function disableStrategy(address _prevStrategy, address _strategy) external;
@@ -96,18 +94,17 @@ interface IAzorius {
      * Updates the timelockPeriod for newly created Proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
      * @param _newTimelockPeriod The timelockPeriod (in seconds) to be used for new Proposals.
-     * TODO should we remove the word 'new' from this somehow?
      */
-    function updateTimelockPeriod(uint256 _newTimelockPeriod) external;
+    function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
     /**
      * Submits a new Proposal, using one of the enabled BaseStrategies.
      * New Proposals begin immediately in the ACTIVE state.
      *
      * @param _strategy address of the BaseStrategy implementation which the Proposal will use.
-     * @param _data arbitrary data TODO what is this?
+     * @param _data arbitrary data passed to the BaseStrategy implementation
      * @param _transactions array of transactions to propose
-     * @param _metadata any additional metadata such as a title or description to submit with the proposal
+     * @param _metadata additional data such as a title/description to submit with the proposal
      */
     function submitProposal(
         address _strategy,
@@ -117,15 +114,15 @@ interface IAzorius {
     ) external;
 
     /**
-     * Executes the specified Proposal. TODO why do we need to match the hashes here? can't it just be _proposalId ?
-     * @notice Transactions must be called in order. TODO what's this mean?
-     * TODO pretty sure this should be _proposalIndex, not _proposalId here???
+     * Executes the specified Proposal.
+     *
+     * Transactions must be called in order.
      *
      * @param _proposalId identifier of the proposal
      * @param _target contract to be called by the avatar
      * @param _value ETH value to pass with the call
      * @param _data data to be executed from the call
-     * @param _operation Call or Delegatecall TODO ?
+     * @param _operation Call or Delegatecall
      */
     function executeProposalByIndex(
         uint256 _proposalId,
@@ -142,7 +139,7 @@ interface IAzorius {
      * @param _targets target contracts for each transaction
      * @param _values ETH values to be sent with each transaction
      * @param _data transaction data to be executed
-     * @param _operations Calls or Delegatecalls TODO what's this? TODO why isn't this Transaction[]?
+     * @param _operations Calls or Delegatecalls
      */
     function executeProposalBatch(
         uint256 _proposalId,
@@ -161,12 +158,16 @@ interface IAzorius {
     function isStrategyEnabled(address _strategy) external view returns (bool);
 
     /**
-     * Returns an array of enabled BaseStrategy contract addresses. TODO is this only enabled ones?
+     * Returns an array of enabled BaseStrategy contract addresses.
+     * Because the list of BaseStrategies is technically unbounded, this
+     * requires the address of the first strategy you would like, along
+     * with the total count of strategies to return, rather than
+     * returning the whole list at once.
      *
      * @param _startAddress contract address of the BaseStrategy to start with
      * @param _count maximum number of BaseStrategies that should be returned
      * @return _strategies array of BaseStrategies
-     * @return _next next BaseStrategy contract address in the linked list TODO how can we get rid of this??
+     * @return _next next BaseStrategy contract address in the linked list
      */
     function getStrategies(
         address _startAddress,
