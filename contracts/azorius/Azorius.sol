@@ -79,9 +79,6 @@ contract Azorius is Module, IAzorius {
         emit EnabledStrategy(_strategy);
     }
 
-    /// @notice Disables a voting strategy on the module, only callable by the owner
-    /// @param _prevStrategy Strategy that pointed to the strategy to be removed in the linked list
-    /// @param _strategy Strategy to be removed
     function disableStrategy(
         address _prevStrategy,
         address _strategy
@@ -101,19 +98,13 @@ contract Azorius is Module, IAzorius {
         emit DisabledStrategy(_strategy);
     }
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
-    function updateTimelockPeriod(
-        uint256 _newTimelockPeriod
-    ) external onlyOwner {
+    function updateTimelockPeriod(uint256 _newTimelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_newTimelockPeriod);
     }
 
     /// @notice Updates the execution period
     /// @param _newExecutionPeriod The new execution period in seconds
-    function updateExecutionPeriod(
-        uint256 _newExecutionPeriod
-    ) external onlyOwner {
+    function updateExecutionPeriod(uint256 _newExecutionPeriod) external onlyOwner {
         _updateExecutionPeriod(_newExecutionPeriod);
     }
 

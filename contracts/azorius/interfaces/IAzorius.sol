@@ -3,22 +3,66 @@ pragma solidity ^0.8.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
+/**
+ * @title Azorius spec - the base interface for the Azorius governance Safe module.
+ * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ */
 interface IAzorius {
+
+    /**
+     * A struct which represents a transaction to perform on the blockchain.
+     */
     struct Transaction {
+        // the recipient address of the transaction TODO should this be named recipient?
+        // https://ethereum.org/en/developers/docs/transactions/#whats-a-transaction
         address to;
+        // Amount of ETH to transfer with the transaction.
         uint256 value;
+        // Encoded function call data of the transaction.
         bytes data;
+        // Operation type. TODO what's this?
         Enum.Operation operation;
     }
 
+    /**
+     * A struct which holds details pertaining to a single proposal.
+     */
     struct Proposal {
-        address strategy; // The voting strategy contract this proposal was created on
-        bytes32[] txHashes; // The hashes of the transactions contained within the proposal
-        uint256 timelockPeriod; // The time in seconds the proposal is timelocked for
-        uint256 executionPeriod; // The time in seconds the proposal has to be executed after timelock ends
-        uint256 executionCounter; // The count of transactions that have been executed within the proposal
+        // the BaseStrategy contract this proposal was created on
+        address strategy;
+        // hashes of the transactions that are being proposed
+        bytes32[] txHashes;
+        // time (in seconds) this proposal will be timelocked for if it passes
+        uint256 timelockPeriod;
+        // time (in seconds) this proposal has to be executed after timelock
+        // ends before it is expired
+        uint256 executionPeriod;
+        // the count of transactions that have been executed within the proposal
+        uint256 executionCounter;
     }
 
+    /**
+     * The list of states in which a Proposal can be in at any given time.
+     *
+     * Proposals begin in the ACTIVE state and will ultimately end in either
+     * the EXECUTED, EXPIRED, or FAILED state.
+     *
+     * ACTIVE - a new proposal begins in this state, and stays in this state
+     *          for the duration of its voting period. TODO
+     * TIMELOCKED - A proposal that passes enters the TIMELOCKED state, during which
+     *          it cannot yet be executed.  This is to allow time for token holders
+     *          to potentially exit their position, as well as parent DAOs time to
+     *          initiate a Freeze, if they choose to do so. A proposal stays timelocked
+     *          for the duration of its timelockPeriod.
+     * EXECUTABLE - Following the TIMELOCKED state, a passed proposal becomes executable,
+     *          and can then finally be executed on chain by anyone.
+     * EXECUTED - the final state for a passed proposal.  The proposal has been executed
+     *          on the blockchain.
+     * EXPIRED - a passed proposal which is not executed before its executionPeriod has
+     *          elapsed will be EXPIRED, and can no longer be executed.
+     * FAILED - a failed proposal (as defined in its BaseStrategy isPassed function).
+     *          For a standard strategy, this would mean it received more NO votes than YES. 
+     */
     enum ProposalState {
         ACTIVE,
         TIMELOCKED,
@@ -28,24 +72,43 @@ interface IAzorius {
         FAILED
     }
 
-    /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
-    /// @param _strategy Address of the strategy to be enabled
+    /**
+     * Enables a BaseStrategy implementation for newly created Proposals.
+     *
+     * Multiple strategies can be enabled, and new Proposals will be able to be
+     * created using any of the currently enabled strategies.
+     *
+     * @param _strategy Address of the BaseStrategy to be enabled.
+     */
     function enableStrategy(address _strategy) external;
 
-    /// @notice Disables a voting strategy on the module, only callable by the owner
-    /// @param _prevStrategy Strategy that pointed to the strategy to be removed in the linked list
-    /// @param _strategy Strategy to be removed
+    /**
+     * Disables a previously enabled BaseStrategy implementation for new proposal.
+     * This has no effect on existing Proposals, either ACTIVE or completed.
+     *
+     * @param _prevStrategy the BaseStrategy that pointed to the strategy to be removed in the linked list
+     *          TODO we should find a way to remove this _prevStrategy
+     * @param _strategy the BaseStrategy implementation to be removed
+     */
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
+    /**
+     * Updates the timelockPeriod for newly created Proposals.
+     * This has no effect on existing Proposals, either ACTIVE or completed.
+     * @param _newTimelockPeriod The timelockPeriod (in seconds) to be used for new Proposals.
+     * TODO should we remove the word 'new' from this somehow?
+     */
     function updateTimelockPeriod(uint256 _newTimelockPeriod) external;
 
-    /// @notice This method submits a proposal which includes metadata strings to describe the proposal
-    /// @param _strategy Address of the voting strategy which the proposal will be submitted to
-    /// @param _data Additional data which will be passed to the strategy contract
-    /// @param _transactions Array of transactions to execute
-    /// @param _metadata Any additional metadata such as a title or description to submit with the proposal
+    /**
+     * Submits a new Proposal, using one of the enabled BaseStrategies.
+     * New Proposals begin immediately in the ACTIVE state.
+     *
+     * @param _strategy address of the BaseStrategy implementation which the Proposal will use.
+     * @param _data arbitrary data TODO what is this?
+     * @param _transactions An array of transactions to propose.
+     * @param _metadata Any additional metadata such as a title or description to submit with the proposal.
+     */
     function submitProposal(
         address _strategy,
         bytes memory _data,
@@ -53,13 +116,17 @@ interface IAzorius {
         string calldata _metadata
     ) external;
 
-    /// @notice Executes the specified transaction within a proposal
-    /// @notice Transactions must be called in order
-    /// @param _proposalId the identifier of the proposal
-    /// @param _target the contract to be called by the avatar
-    /// @param _value ether value to pass with the call
-    /// @param _data the data to be executed from the call
-    /// @param _operation Call or Delegatecall
+    /**
+     * Executes the specified Proposal. TODO why do we need to match the hashes here? can't it just be _proposalId ?
+     * @notice Transactions must be called in order. TODO what's this mean?
+     * TODO pretty sure this should be _proposalIndex, not _proposalId here???
+     *
+     * @param _proposalId the identifier of the proposal
+     * @param _target the contract to be called by the avatar
+     * @param _value ether value to pass with the call
+     * @param _data the data to be executed from the call
+     * @param _operation Call or Delegatecall
+     */
     function executeProposalByIndex(
         uint256 _proposalId,
         address _target,
