@@ -7,10 +7,9 @@ import "./interfaces/IBaseFreezeVoting.sol";
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
     uint256 public freezeProposalCreatedBlock; // Block number the freeze proposal was created at
-    uint256 public freezeProposalCreatedTime; // Timestamp the freeze proposal was created at  
     uint256 public freezeProposalVoteCount; // Number of accrued freeze votes
-    uint256 public freezeProposalPeriod; // Number of seconds a freeze proposal has to succeed
-    uint256 public freezePeriod; // Number of seconds a freeze lasts, from time of freeze proposal creation
+    uint256 public freezeProposalPeriod; // Number of blocks a freeze proposal has to succeed
+    uint256 public freezePeriod; // Number of blocks a freeze lasts, from time of freeze proposal creation
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
     event FreezeVoteCast(address indexed voter, uint256 votesCast);
@@ -25,7 +24,6 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     /// @notice Unfreezes the DAO, only callable by the owner
     function unfreeze() external onlyOwner {
         freezeProposalCreatedBlock = 0;
-        freezeProposalCreatedTime = 0;
         freezeProposalVoteCount = 0;
     }
 
@@ -38,7 +36,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /// @notice Updates the freeze proposal period, only callable by the owner
-    /// @param _freezeProposalPeriod The number of seconds a freeze proposal has to succeed
+    /// @param _freezeProposalPeriod The number of blocks a freeze proposal has to succeed
     function updateFreezeProposalPeriod(
         uint256 _freezeProposalPeriod
     ) external onlyOwner {
@@ -46,7 +44,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /// @notice Updates the freeze period, only callable by the owner
-    /// @param _freezePeriod The number of seconds a freeze lasts, from time of freeze proposal creation
+    /// @param _freezePeriod The number of blocks a freeze lasts, from time of freeze proposal creation
     function updateFreezePeriod(uint256 _freezePeriod) external onlyOwner {
         _updateFreezePeriod(_freezePeriod);
     }
@@ -62,7 +60,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /// @notice Updates the freeze proposal period
-    /// @param _freezeProposalPeriod The number of seconds a freeze proposal has to succeed
+    /// @param _freezeProposalPeriod The number of blocks a freeze proposal has to succeed
     function _updateFreezeProposalPeriod(
         uint256 _freezeProposalPeriod
     ) internal {
@@ -72,7 +70,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /// @notice Updates the freeze period
-    /// @param _freezePeriod The number of seconds a freeze lasts, from time of freeze proposal creation
+    /// @param _freezePeriod The number of blocks a freeze lasts, from time of freeze proposal creation
     function _updateFreezePeriod(uint256 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
 
@@ -84,7 +82,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     function isFrozen() external view returns (bool) {
         if (
             freezeProposalVoteCount >= freezeVotesThreshold &&
-            block.timestamp < freezeProposalCreatedTime + freezePeriod
+            block.number < freezeProposalCreatedBlock + freezePeriod
         ) {
             return true;
         }

@@ -39,11 +39,10 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         require(parentGnosisSafe.isOwner(msg.sender), "User is not an owner ");
 
         if (
-            block.timestamp > freezeProposalCreatedTime + freezeProposalPeriod
+            block.number > freezeProposalCreatedBlock + freezeProposalPeriod
         ) {
             // Create freeze proposal, count user's vote
             freezeProposalCreatedBlock = block.number;
-            freezeProposalCreatedTime = block.timestamp;
 
             freezeProposalVoteCount = 1;
 

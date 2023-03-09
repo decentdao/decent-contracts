@@ -41,12 +41,11 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         uint256 userVotes;
 
         if (
-            block.timestamp >
-            freezeProposalCreatedTime + freezeProposalPeriod
+            block.number >
+            freezeProposalCreatedBlock + freezeProposalPeriod
         ) {
             // Create freeze proposal, set total votes to msg.sender's vote count
             freezeProposalCreatedBlock = block.number;
-            freezeProposalCreatedTime = block.timestamp;
 
             userVotes = votesToken.getPastVotes(
                 msg.sender,

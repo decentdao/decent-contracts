@@ -14,8 +14,8 @@ interface IAzorius {
     struct Proposal {
         address strategy; // The voting strategy contract this proposal was created on
         bytes32[] txHashes; // The hashes of the transactions contained within the proposal
-        uint256 timelockPeriod; // The time in seconds the proposal is timelocked for
-        uint256 executionPeriod; // The time in seconds the proposal has to be executed after timelock ends
+        uint256 timelockPeriod; // The number of blocks the proposal is timelocked for
+        uint256 executionPeriod; // The number of blocks the proposal has to be executed after timelock ends
         uint256 executionCounter; // The count of transactions that have been executed within the proposal
     }
 
@@ -37,8 +37,8 @@ interface IAzorius {
     /// @param _strategy Strategy to be removed
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
+    /// @notice Updates the timelock period - time in blocks between queuing and when a proposal can be executed
+    /// @param _newTimelockPeriod The new timelock period in blocks
     function updateTimelockPeriod(uint256 _newTimelockPeriod) external;
 
     /// @notice This method submits a proposal which includes metadata strings to describe the proposal
@@ -161,8 +161,8 @@ interface IAzorius {
     /// @param _proposalId The ID of the proposal
     /// @return _strategy The address of the strategy contract the proposal is on
     /// @return _txHashes The hashes of the transactions the proposal contains
-    /// @return _timelockPeriod The time in seconds the proposal is timelocked for
-    /// @return _executionPeriod The time in seconds the proposal has to be executed after timelock ends
+    /// @return _timelockPeriod The number of blocks the proposal is timelocked for
+    /// @return _executionPeriod The number of blocks the proposal has to be executed after timelock ends
     /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     function getProposal(
         uint256 _proposalId

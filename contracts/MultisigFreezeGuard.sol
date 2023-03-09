@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: MITblocks
 pragma solidity ^0.8.0;
 
 import "./interfaces/IMultisigFreezeGuard.sol";
@@ -17,12 +17,11 @@ contract MultisigFreezeGuard is
     IMultisigFreezeGuard,
     BaseGuard
 {
-    uint256 public timelockPeriod;
-    uint256 public executionPeriod;
+    uint256 public timelockPeriod; // Timelock period in number of blocks
+    uint256 public executionPeriod; // Execution period in number of blocks
     IBaseFreezeVoting public freezeVoting;
     IGnosisSafe public childGnosisSafe;
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
-    mapping(bytes32 => uint256) internal transactionTimelockedTimestamp;
 
     event MultisigFreezeGuardSetup(
         address creator,
@@ -109,8 +108,8 @@ contract MultisigFreezeGuard is
         );
 
         require(
-            block.timestamp >=
-                transactionTimelockedTimestamp[transactionHash] +
+            block.number >=
+                transactionTimelockedBlock[transactionHash] +
                     timelockPeriod +
                     executionPeriod,
             "Transaction is in timelock or execution period"
@@ -137,19 +136,18 @@ contract MultisigFreezeGuard is
         );
 
         transactionTimelockedBlock[transactionHash] = block.number;
-        transactionTimelockedTimestamp[transactionHash] = block.timestamp;
 
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
-    /// @notice Updates the timelock period in seconds, only callable by the owner
-    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
+    /// @notice Updates the timelock period in blocks, only callable by the owner
+    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period in seconds, only callable by the owner
-    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    /// @notice Updates the execution period in blocks, only callable by the owner
+    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
     function updateExecutionPeriod(uint256 _executionPeriod)
         external
         onlyOwner
@@ -157,16 +155,16 @@ contract MultisigFreezeGuard is
         executionPeriod = _executionPeriod;
     }
 
-    /// @notice Updates the timelock period in seconds
-    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
+    /// @notice Updates the timelock period in blocks
+    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
 
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period in seconds
-    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    /// @notice Updates the execution period in blocks
+    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
     function _updateExecutionPeriod(uint256 _executionPeriod)
         internal
     {
@@ -217,14 +215,14 @@ contract MultisigFreezeGuard is
         );
 
         require(
-            block.timestamp >=
-                transactionTimelockedTimestamp[transactionHash] + timelockPeriod,
+            block.number >=
+                transactionTimelockedBlock[transactionHash] + timelockPeriod,
             "Transaction timelock period has not completed yet"
         );
 
         require(
-            block.timestamp <=
-                transactionTimelockedTimestamp[transactionHash] +
+            block.number <=
+                transactionTimelockedBlock[transactionHash] +
                     timelockPeriod +
                     executionPeriod,
             "Transaction execution period has ended"
@@ -251,17 +249,6 @@ contract MultisigFreezeGuard is
         returns (uint256)
     {
         return transactionTimelockedBlock[_transactionHash];
-    }
-
-    /// @notice Gets the timestamp that the transaction was timelocked at
-    /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The timestamp the transaction was timelocked at
-    function getTransactionTimelockedTimestamp(bytes32 _transactionHash)
-        public
-        view
-        returns (uint256)
-    {
-        return transactionTimelockedTimestamp[_transactionHash];
     }
 
     /// @dev Returns the hash of all the transaction data

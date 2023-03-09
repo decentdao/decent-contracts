@@ -22,10 +22,10 @@ interface IBaseStrategy {
     /// @return bool True if the user can submit a proposal
     function isProposer(address _user) external view returns (bool);
 
-    /// @notice Returns the timestamp voting ends on the proposal
+    /// @notice Returns the block number voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The timestamp voting ends on the proposal
-    function votingDeadline(
+    /// @return uint256 The block number voting ends on the proposal
+    function votingEndBlock(
         uint256 _proposalId
     ) external view returns (uint256);
 }

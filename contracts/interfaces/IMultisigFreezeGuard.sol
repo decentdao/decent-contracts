@@ -28,13 +28,13 @@ interface IMultisigFreezeGuard {
         bytes memory signatures
     ) external;
 
-    /// @notice Updates the timelock period in seconds, only callable by the owner
-    /// @param _timelockPeriod The number of seconds between when a transaction is timelocked and can be executed
+    /// @notice Updates the timelock period in blocks, only callable by the owner
+    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
     function updateTimelockPeriod(uint256 _timelockPeriod)
         external;
 
-    /// @notice Updates the execution period in seconds, only callable by the owner
-    /// @param _executionPeriod The number of seconds a transaction has to be executed after timelock period has ended
+    /// @notice Updates the execution period in blocks, only callable by the owner
+    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
     function updateExecutionPeriod(uint256 _executionPeriod)
         external;
 
@@ -42,14 +42,6 @@ interface IMultisigFreezeGuard {
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number
     function getTransactionTimelockedBlock(bytes32 _transactionHash)
-        external
-        view
-        returns (uint256);
-
-    /// @notice Gets the timestamp that the transaction was timelocked at
-    /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The timestamp the transaction was timelocked at
-    function getTransactionTimelockedTimestamp(bytes32 _transactionHash)
         external
         view
         returns (uint256);

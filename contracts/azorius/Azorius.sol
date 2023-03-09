@@ -12,8 +12,8 @@ contract Azorius is Module, IAzorius {
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
     uint256 public totalProposalCount; // Total number of submitted proposals
-    uint256 public timelockPeriod; // Delay between a proposal is passed and can be executed
-    uint256 public executionPeriod; // Delay between when timelock ends and proposal expires
+    uint256 public timelockPeriod; // Delay in blocks between a proposal is passed and can be executed
+    uint256 public executionPeriod; // Delay in blocks between when timelock ends and proposal expires
     address internal constant SENTINEL_STRATEGY = address(0x1);
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposal ID
     mapping(address => address) internal strategies;
@@ -101,8 +101,8 @@ contract Azorius is Module, IAzorius {
         emit DisabledStrategy(_strategy);
     }
 
-    /// @notice Updates the timelock period - time between queuing and when a proposal can be executed
-    /// @param _newTimelockPeriod The new timelock period in seconds
+    /// @notice Updates the timelock period - blocks between queuing and when a proposal can be executed
+    /// @param _newTimelockPeriod The new timelock period in blocks
     function updateTimelockPeriod(
         uint256 _newTimelockPeriod
     ) external onlyOwner {
@@ -110,7 +110,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @notice Updates the execution period
-    /// @param _newExecutionPeriod The new execution period in seconds
+    /// @param _newExecutionPeriod The new execution period in blocks
     function updateExecutionPeriod(
         uint256 _newExecutionPeriod
     ) external onlyOwner {
@@ -255,7 +255,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @notice Updates the timelock period
-    /// @param _newTimelockPeriod The new timelock period in seconds
+    /// @param _newTimelockPeriod The new timelock period in blocks
     function _updateTimelockPeriod(uint256 _newTimelockPeriod) internal {
         timelockPeriod = _newTimelockPeriod;
 
@@ -263,7 +263,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @notice Updates the execution period
-    /// @param _newExecutionPeriod The new execution period in seconds
+    /// @param _newExecutionPeriod The new execution period in blocks
     function _updateExecutionPeriod(uint256 _newExecutionPeriod) internal {
         executionPeriod = _newExecutionPeriod;
 
@@ -333,21 +333,21 @@ contract Azorius is Module, IAzorius {
 
         IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
 
-        uint256 votingDeadline = _strategy.votingDeadline(_proposalId);
+        uint256 votingEndBlock = _strategy.votingEndBlock(_proposalId);
 
-        if (block.timestamp <= votingDeadline) {
+        if (block.number <= votingEndBlock) {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
         } else if (
-            block.timestamp <= votingDeadline + _proposal.timelockPeriod
+            block.number <= votingEndBlock + _proposal.timelockPeriod
         ) {
             return ProposalState.TIMELOCKED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
         } else if (
-            block.timestamp <=
-            votingDeadline +
+            block.number <=
+            votingEndBlock +
                 _proposal.timelockPeriod +
                 _proposal.executionPeriod
         ) {
@@ -433,8 +433,8 @@ contract Azorius is Module, IAzorius {
     /// @param _proposalId The ID of the proposal
     /// @return _strategy The address of the strategy contract the proposal is on
     /// @return _txHashes The hashes of the transactions the proposal contains
-    /// @return _timelockPeriod The time in seconds the proposal is timelocked for
-    /// @return _executionPeriod The time in seconds the proposal has to be executed after timelock ends
+    /// @return _timelockPeriod The number of blocks the proposal is timelocked for
+    /// @return _executionPeriod The number of blocks the proposal has to be executed after timelock ends
     /// @return _executionCounter Counter of how many of the proposal transactions have been executed
     function getProposal(
         uint256 _proposalId
