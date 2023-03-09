@@ -32,9 +32,7 @@ abstract contract BaseStrategy is
 
     /// @notice Called by the proposal module, this notifes the strategy of a new proposal
     /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(
-        bytes memory _data
-    ) external virtual;
+    function initializeProposal(bytes memory _data) external virtual;
 
     /// @notice Sets the address of the Azorius contract
     /// @param _azoriusModule The address of the Azorius module

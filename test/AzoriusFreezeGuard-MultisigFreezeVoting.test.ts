@@ -817,7 +817,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(4);
     });
 
-    it("A frozen DAO can be defrosted by its owner, and continue to execute TX's", async () => {
+    it("A frozen DAO can be unfrozen by its owner, and continue to execute TX's", async () => {
       // Create transaction to transfer tokens to the deployer
       const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
         "transfer",
@@ -947,8 +947,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
         )
       ).to.be.revertedWith("DAO is frozen");
 
-      // Parent DAO defrosts the child
-      await freezeVoting.connect(freezeVotingOwner).defrost();
+      // Parent DAO unfreezes the child
+      await freezeVoting.connect(freezeVotingOwner).unfreeze();
 
       // Child DAO is now unfrozen
       expect(await freezeVoting.isFrozen()).to.eq(false);

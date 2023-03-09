@@ -489,7 +489,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
     });
 
-    it("A defrosted DAO may not execute a previously passed transaction", async () => {
+    it("An unfrozen DAO may not execute a previously passed transaction", async () => {
       // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       // Vetoer 2 casts 600 freeze votes
@@ -569,7 +569,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ).to.be.revertedWith("Transaction execution period has ended");
     });
 
-    it("Defrosted DAOs may execute txs", async () => {
+    it("Unfrozen DAOs may execute txs", async () => {
       // Vetoer 1 casts 500 freeze votes
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       // Vetoer 2 casts 600 freeze votes
@@ -577,7 +577,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
       // Check that the DAO has been frozen
       expect(await freezeVoting.isFrozen()).to.eq(true);
-      await freezeVoting.connect(freezeGuardOwner).defrost();
+      await freezeVoting.connect(freezeGuardOwner).unfreeze();
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
@@ -644,7 +644,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     it("Only owner methods must be called by vetoGuard owner", async () => {
       await expect(
-        freezeVoting.connect(tokenVetoer1).defrost()
+        freezeVoting.connect(tokenVetoer1).unfreeze()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
         freezeVoting.connect(tokenVetoer1).updateFreezeVotesThreshold(0)

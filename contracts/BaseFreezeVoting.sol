@@ -23,7 +23,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     function castFreezeVote() external virtual;
 
     /// @notice Unfreezes the DAO, only callable by the owner
-    function defrost() external onlyOwner {
+    function unfreeze() external onlyOwner {
         freezeProposalCreatedBlock = 0;
         freezeProposalCreatedTime = 0;
         freezeProposalVoteCount = 0;
