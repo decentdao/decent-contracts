@@ -260,7 +260,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await gnosisSafe.execTransaction(
         tx.to,
@@ -438,7 +438,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         gnosisSafe.execTransaction(
@@ -470,7 +470,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       );
 
       // Move time forward to elapse freeze proposal period
-      await time.increase(time.duration.seconds(10));
+      await time.advanceBlocks(10);
 
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
@@ -531,7 +531,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         gnosisSafe.execTransaction(
@@ -549,7 +549,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ).to.be.revertedWith("DAO is frozen");
 
       // Move time forward to elapse freeze period
-      await time.increase(time.duration.seconds(140));
+      await time.advanceBlocks(140);
 
       // Check that the DAO has been unFrozen
       expect(await freezeVoting.isFrozen()).to.eq(false);
@@ -613,7 +613,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       // Check that the DAO has been unFrozen
       await expect(
