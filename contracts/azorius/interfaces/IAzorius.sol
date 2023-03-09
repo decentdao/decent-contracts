@@ -220,7 +220,7 @@ interface IAzorius {
     function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
 
     /**
-     * @notice Returns the keccak256 hash of the specified transaction.
+     * Returns the keccak256 hash of the specified transaction.
      *
      * @param _to target address of the transaction
      * @param _value ETH value to send with the transaction
@@ -236,7 +236,7 @@ interface IAzorius {
     ) external view returns (bytes32);
 
     /**
-     * Gets the transaction hashes associated with a given proposalId.
+     * Returns the transaction hashes associated with a given proposalId.
      *
      * @param _proposalId identifier of the Proposal to get transaction hashes for
      * @return bytes32[] array of transaction hashes
@@ -244,7 +244,7 @@ interface IAzorius {
     function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory);
 
     /**
-     * @notice Gets details about the specified Proposal.
+     * Returns details about the specified Proposal.
      *
      * @param _proposalId identifier of the Proposal
      * @return _strategy address of the BaseStrategy contract the Proposal is on
