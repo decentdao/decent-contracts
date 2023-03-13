@@ -168,13 +168,13 @@ contract Azorius is Module, IAzorius {
      * @param _data data to be executed from the call
      * @param _operation Call or Delegatecall
      */
-    function executeProposalByIndex(
+    function _executeProposalTxByIndex(
         uint256 _proposalId,
         address _target,
         uint256 _value,
         bytes memory _data,
         Enum.Operation _operation
-    ) public {
+    ) internal {
         require(
             proposalState(_proposalId) == ProposalState.EXECUTABLE,
             "Proposal must be in the executable state"
@@ -215,7 +215,7 @@ contract Azorius is Module, IAzorius {
             "Too many transactions to execute provided"
         );
         for (uint256 i = 0; i < _targets.length; i++) {
-            executeProposalByIndex(
+            _executeProposalTxByIndex(
                 _proposalId,
                 _targets[i],
                 _values[i],

@@ -107,14 +107,6 @@ interface IAzorius {
         string calldata _metadata
     ) external;
 
-    function executeProposalByIndex(
-        uint256 _proposalId,
-        address _target,
-        uint256 _value,
-        bytes memory _data,
-        Enum.Operation _operation
-    ) external;
-
     /**
      * Executes all transactions within a Proposal.
      *
