@@ -102,10 +102,13 @@ contract Azorius is Module, IAzorius {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period
-    /// @param _newExecutionPeriod The new execution period in seconds
-    function updateExecutionPeriod(uint256 _newExecutionPeriod) external onlyOwner {
-        _updateExecutionPeriod(_newExecutionPeriod);
+    /**
+     * Updates the execution period for future Proposals.
+     *
+     * @param _executionPeriod new execution period (in seconds)
+     */
+    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
+        _updateExecutionPeriod(_executionPeriod);
     }
 
     /** Implemented from IAzorius */
@@ -155,7 +158,16 @@ contract Azorius is Module, IAzorius {
         totalProposalCount++;
     }
 
-    /** Implemented from IAzorius */
+    /**
+     * Executes the specified transaction in a Proposal, by index.
+     * Transactions in a proposal must be called in order.
+     *
+     * @param _proposalId identifier of the proposal
+     * @param _target contract to be called by the avatar
+     * @param _value ETH value to pass with the call
+     * @param _data data to be executed from the call
+     * @param _operation Call or Delegatecall
+     */
     function executeProposalByIndex(
         uint256 _proposalId,
         address _target,
@@ -217,8 +229,11 @@ contract Azorius is Module, IAzorius {
         );
     }
 
-    /// @notice Enables the specified array of strategy contract addresses
-    /// @param _strategies The array of strategy contract addresses
+    /**
+     * Enables the specified array of BaseStrategy contract addresses.
+     *
+     * @param _strategies array of BaseStrategy contract addresses to enable
+     */
     function setupStrategies(address[] memory _strategies) internal {
         require(
             strategies[SENTINEL_STRATEGY] == address(0),
@@ -230,20 +245,24 @@ contract Azorius is Module, IAzorius {
         }
     }
 
-    /// @notice Updates the timelock period
-    /// @param _timelockPeriod The new timelock period in seconds
+    /**
+     * Updates the timelock period for future Proposals.
+     *
+     * @param _timelockPeriod new timelock period (in seconds)
+     */
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
-
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period
-    /// @param _newExecutionPeriod The new execution period in seconds
-    function _updateExecutionPeriod(uint256 _newExecutionPeriod) internal {
-        executionPeriod = _newExecutionPeriod;
-
-        emit ExecutionPeriodUpdated(_newExecutionPeriod);
+    /**
+     * Updates the execution period for future Proposals.
+     *
+     * @param _executionPeriod new execution period (in seconds)
+     */
+    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
+        executionPeriod = _executionPeriod;
+        emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
     /** Implemented from IAzorius */

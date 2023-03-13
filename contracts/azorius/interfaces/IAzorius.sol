@@ -27,17 +27,11 @@ interface IAzorius {
      * A struct which holds details pertaining to a single proposal.
      */
     struct Proposal {
-        // BaseStrategy contract this proposal was created on
-        address strategy;
-        // hashes of the transactions that are being proposed
-        bytes32[] txHashes;
-        // time (in seconds) this proposal will be timelocked for if it passes
-        uint256 timelockPeriod;
-        // time (in seconds) this proposal has to be executed after timelock
-        // ends before it is expired
-        uint256 executionPeriod;
-        // count of transactions that have been executed within the proposal
-        uint256 executionCounter;
+        address strategy; // BaseStrategy contract this proposal was created on
+        bytes32[] txHashes; // hashes of the transactions that are being proposed
+        uint256 timelockPeriod; // time (in seconds) this proposal will be timelocked for if it passes
+        uint256 executionPeriod; // time (in seconds) this proposal has to be executed after timelock ends before it is expired
+        uint256 executionCounter; // count of transactions that have been executed within the proposal
     }
 
     /**
@@ -113,17 +107,6 @@ interface IAzorius {
         string calldata _metadata
     ) external;
 
-    /**
-     * Executes the specified Proposal.
-     *
-     * Transactions must be called in order.
-     *
-     * @param _proposalId identifier of the proposal
-     * @param _target contract to be called by the avatar
-     * @param _value ETH value to pass with the call
-     * @param _data data to be executed from the call
-     * @param _operation Call or Delegatecall
-     */
     function executeProposalByIndex(
         uint256 _proposalId,
         address _target,
