@@ -60,7 +60,7 @@ contract Azorius is Module, IAzorius {
         emit AzoriusSetup(msg.sender, _owner, _avatar, _target);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function enableStrategy(address _strategy) public onlyOwner {
         require(
             _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
@@ -77,7 +77,7 @@ contract Azorius is Module, IAzorius {
         emit EnabledStrategy(_strategy);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function disableStrategy(
         address _prevStrategy,
         address _strategy
@@ -97,7 +97,7 @@ contract Azorius is Module, IAzorius {
         emit DisabledStrategy(_strategy);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
@@ -111,7 +111,7 @@ contract Azorius is Module, IAzorius {
         _updateExecutionPeriod(_executionPeriod);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function submitProposal(
         address _strategy,
         bytes memory _data,
@@ -194,7 +194,7 @@ contract Azorius is Module, IAzorius {
         emit TransactionExecuted(_proposalId, txHash);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function executeProposalBatch(
         uint256 _proposalId,
         address[] memory _targets,
@@ -265,14 +265,14 @@ contract Azorius is Module, IAzorius {
         emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function isStrategyEnabled(address _strategy) public view returns (bool) {
         return
             SENTINEL_STRATEGY != _strategy &&
             strategies[_strategy] != address(0);
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function getStrategies(
         address _startAddress,
         uint256 _count
@@ -299,12 +299,12 @@ contract Azorius is Module, IAzorius {
         }
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool) {
         return proposals[_proposalId].executionCounter > _index;
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function proposalState(uint256 _proposalId) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
 
@@ -336,7 +336,7 @@ contract Azorius is Module, IAzorius {
         }
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function generateTxHashData(
         address _to,
         uint256 _value,
@@ -367,12 +367,12 @@ contract Azorius is Module, IAzorius {
             );
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32) {
         return proposals[_proposalId].txHashes[_txIndex];
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function getTxHash(
         address _to,
         uint256 _value,
@@ -382,12 +382,12 @@ contract Azorius is Module, IAzorius {
         return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
     }
 
-    /** Implemented from IAzorius */
+    /** @inheritdoc IAzorius */
     function getProposal(uint256 _proposalId)
         external
         view
