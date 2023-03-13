@@ -13,14 +13,10 @@ interface IAzorius {
      * A struct which represents a transaction to perform on the blockchain.
      */
     struct Transaction {
-        // destination address of the transaction
-        address to;
-        // amount of ETH to transfer with the transaction
-        uint256 value;
-        // encoded function call data of the transaction
-        bytes data;
-        // Operation type, Call or DelegateCall
-        Enum.Operation operation;
+        address to; // destination address of the transaction
+        uint256 value; // amount of ETH to transfer with the transaction
+        bytes data; // encoded function call data of the transaction
+        Enum.Operation operation; // Operation type, Call or DelegateCall
     }
 
     /**
