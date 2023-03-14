@@ -203,8 +203,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
           childGnosisSafe.address,
           childGnosisSafe.address,
           [],
-          60, // Timelock period in seconds
-          60, // Execution period in seconds
+          60, // Timelock period in blocks
+          60, // Execution period in blocks
         ]
       )
     );
@@ -219,7 +219,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           parentGnosisSafe.address, // owner
           childVotesToken.address, // governance token
           azoriusModule.address, // Azorius module
-          60, // voting period in seconds
+          60, // voting period in blocks
           500000, // quorom numerator, denominator is 1,000,000
           "Voting", // name
         ]
@@ -241,8 +241,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
         [
           freezeVotingOwner.address, // owner
           2, // freeze votes threshold
-          10, // freeze proposal duration in seconds
-          200, // freeze duration in seconds
+          10, // freeze proposal duration in blocks
+          200, // freeze duration in blocks
           parentGnosisSafe.address,
         ]
       )
@@ -978,8 +978,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     it("Freeze state values are updated correctly throughout the freeze process", async () => {
       // freeze votes threshold => 2
-      // freeze proposal duration in seconds => 10
-      // freeze duration in seconds => 200
+      // freeze proposal duration in blocks => 10
+      // freeze duration in blocks => 200
 
       // One voter casts freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();

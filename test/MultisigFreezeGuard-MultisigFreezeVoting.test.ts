@@ -193,8 +193,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       [
         freezeGuardOwner.address,
         2, // freeze votes threshold
-        10, // freeze proposal duration in seconds
-        200, // freeze duration in seconds
+        10, // freeze proposal duration in blocks
+        200, // freeze duration in blocks
         parentGnosisSafe.address,
       ]
     );
