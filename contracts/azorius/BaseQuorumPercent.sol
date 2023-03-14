@@ -10,6 +10,8 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
 
     event QuorumNumeratorUpdated(uint256 newQuorumNumerator);
 
+    error InvalidQuorumNumerator();
+
     function quorum(uint256 blockNumber) public view virtual returns (uint256);
 
     function updateQuorumNumerator(
@@ -21,10 +23,8 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     function _updateQuorumNumerator(
         uint256 newQuorumNumerator
     ) internal virtual {
-        require(
-            newQuorumNumerator <= quorumDenominator,
-            "quorumNumerator cannot be greater than quorumDenominator"
-        );
+        if (newQuorumNumerator > quorumDenominator)
+            revert InvalidQuorumNumerator();
 
         quorumNumerator = newQuorumNumerator;
 

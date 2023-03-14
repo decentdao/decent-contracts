@@ -38,6 +38,18 @@ contract Azorius is Module, IAzorius {
     event TimelockPeriodUpdated(uint256 timelockPeriod);
     event ExecutionPeriodUpdated(uint256 executionPeriod);
 
+    error InvalidStrategy();
+    error StrategyEnabled();
+    error StrategyDisabled();
+    error InvalidProposal();
+    error InvalidProposer();
+    error ProposalNotExecutable();
+    error InvalidTxHash();
+    error TxFailed();
+    error InvalidTxs();
+    error InvalidArrayLengths();
+    error AlreadySetupStrategies();
+
     function setUp(bytes memory initParams) public override initializer {
         (
             address _owner,
@@ -64,14 +76,9 @@ contract Azorius is Module, IAzorius {
     /// @notice Enables a voting strategy that can vote on proposals, only callable by the owner
     /// @param _strategy Address of the strategy to be enabled
     function enableStrategy(address _strategy) public onlyOwner {
-        require(
-            _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
-            "Invalid strategy"
-        );
-        require(
-            strategies[_strategy] == address(0),
-            "Strategy already enabled"
-        );
+        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
+            revert InvalidStrategy();
+        if (strategies[_strategy] != address(0)) revert StrategyEnabled();
 
         strategies[_strategy] = strategies[SENTINEL_STRATEGY];
         strategies[SENTINEL_STRATEGY] = _strategy;
@@ -86,14 +93,9 @@ contract Azorius is Module, IAzorius {
         address _prevStrategy,
         address _strategy
     ) public onlyOwner {
-        require(
-            _strategy != address(0) && _strategy != SENTINEL_STRATEGY,
-            "Invalid strategy"
-        );
-        require(
-            strategies[_prevStrategy] == _strategy,
-            "Strategy already disabled"
-        );
+        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
+            revert InvalidStrategy();
+        if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();
 
         strategies[_prevStrategy] = strategies[_strategy];
         strategies[_strategy] = address(0);
@@ -128,15 +130,10 @@ contract Azorius is Module, IAzorius {
         Transaction[] calldata _transactions,
         string calldata _metadata
     ) external {
-        require(isStrategyEnabled(_strategy), "Voting strategy is not enabled");
-        require(
-            _transactions.length > 0,
-            "Proposal must contain at least one transaction"
-        );
-        require(
-            IBaseStrategy(_strategy).isProposer(msg.sender),
-            "Caller cannot submit proposals"
-        );
+        if (!isStrategyEnabled(_strategy)) revert StrategyDisabled();
+        if (_transactions.length == 0) revert InvalidProposal();
+        if (!IBaseStrategy(_strategy).isProposer(msg.sender))
+            revert InvalidProposer();
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
         for (uint256 i = 0; i < _transactions.length; i++) {
@@ -182,22 +179,17 @@ contract Azorius is Module, IAzorius {
         bytes memory _data,
         Enum.Operation _operation
     ) public {
-        require(
-            proposalState(_proposalId) == ProposalState.EXECUTABLE,
-            "Proposal must be in the executable state"
-        );
+        if (proposalState(_proposalId) != ProposalState.EXECUTABLE)
+            revert ProposalNotExecutable();
         bytes32 txHash = getTxHash(_target, _value, _data, _operation);
-        require(
+        if (
             proposals[_proposalId].txHashes[
                 proposals[_proposalId].executionCounter
-            ] == txHash,
-            "Transaction hash does not match the indexed hash"
-        );
+            ] != txHash
+        ) revert InvalidTxHash();
         proposals[_proposalId].executionCounter++;
-        require(
-            exec(_target, _value, _data, _operation),
-            "Module transaction failed"
-        );
+        if (!exec(_target, _value, _data, _operation)) revert TxFailed();
+
         emit TransactionExecuted(_proposalId, txHash);
     }
 
@@ -214,18 +206,16 @@ contract Azorius is Module, IAzorius {
         bytes[] memory _data,
         Enum.Operation[] memory _operations
     ) external {
-        require(_targets.length != 0, "No transactions to execute provided");
-        require(
-            _targets.length == _values.length &&
-                _targets.length == _data.length &&
-                _targets.length == _operations.length,
-            "Array length mismatch"
-        );
-        require(
-            proposals[_proposalId].executionCounter + _targets.length <=
-                proposals[_proposalId].txHashes.length,
-            "Too many transactions to execute provided"
-        );
+        if (_targets.length == 0) revert InvalidTxs();
+        if (
+            _targets.length != _values.length ||
+            _targets.length != _data.length ||
+            _targets.length != _operations.length
+        ) revert InvalidArrayLengths();
+        if (
+            proposals[_proposalId].executionCounter + _targets.length >
+            proposals[_proposalId].txHashes.length
+        ) revert InvalidTxs();
         for (uint256 i = 0; i < _targets.length; i++) {
             executeProposalByIndex(
                 _proposalId,
@@ -244,10 +234,8 @@ contract Azorius is Module, IAzorius {
     /// @notice Enables the specified array of strategy contract addresses
     /// @param _strategies The array of strategy contract addresses
     function setupStrategies(address[] memory _strategies) internal {
-        require(
-            strategies[SENTINEL_STRATEGY] == address(0),
-            "setupStrategies has already been called"
-        );
+        if(
+            strategies[SENTINEL_STRATEGY] != address(0)) revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
         for (uint256 i = 0; i < _strategies.length; i++) {
             enableStrategy(_strategies[i]);
@@ -329,7 +317,7 @@ contract Azorius is Module, IAzorius {
     ) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
 
-        require(_proposal.strategy != address(0), "Invalid proposal ID");
+        if(_proposal.strategy == address(0)) revert InvalidProposal();
 
         IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
 
@@ -339,9 +327,7 @@ contract Azorius is Module, IAzorius {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
-        } else if (
-            block.number <= votingEndBlock + _proposal.timelockPeriod
-        ) {
+        } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {
             return ProposalState.TIMELOCKED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;

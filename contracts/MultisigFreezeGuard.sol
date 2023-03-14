@@ -34,12 +34,14 @@ contract MultisigFreezeGuard is
         bytes32 indexed transactionHash,
         bytes indexed signatures
     );
-    event TimelockPeriodUpdated(
-      uint256 timelockPeriod
-    );
-    event ExecutionPeriodUpdated(
-      uint256 executionPeriod
-    );
+    event TimelockPeriodUpdated(uint256 timelockPeriod);
+    event ExecutionPeriodUpdated(uint256 executionPeriod);
+
+    error NotTimelockable();
+    error NotTimelocked();
+    error Timelocked();
+    error Expired();
+    error DAOFrozen();
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -107,26 +109,26 @@ contract MultisigFreezeGuard is
             refundReceiver
         );
 
-        require(
-            block.number >=
-                transactionTimelockedBlock[transactionHash] +
-                    timelockPeriod +
-                    executionPeriod,
-            "Transaction is in timelock or execution period"
-        );
+        if (
+            block.number <
+            transactionTimelockedBlock[transactionHash] +
+                timelockPeriod +
+                executionPeriod
+        ) revert NotTimelockable();
 
-        bytes memory gnosisTransactionHash = childGnosisSafe.encodeTransactionData(
-            to,
-            value,
-            data,
-            operation,
-            safeTxGas,
-            baseGas,
-            gasPrice,
-            gasToken,
-            refundReceiver,
-            childGnosisSafe.nonce()
-        );
+        bytes memory gnosisTransactionHash = childGnosisSafe
+            .encodeTransactionData(
+                to,
+                value,
+                data,
+                operation,
+                safeTxGas,
+                baseGas,
+                gasPrice,
+                gasToken,
+                refundReceiver,
+                childGnosisSafe.nonce()
+            );
 
         // If signatures are not valid, this will revert
         childGnosisSafe.checkSignatures(
@@ -148,10 +150,9 @@ contract MultisigFreezeGuard is
 
     /// @notice Updates the execution period in blocks, only callable by the owner
     /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
-    function updateExecutionPeriod(uint256 _executionPeriod)
-        external
-        onlyOwner
-    {
+    function updateExecutionPeriod(
+        uint256 _executionPeriod
+    ) external onlyOwner {
         executionPeriod = _executionPeriod;
     }
 
@@ -165,9 +166,7 @@ contract MultisigFreezeGuard is
 
     /// @notice Updates the execution period in blocks
     /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
-    function _updateExecutionPeriod(uint256 _executionPeriod)
-        internal
-    {
+    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
 
         emit ExecutionPeriodUpdated(_executionPeriod);
@@ -196,7 +195,7 @@ contract MultisigFreezeGuard is
         address payable refundReceiver,
         bytes memory,
         address
-    ) external view override (BaseGuard, IGuard) {
+    ) external view override(BaseGuard, IGuard) {
         bytes32 transactionHash = getTransactionHash(
             to,
             value,
@@ -209,45 +208,38 @@ contract MultisigFreezeGuard is
             refundReceiver
         );
 
-        require(
-            transactionTimelockedBlock[transactionHash] != 0,
-            "Transaction has not been timelocked yet"
-        );
+        if (transactionTimelockedBlock[transactionHash] == 0)
+            revert NotTimelocked();
 
-        require(
-            block.number >=
-                transactionTimelockedBlock[transactionHash] + timelockPeriod,
-            "Transaction timelock period has not completed yet"
-        );
+        if (
+            block.number <
+            transactionTimelockedBlock[transactionHash] + timelockPeriod
+        ) revert Timelocked();
 
-        require(
-            block.number <=
-                transactionTimelockedBlock[transactionHash] +
-                    timelockPeriod +
-                    executionPeriod,
-            "Transaction execution period has ended"
-        );
+        if (
+            block.number >
+            transactionTimelockedBlock[transactionHash] +
+                timelockPeriod +
+                executionPeriod
+        ) revert Expired();
 
-        require(!freezeVoting.isFrozen(), "DAO is frozen");
+        if (freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe
     /// @param txHash The hash of the transaction that was executed
     /// @param success Boolean indicating whether the Gnosis Safe successfully executed the tx
-    function checkAfterExecution(bytes32 txHash, bool success)
-        external
-        view
-        override (BaseGuard, IGuard)
-    {}
+    function checkAfterExecution(
+        bytes32 txHash,
+        bool success
+    ) external view override(BaseGuard, IGuard) {}
 
     /// @notice Gets the block number that the transaction was timelocked at
     /// @param _transactionHash The hash of the transaction data
     /// @return uint256 The block number
-    function getTransactionTimelockedBlock(bytes32 _transactionHash)
-        public
-        view
-        returns (uint256)
-    {
+    function getTransactionTimelockedBlock(
+        bytes32 _transactionHash
+    ) public view returns (uint256) {
         return transactionTimelockedBlock[_transactionHash];
     }
 
@@ -276,18 +268,19 @@ contract MultisigFreezeGuard is
         address gasToken,
         address refundReceiver
     ) public pure returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                to,
-                value,
-                keccak256(data),
-                operation,
-                safeTxGas,
-                baseGas,
-                gasPrice,
-                gasToken,
-                refundReceiver
-            )
-        );
+        return
+            keccak256(
+                abi.encode(
+                    to,
+                    value,
+                    keccak256(data),
+                    operation,
+                    safeTxGas,
+                    baseGas,
+                    gasPrice,
+                    gasToken,
+                    refundReceiver
+                )
+            );
     }
 }

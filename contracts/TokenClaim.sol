@@ -14,6 +14,23 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
     uint256 public parentAllocation;
     mapping(address => bool) public claimed;
 
+    event TokenClaimed(
+        address indexed pToken,
+        address indexed cToken,
+        address indexed claimer,
+        uint256 amount
+    );
+
+    error NoAllocation();
+    error AllocationClaimed();
+    event TokenClaimCreated(
+        address parentToken,
+        address childToken,
+        uint256 parentAllocation,
+        uint256 snapshotId
+    );
+
+
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public override initializer {

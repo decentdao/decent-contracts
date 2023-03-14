@@ -34,6 +34,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 weight
     );
 
+    error InvalidProposal();
+    error VotingEnded();
+    error AlreadyVoted();
+    error InvalidVote();
+
     /// @notice Updates the voting time period
     /// @param _newVotingPeriod The voting time period in blocks
     function updateVotingPeriod(uint256 _newVotingPeriod) external onlyOwner {
@@ -61,7 +66,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
         emit VotingPeriodUpdated(_newVotingPeriod);
     }
-    
+
     /// @notice Function for counting a vote for a proposal, can only be called internally
     /// @param _proposalId The ID of the proposal
     /// @param _voter The address of the account casting the vote
@@ -73,18 +78,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint8 _support,
         uint256 _weight
     ) internal {
-        require(
-            proposals[_proposalId].votingEndBlock != 0,
-            "Proposal has not been submitted yet"
-        );
-        require(
-            block.number <= proposals[_proposalId].votingEndBlock,
-            "Voting period has passed"
-        );
-        require(
-            !proposals[_proposalId].hasVoted[_voter],
-            "Voter has already voted"
-        );
+        if (proposals[_proposalId].votingEndBlock == 0)
+            revert InvalidProposal();
+        if (block.number > proposals[_proposalId].votingEndBlock)
+            revert VotingEnded();
+        if (proposals[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
 
         proposals[_proposalId].hasVoted[_voter] = true;
 
@@ -95,7 +93,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         } else if (_support == uint8(VoteType.ABSTAIN)) {
             proposals[_proposalId].abstainVotes += _weight;
         } else {
-            revert("Invalid value for enum VoteType");
+            revert InvalidVote();
         }
 
         emit Voted(_voter, _proposalId, _support, _weight);
@@ -145,6 +143,6 @@ abstract contract BaseTokenVoting is BaseStrategy {
     function votingEndBlock(
         uint256 _proposalId
     ) public view override returns (uint256) {
-      return proposals[_proposalId].votingEndBlock;
+        return proposals[_proposalId].votingEndBlock;
     }
 }

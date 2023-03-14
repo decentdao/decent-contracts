@@ -9,6 +9,8 @@ import "./BaseQuorumPercent.sol";
 contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     ERC20Votes public governanceToken;
 
+    error InvalidTokenAddress();
+
     /// @notice Sets up the contract with initial parameters
     /// @param initParams The initial setup parameters encoded as bytes
     function setUp(bytes memory initParams) public override initializer {
@@ -21,19 +23,10 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             string memory _name
         ) = abi.decode(
                 initParams,
-                (
-                    address,
-                    ERC20Votes,
-                    address,
-                    uint256,
-                    uint256,
-                    string
-                )
+                (address, ERC20Votes, address, uint256, uint256, string)
             );
-        require(
-            address(_governanceToken) != address(0),
-            "Invalid governance token address"
-        );
+        if (address(_governanceToken) == address(0))
+            revert InvalidTokenAddress();
 
         name = _name;
         governanceToken = _governanceToken;

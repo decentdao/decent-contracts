@@ -17,6 +17,8 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
         address indexed freezeVoting
     );
 
+    error DAOFrozen();
+
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public override initializer {
@@ -47,7 +49,7 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
         bytes memory,
         address
     ) external view override(BaseGuard, IGuard) {
-        require(!freezeVoting.isFrozen(), "DAO is frozen");
+        if(freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe

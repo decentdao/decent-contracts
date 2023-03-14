@@ -14,13 +14,12 @@ abstract contract BaseStrategy is
     event AzoriusSet(address indexed newAzorius);
     event StrategySetup(address indexed azoriusModule, address indexed owner);
 
+    error OnlyAzorius();
+
     IAzorius public azoriusModule;
 
     modifier onlyAzorius() {
-        require(
-            msg.sender == address(azoriusModule),
-            "Only callable by Azorius module"
-        );
+        if (msg.sender != address(azoriusModule)) revert OnlyAzorius();
         _;
     }
 

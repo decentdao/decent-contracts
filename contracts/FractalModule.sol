@@ -7,12 +7,13 @@ import "./interfaces/IFractalModule.sol";
 contract FractalModule is IFractalModule, Module {
     mapping(address => bool) public controllers; // A DAO may authorize users to act on the behalf of the parent DAO.
 
+    error Unauthorized();
+    error TxFailed();
+
     /// @dev Throws if called by any account other than the owner.
     modifier onlyAuthorized() {
-        require(
-            owner() == msg.sender || controllers[msg.sender],
-            "Not Authorized"
-        );
+        if (owner() != msg.sender && !controllers[msg.sender])
+            revert Unauthorized();
         _;
     }
 
@@ -23,7 +24,7 @@ contract FractalModule is IFractalModule, Module {
         (
             address _owner, // Controlling DAO
             address _avatar,
-            address _target, 
+            address _target,
             address[] memory _controllers // Authorized controllers
         ) = abi.decode(
                 initializeParams,
@@ -45,10 +46,7 @@ contract FractalModule is IFractalModule, Module {
             bytes memory _data,
             Enum.Operation _operation
         ) = abi.decode(execTxData, (address, uint256, bytes, Enum.Operation));
-        require(
-            exec(_target, _value, _data, _operation),
-            "Module transaction failed"
-        );
+        if(!exec(_target, _value, _data, _operation)) revert TxFailed();
     }
 
     /// @notice Allows the module owner to add users which may exectxs
@@ -66,10 +64,9 @@ contract FractalModule is IFractalModule, Module {
 
     /// @notice Allows the module owner to remove users which may exectxs
     /// @param _controllers Addresses removed to the contoller list
-    function removeControllers(address[] memory _controllers)
-        external
-        onlyOwner
-    {
+    function removeControllers(
+        address[] memory _controllers
+    ) external onlyOwner {
         uint256 controllersLength = _controllers.length;
         for (uint256 i; i < controllersLength; ) {
             controllers[_controllers[i]] = false;

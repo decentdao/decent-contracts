@@ -9,7 +9,13 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 contract ERC20FreezeVoting is BaseFreezeVoting {
     IVotes public votesToken;
 
-    event ERC20FreezeVotingSetup(address indexed owner, address indexed votesToken);
+    event ERC20FreezeVotingSetup(
+        address indexed owner,
+        address indexed votesToken
+    );
+
+    error NoVotes();
+    error AlreadyVoted();
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -40,10 +46,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
     function castFreezeVote() external override {
         uint256 userVotes;
 
-        if (
-            block.number >
-            freezeProposalCreatedBlock + freezeProposalPeriod
-        ) {
+        if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // Create freeze proposal, set total votes to msg.sender's vote count
             freezeProposalCreatedBlock = block.number;
 
@@ -51,26 +54,24 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
                 msg.sender,
                 freezeProposalCreatedBlock - 1
             );
-            require(userVotes > 0, "User has no votes");
 
             freezeProposalVoteCount = userVotes;
 
             emit FreezeProposalCreated(msg.sender);
         } else {
             // There is an existing freeze proposal, count user's votes
-            require(
-                !userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock],
-                "User has already voted"
-            );
+            if (userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock])
+                revert AlreadyVoted();
 
             userVotes = votesToken.getPastVotes(
                 msg.sender,
                 freezeProposalCreatedBlock - 1
             );
-            require(userVotes > 0, "User has no votes");
 
             freezeProposalVoteCount += userVotes;
         }
+
+        if (userVotes == 0) revert NoVotes();
 
         userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock] = true;
 
