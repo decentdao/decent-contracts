@@ -25,8 +25,8 @@ interface IAzorius {
     struct Proposal {
         address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
-        uint256 timelockPeriod; // time (in seconds) this proposal will be timelocked for if it passes
-        uint256 executionPeriod; // time (in seconds) this proposal has to be executed after timelock ends before it is expired
+        uint256 timelockPeriod; // time (in blocks) this proposal will be timelocked for if it passes
+        uint256 executionPeriod; // time (in blocks) this proposal has to be executed after timelock ends before it is expired
         uint256 executionCounter; // count of transactions that have been executed within the proposal
     }
 
@@ -83,7 +83,7 @@ interface IAzorius {
     /**
      * Updates the timelockPeriod for newly created Proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
-     * @param _timelockPeriod The timelockPeriod (in seconds) to be used for new Proposals.
+     * @param _timelockPeriod The timelockPeriod (in blocks) to be used for new Proposals.
      */
     function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
@@ -220,8 +220,8 @@ interface IAzorius {
      * @param _proposalId identifier of the Proposal
      * @return _strategy address of the BaseStrategy contract the Proposal is on
      * @return _txHashes hashes of the transactions the Proposal contains
-     * @return _timelockPeriod time (in seconds) the Proposal is timelocked for
-     * @return _executionPeriod time (in seconds) the Proposal must be executed within, after timelock ends
+     * @return _timelockPeriod time (in blocks) the Proposal is timelocked for
+     * @return _executionPeriod time (in blocks) the Proposal must be executed within, after timelock ends
      * @return _executionCounter counter of how many of the Proposals transactions have been executed
      */
     function getProposal(uint256 _proposalId) external view

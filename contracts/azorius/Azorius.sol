@@ -11,8 +11,8 @@ contract Azorius is Module, IAzorius {
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
     uint256 public totalProposalCount; // Total number of submitted proposals
-    uint256 public timelockPeriod; // Delay between a proposal is passed and can be executed
-    uint256 public executionPeriod; // Delay between when timelock ends and proposal expires
+    uint256 public timelockPeriod; // Delay in blocks between a proposal is passed and can be executed
+    uint256 public executionPeriod; // Delay in blocks between when timelock ends and proposal expires
     address internal constant SENTINEL_STRATEGY = address(0x1);
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
     mapping(address => address) internal strategies;
@@ -105,7 +105,7 @@ contract Azorius is Module, IAzorius {
     /**
      * Updates the execution period for future Proposals.
      *
-     * @param _executionPeriod new execution period (in seconds)
+     * @param _executionPeriod new execution period (in blocks)
      */
     function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
         _updateExecutionPeriod(_executionPeriod);
@@ -248,7 +248,7 @@ contract Azorius is Module, IAzorius {
     /**
      * Updates the timelock period for future Proposals.
      *
-     * @param _timelockPeriod new timelock period (in seconds)
+     * @param _timelockPeriod new timelock period (in blocks)
      */
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
@@ -258,7 +258,7 @@ contract Azorius is Module, IAzorius {
     /**
      * Updates the execution period for future Proposals.
      *
-     * @param _executionPeriod new execution period (in seconds)
+     * @param _executionPeriod new execution period (in blocks)
      */
     function _updateExecutionPeriod(uint256 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
@@ -312,21 +312,21 @@ contract Azorius is Module, IAzorius {
 
         IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
 
-        uint256 votingDeadline = _strategy.votingDeadline(_proposalId);
+        uint256 votingEndBlock = _strategy.votingEndBlock(_proposalId);
 
-        if (block.timestamp <= votingDeadline) {
+        if (block.number <= votingEndBlock) {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
         } else if (
-            block.timestamp <= votingDeadline + _proposal.timelockPeriod
+            block.number <= votingEndBlock + _proposal.timelockPeriod
         ) {
             return ProposalState.TIMELOCKED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             return ProposalState.EXECUTED;
         } else if (
-            block.timestamp <=
-            votingDeadline +
+            block.number <=
+            votingEndBlock +
                 _proposal.timelockPeriod +
                 _proposal.executionPeriod
         ) {

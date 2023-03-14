@@ -173,7 +173,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     // Deploy MultisigFreezeVoting contract
     freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
 
-    // Deploy MultisigFreezeGuard contract with a 60 second timelock period and 60 second execution period
+    // Deploy MultisigFreezeGuard contract with a 60 block timelock period and 60 block execution period
     const freezeGuardSetupData = abiCoder.encode(
       ["uint256", "uint256", "address", "address", "address"],
       [
@@ -193,8 +193,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       [
         freezeGuardOwner.address,
         2, // freeze votes threshold
-        10, // freeze proposal duration in seconds
-        200, // freeze duration in seconds
+        10, // freeze proposal duration in blocks
+        200, // freeze duration in blocks
         parentGnosisSafe.address,
       ]
     );
@@ -298,7 +298,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await childGnosisSafe.execTransaction(
         tx.to,
@@ -502,7 +502,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -534,7 +534,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -616,7 +616,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -648,7 +648,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -668,7 +668,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward to elapse freeze period
-      await time.increase(time.duration.seconds(140));
+      await time.advanceBlocks(140);
 
       // Check that the DAO isn't frozen now
       expect(await freezeVoting.isFrozen()).to.eq(false);
@@ -714,7 +714,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -746,7 +746,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse freeze proposal period
-      await time.increase(time.duration.seconds(20));
+      await time.advanceBlocks(20);
 
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
@@ -807,7 +807,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       await expect(
         childGnosisSafe.execTransaction(
@@ -825,7 +825,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.be.revertedWith("DAO is frozen");
 
       // Move time forward to elapse freeze period
-      await time.increase(time.duration.seconds(140));
+      await time.advanceBlocks(140);
 
       // Check that the DAO has been unFrozen
       expect(await freezeVoting.isFrozen()).to.eq(false);
@@ -891,7 +891,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.increase(time.duration.seconds(60));
+      await time.advanceBlocks(60);
 
       // Check that the DAO has been unFrozen
       await expect(

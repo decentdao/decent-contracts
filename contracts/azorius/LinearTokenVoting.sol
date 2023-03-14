@@ -65,9 +65,9 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         if (
             proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
             proposals[_proposalId].yesVotes >=
-            quorum(proposals[_proposalId].startBlock) &&
-            proposals[_proposalId].votingDeadline != 0 &&
-            block.timestamp > proposals[_proposalId].votingDeadline
+            quorum(proposals[_proposalId].votingStartBlock) &&
+            proposals[_proposalId].votingEndBlock != 0 &&
+            block.number > proposals[_proposalId].votingEndBlock
         ) {
             return true;
         }
@@ -97,7 +97,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         return
             governanceToken.getPastVotes(
                 _voter,
-                proposals[_proposalId].startBlock
+                proposals[_proposalId].votingStartBlock
             );
     }
 

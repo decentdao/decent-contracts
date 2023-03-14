@@ -12,7 +12,7 @@ abstract contract BaseStrategy is
     IBaseStrategy
 {
     event AzoriusSet(address indexed newAzorius);
-    event StrategySetup(address indexed AzoriusModule, address indexed owner);
+    event StrategySetup(address indexed azoriusModule, address indexed owner);
 
     IAzorius public azoriusModule;
 
@@ -52,10 +52,10 @@ abstract contract BaseStrategy is
     /// @return bool True if the user can submit a proposal
     function isProposer(address _user) public view virtual returns (bool);
 
-    /// @notice Returns the timestamp voting ends on the proposal
+    /// @notice Returns the block number voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The timestamp voting ends on the proposal
-    function votingDeadline(
+    /// @return uint256 The block number voting ends on the proposal
+    function votingEndBlock(
         uint256 _proposalId
     ) public view virtual returns (uint256);
 }

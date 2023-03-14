@@ -15,18 +15,18 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 noVotes; // The total number of NO votes for this proposal
         uint256 yesVotes; // The total number of YES votes for this proposal
         uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
-        uint256 votingDeadline; // The timestamp voting ends for this proposal
-        uint256 startBlock; // The block the proposal voting starts
+        uint256 votingStartBlock; // The block the proposal voting starts
+        uint256 votingEndBlock; // The block voting ends for this proposal
         mapping(address => bool) hasVoted;
     }
 
-    uint256 public votingPeriod; // the length of time voting is valid for a proposal
+    uint256 public votingPeriod; // The number of blocks a proposal can be voted on
     string public name;
 
     mapping(uint256 => ProposalVoting) internal proposals;
 
     event VotingPeriodUpdated(uint256 newVotingPeriod);
-    event ProposalInitialized(uint256 proposalId, uint256 votingDeadline);
+    event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
     event Voted(
         address voter,
         uint256 proposalId,
@@ -35,7 +35,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     );
 
     /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in seconds
+    /// @param _newVotingPeriod The voting time period in blocks
     function updateVotingPeriod(uint256 _newVotingPeriod) external onlyOwner {
         _updateVotingPeriod(_newVotingPeriod);
     }
@@ -46,17 +46,16 @@ abstract contract BaseTokenVoting is BaseStrategy {
         bytes memory _data
     ) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
+        uint256 _votingEndBlock = block.number + votingPeriod;
 
-        uint256 _votingDeadline = votingPeriod + block.timestamp;
+        proposals[proposalId].votingEndBlock = _votingEndBlock;
+        proposals[proposalId].votingStartBlock = block.number;
 
-        proposals[proposalId].votingDeadline = _votingDeadline;
-        proposals[proposalId].startBlock = block.number;
-
-        emit ProposalInitialized(proposalId, _votingDeadline);
+        emit ProposalInitialized(proposalId, _votingEndBlock);
     }
 
     /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in seconds
+    /// @param _newVotingPeriod The voting time period in blocks
     function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
         votingPeriod = _newVotingPeriod;
 
@@ -75,11 +74,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 _weight
     ) internal {
         require(
-            proposals[_proposalId].votingDeadline != 0,
+            proposals[_proposalId].votingEndBlock != 0,
             "Proposal has not been submitted yet"
         );
         require(
-            block.timestamp <= proposals[_proposalId].votingDeadline,
+            block.number <= proposals[_proposalId].votingEndBlock,
             "Voting period has passed"
         );
         require(
@@ -118,8 +117,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @return yesVotes The total count of "Yes" votes for the proposal
     /// @return noVotes The total count of "No" votes for the proposal
     /// @return abstainVotes The total count of "Abstain" votes for the proposal
-    /// @return votingDeadline The timestamp at which proposal voting ends
-    /// @return startBlock The block number that the proposal voting starts at
+    /// @return votingStartBlock The block number that the proposal voting starts
+    /// @return votingEndBlock The block number that the proposal voting ends
     function getProposal(
         uint256 _proposalId
     )
@@ -129,23 +128,23 @@ abstract contract BaseTokenVoting is BaseStrategy {
             uint256 yesVotes,
             uint256 noVotes,
             uint256 abstainVotes,
-            uint256 votingDeadline,
-            uint256 startBlock
+            uint256 votingStartBlock,
+            uint256 votingEndBlock
         )
     {
         yesVotes = proposals[_proposalId].yesVotes;
         noVotes = proposals[_proposalId].noVotes;
         abstainVotes = proposals[_proposalId].abstainVotes;
-        votingDeadline = proposals[_proposalId].votingDeadline;
-        startBlock = proposals[_proposalId].startBlock;
+        votingStartBlock = proposals[_proposalId].votingStartBlock;
+        votingEndBlock = proposals[_proposalId].votingEndBlock;
     }
 
-    /// @notice Returns the timestamp voting ends on the proposal
+    /// @notice Returns the block that voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The timestamp voting ends on the proposal
-    function votingDeadline(
+    /// @return uint256 The block number voting ends on the proposal
+    function votingEndBlock(
         uint256 _proposalId
     ) public view override returns (uint256) {
-      return proposals[_proposalId].votingDeadline;
+      return proposals[_proposalId].votingEndBlock;
     }
 }
