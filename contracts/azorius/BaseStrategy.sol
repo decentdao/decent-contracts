@@ -31,9 +31,11 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
         emit AzoriusSet(_azoriusModule);
     }
 
-    /// @notice Sets the address of the Azorius contract
-    /// TODO why is these internal function here? 
-    /// @param _azoriusModule The address of the Azorius module
+    /**
+     * Sets the address of the Azorius module contract. TODO why is this internal function here? 
+     *
+     * @param _azoriusModule address of the Azorius module
+     */
     function _setAzorius(address _azoriusModule) internal {
         azoriusModule = IAzorius(_azoriusModule);
         emit AzoriusSet(_azoriusModule);

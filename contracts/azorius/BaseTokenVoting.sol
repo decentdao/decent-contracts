@@ -5,46 +5,59 @@ import "./BaseStrategy.sol";
 
 /// @title An abstract contract used as a base for ERC-20 token voting strategies
 abstract contract BaseTokenVoting is BaseStrategy {
+
+    /**
+     * The voting options for a Proposal.
+     */
     enum VoteType {
-        NO,
-        YES,
-        ABSTAIN
+        YES,    // approves of executing the Proposal
+        NO,     // disapproves of executing the Proposal
+        ABSTAIN // neither YES nor NO, i.e. voting "present"
     }
 
+    /**
+     * Defines the current state of votes on a particular Proposal.
+     * TODO rename this to something better
+     */
     struct ProposalVoting {
-        uint256 noVotes; // The total number of NO votes for this proposal
-        uint256 yesVotes; // The total number of YES votes for this proposal
-        uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
-        uint256 votingStartBlock; // The block the proposal voting starts
-        uint256 votingEndBlock; // The block voting ends for this proposal
-        mapping(address => bool) hasVoted;
+        uint256 yesVotes; // current number of YES votes for the Proposal
+        uint256 noVotes; // current number of NO votes for the Proposal
+        uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
+        uint256 votingStartBlock; // block that voting starts at
+        uint256 votingEndBlock; // block that voting ends
+        mapping(address => bool) hasVoted; // whether a given address has voted yet or not
     }
 
-    uint256 public votingPeriod; // The number of blocks a proposal can be voted on
+    /** Number of blocks a new Proposal can be voted on. */
+    uint256 public votingPeriod;
+
+    /** TODO is this needed? what's this for */
     string public name;
 
-    mapping(uint256 => ProposalVoting) internal proposals;
+    /** proposalId to ProposalVoting, the voting state of a Proposal */
+    mapping(uint256 => ProposalVoting) internal proposals; // TODO rename to voteState?
 
-    event VotingPeriodUpdated(uint256 newVotingPeriod);
+    event VotingPeriodUpdated(uint256 votingPeriod);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
-    event Voted(
-        address voter,
-        uint256 proposalId,
-        uint8 support,
-        uint256 weight
-    );
+    event Voted(address voter, uint256 proposalId, uint8 support, uint256 weight); // TODO should support be VoteType here?
 
-    /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in blocks
-    function updateVotingPeriod(uint256 _newVotingPeriod) external onlyOwner {
-        _updateVotingPeriod(_newVotingPeriod);
+    /**
+     * Updates the voting time period for new Proposals.
+     *
+     * @param _votingPeriod voting time period (in blocks)
+     */
+    function updateVotingPeriod(uint256 _votingPeriod) external onlyOwner {
+        _updateVotingPeriod(_votingPeriod);
     }
 
-    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
-    /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(
-        bytes memory _data
-    ) external virtual override onlyAzorius {
+    /** Internal implementation of  updateVotingPeriod above TODO WHY */
+    function _updateVotingPeriod(uint256 _votingPeriod) internal {
+        votingPeriod = _votingPeriod;
+        emit VotingPeriodUpdated(_votingPeriod);
+    }
+
+    /// @inheritdoc IBaseStrategy
+    function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
 
@@ -53,26 +66,17 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
     }
-
-    /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in blocks
-    function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
-        votingPeriod = _newVotingPeriod;
-
-        emit VotingPeriodUpdated(_newVotingPeriod);
-    }
     
-    /// @notice Function for counting a vote for a proposal, can only be called internally
-    /// @param _proposalId The ID of the proposal
-    /// @param _voter The address of the account casting the vote
-    /// @param _support Indicates vote support, which can be "No", "Yes", or "Abstain"
-    /// @param _weight The amount of voting weight cast
-    function _vote(
-        uint256 _proposalId,
-        address _voter,
-        uint8 _support,
-        uint256 _weight
-    ) internal {
+    /**
+     * Internal function for casting a vote on a Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @param _voter address casting the vote
+     * @param _support vote support, as defined in VoteType TODO should this be VoteType?
+     * @param _weight amount of voting weight cast, typically the
+     *          total number of tokens delegated
+     */
+    function _vote(uint256 _proposalId, address _voter, uint8 _support, uint256 _weight) internal {
         require(
             proposals[_proposalId].votingEndBlock != 0,
             "Proposal has not been submitted yet"
@@ -95,41 +99,40 @@ abstract contract BaseTokenVoting is BaseStrategy {
         } else if (_support == uint8(VoteType.ABSTAIN)) {
             proposals[_proposalId].abstainVotes += _weight;
         } else {
-            revert("Invalid value for enum VoteType");
+            revert("Invalid value for enum VoteType"); // TODO making the param be VoteType removes this
         }
 
         emit Voted(_voter, _proposalId, _support, _weight);
     }
 
-    /// @notice Returns true if an account has voted on the specified proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @param _account The account address to check
-    /// @return bool Returns true if the account has already voted on the proposal
-    function hasVoted(
-        uint256 _proposalId,
-        address _account
-    ) public view returns (bool) {
-        return proposals[_proposalId].hasVoted[_account];
+    /**
+     * Returns whether an address has voted on the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal to check
+     * @param _address address to check
+     * @return bool true if the address has voted on the Proposal, otherwise false
+     */
+    function hasVoted(uint256 _proposalId, address _address) public view returns (bool) {
+        return proposals[_proposalId].hasVoted[_address];
     }
 
-    /// @notice Returns the current state of the specified proposal
-    /// @param _proposalId The ID of the proposal to get
-    /// @return yesVotes The total count of "Yes" votes for the proposal
-    /// @return noVotes The total count of "No" votes for the proposal
-    /// @return abstainVotes The total count of "Abstain" votes for the proposal
-    /// @return votingStartBlock The block number that the proposal voting starts
-    /// @return votingEndBlock The block number that the proposal voting ends
-    function getProposal(
-        uint256 _proposalId
-    )
-        external
-        view
+    /**
+     * Returns the current state of the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @return yesVotes current count of "YES" votes
+     * @return noVotes current count of "NO" votes
+     * @return abstainVotes current count of "ABSTAIN" votes
+     * @return votingStartBlock block number voting starts
+     * @return votingEndBlock block number voting ends
+     */
+    function getProposal(uint256 _proposalId) external view
         returns (
             uint256 yesVotes,
             uint256 noVotes,
             uint256 abstainVotes,
             uint256 votingStartBlock,
-            uint256 votingEndBlock
+            uint256 votingEndBlock // TODO what's this error here?
         )
     {
         yesVotes = proposals[_proposalId].yesVotes;
@@ -139,12 +142,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
         votingEndBlock = proposals[_proposalId].votingEndBlock;
     }
 
-    /// @notice Returns the block that voting ends on the proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The block number voting ends on the proposal
-    function votingEndBlock(
-        uint256 _proposalId
-    ) public view override returns (uint256) {
+    /// @inheritdoc BaseStrategy
+    function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
       return proposals[_proposalId].votingEndBlock;
     }
 }

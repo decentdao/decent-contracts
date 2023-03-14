@@ -7,6 +7,7 @@ import "./BaseQuorumPercent.sol";
 
 /// @title An Azorius strategy that enables linear token voting
 contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
+    
     ERC20Votes public governanceToken;
 
     /// @notice Sets up the contract with initial parameters
@@ -58,9 +59,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         );
     }
 
-    /// @notice Returns if a proposal has succeeded
-    /// @param _proposalId The ID of the proposal to check
-    /// @return bool True if the proposal has passed
+    /// @inheritdoc IBaseStrategy
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         if (
             proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
@@ -78,9 +77,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @notice Calculates the number of token votes needed for quorum at a specific block number
     /// @param _blockNumber The block number to calculate quorum at
     /// @return uint256 The number of token votes needed for quorum
-    function quorum(
-        uint256 _blockNumber
-    ) public view override returns (uint256) {
+    function quorum(uint256 _blockNumber) public view override returns (uint256) {
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
                 quorumNumerator) / quorumDenominator;
@@ -90,10 +87,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @param _voter Address of the voter
     /// @param _proposalId The ID of the proposal
     /// @return uint256 The user's vote count
-    function getVotingWeight(
-        address _voter,
-        uint256 _proposalId
-    ) public view returns (uint256) {
+    function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
         return
             governanceToken.getPastVotes(
                 _voter,
@@ -101,8 +95,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             );
     }
 
-    /// @notice Returns if the specified address can submit a proposal
-    /// @return bool True if the user can submit a proposal
+    /// @inheritdoc IBaseStrategy
     function isProposer(address) public pure override returns (bool) {
         return true;
     }
