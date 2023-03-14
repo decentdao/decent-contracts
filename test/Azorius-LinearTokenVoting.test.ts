@@ -238,7 +238,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.name()).to.eq("Voting");
     });
 
-    it.only("A strategy cannot be enabled more than once", async () => {
+    it("A strategy cannot be enabled more than once", async () => {
       await expect(
         azorius
           .connect(gnosisSafeOwner)
