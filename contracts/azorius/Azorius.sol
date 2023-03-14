@@ -105,7 +105,7 @@ contract Azorius is Module, IAzorius {
     /**
      * Updates the execution period for future Proposals.
      *
-     * @param _executionPeriod new execution period (in seconds)
+     * @param _executionPeriod new execution period (in blocks)
      */
     function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
         _updateExecutionPeriod(_executionPeriod);

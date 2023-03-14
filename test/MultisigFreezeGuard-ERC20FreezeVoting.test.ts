@@ -135,7 +135,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     // Deploy ERC20FreezeVoting contract
     freezeVoting = await new ERC20FreezeVoting__factory(deployer).deploy();
 
-    // Deploy MultisigFreezeGuard contract with a 60 second timelock period, and a 60 second execution period
+    // Deploy MultisigFreezeGuard contract with a 60 block timelock period, and a 60 block execution period
     const freezeGuardSetupData = abiCoder.encode(
       ["uint256", "uint256", "address", "address", "address"],
       [

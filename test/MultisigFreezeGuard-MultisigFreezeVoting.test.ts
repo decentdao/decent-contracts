@@ -173,7 +173,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     // Deploy MultisigFreezeVoting contract
     freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
 
-    // Deploy MultisigFreezeGuard contract with a 60 second timelock period and 60 second execution period
+    // Deploy MultisigFreezeGuard contract with a 60 block timelock period and 60 block execution period
     const freezeGuardSetupData = abiCoder.encode(
       ["uint256", "uint256", "address", "address", "address"],
       [

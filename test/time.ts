@@ -24,34 +24,12 @@ const increaseTo = async (to: number) => {
   await advanceBlock();
 };
 
-const duration = {
-  seconds: function (val: number) {
-    return val;
-  },
-  minutes: function (val: number) {
-    return val * this.seconds(60);
-  },
-  hours: function (val: number) {
-    return val * this.minutes(60);
-  },
-  days: function (val: number) {
-    return val * this.hours(24);
-  },
-  weeks: function (val: number) {
-    return val * this.days(7);
-  },
-  years: function (val: number) {
-    return val * this.days(365);
-  },
-};
-
 const defaultExport = {
   advanceBlocks,
   advanceBlock,
   latest,
   increase,
   increaseTo,
-  duration,
 };
 
 export default defaultExport;
