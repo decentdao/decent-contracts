@@ -181,8 +181,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           childGnosisSafe.address,
           childGnosisSafe.address,
           [],
-          60, // Timelock period in seconds
-          60, // Execution period in seconds
+          60, // Timelock period in blocks
+          60, // Execution period in blocks
         ]
       )
     );
@@ -197,7 +197,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           mockParentDAO.address, // owner
           childVotesToken.address, // governance token
           azoriusModule.address, // Azorius module
-          60, // voting period in seconds
+          60, // voting period in blocks
           500000, // quorom numerator, denominator is 1,000,000
           "Voting", // name
         ]
@@ -218,8 +218,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         [
           mockParentDAO.address, // owner
           150, // freeze votes threshold
-          10, // freeze proposal duration in seconds
-          100, // freeze duration in seconds
+          10, // freeze proposal duration in blocks
+          100, // freeze duration in blocks
           parentVotesToken.address,
         ]
       )
@@ -331,12 +331,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalByIndex(
+      await azoriusModule.executeProposalBatch(
         0,
-        childVotesToken.address,
-        0,
-        tokenTransferData,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData],
+        [0]
       );
 
       // Proposal is executed
@@ -536,34 +536,34 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalByIndex(
+        azoriusModule.executeProposalBatch(
           0,
-          childVotesToken.address,
-          0,
-          tokenTransferData1,
-          0
+          [childVotesToken.address],
+          [0],
+          [tokenTransferData1],
+          [0]
         )
       ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalByIndex(
+        azoriusModule.executeProposalBatch(
           1,
-          childVotesToken.address,
-          0,
-          tokenTransferData2,
-          0
+          [childVotesToken.address],
+          [0],
+          [tokenTransferData2],
+          [0]
         )
       ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalByIndex(
+        azoriusModule.executeProposalBatch(
           2,
-          childVotesToken.address,
-          0,
-          tokenTransferData3,
-          0
+          [childVotesToken.address],
+          [0],
+          [tokenTransferData3],
+          [0]
         )
       ).to.be.revertedWith("DAOFrozen()");
     });
@@ -620,12 +620,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await azoriusModule.executeProposalByIndex(
+    await azoriusModule.executeProposalBatch(
       0,
-      childVotesToken.address,
-      0,
-      tokenTransferData,
-      0
+      [childVotesToken.address],
+      [0],
+      [tokenTransferData],
+      [0]
     );
 
     // Proposal is executed
@@ -709,23 +709,23 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      azoriusModule.executeProposalByIndex(
+      azoriusModule.executeProposalBatch(
         0,
-        childVotesToken.address,
-        0,
-        tokenTransferData1,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData1],
+        [0]
       )
     ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
-      azoriusModule.executeProposalByIndex(
+      azoriusModule.executeProposalBatch(
         1,
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData2],
+        [0]
       )
     ).to.be.revertedWith("DAOFrozen()");
 
@@ -774,12 +774,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await azoriusModule.executeProposalByIndex(
+    await azoriusModule.executeProposalBatch(
       2,
-      childVotesToken.address,
-      0,
-      tokenTransferData3,
-      0
+      [childVotesToken.address],
+      [0],
+      [tokenTransferData3],
+      [0]
     );
 
     // Proposal is executed
@@ -890,34 +890,34 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     // This proposal should fail due to freeze
     await expect(
-      azoriusModule.executeProposalByIndex(
+      azoriusModule.executeProposalBatch(
         0,
-        childVotesToken.address,
-        0,
-        tokenTransferData1,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData1],
+        [0]
       )
     ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
-      azoriusModule.executeProposalByIndex(
+      azoriusModule.executeProposalBatch(
         1,
-        childVotesToken.address,
-        0,
-        tokenTransferData2,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData2],
+        [0]
       )
     ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
-      azoriusModule.executeProposalByIndex(
+      azoriusModule.executeProposalBatch(
         2,
-        childVotesToken.address,
-        0,
-        tokenTransferData3,
-        0
+        [childVotesToken.address],
+        [0],
+        [tokenTransferData3],
+        [0]
       )
     ).to.be.revertedWith("DAOFrozen()");
 
@@ -931,12 +931,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
-    await azoriusModule.executeProposalByIndex(
+    await azoriusModule.executeProposalBatch(
       0,
-      childVotesToken.address,
-      0,
-      tokenTransferData1,
-      0
+      [childVotesToken.address],
+      [0],
+      [tokenTransferData1],
+      [0]
     );
 
     expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
@@ -945,8 +945,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
   it("Freeze state values are updated correctly throughout the freeze process", async () => {
     // freeze votes threshold => 150
-    // freeze proposal duration in seconds => 10
-    // freeze duration in seconds => 100
+    // freeze proposal duration in blocks => 10
+    // freeze duration in blocks => 100
 
     // One voter casts freeze vote
     await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
