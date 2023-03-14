@@ -43,7 +43,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         _updateQuorumNumerator(_quorumNumerator);
         _updateVotingPeriod(_votingPeriod);
 
-        emit StrategySetup(_azoriusModule, _owner);
+        emit StrategySetUp(_azoriusModule, _owner);
     }
 
     /// @notice Casts a vote for a proposal
