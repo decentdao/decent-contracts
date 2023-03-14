@@ -312,7 +312,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction has not been timelocked yet");
+      ).to.be.revertedWith("NotTimelocked()");
     });
 
     it("A transaction cannot be timelocked if the signatures aren't valid", async () => {
@@ -395,7 +395,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction timelock period has not completed yet");
+      ).to.be.revertedWith("Timelocked()");
     });
 
     it("A DAO may execute txs during a the freeze proposal period if the freeze threshold is not met", async () => {
@@ -485,7 +485,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       await expect(
         freezeVoting.connect(tokenVetoer1).castFreezeVote()
-      ).to.be.revertedWith("User has already voted");
+      ).to.be.revertedWith("AlreadyVoted()");
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
     });
 
@@ -546,7 +546,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Move time forward to elapse freeze period
       await time.advanceBlocks(140);
@@ -566,7 +566,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("Transaction execution period has ended");
+      ).to.be.revertedWith("Expired()");
     });
 
     it("Unfrozen DAOs may execute txs", async () => {
@@ -635,11 +635,11 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     it("You must have voting weight to cast a freeze vote", async () => {
       await expect(
         freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("User has no votes");
+      ).to.be.revertedWith("NoVotes()");
       freezeVoting.connect(tokenVetoer1).castFreezeVote();
       await expect(
         freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("User has no votes");
+      ).to.be.revertedWith("NoVotes()");
     });
 
     it("Only owner methods must be called by vetoGuard owner", async () => {

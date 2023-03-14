@@ -316,7 +316,7 @@ describe("Fractal Module Tests", () => {
 
       // REVERT => NOT AUTHORIZED
       await expect(fractalModule.execTx(txData)).to.be.revertedWith(
-        "Not Authorized"
+        "Unauthorized()"
       );
 
       // OWNER MAY EXECUTE
@@ -334,7 +334,7 @@ describe("Fractal Module Tests", () => {
       // REVERT => Execution Failure
       await expect(
         fractalModule.connect(owner1).execTx(txData)
-      ).to.be.revertedWith("Module transaction failed");
+      ).to.be.revertedWith("TxFailed()");
 
       expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesToken.balanceOf(owner1.address)).to.eq(1000);

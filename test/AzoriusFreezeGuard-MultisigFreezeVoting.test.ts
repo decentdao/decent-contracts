@@ -565,7 +565,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -576,7 +576,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -587,7 +587,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
     });
 
     it("A proposal can still be executed if a freeze proposal has been created, but threshold has not been met", async () => {
@@ -742,7 +742,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -753,7 +753,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Increase time so that freeze period has ended
       await time.advanceBlocks(200);
@@ -923,7 +923,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -934,7 +934,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -945,7 +945,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Parent DAO unfreezes the child
       await freezeVoting.connect(freezeVotingOwner).unfreeze();
@@ -1042,7 +1042,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // First voter cannot vote again
       await expect(
         freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
-      ).to.be.revertedWith("User has already voted");
+      ).to.be.revertedWith("AlreadyVoted()");
 
       // Second voter casts freeze vote, should update state of current freeze proposal
       await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();

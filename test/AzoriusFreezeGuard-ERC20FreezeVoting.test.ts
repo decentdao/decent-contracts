@@ -543,7 +543,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -554,7 +554,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // This proposal should fail due to freeze
       await expect(
@@ -565,7 +565,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
     });
   });
 
@@ -716,7 +716,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         tokenTransferData1,
         0
       )
-    ).to.be.revertedWith("DAO is frozen");
+    ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
@@ -727,7 +727,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         tokenTransferData2,
         0
       )
-    ).to.be.revertedWith("DAO is frozen");
+    ).to.be.revertedWith("DAOFrozen()");
 
     // Increase time so that freeze has ended
     for (let i = 0; i <= 100; i++) {
@@ -897,7 +897,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         tokenTransferData1,
         0
       )
-    ).to.be.revertedWith("DAO is frozen");
+    ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
@@ -908,7 +908,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         tokenTransferData2,
         0
       )
-    ).to.be.revertedWith("DAO is frozen");
+    ).to.be.revertedWith("DAOFrozen()");
 
     // This proposal should fail due to freeze
     await expect(
@@ -919,7 +919,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         tokenTransferData3,
         0
       )
-    ).to.be.revertedWith("DAO is frozen");
+    ).to.be.revertedWith("DAOFrozen()");
 
     // Parent DAO unfreezes the child
     await freezeVoting.connect(mockParentDAO).unfreeze();
@@ -1009,7 +1009,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // First voter cannot vote again
     await expect(
       freezeVoting.connect(parentTokenHolder1).castFreezeVote()
-    ).to.be.revertedWith("User has already voted");
+    ).to.be.revertedWith("AlreadyVoted()");
 
     // Second voter casts freeze vote, should update state of current freeze proposal
     await freezeVoting.connect(parentTokenHolder2).castFreezeVote();

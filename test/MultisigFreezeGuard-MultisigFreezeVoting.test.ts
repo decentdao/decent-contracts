@@ -350,7 +350,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction has not been timelocked yet");
+      ).to.be.revertedWith("NotTimelocked()");
     });
 
     it("A transaction cannot be timelocked if the signatures aren't valid", async () => {
@@ -435,7 +435,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Transaction timelock period has not completed yet");
+      ).to.be.revertedWith("Timelocked()");
     });
 
     it("A frozen DAO cannot execute any transactions", async () => {
@@ -517,7 +517,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Timelock tx2
       await freezeGuard.timelockTransaction(
@@ -549,7 +549,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx2.refundReceiver,
           signatureBytes2
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
     });
 
     it("A frozen DAO automatically unfreezes after the freeze period has ended", async () => {
@@ -631,7 +631,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Timelock tx2
       await freezeGuard.timelockTransaction(
@@ -663,7 +663,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx2.refundReceiver,
           signatureBytes2
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
@@ -761,7 +761,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       await expect(
         freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
-      ).to.be.revertedWith("User has already voted");
+      ).to.be.revertedWith("AlreadyVoted()");
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
     });
 
@@ -822,7 +822,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAO is frozen");
+      ).to.be.revertedWith("DAOFrozen()");
 
       // Move time forward to elapse freeze period
       await time.advanceBlocks(140);
@@ -844,7 +844,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("Transaction execution period has ended");
+      ).to.be.revertedWith("Expired()");
     });
 
     it("Unfrozen DAOs may execute txs", async () => {
@@ -913,7 +913,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     it("You must be a parent multisig owner to cast a freeze vote", async () => {
       await expect(
         freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("User is not an owner");
+      ).to.be.revertedWith("NotOwner()");
     });
 
     it("Only owner methods must be called by the owner", async () => {

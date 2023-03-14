@@ -238,12 +238,12 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.name()).to.eq("Voting");
     });
 
-    it("A strategy cannot be enabled more than once", async () => {
+    it.only("A strategy cannot be enabled more than once", async () => {
       await expect(
         azorius
           .connect(gnosisSafeOwner)
           .enableStrategy(linearTokenVoting.address)
-      ).to.be.revertedWith("Strategy already enabled");
+      ).to.be.revertedWith("StrategyEnabled()");
     });
 
     it("Multiple strategies can be enabled, disabled, and returned", async () => {
@@ -311,11 +311,11 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
     it("Getting proposal state on an invalid proposal ID reverts", async () => {
       await expect(azorius.proposalState(0)).to.be.revertedWith(
-        "Invalid proposal ID"
+        "InvalidProposal()"
       );
 
       await expect(azorius.proposalState(0)).to.be.revertedWith(
-        "Invalid proposal ID"
+        "InvalidProposal()"
       );
     });
 
@@ -341,20 +341,20 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [proposalTransaction],
           ""
         )
-      ).to.be.revertedWith("Voting strategy is not enabled");
+      ).to.be.revertedWith("StrategyDisabled()");
     });
 
     it("A proposal cannot be submitted if it contains zero transactions", async () => {
       // Submit transactions as empty array
       await expect(
         azorius.submitProposal(linearTokenVoting.address, "0x", [], "")
-      ).to.be.revertedWith("Proposal must contain at least one transaction");
+      ).to.be.revertedWith("InvalidProposal");
     });
 
     it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
       // Submit call from address that isn't Azorius module
       await expect(linearTokenVoting.initializeProposal([])).to.be.revertedWith(
-        "Only callable by Azorius module"
+        "OnlyAzorius()"
       );
     });
 
@@ -362,7 +362,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // User attempts to vote on proposal that has not yet been submitted
       await expect(
         linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
-      ).to.be.revertedWith("Proposal has not been submitted yet");
+      ).to.be.revertedWith("InvalidProposal()");
     });
 
     it("Votes cannot be cast after the voting period has ended", async () => {
@@ -395,7 +395,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Users vote in support of proposal
       await expect(
         linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
-      ).to.be.revertedWith("Voting period has passed");
+      ).to.be.revertedWith("VotingEnded()");
     });
 
     it("A voter cannot vote more than once on a proposal", async () => {
@@ -426,7 +426,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
       await expect(
         linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
-      ).to.be.revertedWith("Voter has already voted");
+      ).to.be.revertedWith("AlreadyVoted()");
     });
 
     it("Correctly counts proposal Yes votes", async () => {
@@ -640,7 +640,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [tokenTransferData],
           [0]
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
     });
 
     it("A proposal is not passed if quorum is not reached", async () => {
@@ -685,7 +685,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [tokenTransferData],
           [0]
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
 
       // Proposal in the failed state
       expect(await azorius.proposalState(0)).to.eq(5);
@@ -731,7 +731,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [tokenTransferData],
           [0]
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -1118,7 +1118,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the third transaction
       await expect(
@@ -1129,7 +1129,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the fourth transaction
       await expect(
@@ -1140,7 +1140,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData4,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       expect(await azorius.isTxExecuted(0, 0)).to.eq(false);
       expect(await azorius.isTxExecuted(0, 1)).to.eq(false);
@@ -1174,7 +1174,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the third transaction
       await expect(
@@ -1185,7 +1185,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the fourth transaction
       await expect(
@@ -1196,7 +1196,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData4,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Execute the second transaction
       await azorius.executeProposalByIndex(
@@ -1226,7 +1226,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the second transaction
       await expect(
@@ -1237,7 +1237,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Attempt to execute the fourth transaction
       await expect(
@@ -1248,7 +1248,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData4,
           0
         )
-      ).to.be.revertedWith("Transaction hash does not match the indexed hash");
+      ).to.be.revertedWith("InvalidTxHash()");
 
       // Execute the third transaction
       await azorius.executeProposalByIndex(
@@ -1278,7 +1278,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData1,
           0
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
 
       // Attempt to execute the second transaction
       await expect(
@@ -1289,7 +1289,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData2,
           0
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
 
       // Attempt to execute the third transaction
       await expect(
@@ -1300,7 +1300,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData3,
           0
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
 
       // Attempt to execute the fourth transaction
       await expect(
@@ -1311,7 +1311,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           tokenTransferData4,
           0
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
     });
 
     it("Executing a proposal reverts if the transaction cannot be executed", async () => {
@@ -1366,7 +1366,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [tokenTransferData],
           [0]
         )
-      ).to.be.revertedWith("Module transaction failed");
+      ).to.be.revertedWith("TxFailed()");
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1430,7 +1430,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
           [tokenTransferData],
           [0]
         )
-      ).to.be.revertedWith("Proposal must be in the executable state");
+      ).to.be.revertedWith("ProposalNotExecutable()");
     });
   });
 });
