@@ -31,8 +31,12 @@ contract VotesToken is
         __ERC20Permit_init(_name);
         _registerInterface(type(IERC20Upgradeable).interfaceId);
 
-        for (uint256 i; i < _hodlers.length; i++) {
+        uint256 hodlersLength = _hodlers.length;
+        for (uint256 i; i < hodlersLength; ) {
             _mint(_hodlers[i], _allocations[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -41,19 +45,17 @@ contract VotesToken is
     }
 
     // The functions below are overrides required by Solidity.
-    function _mint(address to, uint256 amount)
-        internal
-        virtual
-        override(ERC20Upgradeable, ERC20VotesUpgradeable)
-    {
+    function _mint(
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         super._mint(to, amount);
     }
 
-    function _burn(address account, uint256 amount)
-        internal
-        virtual
-        override(ERC20Upgradeable, ERC20VotesUpgradeable)
-    {
+    function _burn(
+        address account,
+        uint256 amount
+    ) internal virtual override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         super._burn(account, amount);
     }
 
