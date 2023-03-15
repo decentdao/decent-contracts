@@ -64,7 +64,7 @@ contract Azorius is Module, IAzorius {
         __Ownable_init();
         avatar = _avatar;
         target = _target;
-        setupStrategies(_strategies);
+        _setupStrategies(_strategies);
         transferOwnership(_owner);
         _updateTimelockPeriod(_timelockPeriod);
         _updateExecutionPeriod(_executionPeriod);
@@ -224,7 +224,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _strategies array of BaseStrategy contract addresses to enable
      */
-    function setupStrategies(address[] memory _strategies) internal {
+    function _setupStrategies(address[] memory _strategies) internal {
         if(
             strategies[SENTINEL_STRATEGY] != address(0)) revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
