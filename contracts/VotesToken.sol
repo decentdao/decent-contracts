@@ -31,7 +31,7 @@ contract VotesToken is
         __ERC20Permit_init(_name);
         _registerInterface(type(IERC20Upgradeable).interfaceId);
 
-        for (uint256 i = 0; i < _hodlers.length; i++) {
+        for (uint256 i; i < _hodlers.length; i++) {
             _mint(_hodlers[i], _allocations[i]);
         }
     }

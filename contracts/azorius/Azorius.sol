@@ -126,7 +126,7 @@ contract Azorius is Module, IAzorius {
             revert InvalidProposer();
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
-        for (uint256 i = 0; i < _transactions.length; i++) {
+        for (uint256 i; i < _transactions.length; i++) {
             txHashes[i] = getTxHash(
                 _transactions[i].to,
                 _transactions[i].value,
@@ -204,7 +204,7 @@ contract Azorius is Module, IAzorius {
             proposals[_proposalId].executionCounter + _targets.length >
             proposals[_proposalId].txHashes.length
         ) revert InvalidTxs();
-        for (uint256 i = 0; i < _targets.length; i++) {
+        for (uint256 i; i < _targets.length; i++) {
             _executeProposalTxByIndex(
                 _proposalId,
                 _targets[i],
@@ -228,7 +228,7 @@ contract Azorius is Module, IAzorius {
         if(
             strategies[SENTINEL_STRATEGY] != address(0)) revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
-        for (uint256 i = 0; i < _strategies.length; i++) {
+        for (uint256 i; i < _strategies.length; i++) {
             enableStrategy(_strategies[i]);
         }
     }
