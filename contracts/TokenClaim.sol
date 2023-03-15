@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract TokenClaim is FactoryFriendly, ITokenClaim {
     using SafeERC20 for IERC20;
 
+    address public funder;
+    uint256 public deadline;
     address public childToken;
     address public parentToken;
     uint256 public snapShotId;
@@ -20,11 +22,14 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
         __Ownable_init();
         (
             address _childTokenFunder,
+            address _deadline,
             address _parentToken,
             address _childToken,
             uint256 _parentAllocation
         ) = abi.decode(initializeParams, (address, address, address, uint256));
 
+        funder = _childTokenFunder;
+        deadline = _deadline;
         childToken = _childToken;
         parentToken = _parentToken;
         parentAllocation = _parentAllocation;
@@ -61,5 +66,14 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
         return claimed[claimer] ? 0 :
             (VotesToken(parentToken).balanceOfAt(claimer, snapShotId) * parentAllocation) /
             VotesToken(parentToken).totalSupplyAt(snapShotId);
+    }
+
+    /// @notice Returns unclaimed tokens after the deadline to the funder.
+    function reclaim() external {
+        require(msg.sender == funder, "caller is not the funder");
+        require(deadline != 0, "no deadline set");
+        require(block.number >= deadline, "deadline has not elapsed");
+        IERC20 token = IERC20(childToken);
+        token.safeTransfer(funder, token.balanceOf(address(this)));
     }
 }

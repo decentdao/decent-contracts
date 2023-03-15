@@ -59,9 +59,10 @@ describe("VotesToken Claiming", function () {
     await cToken.setUp(cTokenSetupData);
 
     const tokenClaimSetupData = abiCoder.encode(
-      ["address", "address", "address", "uint256"],
+      ["address", "uint256", "address", "address", "uint256"],
       [
         deployer.address,
+        0,
         pToken.address,
         cToken.address,
         ethers.utils.parseUnits("100", 18),
