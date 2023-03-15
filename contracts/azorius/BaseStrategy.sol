@@ -7,9 +7,9 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title BaseTokenVoting - the base abstract contract for all voting strategies in Azorius.
+ * @title BaseStrategy - the base abstract contract for all voting strategies in Azorius.
  */
-abstract contract BaseTokenVoting is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
+abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
 
     event AzoriusSet(address indexed azoriusModule);
     event StrategySetUp(address indexed azoriusModule, address indexed owner); // TODO should this emit the strategy contract address?
