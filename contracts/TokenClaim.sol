@@ -22,7 +22,7 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
         __Ownable_init();
         (
             address _childTokenFunder,
-            address _deadline,
+            uint256 _deadline,
             address _parentToken,
             address _childToken,
             uint256 _parentAllocation
