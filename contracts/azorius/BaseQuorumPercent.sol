@@ -3,31 +3,31 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-/// @title BaseQuorumPercent - A Azorius strategy extension that enables percent based quorums
+/**
+ * @title BaseQuorumPercent - An Azorius BaseStrategy extension contract
+ * that enables percent based quorums.
+ */
 abstract contract BaseQuorumPercent is OwnableUpgradeable {
+    
     uint256 public quorumNumerator;
-    uint256 public constant quorumDenominator = 1_000_000;
+    uint256 public constant QUORUM_DENOMINATOR = 1_000_000;
 
-    event QuorumNumeratorUpdated(uint256 newQuorumNumerator);
+    event QuorumNumeratorUpdated(uint256 quorumNumerator);
 
-    function quorum(uint256 blockNumber) public view virtual returns (uint256);
+    function quorum(uint256 _blockNumber) public view virtual returns (uint256);
 
-    function updateQuorumNumerator(
-        uint256 newQuorumNumerator
-    ) public virtual onlyOwner {
-        _updateQuorumNumerator(newQuorumNumerator);
+    function updateQuorumNumerator(uint256 _quorumNumerator) public virtual onlyOwner {
+        _updateQuorumNumerator(_quorumNumerator); // TODO WHYYYYY
     }
 
-    function _updateQuorumNumerator(
-        uint256 newQuorumNumerator
-    ) internal virtual {
+    function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual {
         require(
-            newQuorumNumerator <= quorumDenominator,
+            quorumNumerator <= QUORUM_DENOMINATOR,
             "quorumNumerator cannot be greater than quorumDenominator"
         );
 
-        quorumNumerator = newQuorumNumerator;
+        quorumNumerator = _quorumNumerator;
 
-        emit QuorumNumeratorUpdated(newQuorumNumerator);
+        emit QuorumNumeratorUpdated(_quorumNumerator);
     }
 }

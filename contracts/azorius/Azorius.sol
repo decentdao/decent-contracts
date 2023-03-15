@@ -5,6 +5,10 @@ import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import "./interfaces/IBaseStrategy.sol";
 import "./interfaces/IAzorius.sol";
 
+/**
+ * @title Azorius Protocol - a Safe module which allows for composable governance.
+ * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ */
 contract Azorius is Module, IAzorius {
 
     address internal constant SENTINEL_STRATEGY = address(0x1); // TODO what's this?

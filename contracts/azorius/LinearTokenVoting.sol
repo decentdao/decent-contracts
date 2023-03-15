@@ -5,13 +5,19 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "./BaseTokenVoting.sol";
 import "./BaseQuorumPercent.sol";
 
-/// @title An Azorius strategy that enables linear token voting
+/**
+ * @title An Azorius BaseTokenVoting strategy that enables linear (i.e. 1 to 1) token voting.
+ * Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
+ */
 contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     
     ERC20Votes public governanceToken;
 
-    /// @notice Sets up the contract with initial parameters
-    /// @param initParams The initial setup parameters encoded as bytes
+    /**
+     * Sets up the contract with its initial parameters.
+     *
+     * @param initParams initial setup parameters, encoded as bytes
+     */
     function setUp(bytes memory initParams) public override initializer {
         (
             address _owner,
@@ -47,9 +53,12 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         emit StrategySetUp(_azoriusModule, _owner);
     }
 
-    /// @notice Casts a vote for a proposal
-    /// @param _proposalId The ID of the proposal to vote for
-    /// @param _support Proposal support represented as NO, YES, or ABSTAIN
+    /**
+     * Casts votes for a Proposal, equal to the caller's token delegation.
+     *
+     * @param _proposalId id of the Proposal to vote on
+     * @param _support Proposal support as defined in VoteType (NO, YES, ABSTAIN) TODO change all instances of "support" to voteType? or rename VoteType to SupportType?
+     */
     function vote(uint256 _proposalId, uint8 _support, bytes memory) external {
         _vote(
             _proposalId,
@@ -57,6 +66,36 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             _support,
             getVotingWeight(msg.sender, _proposalId)
         );
+    }
+
+    /**
+     * Calculates the number of votes needed to achieve quorum at a specific block number.
+     *
+     * Because token supply is not necessarily static, it is required to calculate
+     * quorum based on the supply at the time of a Proposal's creation.
+     *
+     * @param _blockNumber block number to calculate quorum at
+     * @return uint256 the number of votes needed for quorum TODO move this to BaseStrategy or BaseTokenVoting?
+     */
+    function quorum(uint256 _blockNumber) public view override returns (uint256) {
+        return
+            (governanceToken.getPastTotalSupply(_blockNumber) *
+                quorumNumerator) / QUORUM_DENOMINATOR;
+    }
+
+    /**
+     * Calculates the voting weight an address has for a specific Proposal.
+     *
+     * @param _voter address of the voter
+     * @param _proposalId id of the Proposal
+     * @return uint256 the address' voting weight TODO change this to getVoteCount?
+     */
+    function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
+        return
+            governanceToken.getPastVotes(
+                _voter,
+                proposals[_proposalId].votingStartBlock
+            );
     }
 
     /// @inheritdoc IBaseStrategy
@@ -74,29 +113,8 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         return false;
     }
 
-    /// @notice Calculates the number of token votes needed for quorum at a specific block number
-    /// @param _blockNumber The block number to calculate quorum at
-    /// @return uint256 The number of token votes needed for quorum
-    function quorum(uint256 _blockNumber) public view override returns (uint256) {
-        return
-            (governanceToken.getPastTotalSupply(_blockNumber) *
-                quorumNumerator) / quorumDenominator;
-    }
-
-    /// @notice Calculates the voting weight an address has for a specific proposal
-    /// @param _voter Address of the voter
-    /// @param _proposalId The ID of the proposal
-    /// @return uint256 The user's vote count
-    function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
-        return
-            governanceToken.getPastVotes(
-                _voter,
-                proposals[_proposalId].votingStartBlock
-            );
-    }
-
     /// @inheritdoc IBaseStrategy
     function isProposer(address) public pure override returns (bool) {
-        return true;
+        return true; // anyone can create Proposals
     }
 }

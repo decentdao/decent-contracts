@@ -3,15 +3,17 @@ pragma solidity ^0.8.0;
 
 import "./BaseStrategy.sol";
 
-/// @title An abstract contract used as a base for ERC-20 token voting strategies
+/**
+ * @title BaseTokenVoting - an abstract contract used as a base for ERC-20 token voting strategies.
+ */
 abstract contract BaseTokenVoting is BaseStrategy {
 
     /**
      * The voting options for a Proposal.
      */
     enum VoteType {
-        YES,    // approves of executing the Proposal
         NO,     // disapproves of executing the Proposal
+        YES,    // approves of executing the Proposal
         ABSTAIN // neither YES nor NO, i.e. voting "present"
     }
 
@@ -20,8 +22,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
      * TODO rename this to something better
      */
     struct ProposalVoting {
-        uint256 yesVotes; // current number of YES votes for the Proposal
         uint256 noVotes; // current number of NO votes for the Proposal
+        uint256 yesVotes; // current number of YES votes for the Proposal
         uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
         uint256 votingStartBlock; // block that voting starts at
         uint256 votingEndBlock; // block that voting ends
@@ -120,23 +122,23 @@ abstract contract BaseTokenVoting is BaseStrategy {
      * Returns the current state of the specified Proposal.
      *
      * @param _proposalId id of the Proposal
-     * @return yesVotes current count of "YES" votes
      * @return noVotes current count of "NO" votes
+     * @return yesVotes current count of "YES" votes
      * @return abstainVotes current count of "ABSTAIN" votes
      * @return votingStartBlock block number voting starts
      * @return votingEndBlock block number voting ends
      */
     function getProposal(uint256 _proposalId) external view
         returns (
-            uint256 yesVotes,
             uint256 noVotes,
+            uint256 yesVotes,
             uint256 abstainVotes,
             uint256 votingStartBlock,
             uint256 votingEndBlock // TODO what's this error here?
         )
     {
-        yesVotes = proposals[_proposalId].yesVotes;
         noVotes = proposals[_proposalId].noVotes;
+        yesVotes = proposals[_proposalId].yesVotes;
         abstainVotes = proposals[_proposalId].abstainVotes;
         votingStartBlock = proposals[_proposalId].votingStartBlock;
         votingEndBlock = proposals[_proposalId].votingEndBlock;
