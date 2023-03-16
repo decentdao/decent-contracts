@@ -3,6 +3,9 @@ pragma solidity =0.8.19;
 
 import "./BaseStrategy.sol";
 
+// TODO: move this into linearTOkenVoting
+// TODO: rename to ERC20Voting
+
 /// @title An abstract contract used as a base for ERC-20 token voting strategies
 abstract contract BaseTokenVoting is BaseStrategy {
     enum VoteType {
@@ -21,7 +24,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     }
 
     uint256 public votingPeriod; // The number of blocks a proposal can be voted on
-    mapping(uint256 => ProposalVotes) internal proposals;
+    mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 newVotingPeriod);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
@@ -51,8 +54,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
 
-        proposals[proposalId].votingEndBlock = _votingEndBlock;
-        proposals[proposalId].votingStartBlock = block.number;
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = block.number;
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
     }
@@ -76,20 +79,20 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint8 _support,
         uint256 _weight
     ) internal {
-        if (proposals[_proposalId].votingEndBlock == 0)
+        if (proposalVotes[_proposalId].votingEndBlock == 0)
             revert InvalidProposal();
-        if (block.number > proposals[_proposalId].votingEndBlock)
+        if (block.number > proposalVotes[_proposalId].votingEndBlock)
             revert VotingEnded();
-        if (proposals[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
+        if (proposalVotes[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
 
-        proposals[_proposalId].hasVoted[_voter] = true;
+        proposalVotes[_proposalId].hasVoted[_voter] = true;
 
         if (_support == uint8(VoteType.NO)) {
-            proposals[_proposalId].noVotes += _weight;
+            proposalVotes[_proposalId].noVotes += _weight;
         } else if (_support == uint8(VoteType.YES)) {
-            proposals[_proposalId].yesVotes += _weight;
+            proposalVotes[_proposalId].yesVotes += _weight;
         } else if (_support == uint8(VoteType.ABSTAIN)) {
-            proposals[_proposalId].abstainVotes += _weight;
+            proposalVotes[_proposalId].abstainVotes += _weight;
         } else {
             revert InvalidVote();
         }
@@ -105,7 +108,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 _proposalId,
         address _account
     ) public view returns (bool) {
-        return proposals[_proposalId].hasVoted[_account];
+        return proposalVotes[_proposalId].hasVoted[_account];
     }
 
     /// @notice Returns the current state of the specified proposal
@@ -128,11 +131,11 @@ abstract contract BaseTokenVoting is BaseStrategy {
             uint256 votingEndBlock
         )
     {
-        yesVotes = proposals[_proposalId].yesVotes;
-        noVotes = proposals[_proposalId].noVotes;
-        abstainVotes = proposals[_proposalId].abstainVotes;
-        votingStartBlock = proposals[_proposalId].votingStartBlock;
-        votingEndBlock = proposals[_proposalId].votingEndBlock;
+        yesVotes = proposalVotes[_proposalId].yesVotes;
+        noVotes = proposalVotes[_proposalId].noVotes;
+        abstainVotes = proposalVotes[_proposalId].abstainVotes;
+        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
+        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
     /// @notice Returns the block that voting ends on the proposal
@@ -141,6 +144,6 @@ abstract contract BaseTokenVoting is BaseStrategy {
     function votingEndBlock(
         uint256 _proposalId
     ) public view override returns (uint256) {
-        return proposals[_proposalId].votingEndBlock;
+        return proposalVotes[_proposalId].votingEndBlock;
     }
 }

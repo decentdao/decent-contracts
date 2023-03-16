@@ -54,11 +54,11 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @return bool True if the proposal has passed
     function isPassed(uint256 _proposalId) external view override returns (bool) {
         if (
-            proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
-            proposals[_proposalId].yesVotes >=
-            quorum(proposals[_proposalId].votingStartBlock) &&
-            proposals[_proposalId].votingEndBlock != 0 &&
-            block.number > proposals[_proposalId].votingEndBlock
+            proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
+            proposalVotes[_proposalId].yesVotes >=
+            quorum(proposalVotes[_proposalId].votingStartBlock) &&
+            proposalVotes[_proposalId].votingEndBlock != 0 &&
+            block.number > proposalVotes[_proposalId].votingEndBlock
         ) {
             return true;
         }
@@ -88,7 +88,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         return
             governanceToken.getPastVotes(
                 _voter,
-                proposals[_proposalId].votingStartBlock
+                proposalVotes[_proposalId].votingStartBlock
             );
     }
 
