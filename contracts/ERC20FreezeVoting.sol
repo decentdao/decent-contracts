@@ -55,6 +55,8 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
                 freezeProposalCreatedBlock - 1
             );
 
+            if (userVotes == 0) revert NoVotes();
+
             freezeProposalVoteCount = userVotes;
 
             emit FreezeProposalCreated(msg.sender);
@@ -68,10 +70,10 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
                 freezeProposalCreatedBlock - 1
             );
 
-            freezeProposalVoteCount += userVotes;
-        }
+            if (userVotes == 0) revert NoVotes();
 
-        if (userVotes == 0) revert NoVotes();
+            freezeProposalVoteCount += userVotes;
+        }        
 
         userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock] = true;
 
