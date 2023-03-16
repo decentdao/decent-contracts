@@ -44,17 +44,17 @@ abstract contract BaseStrategy is
     /// @notice Returns if a proposal has succeeded
     /// @param _proposalId The proposalId to check
     /// @return bool Returns true if the proposal has passed
-    function isPassed(uint256 _proposalId) public view virtual returns (bool);
+    function isPassed(uint256 _proposalId) external view virtual returns (bool);
 
     /// @notice Returns if the specified address can submit a proposal
     /// @param _user The user address to check
     /// @return bool True if the user can submit a proposal
-    function isProposer(address _user) public view virtual returns (bool);
+    function isProposer(address _user) external view virtual returns (bool);
 
     /// @notice Returns the block number voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
     /// @return uint256 The block number voting ends on the proposal
     function votingEndBlock(
         uint256 _proposalId
-    ) public view virtual returns (uint256);
+    ) external view virtual returns (uint256);
 }
