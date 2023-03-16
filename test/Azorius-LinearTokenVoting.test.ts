@@ -165,14 +165,13 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy();
 
     const linearTokenVotingSetupData = abiCoder.encode(
-      ["address", "address", "address", "uint256", "uint256", "string"],
+      ["address", "address", "address", "uint256", "uint256"],
       [
         gnosisSafeOwner.address, // owner
         votesToken.address, // governance token
         azorius.address, // Azorius module
         60, // voting period in blocks
         500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-        "Voting", // name
       ]
     );
 
@@ -633,7 +632,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(5);
 
       await expect(
-        azorius.executeProposalBatch(
+        azorius.executeProposal(
           0,
           [votesToken.address],
           [0],
@@ -678,7 +677,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       await expect(
-        azorius.executeProposalBatch(
+        azorius.executeProposal(
           0,
           [votesToken.address],
           [0],
@@ -724,7 +723,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       await expect(await linearTokenVoting.isPassed(0)).to.be.false;
 
       await expect(
-        azorius.executeProposalBatch(
+        azorius.executeProposal(
           0,
           [votesToken.address],
           [0],
@@ -825,7 +824,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azorius.executeProposalBatch(
+      await azorius.executeProposal(
         0,
         [votesToken.address],
         [0],
@@ -908,7 +907,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azorius.executeProposalBatch(
+      await azorius.executeProposal(
         0,
         [votesToken.address, votesToken.address, votesToken.address],
         [0, 0, 0],
@@ -968,7 +967,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       // Execute the transaction
       await expect(
-        azorius.executeProposalBatch(
+        azorius.executeProposal(
           0,
           [votesToken.address],
           [0],
@@ -1032,7 +1031,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       // Execute the transaction
       await expect(
-        azorius.executeProposalBatch(
+        azorius.executeProposal(
           0,
           [votesToken.address],
           [0],

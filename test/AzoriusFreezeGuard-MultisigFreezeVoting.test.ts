@@ -214,14 +214,13 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await linearTokenVoting.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "uint256", "uint256", "string"],
+        ["address", "address", "address", "uint256", "uint256"],
         [
           parentGnosisSafe.address, // owner
           childVotesToken.address, // governance token
           azoriusModule.address, // Azorius module
           60, // voting period in blocks
           500000, // quorom numerator, denominator is 1,000,000
-          "Voting", // name
         ]
       )
     );
@@ -356,7 +355,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalBatch(
+      await azoriusModule.executeProposal(
         0,
         [childVotesToken.address],
         [0],
@@ -440,7 +439,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalBatch(
+      await azoriusModule.executeProposal(
         0,
         [
           childVotesToken.address,
@@ -558,7 +557,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // Executing proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           0,
           [childVotesToken.address],
           [0],
@@ -569,7 +568,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           1,
           [childVotesToken.address],
           [0],
@@ -580,7 +579,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           2,
           [childVotesToken.address],
           [0],
@@ -643,7 +642,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalBatch(
+      await azoriusModule.executeProposal(
         0,
         [childVotesToken.address],
         [0],
@@ -735,7 +734,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           0,
           [childVotesToken.address],
           [0],
@@ -746,7 +745,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           1,
           [childVotesToken.address],
           [0],
@@ -800,7 +799,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalBatch(
+      await azoriusModule.executeProposal(
         2,
         [childVotesToken.address],
         [0],
@@ -916,7 +915,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           0,
           [childVotesToken.address],
           [0],
@@ -927,7 +926,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           1,
           [childVotesToken.address],
           [0],
@@ -938,7 +937,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       // This proposal should fail due to freeze
       await expect(
-        azoriusModule.executeProposalBatch(
+        azoriusModule.executeProposal(
           2,
           [childVotesToken.address],
           [0],
@@ -959,7 +958,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
-      await azoriusModule.executeProposalBatch(
+      await azoriusModule.executeProposal(
         0,
         [childVotesToken.address],
         [0],
