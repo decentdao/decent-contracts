@@ -7,8 +7,8 @@ import time from "./time";
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
-  LinearTokenVoting,
-  LinearTokenVoting__factory,
+  LinearERC20Voting,
+  LinearERC20Voting__factory,
   Azorius,
   Azorius__factory,
   AzoriusFreezeGuard,
@@ -33,7 +33,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
   let childGnosisSafe: GnosisSafe;
   let freezeGuard: AzoriusFreezeGuard;
   let azoriusModule: Azorius;
-  let linearTokenVoting: LinearTokenVoting;
+  let linearERC20Voting: LinearERC20Voting;
   let freezeVoting: MultisigFreezeVoting;
   let childVotesToken: VotesToken;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
@@ -209,10 +209,10 @@ describe("Azorius Child DAO with Multisig parent", () => {
       )
     );
 
-    // Deploy Linear Token Voting Strategy
-    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy();
+    // Deploy Linear ERC-20 Voting Strategy
+    linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
 
-    await linearTokenVoting.setUp(
+    await linearERC20Voting.setUp(
       abiCoder.encode(
         ["address", "address", "address", "uint256", "uint256"],
         [
@@ -228,7 +228,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
     // Enable the Linear Token Voting strategy on Azorius
     await azoriusModule
       .connect(azoriusModuleOwner)
-      .enableStrategy(linearTokenVoting.address);
+      .enableStrategy(linearERC20Voting.address);
 
     // Deploy MultisigFreezeVoting contract
     freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
@@ -324,7 +324,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -334,8 +334,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -408,7 +408,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       ];
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         proposalTransactions,
         ""
@@ -418,8 +418,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -497,19 +497,19 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction2],
         ""
       );
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction3],
         ""
@@ -521,14 +521,14 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(2, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -604,7 +604,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -614,8 +614,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(0)).to.eq(0);
 
       // Both users vote in support of proposal
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -686,14 +686,14 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction2],
         ""
@@ -704,11 +704,11 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(1)).to.eq(0);
 
       // Both users vote in support of proposals
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(1, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -770,7 +770,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction3],
         ""
@@ -778,8 +778,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       expect(await azoriusModule.proposalState(2)).to.eq(0);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(2, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -855,19 +855,19 @@ describe("Azorius Child DAO with Multisig parent", () => {
       };
 
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction1],
         ""
       );
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction2],
         ""
       );
       await azoriusModule.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction3],
         ""
@@ -879,14 +879,14 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(await azoriusModule.proposalState(2)).to.eq(0);
 
       // Both users vote in support of proposals
-      await linearTokenVoting.connect(childTokenHolder1).vote(0, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(1, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(1, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(1, 1, [0]);
 
-      await linearTokenVoting.connect(childTokenHolder1).vote(2, 1, [0]);
-      await linearTokenVoting.connect(childTokenHolder2).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder1).vote(2, 1, [0]);
+      await linearERC20Voting.connect(childTokenHolder2).vote(2, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);

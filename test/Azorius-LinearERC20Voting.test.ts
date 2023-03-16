@@ -7,8 +7,8 @@ import time from "./time";
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
-  LinearTokenVoting,
-  LinearTokenVoting__factory,
+  LinearERC20Voting,
+  LinearERC20Voting__factory,
   Azorius,
   Azorius__factory,
   VotesToken,
@@ -23,11 +23,11 @@ import {
   predictGnosisSafeAddress,
 } from "./helpers";
 
-describe("Safe with Azorius module and LinearTokenVoting", () => {
+describe("Safe with Azorius module and linearERC20Voting", () => {
   // Deployed contracts
   let gnosisSafe: GnosisSafe;
   let azorius: Azorius;
-  let linearTokenVoting: LinearTokenVoting;
+  let linearERC20Voting: LinearERC20Voting;
   let votesToken: VotesToken;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 
@@ -161,10 +161,10 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
     await azorius.setUp(azoriusSetupData);
 
-    // Deploy Linear Token Voting Strategy
-    linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy();
+    // Deploy Linear ERC20 Voting Strategy
+    linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
 
-    const linearTokenVotingSetupData = abiCoder.encode(
+    const linearERC20VotingSetupData = abiCoder.encode(
       ["address", "address", "address", "uint256", "uint256"],
       [
         gnosisSafeOwner.address, // owner
@@ -175,12 +175,12 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       ]
     );
 
-    await linearTokenVoting.setUp(linearTokenVotingSetupData);
+    await linearERC20Voting.setUp(linearERC20VotingSetupData);
 
     // Enable the Linear Voting strategy on Azorius
     await azorius
       .connect(gnosisSafeOwner)
-      .enableStrategy(linearTokenVoting.address);
+      .enableStrategy(linearERC20Voting.address);
 
     // Create transaction on Gnosis Safe to setup Azorius module
     const enableAzoriusModuleData = gnosisSafe.interface.encodeFunctionData(
@@ -225,22 +225,22 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
   });
 
-  describe("Safe with Azorius module and LinearTokenVoting", () => {
+  describe("Safe with Azorius module and linearERC20Voting", () => {
     it("Gets correctly initialized", async () => {
-      expect(await linearTokenVoting.owner()).to.eq(gnosisSafeOwner.address);
-      expect(await linearTokenVoting.governanceToken()).to.eq(
+      expect(await linearERC20Voting.owner()).to.eq(gnosisSafeOwner.address);
+      expect(await linearERC20Voting.governanceToken()).to.eq(
         votesToken.address
       );
-      expect(await linearTokenVoting.azoriusModule()).to.eq(azorius.address);
-      expect(await linearTokenVoting.votingPeriod()).to.eq(60);
-      expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
+      expect(await linearERC20Voting.azoriusModule()).to.eq(azorius.address);
+      expect(await linearERC20Voting.votingPeriod()).to.eq(60);
+      expect(await linearERC20Voting.quorumNumerator()).to.eq(500000);
     });
 
     it("A strategy cannot be enabled more than once", async () => {
       await expect(
         azorius
           .connect(gnosisSafeOwner)
-          .enableStrategy(linearTokenVoting.address)
+          .enableStrategy(linearERC20Voting.address)
       ).to.be.revertedWith("StrategyEnabled()");
     });
 
@@ -263,34 +263,34 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       ).to.deep.eq([
         mockStrategy2.address,
         mockStrategy1.address,
-        linearTokenVoting.address,
+        linearERC20Voting.address,
       ]);
     });
 
     it("The owner can change the Azorius Module on the Strategy", async () => {
-      await linearTokenVoting
+      await linearERC20Voting
         .connect(gnosisSafeOwner)
         .setAzorius(deployer.address);
 
-      expect(await linearTokenVoting.azoriusModule()).to.eq(deployer.address);
+      expect(await linearERC20Voting.azoriusModule()).to.eq(deployer.address);
     });
 
     it("A non-owner cannot change the Azorius Module on the Strategy", async () => {
       await expect(
-        linearTokenVoting.connect(tokenHolder1).setAzorius(deployer.address)
+        linearERC20Voting.connect(tokenHolder1).setAzorius(deployer.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("The owner can update the voting period", async () => {
-      expect(await linearTokenVoting.votingPeriod()).to.eq(60);
-      await linearTokenVoting.connect(gnosisSafeOwner).updateVotingPeriod(120);
+      expect(await linearERC20Voting.votingPeriod()).to.eq(60);
+      await linearERC20Voting.connect(gnosisSafeOwner).updateVotingPeriod(120);
 
-      expect(await linearTokenVoting.votingPeriod()).to.eq(120);
+      expect(await linearERC20Voting.votingPeriod()).to.eq(120);
     });
 
     it("A non-owner cannot update the strategy voting period", async () => {
       await expect(
-        linearTokenVoting.connect(tokenHolder1).updateVotingPeriod(120)
+        linearERC20Voting.connect(tokenHolder1).updateVotingPeriod(120)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -345,13 +345,13 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     it("A proposal cannot be submitted if it contains zero transactions", async () => {
       // Submit transactions as empty array
       await expect(
-        azorius.submitProposal(linearTokenVoting.address, "0x", [], "")
+        azorius.submitProposal(linearERC20Voting.address, "0x", [], "")
       ).to.be.revertedWith("InvalidProposal");
     });
 
     it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
       // Submit call from address that isn't Azorius module
-      await expect(linearTokenVoting.initializeProposal([])).to.be.revertedWith(
+      await expect(linearERC20Voting.initializeProposal([])).to.be.revertedWith(
         "OnlyAzorius()"
       );
     });
@@ -359,7 +359,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     it("Votes cannot be cast on a proposal that hasn't been submitted yet", async () => {
       // User attempts to vote on proposal that has not yet been submitted
       await expect(
-        linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
+        linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0])
       ).to.be.revertedWith("InvalidProposal()");
     });
 
@@ -378,7 +378,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -392,7 +392,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
 
       // Users vote in support of proposal
       await expect(
-        linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
+        linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0])
       ).to.be.revertedWith("VotingEnded()");
     });
 
@@ -411,7 +411,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -421,9 +421,9 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
       await expect(
-        linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0])
+        linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0])
       ).to.be.revertedWith("AlreadyVoted()");
     });
 
@@ -442,7 +442,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -451,22 +451,22 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearTokenVoting.getProposal(0)).yesVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(0);
 
       // Token holder 1 votes but does not have any voting weight
-      await linearTokenVoting.connect(tokenHolder1).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder1).vote(0, 1, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).yesVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(0);
 
       // Token holder 2 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).yesVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(300);
 
       // Token holder 3 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).yesVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(600);
     });
 
     it("Correctly counts proposal No votes", async () => {
@@ -484,7 +484,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -493,22 +493,22 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearTokenVoting.getProposal(0)).noVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(0);
 
       // Token holder 1 votes but does not have any voting weight
-      await linearTokenVoting.connect(tokenHolder1).vote(0, 0, [0]);
+      await linearERC20Voting.connect(tokenHolder1).vote(0, 0, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).noVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(0);
 
       // Token holder 2 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 0, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 0, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).noVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(300);
 
       // Token holder 3 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 0, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 0, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).noVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(600);
     });
 
     it("Correctly counts proposal Abstain votes", async () => {
@@ -526,7 +526,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -535,22 +535,22 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearTokenVoting.getProposal(0)).abstainVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(0);
 
       // Token holder 1 votes but does not have any voting weight
-      await linearTokenVoting.connect(tokenHolder1).vote(0, 2, [0]);
+      await linearERC20Voting.connect(tokenHolder1).vote(0, 2, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).abstainVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(0);
 
       // Token holder 2 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 2, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 2, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).abstainVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(300);
 
       // Token holder 3 votes with voting weight of 300
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 2, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 2, [0]);
 
-      expect((await linearTokenVoting.getProposal(0)).abstainVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(600);
     });
 
     it("A proposal is passed with enough Yes votes and quorum", async () => {
@@ -568,7 +568,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -577,16 +577,16 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.true;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.true;
 
       // Proposal is timelocked
       await expect(await azorius.proposalState(0)).to.eq(1);
@@ -607,7 +607,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -616,16 +616,16 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote against
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 0, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 0, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 0, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 0, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Proposal is in the failed state
       expect(await azorius.proposalState(0)).to.eq(5);
@@ -656,7 +656,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -665,15 +665,15 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // User votes "Yes"
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       await expect(
         azorius.executeProposal(
@@ -704,7 +704,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -713,13 +713,13 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote "Yes"
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
-      await expect(await linearTokenVoting.isPassed(0)).to.be.false;
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       await expect(
         azorius.executeProposal(
@@ -752,7 +752,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       const proposalMetadata = "This is my amazing proposal!";
 
       const tx = await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         proposalMetadata
@@ -794,7 +794,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -804,8 +804,8 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -877,7 +877,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
         ""
@@ -887,8 +887,8 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -936,7 +936,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -946,8 +946,8 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -997,7 +997,7 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       };
 
       await azorius.submitProposal(
-        linearTokenVoting.address,
+        linearERC20Voting.address,
         "0x",
         [proposalTransaction],
         ""
@@ -1007,8 +1007,8 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Users vote in support of proposal
-      await linearTokenVoting.connect(tokenHolder2).vote(0, 1, [0]);
-      await linearTokenVoting.connect(tokenHolder3).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);

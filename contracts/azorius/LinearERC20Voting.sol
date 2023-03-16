@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "./BaseStrategy.sol";
+import "./BaseQuorumPercent.sol";
 
-// TODO: move this into linearTOkenVoting
-// TODO: rename to ERC20Voting
-
-/// @title An abstract contract used as a base for ERC-20 token voting strategies
-abstract contract BaseTokenVoting is BaseStrategy {
+/// @title An Azorius strategy that enables linear token voting
+contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     enum VoteType {
         NO,
         YES,
@@ -23,6 +22,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         mapping(address => bool) hasVoted;
     }
 
+    ERC20Votes public governanceToken;
     uint256 public votingPeriod; // The number of blocks a proposal can be voted on
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
@@ -39,6 +39,33 @@ abstract contract BaseTokenVoting is BaseStrategy {
     error VotingEnded();
     error AlreadyVoted();
     error InvalidVote();
+    error InvalidTokenAddress();
+
+    /// @notice Sets up the contract with initial parameters
+    /// @param initParams The initial setup parameters encoded as bytes
+    function setUp(bytes memory initParams) public override initializer {
+        (
+            address _owner,
+            ERC20Votes _governanceToken,
+            address _azoriusModule,
+            uint256 _votingPeriod,
+            uint256 _quorumNumerator
+        ) = abi.decode(
+                initParams,
+                (address, ERC20Votes, address, uint256, uint256)
+            );
+        if (address(_governanceToken) == address(0))
+            revert InvalidTokenAddress();
+
+        governanceToken = _governanceToken;
+        __Ownable_init();
+        transferOwnership(_owner);
+        _setAzorius(_azoriusModule);
+        _updateQuorumNumerator(_quorumNumerator);
+        _updateVotingPeriod(_votingPeriod);
+
+        emit StrategySetup(_azoriusModule, _owner);
+    }
 
     /// @notice Updates the voting time period
     /// @param _newVotingPeriod The voting time period in blocks
@@ -50,7 +77,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /// @param _data Any extra data to pass to the voting strategy
     function initializeProposal(
         bytes memory _data
-    ) external virtual override onlyAzorius {
+    ) external override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
 
@@ -58,6 +85,18 @@ abstract contract BaseTokenVoting is BaseStrategy {
         proposalVotes[proposalId].votingStartBlock = block.number;
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
+    }
+
+    /// @notice Casts a vote for a proposal
+    /// @param _proposalId The ID of the proposal to vote for
+    /// @param _support Proposal support represented as NO, YES, or ABSTAIN
+    function vote(uint256 _proposalId, uint8 _support, bytes memory) external {
+        _vote(
+            _proposalId,
+            msg.sender,
+            _support,
+            getVotingWeight(msg.sender, _proposalId)
+        );
     }
 
     /// @notice Updates the voting time period
@@ -107,8 +146,36 @@ abstract contract BaseTokenVoting is BaseStrategy {
     function hasVoted(
         uint256 _proposalId,
         address _account
-    ) public view returns (bool) {
+    ) external view returns (bool) {
         return proposalVotes[_proposalId].hasVoted[_account];
+    }
+
+    /// @notice Returns if a proposal has succeeded
+    /// @param _proposalId The ID of the proposal to check
+    /// @return bool True if the proposal has passed
+    function isPassed(uint256 _proposalId) external view override returns (bool) {
+        if (
+            proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
+            proposalVotes[_proposalId].yesVotes >=
+            quorum(proposalVotes[_proposalId].votingStartBlock) &&
+            proposalVotes[_proposalId].votingEndBlock != 0 &&
+            block.number > proposalVotes[_proposalId].votingEndBlock
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// @notice Calculates the number of token votes needed for quorum at a specific block number
+    /// @param _blockNumber The block number to calculate quorum at
+    /// @return uint256 The number of token votes needed for quorum
+    function quorum(
+        uint256 _blockNumber
+    ) public view override returns (uint256) {
+        return
+            (governanceToken.getPastTotalSupply(_blockNumber) *
+                quorumNumerator) / quorumDenominator;
     }
 
     /// @notice Returns the current state of the specified proposal
@@ -138,12 +205,33 @@ abstract contract BaseTokenVoting is BaseStrategy {
         votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
+    /// @notice Calculates the voting weight an address has for a specific proposal
+    /// @param _voter Address of the voter
+    /// @param _proposalId The ID of the proposal
+    /// @return uint256 The user's vote count
+    function getVotingWeight(
+        address _voter,
+        uint256 _proposalId
+    ) public view returns (uint256) {
+        return
+            governanceToken.getPastVotes(
+                _voter,
+                proposalVotes[_proposalId].votingStartBlock
+            );
+    }
+
+    /// @notice Returns if the specified address can submit a proposal
+    /// @return bool True if the user can submit a proposal
+    function isProposer(address) external pure override returns (bool) {
+        return true;
+    }
+
     /// @notice Returns the block that voting ends on the proposal
     /// @param _proposalId The ID of the proposal to check
     /// @return uint256 The block number voting ends on the proposal
     function votingEndBlock(
         uint256 _proposalId
-    ) public view override returns (uint256) {
+    ) external view override returns (uint256) {
         return proposalVotes[_proposalId].votingEndBlock;
     }
 }
