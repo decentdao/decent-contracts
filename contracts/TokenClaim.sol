@@ -48,7 +48,7 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
 
         snapShotId = VotesToken(_parentToken).captureSnapShot();
 
-        IERC20(_childToken).transferFrom(_childTokenFunder, address(this), _parentAllocation);
+        IERC20(_childToken).safeTransferFrom(_childTokenFunder, address(this), _parentAllocation);
 
         emit TokenClaimCreated(_parentToken, _childToken, _parentAllocation, snapShotId);
     }
