@@ -24,6 +24,8 @@ contract Azorius is Module, IAzorius {
         Transaction[] transactions,
         string metadata
     );
+
+    // todo: combine TransactionExecuted and TransactionExecutedBatch into single event
     event TransactionExecuted(uint256 proposalId, bytes32 txHash);
     event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
     event AzoriusSetup(
@@ -171,7 +173,7 @@ contract Azorius is Module, IAzorius {
      * @param _data data to be executed from the call
      * @param _operation Call or Delegatecall
      */
-    function _executeProposalTxByIndex(
+    function _executeProposalTx(
         uint256 _proposalId,
         address _target,
         uint256 _value,
@@ -193,7 +195,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function executeProposalBatch(
+    function executeProposal(
         uint256 _proposalId,
         address[] memory _targets,
         uint256[] memory _values,
@@ -212,7 +214,7 @@ contract Azorius is Module, IAzorius {
         ) revert InvalidTxs();
         uint256 targetsLength = _targets.length;
         for (uint256 i; i < targetsLength; ) {
-            _executeProposalTxByIndex(
+            _executeProposalTx(
                 _proposalId,
                 _targets[i],
                 _values[i],
