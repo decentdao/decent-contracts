@@ -11,7 +11,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         ABSTAIN
     }
 
-    struct ProposalVoting {
+    struct ProposalVotes {
         uint256 noVotes; // The total number of NO votes for this proposal
         uint256 yesVotes; // The total number of YES votes for this proposal
         uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
@@ -23,7 +23,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
     uint256 public votingPeriod; // The number of blocks a proposal can be voted on
     string public name;
 
-    mapping(uint256 => ProposalVoting) internal proposals;
+    mapping(uint256 => ProposalVotes) internal proposals;
 
     event VotingPeriodUpdated(uint256 newVotingPeriod);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
