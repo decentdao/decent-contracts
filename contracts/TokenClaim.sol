@@ -9,12 +9,16 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
     using SafeERC20 for IERC20;
 
     address public funder;
-    uint256 public deadline;
+    uint256 public deadlineBlock;
     address public childToken;
     address public parentToken;
     uint256 public snapShotId;
     uint256 public parentAllocation;
     mapping(address => bool) public claimed;
+
+    error NotTheFunder();
+    error NoDeadline();
+    error DeadlinePending();
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -22,14 +26,14 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
         __Ownable_init();
         (
             address _childTokenFunder,
-            uint256 _deadline,
+            uint256 _deadlineBlock,
             address _parentToken,
             address _childToken,
             uint256 _parentAllocation
         ) = abi.decode(initializeParams, (address, uint256, address, address, uint256));
 
         funder = _childTokenFunder;
-        deadline = _deadline;
+        deadlineBlock = _deadlineBlock;
         childToken = _childToken;
         parentToken = _parentToken;
         parentAllocation = _parentAllocation;
@@ -70,9 +74,9 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
 
     /// @notice Returns unclaimed tokens after the deadline to the funder.
     function reclaim() external {
-        require(msg.sender == funder, "caller is not the funder");
-        require(deadline != 0, "no deadline set");
-        require(block.number >= deadline, "deadline has not elapsed");
+        if (msg.sender != funder) revert NotTheFunder();
+        if (deadlineBlock == 0) revert NoDeadline();
+        if (block.number < deadlineBlock) revert DeadlinePending();
         IERC20 token = IERC20(childToken);
         token.safeTransfer(funder, token.balanceOf(address(this)));
     }

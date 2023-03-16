@@ -7,6 +7,7 @@ import {
 } from "../typechain-types";
 import chai from "chai";
 import { ethers } from "hardhat";
+import time from "./time";
 
 const expect = chai.expect;
 
@@ -58,11 +59,12 @@ describe("VotesToken Claiming", function () {
 
     await cToken.setUp(cTokenSetupData);
 
+    const latestBlock = await ethers.provider.getBlock("latest");
     const tokenClaimSetupData = abiCoder.encode(
       ["address", "uint256", "address", "address", "uint256"],
       [
         deployer.address,
-        0,
+        latestBlock.number + 5,
         pToken.address,
         cToken.address,
         ethers.utils.parseUnits("100", 18),
@@ -148,6 +150,26 @@ describe("VotesToken Claiming", function () {
   it("Should revert without an allocation", async () => {
     await expect(tokenClaim.claimToken(userB.address)).to.revertedWith(
       "NoAllocation()"
+    );
+  });
+
+  it("Should revert a non funder reclaim", async () => {
+    await expect(tokenClaim.connect(userA).reclaim()).to.revertedWith(
+      "NotTheFunder()"
+    );
+  });
+
+  it("Should revert an unexpired reclaim", async () => {
+    await expect(tokenClaim.connect(deployer).reclaim()).to.revertedWith(
+      "DeadlinePending()"
+    );
+  });
+
+  it("Should allow an expired reclaim", async () => {
+    await time.advanceBlocks(5);
+    await tokenClaim.connect(deployer).reclaim();
+    expect(await cToken.balanceOf(deployer.address)).to.eq(
+      ethers.utils.parseUnits("100", 18)
     );
   });
 });
