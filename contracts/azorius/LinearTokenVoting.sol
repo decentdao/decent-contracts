@@ -28,6 +28,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
 
+        // todo: get rid of name
         name = _name;
         governanceToken = _governanceToken;
         __Ownable_init();
@@ -54,7 +55,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
     /// @notice Returns if a proposal has succeeded
     /// @param _proposalId The ID of the proposal to check
     /// @return bool True if the proposal has passed
-    function isPassed(uint256 _proposalId) public view override returns (bool) {
+    function isPassed(uint256 _proposalId) external view override returns (bool) {
         if (
             proposals[_proposalId].yesVotes > proposals[_proposalId].noVotes &&
             proposals[_proposalId].yesVotes >=
