@@ -21,8 +21,6 @@ abstract contract BaseTokenVoting is BaseStrategy {
     }
 
     uint256 public votingPeriod; // The number of blocks a proposal can be voted on
-    string public name;
-
     mapping(uint256 => ProposalVotes) internal proposals;
 
     event VotingPeriodUpdated(uint256 newVotingPeriod);

@@ -19,17 +19,14 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             ERC20Votes _governanceToken,
             address _azoriusModule,
             uint256 _votingPeriod,
-            uint256 _quorumNumerator,
-            string memory _name
+            uint256 _quorumNumerator
         ) = abi.decode(
                 initParams,
-                (address, ERC20Votes, address, uint256, uint256, string)
+                (address, ERC20Votes, address, uint256, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
 
-        // todo: get rid of name
-        name = _name;
         governanceToken = _governanceToken;
         __Ownable_init();
         transferOwnership(_owner);
