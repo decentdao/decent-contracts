@@ -11,20 +11,30 @@ import "./interfaces/IAzorius.sol";
  */
 contract Azorius is Module, IAzorius {
 
-    // sentinel node of the linked list of BaseStrategies
-    // https://en.wikipedia.org/wiki/Sentinel_node
+    /**
+     * The sentinel node of the linked list of enabled BaseStrategies.
+     * https://en.wikipedia.org/wiki/Sentinel_node
+     */
     address internal constant SENTINEL_STRATEGY = address(0x1);
 
-    // https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
-    // keccak256(
-    //     "EIP712Domain(uint256 chainId,address verifyingContract)"
-    // );
+    /**
+     * keccak256(
+     *      "EIP712Domain(uint256 chainId,address verifyingContract)"
+     * );
+     *
+     * A unique hash intended to prevent signature collisions.
+     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     */
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
 
-    // keccak256(
-    //     "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
-    // );
+    /**
+     * keccak256(
+     *      "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
+     * );
+     *
+     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     */
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
