@@ -11,19 +11,29 @@ import "./interfaces/IAzorius.sol";
  */
 contract Azorius is Module, IAzorius {
 
-    address internal constant SENTINEL_STRATEGY = address(0x1); // TODO what's this?
+    // sentinel node of the linked list of BaseStrategies
+    // https://en.wikipedia.org/wiki/Sentinel_node
+    address internal constant SENTINEL_STRATEGY = address(0x1);
 
+    // https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
+    // keccak256(
+    //     "EIP712Domain(uint256 chainId,address verifyingContract)"
+    // );
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218; // TODO what is this?
+        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+
+    // keccak256(
+    //     "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
+    // );
     bytes32 public constant TRANSACTION_TYPEHASH =
-        0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad; // TODO what is this?
+        0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
     uint256 public totalProposalCount; // total number of submitted proposals
     uint256 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
     uint256 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
 
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
-    mapping(address => address) internal strategies; // TODO why is this address to address
+    mapping(address => address) internal strategies; // linked list of BaseStrategies
 
     event AzoriusSetUp(
         address indexed creator,
@@ -38,11 +48,11 @@ contract Azorius is Module, IAzorius {
         Transaction[] transactions,
         string metadata
     );
-    event TransactionExecuted(uint256 proposalId, bytes32 txHash); // TODO do we still want this event?
-    event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex); // TODO rename to ProposalExecuted, with the id?
+    event TransactionExecuted(uint256 proposalId, bytes32 txHash);
+    event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
-    event TimelockPeriodUpdated(uint256 timelockPeriod); // TODO move Timelock / Execution to BaseStrategy?
+    event TimelockPeriodUpdated(uint256 timelockPeriod);
     event ExecutionPeriodUpdated(uint256 executionPeriod);
 
     function setUp(bytes memory initParams) public override initializer {

@@ -19,9 +19,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
 
     /**
      * Defines the current state of votes on a particular Proposal.
-     * TODO rename this to something better
      */
-    struct ProposalVoting {
+    struct ProposalVotes {
         uint256 noVotes; // current number of NO votes for the Proposal
         uint256 yesVotes; // current number of YES votes for the Proposal
         uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
@@ -33,15 +32,12 @@ abstract contract BaseTokenVoting is BaseStrategy {
     /** Number of blocks a new Proposal can be voted on. */
     uint256 public votingPeriod;
 
-    /** TODO is this needed? what's this for */
-    string public name;
-
-    /** proposalId to ProposalVoting, the voting state of a Proposal */
-    mapping(uint256 => ProposalVoting) internal proposals; // TODO rename to voteState?
+    /** proposalId to ProposalVotes, the voting state of a Proposal */
+    mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 votingPeriod);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
-    event Voted(address voter, uint256 proposalId, uint8 support, uint256 weight); // TODO should support be VoteType here?
+    event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight);
 
     /**
      * Updates the voting time period for new Proposals.
@@ -52,7 +48,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /** Internal implementation of  updateVotingPeriod above TODO WHY */
+    /** Internal implementation of updateVotingPeriod above */
     function _updateVotingPeriod(uint256 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
         emit VotingPeriodUpdated(_votingPeriod);
@@ -63,8 +59,8 @@ abstract contract BaseTokenVoting is BaseStrategy {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
 
-        proposals[proposalId].votingEndBlock = _votingEndBlock;
-        proposals[proposalId].votingStartBlock = block.number;
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = block.number;
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
     }
@@ -74,37 +70,37 @@ abstract contract BaseTokenVoting is BaseStrategy {
      *
      * @param _proposalId id of the Proposal
      * @param _voter address casting the vote
-     * @param _support vote support, as defined in VoteType TODO should this be VoteType?
+     * @param _voteType vote support, as defined in VoteType
      * @param _weight amount of voting weight cast, typically the
      *          total number of tokens delegated
      */
-    function _vote(uint256 _proposalId, address _voter, uint8 _support, uint256 _weight) internal {
+    function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal {
         require(
-            proposals[_proposalId].votingEndBlock != 0,
+            proposalVotes[_proposalId].votingEndBlock != 0,
             "Proposal has not been submitted yet"
         );
         require(
-            block.number <= proposals[_proposalId].votingEndBlock,
+            block.number <= proposalVotes[_proposalId].votingEndBlock,
             "Voting period has passed"
         );
         require(
-            !proposals[_proposalId].hasVoted[_voter],
+            !proposalVotes[_proposalId].hasVoted[_voter],
             "Voter has already voted"
         );
 
-        proposals[_proposalId].hasVoted[_voter] = true;
+        proposalVotes[_proposalId].hasVoted[_voter] = true;
 
-        if (_support == uint8(VoteType.NO)) {
-            proposals[_proposalId].noVotes += _weight;
-        } else if (_support == uint8(VoteType.YES)) {
-            proposals[_proposalId].yesVotes += _weight;
-        } else if (_support == uint8(VoteType.ABSTAIN)) {
-            proposals[_proposalId].abstainVotes += _weight;
+        if (_voteType == uint8(VoteType.NO)) {
+            proposalVotes[_proposalId].noVotes += _weight;
+        } else if (_voteType == uint8(VoteType.YES)) {
+            proposalVotes[_proposalId].yesVotes += _weight;
+        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
+            proposalVotes[_proposalId].abstainVotes += _weight;
         } else {
-            revert("Invalid value for enum VoteType"); // TODO making the param be VoteType removes this
+            revert("Invalid value for enum VoteType");
         }
 
-        emit Voted(_voter, _proposalId, _support, _weight);
+        emit Voted(_voter, _proposalId, _voteType, _weight);
     }
 
     /**
@@ -115,7 +111,7 @@ abstract contract BaseTokenVoting is BaseStrategy {
      * @return bool true if the address has voted on the Proposal, otherwise false
      */
     function hasVoted(uint256 _proposalId, address _address) public view returns (bool) {
-        return proposals[_proposalId].hasVoted[_address];
+        return proposalVotes[_proposalId].hasVoted[_address];
     }
 
     /**
@@ -134,18 +130,18 @@ abstract contract BaseTokenVoting is BaseStrategy {
             uint256 yesVotes,
             uint256 abstainVotes,
             uint256 votingStartBlock,
-            uint256 votingEndBlock // TODO what's this error here?
+            uint256 votingEndBlock
         )
     {
-        noVotes = proposals[_proposalId].noVotes;
-        yesVotes = proposals[_proposalId].yesVotes;
-        abstainVotes = proposals[_proposalId].abstainVotes;
-        votingStartBlock = proposals[_proposalId].votingStartBlock;
-        votingEndBlock = proposals[_proposalId].votingEndBlock;
+        noVotes = proposalVotes[_proposalId].noVotes;
+        yesVotes = proposalVotes[_proposalId].yesVotes;
+        abstainVotes = proposalVotes[_proposalId].abstainVotes;
+        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
+        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
     /// @inheritdoc BaseStrategy
     function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
-      return proposals[_proposalId].votingEndBlock;
+      return proposalVotes[_proposalId].votingEndBlock;
     }
 }

@@ -25,7 +25,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             address _azoriusModule,
             uint256 _votingPeriod,
             uint256 _quorumNumerator,
-            string memory _name
         ) = abi.decode(
                 initParams,
                 (
@@ -34,7 +33,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                     address,
                     uint256,
                     uint256,
-                    string
                 )
             );
         require(
@@ -42,7 +40,6 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             "Invalid governance token address"
         );
 
-        name = _name;
         governanceToken = _governanceToken;
         __Ownable_init();
         transferOwnership(_owner);
@@ -57,13 +54,13 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
      * Casts votes for a Proposal, equal to the caller's token delegation.
      *
      * @param _proposalId id of the Proposal to vote on
-     * @param _support Proposal support as defined in VoteType (NO, YES, ABSTAIN) TODO change all instances of "support" to voteType? or rename VoteType to SupportType?
+     * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)
      */
-    function vote(uint256 _proposalId, uint8 _support, bytes memory) external {
+    function vote(uint256 _proposalId, uint8 _voteType, bytes memory) external {
         _vote(
             _proposalId,
             msg.sender,
-            _support,
+            _voteType,
             getVotingWeight(msg.sender, _proposalId)
         );
     }
@@ -75,7 +72,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
      * quorum based on the supply at the time of a Proposal's creation.
      *
      * @param _blockNumber block number to calculate quorum at
-     * @return uint256 the number of votes needed for quorum TODO move this to BaseStrategy or BaseTokenVoting?
+     * @return uint256 the number of votes needed for quorum
      */
     function quorum(uint256 _blockNumber) public view override returns (uint256) {
         return
@@ -88,7 +85,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
      *
      * @param _voter address of the voter
      * @param _proposalId id of the Proposal
-     * @return uint256 the address' voting weight TODO change this to getVoteCount?
+     * @return uint256 the address' voting weight
      */
     function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
         return

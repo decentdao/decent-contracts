@@ -42,8 +42,6 @@ interface IBaseStrategy {
     /**
      * Returns the block number voting ends on a given Proposal.
      *
-     * TODO would uint64 be better here for both block number and proposalId? max value is 18446744073709551615, current Eth block is 16828775
-     *
      * @param _proposalId proposalId to check
      * @return uint256 block number when voting ends on the Proposal
      */

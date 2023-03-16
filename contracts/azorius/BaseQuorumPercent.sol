@@ -17,7 +17,7 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     function quorum(uint256 _blockNumber) public view virtual returns (uint256);
 
     function updateQuorumNumerator(uint256 _quorumNumerator) public virtual onlyOwner {
-        _updateQuorumNumerator(_quorumNumerator); // TODO WHYYYYY
+        _updateQuorumNumerator(_quorumNumerator);
     }
 
     function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual {

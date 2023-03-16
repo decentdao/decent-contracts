@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
 
     event AzoriusSet(address indexed azoriusModule);
-    event StrategySetUp(address indexed azoriusModule, address indexed owner); // TODO should this emit the strategy contract address?
+    event StrategySetUp(address indexed azoriusModule, address indexed owner);
 
     IAzorius public azoriusModule;
 
@@ -35,7 +35,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     }
 
     /**
-     * Sets the address of the Azorius module contract. TODO why is this internal function here? 
+     * Sets the address of the Azorius module contract.
      *
      * @param _azoriusModule address of the Azorius module
      */
@@ -47,14 +47,12 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     /// @inheritdoc IBaseStrategy
     function initializeProposal(bytes memory _data) external virtual;
 
-    /// TODO why are the rest of these three public when the interface is external?
+    /// @inheritdoc IBaseStrategy
+    function isPassed(uint256 _proposalId) external view virtual returns (bool);
 
     /// @inheritdoc IBaseStrategy
-    function isPassed(uint256 _proposalId) public view virtual returns (bool);
+    function isProposer(address _address) external view virtual returns (bool);
 
     /// @inheritdoc IBaseStrategy
-    function isProposer(address _address) public view virtual returns (bool);
-
-    /// @inheritdoc IBaseStrategy
-    function votingEndBlock(uint256 _proposalId) public view virtual returns (uint256);
+    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
 }
