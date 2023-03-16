@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "./interfaces/IBaseFreezeVoting.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
