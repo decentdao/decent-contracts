@@ -24,7 +24,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
             ERC20Votes _governanceToken,
             address _azoriusModule,
             uint256 _votingPeriod,
-            uint256 _quorumNumerator,
+            uint256 _quorumNumerator
         ) = abi.decode(
                 initParams,
                 (
@@ -32,7 +32,7 @@ contract LinearTokenVoting is BaseTokenVoting, BaseQuorumPercent {
                     ERC20Votes,
                     address,
                     uint256,
-                    uint256,
+                    uint256
                 )
             );
         require(
