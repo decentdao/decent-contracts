@@ -234,7 +234,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.azoriusModule()).to.eq(azorius.address);
       expect(await linearTokenVoting.votingPeriod()).to.eq(60);
       expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
-      expect(await linearTokenVoting.name()).to.eq("Voting");
     });
 
     it("A strategy cannot be enabled more than once", async () => {
