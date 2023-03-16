@@ -62,9 +62,7 @@ contract MultisigFreezeGuard is
         _updateExecutionPeriod(_executionPeriod);
         transferOwnership(_owner);
         freezeVoting = IBaseFreezeVoting(_freezeVoting);
-        childGnosisSafe = IGnosisSafe(
-            _childGnosisSafe == address(0) ? msg.sender : _childGnosisSafe // todo: can we remove this?
-        );
+        childGnosisSafe = IGnosisSafe(_childGnosisSafe);
 
         emit MultisigFreezeGuardSetup(
             msg.sender,
