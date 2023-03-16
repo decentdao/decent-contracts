@@ -7,6 +7,9 @@ import "./interfaces/IFractalModule.sol";
 contract FractalModule is IFractalModule, Module {
     mapping(address => bool) public controllers; // A DAO may authorize users to act on the behalf of the parent DAO.
 
+    event ControllersAdded(address[] controllers);
+    event ControllersRemoved(address[] controllers);
+
     error Unauthorized();
     error TxFailed();
 
