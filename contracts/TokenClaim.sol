@@ -26,7 +26,7 @@ contract TokenClaim is FactoryFriendly, ITokenClaim {
             address _parentToken,
             address _childToken,
             uint256 _parentAllocation
-        ) = abi.decode(initializeParams, (address, address, address, uint256));
+        ) = abi.decode(initializeParams, (address, uint256, address, address, uint256));
 
         funder = _childTokenFunder;
         deadline = _deadline;
