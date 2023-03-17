@@ -15,8 +15,8 @@ import {
   AzoriusFreezeGuard__factory,
   ERC20FreezeVoting,
   ERC20FreezeVoting__factory,
-  VotesToken,
-  VotesToken__factory,
+  VotesERC20,
+  VotesERC20__factory,
 } from "../typechain-types";
 
 import {
@@ -34,8 +34,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
   let azoriusModule: Azorius;
   let linearERC20Voting: LinearERC20Voting;
   let freezeVoting: ERC20FreezeVoting;
-  let parentVotesToken: VotesToken;
-  let childVotesToken: VotesToken;
+  let parentVotesERC20: VotesERC20;
+  let childVotesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 
   // Wallets
@@ -122,10 +122,10 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       predictedGnosisSafeAddress
     );
 
-    // Child Votes Token
-    childVotesToken = await new VotesToken__factory(deployer).deploy();
+    // Child ERC20 Token
+    childVotesERC20 = await new VotesERC20__factory(deployer).deploy();
 
-    const childVotesTokenSetupData = abiCoder.encode(
+    const childVotesERC20SetupData = abiCoder.encode(
       ["string", "string", "address[]", "uint256[]"],
       [
         "CHILD",
@@ -139,12 +139,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       ]
     );
 
-    await childVotesToken.setUp(childVotesTokenSetupData);
+    await childVotesERC20.setUp(childVotesERC20SetupData);
 
-    // Parent Votes Token
-    parentVotesToken = await new VotesToken__factory(deployer).deploy();
+    // Parent Votes ERC-20
+    parentVotesERC20 = await new VotesERC20__factory(deployer).deploy();
 
-    const parentVotesTokenSetupData = abiCoder.encode(
+    const parentVotesERC20SetupData = abiCoder.encode(
       ["string", "string", "address[]", "uint256[]"],
       [
         "PARENT",
@@ -154,19 +154,19 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       ]
     );
 
-    await parentVotesToken.setUp(parentVotesTokenSetupData);
+    await parentVotesERC20.setUp(parentVotesERC20SetupData);
 
     // Token holders delegate their votes to themselves
-    await childVotesToken
+    await childVotesERC20
       .connect(childTokenHolder1)
       .delegate(childTokenHolder1.address);
-    await childVotesToken
+    await childVotesERC20
       .connect(childTokenHolder2)
       .delegate(childTokenHolder2.address);
-    await parentVotesToken
+    await parentVotesERC20
       .connect(parentTokenHolder1)
       .delegate(parentTokenHolder1.address);
-    await parentVotesToken
+    await parentVotesERC20
       .connect(parentTokenHolder2)
       .delegate(parentTokenHolder2.address);
 
@@ -195,7 +195,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         ["address", "address", "address", "uint256", "uint256"],
         [
           mockParentDAO.address, // owner
-          childVotesToken.address, // governance token
+          childVotesERC20.address, // governance token
           azoriusModule.address, // Azorius module
           60, // voting period in blocks
           500000, // quorom numerator, denominator is 1,000,000
@@ -219,7 +219,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           150, // freeze votes threshold
           10, // freeze proposal duration in blocks
           100, // freeze duration in blocks
-          parentVotesToken.address,
+          parentVotesERC20.address,
         ]
       )
     );
@@ -280,19 +280,19 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     ).to.emit(childGnosisSafe, "ExecutionSuccess");
 
     // Gnosis Safe received the 1,000 tokens
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
   });
 
   describe("FreezeGuard Functionality", () => {
     it("A proposal can be created and executed", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
       const proposalTransaction = {
-        to: childVotesToken.address,
+        to: childVotesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -324,15 +324,15 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       // Proposal is executable
       expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+      expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(
         100
       );
-      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await azoriusModule.executeProposal(
         0,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData],
         [0]
@@ -341,44 +341,44 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       // Proposal is executed
       expect(await azoriusModule.proposalState(0)).to.eq(3);
 
-      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+      expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(
         90
       );
-      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+      expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
     });
 
     it("A proposal containing multiple transactions can be created and executed", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1]
       );
 
-      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 2]
       );
 
-      const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 3]
       );
 
       const proposalTransactions = [
         {
-          to: childVotesToken.address,
+          to: childVotesERC20.address,
           value: BigNumber.from(0),
           data: tokenTransferData1,
           operation: 0,
         },
         {
-          to: childVotesToken.address,
+          to: childVotesERC20.address,
           value: BigNumber.from(0),
           data: tokenTransferData2,
           operation: 0,
         },
         {
-          to: childVotesToken.address,
+          to: childVotesERC20.address,
           value: BigNumber.from(0),
           data: tokenTransferData3,
           operation: 0,
@@ -408,18 +408,18 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       // Proposal is executable
       expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+      expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(
         100
       );
-      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await azoriusModule.executeProposal(
         0,
         [
-          childVotesToken.address,
-          childVotesToken.address,
-          childVotesToken.address,
+          childVotesERC20.address,
+          childVotesERC20.address,
+          childVotesERC20.address,
         ],
         [0, 0, 0],
         [tokenTransferData1, tokenTransferData2, tokenTransferData3],
@@ -430,45 +430,45 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       expect(await azoriusModule.proposalState(0)).to.eq(3);
 
       // Check that all three token transfer TX's were executed
-      expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(
+      expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(
         94
       );
-      expect(await childVotesToken.balanceOf(deployer.address)).to.eq(6);
+      expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(6);
     });
 
     it("A frozen DAO cannot execute any transaction", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 10]
       );
 
-      const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 5]
       );
 
-      const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 4]
       );
 
       const proposalTransaction1 = {
-        to: childVotesToken.address,
+        to: childVotesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData1,
         operation: 0,
       };
 
       const proposalTransaction2 = {
-        to: childVotesToken.address,
+        to: childVotesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData2,
         operation: 0,
       };
 
       const proposalTransaction3 = {
-        to: childVotesToken.address,
+        to: childVotesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData3,
         operation: 0,
@@ -537,7 +537,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       await expect(
         azoriusModule.executeProposal(
           0,
-          [childVotesToken.address],
+          [childVotesERC20.address],
           [0],
           [tokenTransferData1],
           [0]
@@ -548,7 +548,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       await expect(
         azoriusModule.executeProposal(
           1,
-          [childVotesToken.address],
+          [childVotesERC20.address],
           [0],
           [tokenTransferData2],
           [0]
@@ -559,7 +559,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       await expect(
         azoriusModule.executeProposal(
           2,
-          [childVotesToken.address],
+          [childVotesERC20.address],
           [0],
           [tokenTransferData3],
           [0]
@@ -570,13 +570,13 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
   it("A proposal can still be executed if a freeze proposal has been created, but threshold has not been met", async () => {
     // Create transaction to transfer tokens to the deployer
-    const tokenTransferData = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 10]
     );
 
     const proposalTransaction = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData,
       operation: 0,
@@ -615,13 +615,13 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Proposal is ready to execute
     expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
     await azoriusModule.executeProposal(
       0,
-      [childVotesToken.address],
+      [childVotesERC20.address],
       [0],
       [tokenTransferData],
       [0]
@@ -630,31 +630,31 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Proposal is executed
     expect(await azoriusModule.proposalState(0)).to.eq(3);
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(90);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
   });
 
   it("A frozen DAO is automatically unfrozen after the freeze duration is over", async () => {
     // Create transaction to transfer tokens to the deployer
-    const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 10]
     );
 
-    const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 5]
     );
 
     const proposalTransaction1 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData1,
       operation: 0,
     };
 
     const proposalTransaction2 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData2,
       operation: 0,
@@ -710,7 +710,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     await expect(
       azoriusModule.executeProposal(
         0,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData1],
         [0]
@@ -721,7 +721,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     await expect(
       azoriusModule.executeProposal(
         1,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData2],
         [0]
@@ -733,13 +733,13 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       await network.provider.send("evm_mine");
     }
 
-    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 4]
     );
 
     const proposalTransaction3 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData3,
       operation: 0,
@@ -769,13 +769,13 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Proposal is ready to execute
     expect(await azoriusModule.proposalState(2)).to.eq(2);
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
     await azoriusModule.executeProposal(
       2,
-      [childVotesToken.address],
+      [childVotesERC20.address],
       [0],
       [tokenTransferData3],
       [0]
@@ -784,43 +784,43 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Proposal is executed
     expect(await azoriusModule.proposalState(2)).to.eq(3);
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(96);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(4);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(96);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(4);
   });
 
   it("A frozen DAO can be unfrozen by its owner, and continue to execute TX's", async () => {
     // Create transaction to transfer tokens to the deployer
-    const tokenTransferData1 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 10]
     );
 
-    const tokenTransferData2 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 5]
     );
 
-    const tokenTransferData3 = childVotesToken.interface.encodeFunctionData(
+    const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
       "transfer",
       [deployer.address, 4]
     );
 
     const proposalTransaction1 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData1,
       operation: 0,
     };
 
     const proposalTransaction2 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData2,
       operation: 0,
     };
 
     const proposalTransaction3 = {
-      to: childVotesToken.address,
+      to: childVotesERC20.address,
       value: BigNumber.from(0),
       data: tokenTransferData3,
       operation: 0,
@@ -891,7 +891,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     await expect(
       azoriusModule.executeProposal(
         0,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData1],
         [0]
@@ -902,7 +902,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     await expect(
       azoriusModule.executeProposal(
         1,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData2],
         [0]
@@ -913,7 +913,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     await expect(
       azoriusModule.executeProposal(
         2,
-        [childVotesToken.address],
+        [childVotesERC20.address],
         [0],
         [tokenTransferData3],
         [0]
@@ -926,20 +926,20 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Child DAO is now unfrozen
     expect(await freezeVoting.isFrozen()).to.eq(false);
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(100);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(0);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
     // Execute the transaction
     await azoriusModule.executeProposal(
       0,
-      [childVotesToken.address],
+      [childVotesERC20.address],
       [0],
       [tokenTransferData1],
       [0]
     );
 
-    expect(await childVotesToken.balanceOf(childGnosisSafe.address)).to.eq(90);
-    expect(await childVotesToken.balanceOf(deployer.address)).to.eq(10);
+    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(90);
+    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
   });
 
   it("Freeze state values are updated correctly throughout the freeze process", async () => {

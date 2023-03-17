@@ -11,8 +11,8 @@ import {
   LinearERC20Voting__factory,
   Azorius,
   Azorius__factory,
-  VotesToken,
-  VotesToken__factory,
+  VotesERC20,
+  VotesERC20__factory,
 } from "../typechain-types";
 
 import {
@@ -28,7 +28,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   let gnosisSafe: GnosisSafe;
   let azorius: Azorius;
   let linearERC20Voting: LinearERC20Voting;
-  let votesToken: VotesToken;
+  let votesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 
   // Wallets
@@ -115,10 +115,10 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       predictedGnosisSafeAddress
     );
 
-    // Votes Token
-    votesToken = await new VotesToken__factory(deployer).deploy();
+    // Votes ERC-20
+    votesERC20 = await new VotesERC20__factory(deployer).deploy();
 
-    const votesTokenSetupData = abiCoder.encode(
+    const votesERC20SetupData = abiCoder.encode(
       ["string", "string", "address[]", "uint256[]"],
       [
         "DCNT",
@@ -133,16 +133,16 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ]
     );
 
-    await votesToken.setUp(votesTokenSetupData);
+    await votesERC20.setUp(votesERC20SetupData);
 
     // Token holders delegate votes
     // Token holder 1 delegates to token holder 2, so final vote counts should be:
     // tokenHolder1 => 0
     // tokenHolder2 => 300
     // tokenHolder3 => 300
-    await votesToken.connect(tokenHolder1).delegate(tokenHolder2.address);
-    await votesToken.connect(tokenHolder2).delegate(tokenHolder2.address);
-    await votesToken.connect(tokenHolder3).delegate(tokenHolder3.address);
+    await votesERC20.connect(tokenHolder1).delegate(tokenHolder2.address);
+    await votesERC20.connect(tokenHolder2).delegate(tokenHolder2.address);
+    await votesERC20.connect(tokenHolder3).delegate(tokenHolder3.address);
 
     // Deploy Azorius module
     azorius = await new Azorius__factory(deployer).deploy();
@@ -168,7 +168,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ["address", "address", "address", "uint256", "uint256"],
       [
         gnosisSafeOwner.address, // owner
-        votesToken.address, // governance token
+        votesERC20.address, // governance token
         azorius.address, // Azorius module
         60, // voting period in blocks
         500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
@@ -222,14 +222,14 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     ).to.emit(gnosisSafe, "ExecutionSuccess");
 
     // Gnosis Safe received the 1,000 tokens
-    expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
+    expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
   });
 
   describe("Safe with Azorius module and linearERC20Voting", () => {
     it("Gets correctly initialized", async () => {
       expect(await linearERC20Voting.owner()).to.eq(gnosisSafeOwner.address);
       expect(await linearERC20Voting.governanceToken()).to.eq(
-        votesToken.address
+        votesERC20.address
       );
       expect(await linearERC20Voting.azoriusModule()).to.eq(azorius.address);
       expect(await linearERC20Voting.votingPeriod()).to.eq(60);
@@ -319,13 +319,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal cannot be submitted if the specified strategy has not been enabled", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -334,7 +334,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Use an incorrect address for the strategy
       await expect(
         azorius.submitProposal(
-          votesToken.address,
+          votesERC20.address,
           "0x",
           [proposalTransaction],
           ""
@@ -365,13 +365,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Votes cannot be cast after the voting period has ended", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -398,13 +398,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A voter cannot vote more than once on a proposal", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -429,13 +429,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Correctly counts proposal Yes votes", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -471,13 +471,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Correctly counts proposal No votes", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -513,13 +513,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Correctly counts proposal Abstain votes", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -555,13 +555,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal is passed with enough Yes votes and quorum", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -594,13 +594,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal is not passed if there are more No votes than Yes votes", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -633,7 +633,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       await expect(
         azorius.executeProposal(
           0,
-          [votesToken.address],
+          [votesERC20.address],
           [0],
           [tokenTransferData],
           [0]
@@ -643,13 +643,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal is not passed if quorum is not reached", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -678,7 +678,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       await expect(
         azorius.executeProposal(
           0,
-          [votesToken.address],
+          [votesERC20.address],
           [0],
           [tokenTransferData],
           [0]
@@ -691,13 +691,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal is not passed if voting period is not over", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -724,7 +724,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       await expect(
         azorius.executeProposal(
           0,
-          [votesToken.address],
+          [votesERC20.address],
           [0],
           [tokenTransferData],
           [0]
@@ -737,13 +737,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Submitting a proposal emits the event with the associated proposal metadata", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -781,13 +781,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("A proposal can be created and executed", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -819,20 +819,20 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await azorius.executeProposal(
         0,
-        [votesToken.address],
+        [votesERC20.address],
         [0],
         [tokenTransferData],
         [0]
       );
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(600);
 
       // Proposal is in the executed state
       expect(await azorius.proposalState(0)).to.eq(3);
@@ -840,37 +840,37 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Multiple transactions can be executed from a single proposal", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 100]
       );
 
-      const tokenTransferData2 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData2 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 200]
       );
 
-      const tokenTransferData3 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData3 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 300]
       );
 
       const proposalTransaction1 = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData1,
         operation: 0,
       };
 
       const proposalTransaction2 = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData2,
         operation: 0,
       };
 
       const proposalTransaction3 = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData3,
         operation: 0,
@@ -902,20 +902,20 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await azorius.executeProposal(
         0,
-        [votesToken.address, votesToken.address, votesToken.address],
+        [votesERC20.address, votesERC20.address, votesERC20.address],
         [0, 0, 0],
         [tokenTransferData1, tokenTransferData2, tokenTransferData3],
         [0, 0, 0]
       );
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(600);
 
       // Proposal is executed
       expect(await azorius.proposalState(0)).to.eq(3);
@@ -923,13 +923,13 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
     it("Executing a proposal reverts if the transaction cannot be executed", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 700]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -961,14 +961,14 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
       await expect(
         azorius.executeProposal(
           0,
-          [votesToken.address],
+          [votesERC20.address],
           [0],
           [tokenTransferData],
           [0]
@@ -978,19 +978,19 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(600);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
     });
 
     it("If a proposal is not executed during the execution period, it becomes expired", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 600]
       );
 
       const proposalTransaction = {
-        to: votesToken.address,
+        to: votesERC20.address,
         value: BigNumber.from(0),
         data: tokenTransferData,
         operation: 0,
@@ -1032,7 +1032,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       await expect(
         azorius.executeProposal(
           0,
-          [votesToken.address],
+          [votesERC20.address],
           [0],
           [tokenTransferData],
           [0]

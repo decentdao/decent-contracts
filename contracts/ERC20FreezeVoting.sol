@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /// @notice A contract for casting freeze votes with an ERC20 votes token
 contract ERC20FreezeVoting is BaseFreezeVoting {
-    IVotes public votesToken;
+    IVotes public votesERC20;
 
     event ERC20FreezeVotingSetup(
         address indexed owner,
-        address indexed votesToken
+        address indexed votesERC20
     );
 
     error NoVotes();
@@ -25,7 +25,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
             uint256 _freezeVotesThreshold,
             uint256 _freezeProposalPeriod,
             uint256 _freezePeriod,
-            address _votesToken
+            address _votesERC20
         ) = abi.decode(
                 initializeParams,
                 (address, uint256, uint256, uint256, address)
@@ -37,9 +37,9 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
         _updateFreezePeriod(_freezePeriod);
         freezePeriod = _freezePeriod;
-        votesToken = IVotes(_votesToken);
+        votesERC20 = IVotes(_votesERC20);
 
-        emit ERC20FreezeVotingSetup(_owner, _votesToken);
+        emit ERC20FreezeVotingSetup(_owner, _votesERC20);
     }
 
     /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
@@ -50,7 +50,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
             // Create freeze proposal, set total votes to msg.sender's vote count
             freezeProposalCreatedBlock = block.number;
 
-            userVotes = votesToken.getPastVotes(
+            userVotes = votesERC20.getPastVotes(
                 msg.sender,
                 freezeProposalCreatedBlock - 1
             );
@@ -65,7 +65,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
             if (userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock])
                 revert AlreadyVoted();
 
-            userVotes = votesToken.getPastVotes(
+            userVotes = votesERC20.getPastVotes(
                 msg.sender,
                 freezeProposalCreatedBlock - 1
             );

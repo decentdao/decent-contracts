@@ -4,8 +4,8 @@ import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
 import time from "./time";
 import {
-  VotesToken,
-  VotesToken__factory,
+  VotesERC20,
+  VotesERC20__factory,
   ERC20FreezeVoting,
   ERC20FreezeVoting__factory,
   MultisigFreezeGuard,
@@ -29,7 +29,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
   let gnosisSafe: Contract;
   let freezeGuard: MultisigFreezeGuard;
   let freezeVoting: ERC20FreezeVoting;
-  let votesToken: VotesToken;
+  let votesERC20: VotesERC20;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -113,10 +113,10 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     );
 
     // Deploy token, allocate supply to two token vetoers and Gnosis Safe
-    votesToken = await new VotesToken__factory(deployer).deploy();
+    votesERC20 = await new VotesERC20__factory(deployer).deploy();
 
     const abiCoder = new ethers.utils.AbiCoder(); // encode data
-    const votesTokenSetupData = abiCoder.encode(
+    const votesERC20SetupData = abiCoder.encode(
       ["string", "string", "address[]", "uint256[]"],
       [
         "DCNT",
@@ -126,11 +126,11 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ]
     );
 
-    await votesToken.setUp(votesTokenSetupData);
+    await votesERC20.setUp(votesERC20SetupData);
 
     // Vetoers delegate their votes to themselves
-    await votesToken.connect(tokenVetoer1).delegate(tokenVetoer1.address);
-    await votesToken.connect(tokenVetoer2).delegate(tokenVetoer2.address);
+    await votesERC20.connect(tokenVetoer1).delegate(tokenVetoer1.address);
+    await votesERC20.connect(tokenVetoer2).delegate(tokenVetoer2.address);
 
     // Deploy ERC20FreezeVoting contract
     freezeVoting = await new ERC20FreezeVoting__factory(deployer).deploy();
@@ -157,7 +157,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         1090, // freeze votes threshold
         10, // freeze proposal period
         200, // freeze period
-        votesToken.address,
+        votesERC20.address,
         freezeGuard.address,
       ]
     );
@@ -197,7 +197,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     ).to.emit(gnosisSafe, "ExecutionSuccess");
 
     // Gnosis Safe received the 1,000 tokens
-    expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1000);
+    expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(1000);
   });
 
   describe("FreezeGuard Functionality", () => {
@@ -228,13 +228,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     it("A transaction can be timelocked and executed", async () => {
       // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -275,19 +275,19 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         signatureBytes
       );
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
-      expect(await votesToken.balanceOf(deployer.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
     });
 
     it("A transaction cannot be executed if it hasn't yet been timelocked", async () => {
       // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -317,13 +317,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     it("A transaction cannot be timelocked if the signatures aren't valid", async () => {
       // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -351,13 +351,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     it("A transaction cannot be executed if the timelock period has not ended yet", async () => {
       // Create transaction to set the guard address
-      const tokenTransferData = votesToken.interface.encodeFunctionData(
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -406,13 +406,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -499,13 +499,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
@@ -581,13 +581,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
-      const tokenTransferData1 = votesToken.interface.encodeFunctionData(
+      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
         "transfer",
         [deployer.address, 1000]
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesToken.address,
+        to: votesERC20.address,
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await gnosisSafe.nonce(),
