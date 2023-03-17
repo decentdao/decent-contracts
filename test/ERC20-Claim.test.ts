@@ -59,11 +59,12 @@ describe("ERC-20 Token Claiming", function () {
 
     await childERC20.setUp(childERC20SetupData);
 
+    const latestBlock = await ethers.provider.getBlock("latest");
     const erc20ClaimSetupData = abiCoder.encode(
       ["address", "uint256", "address", "address", "uint256"],
       [
         deployer.address,
-        5,
+        latestBlock.number + 5,
         parentERC20.address,
         childERC20.address,
         ethers.utils.parseUnits("100", 18),
