@@ -314,7 +314,7 @@ contract Azorius is Module, IAzorius {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
-        } else if (_proposal.txHashes.length == 0) {
+        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             // a Proposal with 0 transactions goes straight to EXECUTED
             // this allows for the potential for on-chain voting for 
             // "off-chain" executed decisions
@@ -323,8 +323,6 @@ contract Azorius is Module, IAzorius {
             block.number <= votingEndBlock + _proposal.timelockPeriod
         ) {
             return ProposalState.TIMELOCKED;
-        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
-            return ProposalState.EXECUTED;
         } else if (
             block.number <=
             votingEndBlock +
