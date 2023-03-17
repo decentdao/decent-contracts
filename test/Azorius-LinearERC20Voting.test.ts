@@ -342,13 +342,6 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).to.be.revertedWith("StrategyDisabled()");
     });
 
-    it("A proposal cannot be submitted if it contains zero transactions", async () => {
-      // Submit transactions as empty array
-      await expect(
-        azorius.submitProposal(linearERC20Voting.address, "0x", [], "")
-      ).to.be.revertedWith("InvalidProposal");
-    });
-
     it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
       // Submit call from address that isn't Azorius module
       await expect(linearERC20Voting.initializeProposal([])).to.be.revertedWith(
@@ -1038,6 +1031,27 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           [0]
         )
       ).to.be.revertedWith("ProposalNotExecutable()");
+    });
+
+    it("A proposal with no transactions that passes goes immediately to executed", async () => {
+      await azorius.submitProposal(linearERC20Voting.address, "0x", [], "");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+
+      // Users vote in support of proposal
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      await expect(await linearERC20Voting.isPassed(0)).to.be.true;
+
+      // Proposal is executed
+      await expect(await azorius.proposalState(0)).to.eq(3);
     });
   });
 });

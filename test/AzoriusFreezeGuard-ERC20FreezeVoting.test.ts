@@ -263,7 +263,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     const signatureBytes = buildSignatureBytes(sigs);
 
-    // Execute transaction that adds the Azoruis module to the Safe
+    // Execute transaction that adds the Azorius module to the Safe
     await expect(
       childGnosisSafe.execTransaction(
         enableAzoriusModuleTx.to,

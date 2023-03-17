@@ -5,18 +5,52 @@ import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import "./interfaces/IBaseStrategy.sol";
 import "./interfaces/IAzorius.sol";
 
+/**
+ * @title Azorius Protocol - a Safe module which allows for composable governance.
+ * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ */
 contract Azorius is Module, IAzorius {
+
+    /**
+     * The sentinel node of the linked list of enabled BaseStrategies.
+     * https://en.wikipedia.org/wiki/Sentinel_node
+     */
+    address internal constant SENTINEL_STRATEGY = address(0x1);
+
+    /**
+     * keccak256(
+     *      "EIP712Domain(uint256 chainId,address verifyingContract)"
+     * );
+     *
+     * A unique hash intended to prevent signature collisions.
+     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     */
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+
+    /**
+     * keccak256(
+     *      "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
+     * );
+     *
+     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     */
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
-    uint256 public totalProposalCount; // Total number of submitted proposals
-    uint256 public timelockPeriod; // Delay in blocks between a proposal is passed and can be executed
-    uint256 public executionPeriod; // Delay in blocks between when timelock ends and proposal expires
-    address internal constant SENTINEL_STRATEGY = address(0x1);
-    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
-    mapping(address => address) internal strategies;
 
+    uint256 public totalProposalCount; // total number of submitted proposals
+    uint256 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
+    uint256 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
+
+    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
+    mapping(address => address) internal strategies; // linked list of BaseStrategies
+
+    event AzoriusSetUp(
+        address indexed creator,
+        address indexed owner,
+        address indexed avatar,
+        address target
+    );
     event ProposalCreated(
         address strategy,
         uint256 proposalId,
@@ -24,14 +58,7 @@ contract Azorius is Module, IAzorius {
         Transaction[] transactions,
         string metadata
     );
-
     event ProposalExecuted(uint256 proposalId, bytes32[] txHashes);
-    event AzoriusSetup(
-        address indexed creator,
-        address indexed owner,
-        address indexed avatar,
-        address target
-    );
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
     event TimelockPeriodUpdated(uint256 timelockPeriod);
@@ -64,12 +91,12 @@ contract Azorius is Module, IAzorius {
         __Ownable_init();
         avatar = _avatar;
         target = _target;
-        _setupStrategies(_strategies);
+        _setUpStrategies(_strategies);
         transferOwnership(_owner);
         _updateTimelockPeriod(_timelockPeriod);
         _updateExecutionPeriod(_executionPeriod);
 
-        emit AzoriusSetup(msg.sender, _owner, _avatar, _target);
+        emit AzoriusSetUp(msg.sender, _owner, _avatar, _target);
     }
 
     /// @inheritdoc IAzorius
@@ -123,7 +150,6 @@ contract Azorius is Module, IAzorius {
         string calldata _metadata
     ) external {
         if (!isStrategyEnabled(_strategy)) revert StrategyDisabled();
-        if (_transactions.length == 0) revert InvalidProposal();
         if (!IBaseStrategy(_strategy).isProposer(msg.sender))
             revert InvalidProposer();
 
@@ -232,7 +258,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _strategies array of BaseStrategy contract addresses to enable
      */
-    function _setupStrategies(address[] memory _strategies) internal {
+    function _setUpStrategies(address[] memory _strategies) internal {
         if (strategies[SENTINEL_STRATEGY] != address(0))
             revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
@@ -323,10 +349,13 @@ contract Azorius is Module, IAzorius {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
+        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
+            // a Proposal with 0 transactions goes straight to EXECUTED
+            // this allows for the potential for on-chain voting for 
+            // "off-chain" executed decisions
+            return ProposalState.EXECUTED;
         } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {
             return ProposalState.TIMELOCKED;
-        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
-            return ProposalState.EXECUTED;
         } else if (
             block.number <=
             votingEndBlock +
@@ -396,11 +425,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function getProposal(
-        uint256 _proposalId
-    )
-        external
-        view
+    function getProposal(uint256 _proposalId) external view
         returns (
             address _strategy,
             bytes32[] memory _txHashes,

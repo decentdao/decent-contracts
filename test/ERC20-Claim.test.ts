@@ -7,6 +7,7 @@ import {
 } from "../typechain-types";
 import chai from "chai";
 import { ethers } from "hardhat";
+import time from "./time";
 
 const expect = chai.expect;
 
@@ -147,6 +148,26 @@ describe("ERC-20 Token Claiming", function () {
   it("Should revert without an allocation", async () => {
     await expect(erc20Claim.claimToken(userB.address)).to.revertedWith(
       "NoAllocation()"
+    );
+  });
+
+  it("Should revert a non funder reclaim", async () => {
+    await expect(erc20Claim.connect(userA).reclaim()).to.revertedWith(
+      "NotTheFunder()"
+    );
+  });
+
+  it("Should revert an unexpired reclaim", async () => {
+    await expect(erc20Claim.connect(deployer).reclaim()).to.revertedWith(
+      "DeadlinePending()"
+    );
+  });
+
+  it("Should allow an expired reclaim", async () => {
+    await time.advanceBlocks(5);
+    await erc20Claim.connect(deployer).reclaim();
+    expect(await childERC20.balanceOf(deployer.address)).to.eq(
+      ethers.utils.parseUnits("100", 18)
     );
   });
 });

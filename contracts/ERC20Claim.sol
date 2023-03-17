@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract ERC20Claim is FactoryFriendly, IERC20Claim {
     using SafeERC20 for IERC20;
 
+    address public funder;
+    uint256 public deadlineBlock;
     address public childERC20;
     address public parentERC20;
     uint256 public snapShotId;
@@ -23,11 +25,16 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     error NoAllocation();
     error AllocationClaimed();
+    error NotTheFunder();
+    error NoDeadline();
+    error DeadlinePending();
+    
     event ERC20ClaimCreated(
         address parentToken,
         address childToken,
         uint256 parentAllocation,
-        uint256 snapshotId
+        uint256 snapshotId,
+        uint256 deadline
     );
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
@@ -36,11 +43,14 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         __Ownable_init();
         (
             address _childTokenFunder,
+            uint256 _deadlineBlock,
             address _parentERC20,
             address _childERC20,
             uint256 _parentAllocation
-        ) = abi.decode(initializeParams, (address, address, address, uint256));
+        ) = abi.decode(initializeParams, (address, uint256, address, address, uint256));
 
+        funder = _childTokenFunder;
+        deadlineBlock = _deadlineBlock;
         childERC20 = _childERC20;
         parentERC20 = _parentERC20;
         parentAllocation = _parentAllocation;
@@ -57,7 +67,8 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
             _parentERC20,
             _childERC20,
             _parentAllocation,
-            snapShotId
+            snapShotId,
+            _deadlineBlock
         );
     }
 
@@ -85,5 +96,14 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
                 : (VotesERC20(parentERC20).balanceOfAt(claimer, snapShotId) *
                     parentAllocation) /
                     VotesERC20(parentERC20).totalSupplyAt(snapShotId);
+    }
+
+    /// @notice Returns unclaimed tokens after the deadline to the funder.
+    function reclaim() external {
+        if (msg.sender != funder) revert NotTheFunder();
+        if (deadlineBlock == 0) revert NoDeadline();
+        if (block.number < deadlineBlock) revert DeadlinePending();
+        IERC20 token = IERC20(childERC20);
+        token.safeTransfer(funder, token.balanceOf(address(this)));
     }
 }
