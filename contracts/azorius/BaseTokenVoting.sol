@@ -3,148 +3,145 @@ pragma solidity ^0.8.0;
 
 import "./BaseStrategy.sol";
 
-/// @title An abstract contract used as a base for ERC-20 token voting strategies
+/**
+ * @title BaseTokenVoting - an abstract contract used as a base for ERC-20 token voting strategies.
+ */
 abstract contract BaseTokenVoting is BaseStrategy {
+
+    /**
+     * The voting options for a Proposal.
+     */
     enum VoteType {
-        NO,
-        YES,
-        ABSTAIN
+        NO,     // disapproves of executing the Proposal
+        YES,    // approves of executing the Proposal
+        ABSTAIN // neither YES nor NO, i.e. voting "present"
     }
 
-    struct ProposalVoting {
-        uint256 noVotes; // The total number of NO votes for this proposal
-        uint256 yesVotes; // The total number of YES votes for this proposal
-        uint256 abstainVotes; // The total number of ABSTAIN votes for this proposal
-        uint256 votingStartBlock; // The block the proposal voting starts
-        uint256 votingEndBlock; // The block voting ends for this proposal
-        mapping(address => bool) hasVoted;
+    /**
+     * Defines the current state of votes on a particular Proposal.
+     */
+    struct ProposalVotes {
+        uint256 noVotes; // current number of NO votes for the Proposal
+        uint256 yesVotes; // current number of YES votes for the Proposal
+        uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
+        uint256 votingStartBlock; // block that voting starts at
+        uint256 votingEndBlock; // block that voting ends
+        mapping(address => bool) hasVoted; // whether a given address has voted yet or not
     }
 
-    uint256 public votingPeriod; // The number of blocks a proposal can be voted on
-    string public name;
+    /** Number of blocks a new Proposal can be voted on. */
+    uint256 public votingPeriod;
 
-    mapping(uint256 => ProposalVoting) internal proposals;
+    /** proposalId to ProposalVotes, the voting state of a Proposal */
+    mapping(uint256 => ProposalVotes) internal proposalVotes;
 
-    event VotingPeriodUpdated(uint256 newVotingPeriod);
+    event VotingPeriodUpdated(uint256 votingPeriod);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
-    event Voted(
-        address voter,
-        uint256 proposalId,
-        uint8 support,
-        uint256 weight
-    );
+    event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight);
 
-    /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in blocks
-    function updateVotingPeriod(uint256 _newVotingPeriod) external onlyOwner {
-        _updateVotingPeriod(_newVotingPeriod);
+    /**
+     * Updates the voting time period for new Proposals.
+     *
+     * @param _votingPeriod voting time period (in blocks)
+     */
+    function updateVotingPeriod(uint256 _votingPeriod) external onlyOwner {
+        _updateVotingPeriod(_votingPeriod);
     }
 
-    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
-    /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(
-        bytes memory _data
-    ) external virtual override onlyAzorius {
+    /** Internal implementation of updateVotingPeriod above */
+    function _updateVotingPeriod(uint256 _votingPeriod) internal {
+        votingPeriod = _votingPeriod;
+        emit VotingPeriodUpdated(_votingPeriod);
+    }
+
+    /// @inheritdoc IBaseStrategy
+    function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
 
-        proposals[proposalId].votingEndBlock = _votingEndBlock;
-        proposals[proposalId].votingStartBlock = block.number;
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = block.number;
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
     }
-
-    /// @notice Updates the voting time period
-    /// @param _newVotingPeriod The voting time period in blocks
-    function _updateVotingPeriod(uint256 _newVotingPeriod) internal {
-        votingPeriod = _newVotingPeriod;
-
-        emit VotingPeriodUpdated(_newVotingPeriod);
-    }
     
-    /// @notice Function for counting a vote for a proposal, can only be called internally
-    /// @param _proposalId The ID of the proposal
-    /// @param _voter The address of the account casting the vote
-    /// @param _support Indicates vote support, which can be "No", "Yes", or "Abstain"
-    /// @param _weight The amount of voting weight cast
-    function _vote(
-        uint256 _proposalId,
-        address _voter,
-        uint8 _support,
-        uint256 _weight
-    ) internal {
+    /**
+     * Internal function for casting a vote on a Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @param _voter address casting the vote
+     * @param _voteType vote support, as defined in VoteType
+     * @param _weight amount of voting weight cast, typically the
+     *          total number of tokens delegated
+     */
+    function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal {
         require(
-            proposals[_proposalId].votingEndBlock != 0,
+            proposalVotes[_proposalId].votingEndBlock != 0,
             "Proposal has not been submitted yet"
         );
         require(
-            block.number <= proposals[_proposalId].votingEndBlock,
+            block.number <= proposalVotes[_proposalId].votingEndBlock,
             "Voting period has passed"
         );
         require(
-            !proposals[_proposalId].hasVoted[_voter],
+            !proposalVotes[_proposalId].hasVoted[_voter],
             "Voter has already voted"
         );
 
-        proposals[_proposalId].hasVoted[_voter] = true;
+        proposalVotes[_proposalId].hasVoted[_voter] = true;
 
-        if (_support == uint8(VoteType.NO)) {
-            proposals[_proposalId].noVotes += _weight;
-        } else if (_support == uint8(VoteType.YES)) {
-            proposals[_proposalId].yesVotes += _weight;
-        } else if (_support == uint8(VoteType.ABSTAIN)) {
-            proposals[_proposalId].abstainVotes += _weight;
+        if (_voteType == uint8(VoteType.NO)) {
+            proposalVotes[_proposalId].noVotes += _weight;
+        } else if (_voteType == uint8(VoteType.YES)) {
+            proposalVotes[_proposalId].yesVotes += _weight;
+        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
+            proposalVotes[_proposalId].abstainVotes += _weight;
         } else {
             revert("Invalid value for enum VoteType");
         }
 
-        emit Voted(_voter, _proposalId, _support, _weight);
+        emit Voted(_voter, _proposalId, _voteType, _weight);
     }
 
-    /// @notice Returns true if an account has voted on the specified proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @param _account The account address to check
-    /// @return bool Returns true if the account has already voted on the proposal
-    function hasVoted(
-        uint256 _proposalId,
-        address _account
-    ) public view returns (bool) {
-        return proposals[_proposalId].hasVoted[_account];
+    /**
+     * Returns whether an address has voted on the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal to check
+     * @param _address address to check
+     * @return bool true if the address has voted on the Proposal, otherwise false
+     */
+    function hasVoted(uint256 _proposalId, address _address) public view returns (bool) {
+        return proposalVotes[_proposalId].hasVoted[_address];
     }
 
-    /// @notice Returns the current state of the specified proposal
-    /// @param _proposalId The ID of the proposal to get
-    /// @return yesVotes The total count of "Yes" votes for the proposal
-    /// @return noVotes The total count of "No" votes for the proposal
-    /// @return abstainVotes The total count of "Abstain" votes for the proposal
-    /// @return votingStartBlock The block number that the proposal voting starts
-    /// @return votingEndBlock The block number that the proposal voting ends
-    function getProposal(
-        uint256 _proposalId
-    )
-        external
-        view
+    /**
+     * Returns the current state of the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @return noVotes current count of "NO" votes
+     * @return yesVotes current count of "YES" votes
+     * @return abstainVotes current count of "ABSTAIN" votes
+     * @return votingStartBlock block number voting starts
+     * @return votingEndBlock block number voting ends
+     */
+    function getProposal(uint256 _proposalId) external view
         returns (
-            uint256 yesVotes,
             uint256 noVotes,
+            uint256 yesVotes,
             uint256 abstainVotes,
             uint256 votingStartBlock,
             uint256 votingEndBlock
         )
     {
-        yesVotes = proposals[_proposalId].yesVotes;
-        noVotes = proposals[_proposalId].noVotes;
-        abstainVotes = proposals[_proposalId].abstainVotes;
-        votingStartBlock = proposals[_proposalId].votingStartBlock;
-        votingEndBlock = proposals[_proposalId].votingEndBlock;
+        noVotes = proposalVotes[_proposalId].noVotes;
+        yesVotes = proposalVotes[_proposalId].yesVotes;
+        abstainVotes = proposalVotes[_proposalId].abstainVotes;
+        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
+        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
-    /// @notice Returns the block that voting ends on the proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The block number voting ends on the proposal
-    function votingEndBlock(
-        uint256 _proposalId
-    ) public view override returns (uint256) {
-      return proposals[_proposalId].votingEndBlock;
+    /// @inheritdoc BaseStrategy
+    function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
+      return proposalVotes[_proposalId].votingEndBlock;
     }
 }

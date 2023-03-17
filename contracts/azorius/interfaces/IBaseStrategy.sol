@@ -2,30 +2,48 @@
 pragma solidity ^0.8.0;
 
 interface IBaseStrategy {
-    /// @notice Sets the address of the Azorius contract, only callable by owner
-    /// @param _azoriusModule The address of the Azorius module
+
+    /**
+     * Sets the address of the Azorius contract this BaseStrategy is being used on.
+     *
+     * @param _azoriusModule address of the Azorius Safe module
+     */
     function setAzorius(address _azoriusModule) external;
 
-    /// @notice Called by the proposal module, this notifes the strategy of a new proposal
-    /// @param _data Any extra data to pass to the voting strategy
-    function initializeProposal(
-        bytes memory _data
-    ) external;
+    /**
+     * Called by the Azorius module. This notifies this BaseStrategy that a new
+     * Proposal has been created.
+     *
+     * @param _data arbitrary data to pass to this BaseStrategy
+     */
+    function initializeProposal(bytes memory _data) external;
 
-    /// @notice Retruns if a proposal has succeeded
-    /// @param _proposalId The proposalId to check
-    /// @return bool Returns true if the proposal has passed
+    /**
+     * Returns whether a Proposal has been passed.
+     *
+     * @param _proposalId proposalId to check
+     * @return bool true if the proposal has passed, otherwise false
+     */
     function isPassed(uint256 _proposalId) external view returns (bool);
 
-    /// @notice Returns if the specified address can submit a proposal
-    /// @param _user The user address to check
-    /// @return bool True if the user can submit a proposal
-    function isProposer(address _user) external view returns (bool);
+    /**
+     * Returns whether the specified address can submit a Proposal with
+     * this BaseStrategy.
+     *
+     * This allows a BaseStrategy to place any limits it would like on
+     * who can create new Proposals, such as requiring a minimum token
+     * delegation.
+     *
+     * @param _address address to check
+     * @return bool true if the address can submit a Proposal, otherwise false
+     */
+    function isProposer(address _address) external view returns (bool);
 
-    /// @notice Returns the block number voting ends on the proposal
-    /// @param _proposalId The ID of the proposal to check
-    /// @return uint256 The block number voting ends on the proposal
-    function votingEndBlock(
-        uint256 _proposalId
-    ) external view returns (uint256);
+    /**
+     * Returns the block number voting ends on a given Proposal.
+     *
+     * @param _proposalId proposalId to check
+     * @return uint256 block number when voting ends on the Proposal
+     */
+    function votingEndBlock(uint256 _proposalId) external view returns (uint256);
 }

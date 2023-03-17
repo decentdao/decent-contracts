@@ -165,14 +165,13 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
     linearTokenVoting = await new LinearTokenVoting__factory(deployer).deploy();
 
     const linearTokenVotingSetupData = abiCoder.encode(
-      ["address", "address", "address", "uint256", "uint256", "string"],
+      ["address", "address", "address", "uint256", "uint256"],
       [
         gnosisSafeOwner.address, // owner
         votesToken.address, // governance token
         azorius.address, // Azorius module
         60, // voting period in blocks
         500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-        "Voting", // name
       ]
     );
 
@@ -235,7 +234,6 @@ describe("Safe with Azorius module and LinearTokenVoting", () => {
       expect(await linearTokenVoting.azoriusModule()).to.eq(azorius.address);
       expect(await linearTokenVoting.votingPeriod()).to.eq(60);
       expect(await linearTokenVoting.quorumNumerator()).to.eq(500000);
-      expect(await linearTokenVoting.name()).to.eq("Voting");
     });
 
     it("A strategy cannot be enabled more than once", async () => {
