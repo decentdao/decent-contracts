@@ -25,9 +25,7 @@ contract Azorius is Module, IAzorius {
         string metadata
     );
 
-    // todo: combine TransactionExecuted and TransactionExecutedBatch into single event
-    event TransactionExecuted(uint256 proposalId, bytes32 txHash);
-    event TransactionExecutedBatch(uint256 startIndex, uint256 endIndex);
+    event ProposalExecuted(uint256 proposalId, bytes32[] txHashes);
     event AzoriusSetup(
         address indexed creator,
         address indexed owner,
@@ -182,8 +180,9 @@ contract Azorius is Module, IAzorius {
             proposals[_proposalId].txHashes.length
         ) revert InvalidTxs();
         uint256 targetsLength = _targets.length;
+        bytes32[] memory txHashes = new bytes32[](targetsLength);
         for (uint256 i; i < targetsLength; ) {
-            _executeProposalTx(
+            txHashes[i] = _executeProposalTx(
                 _proposalId,
                 _targets[i],
                 _values[i],
@@ -191,13 +190,10 @@ contract Azorius is Module, IAzorius {
                 _operations[i]
             );
             unchecked {
-              ++i;
+                ++i;
             }
         }
-        emit TransactionExecutedBatch(
-            proposals[_proposalId].executionCounter,
-            proposals[_proposalId].executionCounter + _targets.length
-        );
+        emit ProposalExecuted(_proposalId, txHashes);
     }
 
     /**
@@ -216,19 +212,19 @@ contract Azorius is Module, IAzorius {
         uint256 _value,
         bytes memory _data,
         Enum.Operation _operation
-    ) internal {
+    ) internal returns (bytes32 txHash) {
         if (proposalState(_proposalId) != ProposalState.EXECUTABLE)
             revert ProposalNotExecutable();
-        bytes32 txHash = getTxHash(_target, _value, _data, _operation);
+        txHash = getTxHash(_target, _value, _data, _operation);
         if (
             proposals[_proposalId].txHashes[
                 proposals[_proposalId].executionCounter
             ] != txHash
         ) revert InvalidTxHash();
-        proposals[_proposalId].executionCounter++;
-        if (!exec(_target, _value, _data, _operation)) revert TxFailed();
 
-        emit TransactionExecuted(_proposalId, txHash);
+        proposals[_proposalId].executionCounter++;
+        
+        if (!exec(_target, _value, _data, _operation)) revert TxFailed();
     }
 
     /**
@@ -244,7 +240,7 @@ contract Azorius is Module, IAzorius {
         for (uint256 i; i < strategiesLength; ) {
             enableStrategy(_strategies[i]);
             unchecked {
-              ++i;
+                ++i;
             }
         }
     }
