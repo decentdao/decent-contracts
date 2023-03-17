@@ -163,37 +163,6 @@ contract Azorius is Module, IAzorius {
         totalProposalCount++;
     }
 
-    /**
-     * Executes the specified transaction in a Proposal, by index.
-     * Transactions in a proposal must be called in order.
-     *
-     * @param _proposalId identifier of the proposal
-     * @param _target contract to be called by the avatar
-     * @param _value ETH value to pass with the call
-     * @param _data data to be executed from the call
-     * @param _operation Call or Delegatecall
-     */
-    function _executeProposalTx(
-        uint256 _proposalId,
-        address _target,
-        uint256 _value,
-        bytes memory _data,
-        Enum.Operation _operation
-    ) internal {
-        if (proposalState(_proposalId) != ProposalState.EXECUTABLE)
-            revert ProposalNotExecutable();
-        bytes32 txHash = getTxHash(_target, _value, _data, _operation);
-        if (
-            proposals[_proposalId].txHashes[
-                proposals[_proposalId].executionCounter
-            ] != txHash
-        ) revert InvalidTxHash();
-        proposals[_proposalId].executionCounter++;
-        if (!exec(_target, _value, _data, _operation)) revert TxFailed();
-
-        emit TransactionExecuted(_proposalId, txHash);
-    }
-
     /// @inheritdoc IAzorius
     function executeProposal(
         uint256 _proposalId,
@@ -229,6 +198,37 @@ contract Azorius is Module, IAzorius {
             proposals[_proposalId].executionCounter,
             proposals[_proposalId].executionCounter + _targets.length
         );
+    }
+
+    /**
+     * Executes the specified transaction in a Proposal, by index.
+     * Transactions in a proposal must be called in order.
+     *
+     * @param _proposalId identifier of the proposal
+     * @param _target contract to be called by the avatar
+     * @param _value ETH value to pass with the call
+     * @param _data data to be executed from the call
+     * @param _operation Call or Delegatecall
+     */
+    function _executeProposalTx(
+        uint256 _proposalId,
+        address _target,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation
+    ) internal {
+        if (proposalState(_proposalId) != ProposalState.EXECUTABLE)
+            revert ProposalNotExecutable();
+        bytes32 txHash = getTxHash(_target, _value, _data, _operation);
+        if (
+            proposals[_proposalId].txHashes[
+                proposals[_proposalId].executionCounter
+            ] != txHash
+        ) revert InvalidTxHash();
+        proposals[_proposalId].executionCounter++;
+        if (!exec(_target, _value, _data, _operation)) revert TxFailed();
+
+        emit TransactionExecuted(_proposalId, txHash);
     }
 
     /**
