@@ -148,10 +148,6 @@ contract Azorius is Module, IAzorius {
     ) external {
         require(isStrategyEnabled(_strategy), "Voting strategy is not enabled");
         require(
-            _transactions.length > 0,
-            "Proposal must contain at least one transaction"
-        );
-        require(
             IBaseStrategy(_strategy).isProposer(msg.sender),
             "Caller cannot submit proposals"
         );
@@ -346,10 +342,13 @@ contract Azorius is Module, IAzorius {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
+        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
+            // a Proposal with 0 transactions goes straight to EXECUTED
+            // this allows for the potential for on-chain voting for 
+            // "off-chain" executed decisions
+            return ProposalState.EXECUTED;
         } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {
             return ProposalState.TIMELOCKED;
-        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
-            return ProposalState.EXECUTED;
         } else if (
             block.number <=
             votingEndBlock +
