@@ -36,7 +36,7 @@ const hardhatNetworkConfig = process.env.GOERLI_PROVIDER
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.18",
+    version: "0.8.19",
     settings: {
       optimizer: {
         enabled: true,

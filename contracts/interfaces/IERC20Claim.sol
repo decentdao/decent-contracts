@@ -1,22 +1,7 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
-interface ITokenClaim {
-    error NoAllocation();
-    error AllocationClaimed();
-    event TokenClaimCreated(
-        address parentToken,
-        address childToken,
-        uint256 parentAllocation,
-        uint256 snapshotId
-    );
-    event TokenClaimed(
-        address indexed pToken,
-        address indexed cToken,
-        address indexed claimer,
-        uint256 amount
-    );
-
+interface IERC20Claim {
     /// @notice This function allows pToken holders to claim cTokens
     /// @param claimer Address which is being claimed for
     function claimToken(address claimer) external;

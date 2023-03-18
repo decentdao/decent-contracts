@@ -1,13 +1,10 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 interface IFractalModule {
-    event ControllersAdded(address[] controllers);
-    event ControllersRemoved(address[] controllers);
-
     /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
     /// @param execTxData Data payload of module transaction.
     function execTx(bytes memory execTxData) external;

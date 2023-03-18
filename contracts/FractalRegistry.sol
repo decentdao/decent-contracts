@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "./interfaces/IFractalRegistry.sol";
 
@@ -8,6 +8,9 @@ import "./interfaces/IFractalRegistry.sol";
 /// @notice The name of the DAO and child->parent relationships are not stored and not verified anyhow.
 /// @notice So those events should be used only for visual representation and not actual business logic.
 contract FractalRegistry is IFractalRegistry {
+    event FractalNameUpdated(address indexed daoAddress, string daoName);
+    event FractalSubDAODeclared(address indexed parentDAOAddress, address indexed subDAOAddress);
+
     /// @notice Updates the DAO's registered name. It's not unique so shouldn't be used for differentiating DAOs anyhow
     /// @param _name The new DAO name. 
     function updateDAOName(string memory _name) external {

@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
 import {
-  VotesToken__factory,
+  VotesERC20__factory,
   FractalModule,
   FractalModule__factory,
   MultisigFreezeGuard,
@@ -291,19 +291,19 @@ describe("Fractal Module Tests", () => {
 
       // FUND SAFE
       const abiCoder = new ethers.utils.AbiCoder(); // encode data
-      const votesTokenSetupData = abiCoder.encode(
+      const votesERC20SetupData = abiCoder.encode(
         ["string", "string", "address[]", "uint256[]"],
         ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
       );
-      const votesToken = await new VotesToken__factory(deployer).deploy();
-      await votesToken.setUp(votesTokenSetupData);
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1000);
-      expect(await votesToken.balanceOf(owner1.address)).to.eq(0);
+      const votesERC20 = await new VotesERC20__factory(deployer).deploy();
+      await votesERC20.setUp(votesERC20SetupData);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(owner1.address)).to.eq(0);
 
       // CLAWBACK FUNDS
       const clawBackCalldata =
         // eslint-disable-next-line camelcase
-        VotesToken__factory.createInterface().encodeFunctionData("transfer", [
+        VotesERC20__factory.createInterface().encodeFunctionData("transfer", [
           owner1.address,
           500,
         ]);
@@ -311,12 +311,12 @@ describe("Fractal Module Tests", () => {
         // eslint-disable-next-line camelcase
         abiCoder.encode(
           ["address", "uint256", "bytes", "uint8"],
-          [votesToken.address, 0, clawBackCalldata, 0]
+          [votesERC20.address, 0, clawBackCalldata, 0]
         );
 
       // REVERT => NOT AUTHORIZED
       await expect(fractalModule.execTx(txData)).to.be.revertedWith(
-        "Not Authorized"
+        "Unauthorized()"
       );
 
       // OWNER MAY EXECUTE
@@ -334,10 +334,10 @@ describe("Fractal Module Tests", () => {
       // REVERT => Execution Failure
       await expect(
         fractalModule.connect(owner1).execTx(txData)
-      ).to.be.revertedWith("Module transaction failed");
+      ).to.be.revertedWith("TxFailed()");
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
-      expect(await votesToken.balanceOf(owner1.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(owner1.address)).to.eq(1000);
     });
   });
 });

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "./interfaces/IAzorius.sol";
 import "./interfaces/IBaseStrategy.sol";
@@ -14,6 +14,8 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     event AzoriusSet(address indexed azoriusModule);
     event StrategySetUp(address indexed azoriusModule, address indexed owner);
 
+    error OnlyAzorius();
+
     IAzorius public azoriusModule;
 
     /**
@@ -21,10 +23,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
      * can call functions on it.
      */
     modifier onlyAzorius() {
-        require(
-            msg.sender == address(azoriusModule),
-            "Only callable by Azorius module"
-        );
+        if (msg.sender != address(azoriusModule)) revert OnlyAzorius();
         _;
     }
 

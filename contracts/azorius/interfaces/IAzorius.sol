@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
@@ -112,7 +112,7 @@ interface IAzorius {
      * @param _data transaction data to be executed
      * @param _operations Calls or Delegatecalls
      */
-    function executeProposalBatch(
+    function executeProposal(
         uint256 _proposalId,
         address[] memory _targets,
         uint256[] memory _values,

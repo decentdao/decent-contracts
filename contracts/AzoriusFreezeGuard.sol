@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "./interfaces/IBaseFreezeVoting.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
@@ -16,6 +16,8 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
         address indexed owner,
         address indexed freezeVoting
     );
+
+    error DAOFrozen();
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -47,7 +49,7 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
         bytes memory,
         address
     ) external view override(BaseGuard, IGuard) {
-        require(!freezeVoting.isFrozen(), "DAO is frozen");
+        if(freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -12,6 +12,9 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     uint256 public quorumNumerator;
     uint256 public constant QUORUM_DENOMINATOR = 1_000_000;
 
+    error InvalidQuorumNumerator();
+
+
     event QuorumNumeratorUpdated(uint256 quorumNumerator);
 
     function quorum(uint256 _blockNumber) public view virtual returns (uint256);
@@ -21,10 +24,8 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     }
 
     function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual {
-        require(
-            quorumNumerator <= QUORUM_DENOMINATOR,
-            "quorumNumerator cannot be greater than quorumDenominator"
-        );
+        if (_quorumNumerator > QUORUM_DENOMINATOR)
+            revert InvalidQuorumNumerator();
 
         quorumNumerator = _quorumNumerator;
 

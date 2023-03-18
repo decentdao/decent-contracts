@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity =0.8.19;
 
 import "./BaseFreezeVoting.sol";
 import "./interfaces/IGnosisSafe.sol";
@@ -8,7 +8,13 @@ import "./interfaces/IGnosisSafe.sol";
 contract MultisigFreezeVoting is BaseFreezeVoting {
     IGnosisSafe public parentGnosisSafe;
 
-    event MultisigFreezeVotingSetup(address indexed owner, address indexed parentGnosisSafe);
+    event MultisigFreezeVotingSetup(
+        address indexed owner,
+        address indexed parentGnosisSafe
+    );
+
+    error NotOwner();
+    error AlreadyVoted();
 
     /// @notice Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
@@ -36,11 +42,9 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
 
     /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
     function castFreezeVote() external override {
-        require(parentGnosisSafe.isOwner(msg.sender), "User is not an owner ");
+        if (!parentGnosisSafe.isOwner(msg.sender)) revert NotOwner();
 
-        if (
-            block.number > freezeProposalCreatedBlock + freezeProposalPeriod
-        ) {
+        if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // Create freeze proposal, count user's vote
             freezeProposalCreatedBlock = block.number;
 
@@ -49,10 +53,8 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
             emit FreezeProposalCreated(msg.sender);
         } else {
             // There is an existing freeze proposal, count user's vote
-            require(
-                !userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock],
-                "User has already voted"
-            );
+            if (userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock])
+                revert AlreadyVoted();
 
             freezeProposalVoteCount++;
         }
