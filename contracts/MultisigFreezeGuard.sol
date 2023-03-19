@@ -2,7 +2,7 @@
 pragma solidity =0.8.19;
 
 import "./interfaces/IMultisigFreezeGuard.sol";
-import "./interfaces/IBaseFreezeVoting.sol";
+import "./interfaces/IFreezeLock.sol";
 import "./interfaces/IGnosisSafe.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
@@ -19,14 +19,14 @@ contract MultisigFreezeGuard is
 {
     uint256 public timelockPeriod; // Timelock period in number of blocks
     uint256 public executionPeriod; // Execution period in number of blocks
-    IBaseFreezeVoting public freezeVoting;
+    IFreezeLock public freezeLock;
     IGnosisSafe public childGnosisSafe;
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
         address creator,
         address indexed owner,
-        address indexed freezeVoting,
+        address indexed freezeLock,
         address indexed childGnosisSafe
     );
     event TransactionTimelocked(
@@ -51,7 +51,7 @@ contract MultisigFreezeGuard is
             uint256 _timelockPeriod,
             uint256 _executionPeriod,
             address _owner,
-            address _freezeVoting,
+            address _freezeLock,
             address _childGnosisSafe
         ) = abi.decode(
                 initializeParams,
@@ -61,13 +61,13 @@ contract MultisigFreezeGuard is
         _updateTimelockPeriod(_timelockPeriod);
         _updateExecutionPeriod(_executionPeriod);
         transferOwnership(_owner);
-        freezeVoting = IBaseFreezeVoting(_freezeVoting);
+        freezeLock = IFreezeLock(_freezeLock);
         childGnosisSafe = IGnosisSafe(_childGnosisSafe);
 
         emit MultisigFreezeGuardSetup(
             msg.sender,
             _owner,
-            _freezeVoting,
+            _freezeLock,
             _childGnosisSafe
         );
     }
@@ -221,7 +221,7 @@ contract MultisigFreezeGuard is
                 executionPeriod
         ) revert Expired();
 
-        if (freezeVoting.isFrozen()) revert DAOFrozen();
+        if (freezeLock.isFrozen()) revert DAOFrozen();
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe
