@@ -7,10 +7,10 @@ import time from "./time";
 import {
   VotesERC20,
   VotesERC20__factory,
-  MultisigFreezeVoting,
-  MultisigFreezeVoting__factory,
   MultisigFreezeGuard,
   MultisigFreezeGuard__factory,
+  FreezeLock,
+  FreezeLock__factory,
 } from "../typechain-types";
 
 import {
@@ -31,7 +31,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   let childGnosisSafe: Contract;
   let parentGnosisSafe: Contract;
   let freezeGuard: MultisigFreezeGuard;
-  let freezeVoting: MultisigFreezeVoting;
+  let freezeLock: FreezeLock;
   let votesERC20: VotesERC20;
 
   // Wallets
@@ -170,8 +170,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     await votesERC20.setUp(votesERC20SetupData);
 
-    // Deploy MultisigFreezeVoting contract
-    freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
+    freezeLock = await new FreezeLock__factory(deployer).deploy();
 
     // Deploy MultisigFreezeGuard contract with a 60 block timelock period and 60 block execution period
     const freezeGuardSetupData = abiCoder.encode(
@@ -180,25 +179,21 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         60, // Timelock period
         60, // Execution period
         freezeGuardOwner.address,
-        freezeVoting.address,
+        freezeLock.address,
         childGnosisSafe.address,
       ]
     );
     freezeGuard = await new MultisigFreezeGuard__factory(deployer).deploy();
     await freezeGuard.setUp(freezeGuardSetupData);
 
-    // Initialize MultisigFreezeVoting contract
     const freezeVotingSetupData = abiCoder.encode(
-      ["address", "uint256", "uint256", "uint256", "address"],
+      ["address", "uint256"],
       [
         freezeGuardOwner.address,
-        2, // freeze votes threshold
-        10, // freeze proposal duration in blocks
         200, // freeze duration in blocks
-        parentGnosisSafe.address,
       ]
     );
-    await freezeVoting.setUp(freezeVotingSetupData);
+    await freezeLock.setUp(freezeVotingSetupData);
 
     // Create transaction to set the guard address
     const setGuardData = childGnosisSafe.interface.encodeFunctionData(
@@ -241,27 +236,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   describe("MultisigFreezeGuard with MultisigFreezeVoting", () => {
     it("Freeze vars set properly during init", async () => {
       // Frozen Params init correctly
-      expect(await freezeVoting.freezeVotesThreshold()).to.eq(2);
-      expect(await freezeVoting.freezeProposalPeriod()).to.eq(10);
-      expect(await freezeVoting.freezePeriod()).to.eq(200);
-      expect(await freezeVoting.owner()).to.eq(freezeGuardOwner.address);
-    });
-
-    it("Updates state properly due to freeze actions", async () => {
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
-
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      const latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-
-      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.freezePeriod()).to.eq(200);
+      expect(await freezeLock.owner()).to.eq(freezeGuardOwner.address);
     });
 
     it("A transaction can be timelocked and executed", async () => {
@@ -489,17 +465,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes1
       );
 
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
-      // Vetoer 2 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
-
-      // 2 freeze votes have been cast
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);
-
-      // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
       await time.advanceBlocks(60);
@@ -603,17 +571,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes1
       );
 
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-
-      // Vetoer 2 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
-
-      // 2 freeze votes have been cast
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
       // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Move time forward to elapse timelock period
       await time.advanceBlocks(60);
@@ -665,114 +626,20 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         )
       ).to.be.revertedWith("DAOFrozen()");
 
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Move time forward to elapse freeze period
       await time.advanceBlocks(140);
 
       // Check that the DAO isn't frozen now
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-    });
-
-    it("A DAO may execute txs during a freeze proposal period if the freeze threshold is not met", async () => {
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-
-      // Check that the DAO has not been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-
-      // Create transaction to set the guard address
-      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
-        data: tokenTransferData1,
-        safeTxGas: 1000000,
-        nonce: await childGnosisSafe.nonce(),
-      });
-
-      const sigs1 = [
-        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
-        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
-      ];
-      const signatureBytes1 = buildSignatureBytes(sigs1);
-
-      await freezeGuard.timelockTransaction(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver,
-        signatureBytes1
-      );
-
-      // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
-
-      await expect(
-        childGnosisSafe.execTransaction(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver,
-          signatureBytes1
-        )
-      ).to.emit(childGnosisSafe, "ExecutionSuccess");
-    });
-
-    it("Casting a vote after the freeze voting period resets state", async () => {
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
-
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      let latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-
-      // Move time forward to elapse freeze proposal period
-      await time.advanceBlocks(20);
-
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-    });
-
-    it("A user cannot vote twice to freeze a DAO during the same voting period", async () => {
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      await expect(
-        freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
-      ).to.be.revertedWith("AlreadyVoted()");
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
+      expect(await freezeLock.isFrozen()).to.eq(false);
     });
 
     it("Previously Frozen DAOs may not execute TXs after execution period has elapsed", async () => {
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      // Vetoer 2 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
       // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
@@ -828,7 +695,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await time.advanceBlocks(140);
 
       // Check that the DAO has been unFrozen
-      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeLock.isFrozen()).to.eq(false);
 
       // Transaction cannot be executed now, since transaction execution period has ended
       await expect(
@@ -848,15 +715,12 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     });
 
     it("Unfrozen DAOs may execute txs", async () => {
-      // Vetoer 1 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
-      // Vetoer 2 casts 1 freeze vote
-      await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
       // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
-      await freezeVoting.connect(freezeGuardOwner).unfreeze();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeLock.isFrozen()).to.eq(true);
+      await freezeLock.connect(freezeGuardOwner).unfreeze();
+      expect(await freezeLock.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
@@ -910,24 +774,12 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
-    it("You must be a parent multisig owner to cast a freeze vote", async () => {
-      await expect(
-        freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("NotOwner()");
-    });
-
     it("Only owner methods must be called by the owner", async () => {
       await expect(
-        freezeVoting.connect(childMultisigOwner1).unfreeze()
+        freezeLock.connect(childMultisigOwner1).unfreeze()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        freezeVoting.connect(childMultisigOwner1).updateFreezeVotesThreshold(0)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-      await expect(
-        freezeVoting.connect(childMultisigOwner1).updateFreezeProposalPeriod(0)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-      await expect(
-        freezeVoting.connect(childMultisigOwner1).updateFreezePeriod(0)
+        freezeLock.connect(childMultisigOwner1).updateFreezePeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });

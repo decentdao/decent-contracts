@@ -240,7 +240,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(predictedFreezeGuard, freezeGuardImplementation.address);
       expect(await freezeGuard.timelockPeriod()).eq(10);
-      expect(await freezeGuard.freezeVoting()).eq(owner1.address);
+      expect(await freezeGuard.freezeLock()).eq(owner1.address);
       expect(await freezeGuard.childGnosisSafe()).eq(gnosisSafe.address);
     });
 

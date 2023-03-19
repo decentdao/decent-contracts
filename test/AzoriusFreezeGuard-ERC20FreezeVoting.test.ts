@@ -13,10 +13,10 @@ import {
   Azorius__factory,
   AzoriusFreezeGuard,
   AzoriusFreezeGuard__factory,
-  ERC20FreezeVoting,
-  ERC20FreezeVoting__factory,
   VotesERC20,
   VotesERC20__factory,
+  FreezeLock,
+  FreezeLock__factory,
 } from "../typechain-types";
 
 import {
@@ -33,7 +33,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
   let freezeGuard: AzoriusFreezeGuard;
   let azoriusModule: Azorius;
   let linearERC20Voting: LinearERC20Voting;
-  let freezeVoting: ERC20FreezeVoting;
+  let freezeLock: FreezeLock;
   let parentVotesERC20: VotesERC20;
   let childVotesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
@@ -208,18 +208,14 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       .connect(mockParentDAO)
       .enableStrategy(linearERC20Voting.address);
 
-    // Deploy ERC20FreezeVoting contract
-    freezeVoting = await new ERC20FreezeVoting__factory(deployer).deploy();
+    freezeLock = await new FreezeLock__factory(deployer).deploy();
 
-    await freezeVoting.setUp(
+    await freezeLock.setUp(
       abiCoder.encode(
-        ["address", "uint256", "uint256", "uint256", "address"],
+        ["address", "uint256"],
         [
           mockParentDAO.address, // owner
-          150, // freeze votes threshold
-          10, // freeze proposal duration in blocks
           100, // freeze duration in blocks
-          parentVotesERC20.address,
         ]
       )
     );
@@ -232,7 +228,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         ["address", "address"],
         [
           mockParentDAO.address, // Owner
-          freezeVoting.address, // Freeze voting contract
+          freezeLock.address, // Freeze voting contract
         ]
       )
     );
@@ -516,14 +512,11 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       expect(await azoriusModule.proposalState(1)).to.eq(1);
       expect(await azoriusModule.proposalState(2)).to.eq(1);
 
-      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeLock.isFrozen()).to.eq(false);
 
-      // Voters cast freeze votes
-      await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
+      await freezeLock.connect(mockParentDAO).startFreeze();
 
-      await freezeVoting.connect(parentTokenHolder2).castFreezeVote();
-
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Increase time so that timelock period has ended
       await time.advanceBlocks(60);
@@ -566,72 +559,6 @@ describe("Azorius Child DAO with Azorius Parent", () => {
         )
       ).to.be.revertedWith("DAOFrozen()");
     });
-  });
-
-  it("A proposal can still be executed if a freeze proposal has been created, but threshold has not been met", async () => {
-    // Create transaction to transfer tokens to the deployer
-    const tokenTransferData = childVotesERC20.interface.encodeFunctionData(
-      "transfer",
-      [deployer.address, 10]
-    );
-
-    const proposalTransaction = {
-      to: childVotesERC20.address,
-      value: BigNumber.from(0),
-      data: tokenTransferData,
-      operation: 0,
-    };
-
-    await azoriusModule.submitProposal(
-      linearERC20Voting.address,
-      "0x",
-      [proposalTransaction],
-      ""
-    );
-
-    // Proposal is active
-    expect(await azoriusModule.proposalState(0)).to.eq(0);
-
-    // Both users vote in support of proposal
-    await linearERC20Voting.connect(childTokenHolder1).vote(0, 1, [0]);
-    await linearERC20Voting.connect(childTokenHolder2).vote(0, 1, [0]);
-
-    // Increase time so that voting period has ended
-    await time.advanceBlocks(60);
-
-    // Proposal is timelocked
-    expect(await azoriusModule.proposalState(0)).to.eq(1);
-
-    expect(await freezeVoting.isFrozen()).to.eq(false);
-
-    // One voter casts freeze vote
-    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
-
-    expect(await freezeVoting.isFrozen()).to.eq(false);
-
-    // Increase time so that timelock period has ended
-    await time.advanceBlocks(60);
-
-    // Proposal is ready to execute
-    expect(await azoriusModule.proposalState(0)).to.eq(2);
-
-    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
-    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
-
-    // Execute the transaction
-    await azoriusModule.executeProposal(
-      0,
-      [childVotesERC20.address],
-      [0],
-      [tokenTransferData],
-      [0]
-    );
-
-    // Proposal is executed
-    expect(await azoriusModule.proposalState(0)).to.eq(3);
-
-    expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(90);
-    expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
   });
 
   it("A frozen DAO is automatically unfrozen after the freeze duration is over", async () => {
@@ -691,13 +618,11 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     expect(await azoriusModule.proposalState(0)).to.eq(1);
     expect(await azoriusModule.proposalState(1)).to.eq(1);
 
-    expect(await freezeVoting.isFrozen()).to.eq(false);
+    expect(await freezeLock.isFrozen()).to.eq(false);
 
-    // Voters both cast freeze votes
-    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
-    await freezeVoting.connect(parentTokenHolder2).castFreezeVote();
+    await freezeLock.connect(mockParentDAO).startFreeze();
 
-    expect(await freezeVoting.isFrozen()).to.eq(true);
+    expect(await freezeLock.isFrozen()).to.eq(true);
 
     // Increase time so that timelock period has ended
     await time.advanceBlocks(60);
@@ -870,14 +795,11 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     expect(await azoriusModule.proposalState(1)).to.eq(1);
     expect(await azoriusModule.proposalState(2)).to.eq(1);
 
-    expect(await freezeVoting.isFrozen()).to.eq(false);
+    expect(await freezeLock.isFrozen()).to.eq(false);
 
-    // Voters both cast freeze votes
-    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
+    await freezeLock.connect(mockParentDAO).startFreeze();
 
-    await freezeVoting.connect(parentTokenHolder2).castFreezeVote();
-
-    expect(await freezeVoting.isFrozen()).to.eq(true);
+    expect(await freezeLock.isFrozen()).to.eq(true);
 
     // Increase time so that timelock period has ended
     await time.advanceBlocks(60);
@@ -921,10 +843,10 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     ).to.be.revertedWith("DAOFrozen()");
 
     // Parent DAO unfreezes the child
-    await freezeVoting.connect(mockParentDAO).unfreeze();
+    await freezeLock.connect(mockParentDAO).unfreeze();
 
     // Child DAO is now unfrozen
-    expect(await freezeVoting.isFrozen()).to.eq(false);
+    expect(await freezeLock.isFrozen()).to.eq(false);
 
     expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(100);
     expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
@@ -940,114 +862,5 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     expect(await childVotesERC20.balanceOf(childGnosisSafe.address)).to.eq(90);
     expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
-  });
-
-  it("Freeze state values are updated correctly throughout the freeze process", async () => {
-    // freeze votes threshold => 150
-    // freeze proposal duration in blocks => 10
-    // freeze duration in blocks => 100
-
-    // One voter casts freeze vote
-    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
-
-    const firstFreezeProposalCreatedBlock = (
-      await ethers.provider.getBlock("latest")
-    ).number;
-    expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-      firstFreezeProposalCreatedBlock
-    );
-
-    expect(await freezeVoting.freezeProposalVoteCount()).to.eq(100);
-
-    expect(await freezeVoting.isFrozen()).to.eq(false);
-
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder1.address,
-        firstFreezeProposalCreatedBlock
-      )
-    ).to.eq(true);
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder2.address,
-        firstFreezeProposalCreatedBlock
-      )
-    ).to.eq(false);
-
-    // Increase time so freeze proposal has ended
-    await time.advanceBlocks(10);
-
-    // One voter casts freeze vote, this should create a new freeze proposal
-    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
-
-    const secondFreezeProposalCreatedBlock = (
-      await ethers.provider.getBlock("latest")
-    ).number;
-
-    expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-      secondFreezeProposalCreatedBlock
-    );
-
-    expect(await freezeVoting.freezeProposalVoteCount()).to.eq(100);
-
-    expect(await freezeVoting.isFrozen()).to.eq(false);
-
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder1.address,
-        secondFreezeProposalCreatedBlock
-      )
-    ).to.eq(true);
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder2.address,
-        secondFreezeProposalCreatedBlock
-      )
-    ).to.eq(false);
-
-    // First voter cannot vote again
-    await expect(
-      freezeVoting.connect(parentTokenHolder1).castFreezeVote()
-    ).to.be.revertedWith("AlreadyVoted()");
-
-    // Second voter casts freeze vote, should update state of current freeze proposal
-    await freezeVoting.connect(parentTokenHolder2).castFreezeVote();
-
-    expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-      secondFreezeProposalCreatedBlock
-    );
-
-    expect(await freezeVoting.freezeProposalVoteCount()).to.eq(200);
-
-    expect(await freezeVoting.isFrozen()).to.eq(true);
-
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder1.address,
-        secondFreezeProposalCreatedBlock
-      )
-    ).to.eq(true);
-    expect(
-      await freezeVoting.userHasFreezeVoted(
-        parentTokenHolder2.address,
-        secondFreezeProposalCreatedBlock
-      )
-    ).to.eq(true);
-
-    // Move time forward, freeze should still be active
-    await time.advanceBlocks(90);
-
-    expect(await freezeVoting.isFrozen()).to.eq(true);
-
-    // Move time forward, freeze should end
-    await time.advanceBlocks(10);
-
-    expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-      secondFreezeProposalCreatedBlock
-    );
-
-    expect(await freezeVoting.freezeProposalVoteCount()).to.eq(200);
-
-    expect(await freezeVoting.isFrozen()).to.eq(false);
   });
 });

@@ -6,10 +6,10 @@ import time from "./time";
 import {
   VotesERC20,
   VotesERC20__factory,
-  ERC20FreezeVoting,
-  ERC20FreezeVoting__factory,
   MultisigFreezeGuard,
   MultisigFreezeGuard__factory,
+  FreezeLock,
+  FreezeLock__factory,
 } from "../typechain-types";
 import {
   buildSignatureBytes,
@@ -28,7 +28,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
   // Deployed contracts
   let gnosisSafe: Contract;
   let freezeGuard: MultisigFreezeGuard;
-  let freezeVoting: ERC20FreezeVoting;
+  let freezeLock: FreezeLock;
   let votesERC20: VotesERC20;
 
   // Wallets
@@ -133,7 +133,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     await votesERC20.connect(tokenVetoer2).delegate(tokenVetoer2.address);
 
     // Deploy ERC20FreezeVoting contract
-    freezeVoting = await new ERC20FreezeVoting__factory(deployer).deploy();
+    freezeLock = await new FreezeLock__factory(deployer).deploy();
 
     // Deploy MultisigFreezeGuard contract with a 60 block timelock period, and a 60 block execution period
     const freezeGuardSetupData = abiCoder.encode(
@@ -142,7 +142,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         60, // Timelock period
         60, // Execution period
         freezeGuardOwner.address,
-        freezeVoting.address,
+        freezeLock.address,
         gnosisSafe.address,
       ]
     );
@@ -151,17 +151,13 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     // Initialize FreezeVoting contract
     const freezeVotingSetupData = abiCoder.encode(
-      ["address", "uint256", "uint256", "uint256", "address", "address"],
+      ["address", "uint256"],
       [
         freezeGuardOwner.address,
-        1090, // freeze votes threshold
-        10, // freeze proposal period
         200, // freeze period
-        votesERC20.address,
-        freezeGuard.address,
       ]
     );
-    await freezeVoting.setUp(freezeVotingSetupData);
+    await freezeLock.setUp(freezeVotingSetupData);
 
     // Create transaction to set the guard address
     const setGuardData = gnosisSafe.interface.encodeFunctionData("setGuard", [
@@ -203,27 +199,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
   describe("FreezeGuard Functionality", () => {
     it("Freeze parameters correctly setup", async () => {
       // Frozen Params init correctly
-      expect(await freezeVoting.freezeVotesThreshold()).to.eq(1090);
-      expect(await freezeVoting.freezeProposalPeriod()).to.eq(10);
-      expect(await freezeVoting.freezePeriod()).to.eq(200);
-      expect(await freezeVoting.owner()).to.eq(freezeGuardOwner.address);
-    });
-
-    it("Updates state properly due to freeze actions", async () => {
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
-
-      // Vetoer 1 casts 500 freeze votes
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      const latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-
-      await freezeVoting.connect(tokenVetoer2).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.freezePeriod()).to.eq(200);
+      expect(await freezeLock.owner()).to.eq(freezeGuardOwner.address);
     });
 
     it("A transaction can be timelocked and executed", async () => {
@@ -398,105 +375,11 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ).to.be.revertedWith("Timelocked()");
     });
 
-    it("A DAO may execute txs during a the freeze proposal period if the freeze threshold is not met", async () => {
-      // Vetoer 1 casts 500 freeze votes
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-
-      // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-
-      // Create transaction to set the guard address
-      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1000]
-      );
-
-      const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
-        data: tokenTransferData1,
-        safeTxGas: 1000000,
-        nonce: await gnosisSafe.nonce(),
-      });
-
-      const sigs1 = [
-        await safeSignTypedData(owner1, gnosisSafe, tx1),
-        await safeSignTypedData(owner2, gnosisSafe, tx1),
-      ];
-      const signatureBytes1 = buildSignatureBytes(sigs1);
-
-      await freezeGuard.timelockTransaction(
-        tx1.to,
-        tx1.value,
-        tx1.data,
-        tx1.operation,
-        tx1.safeTxGas,
-        tx1.baseGas,
-        tx1.gasPrice,
-        tx1.gasToken,
-        tx1.refundReceiver,
-        signatureBytes1
-      );
-
-      // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
-
-      await expect(
-        gnosisSafe.execTransaction(
-          tx1.to,
-          tx1.value,
-          tx1.data,
-          tx1.operation,
-          tx1.safeTxGas,
-          tx1.baseGas,
-          tx1.gasPrice,
-          tx1.gasToken,
-          tx1.refundReceiver,
-          signatureBytes1
-        )
-      ).to.emit(gnosisSafe, "ExecutionSuccess");
-    });
-
-    it("Casting a vote after the freeze voting period resets state", async () => {
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(0);
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(0);
-
-      // Vetoer 1 casts 500 freeze votes
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      let latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-
-      // Move time forward to elapse freeze proposal period
-      await time.advanceBlocks(10);
-
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      latestBlock = await ethers.provider.getBlock("latest");
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
-      );
-      expect(await freezeVoting.isFrozen()).to.eq(false);
-    });
-
-    it("A user cannot vote twice to freeze a dao during the same voting period", async () => {
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      await expect(
-        freezeVoting.connect(tokenVetoer1).castFreezeVote()
-      ).to.be.revertedWith("AlreadyVoted()");
-      expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-    });
-
     it("An unfrozen DAO may not execute a previously passed transaction", async () => {
-      // Vetoer 1 casts 500 freeze votes
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 freeze votes
-      await freezeVoting.connect(tokenVetoer2).castFreezeVote();
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
       // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
+      expect(await freezeLock.isFrozen()).to.eq(true);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
@@ -552,7 +435,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       await time.advanceBlocks(140);
 
       // Check that the DAO has been unFrozen
-      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeLock.isFrozen()).to.eq(false);
       await expect(
         gnosisSafe.execTransaction(
           tx1.to,
@@ -570,15 +453,12 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     });
 
     it("Unfrozen DAOs may execute txs", async () => {
-      // Vetoer 1 casts 500 freeze votes
-      await freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      // Vetoer 2 casts 600 freeze votes
-      await freezeVoting.connect(tokenVetoer2).castFreezeVote();
+      await freezeLock.connect(freezeGuardOwner).startFreeze();
 
       // Check that the DAO has been frozen
-      expect(await freezeVoting.isFrozen()).to.eq(true);
-      await freezeVoting.connect(freezeGuardOwner).unfreeze();
-      expect(await freezeVoting.isFrozen()).to.eq(false);
+      expect(await freezeLock.isFrozen()).to.eq(true);
+      await freezeLock.connect(freezeGuardOwner).unfreeze();
+      expect(await freezeLock.isFrozen()).to.eq(false);
 
       // Create transaction to set the guard address
       const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
@@ -632,28 +512,12 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ).to.emit(gnosisSafe, "ExecutionSuccess");
     });
 
-    it("You must have voting weight to cast a freeze vote", async () => {
-      await expect(
-        freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("NoVotes()");
-      freezeVoting.connect(tokenVetoer1).castFreezeVote();
-      await expect(
-        freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("NoVotes()");
-    });
-
     it("Only owner methods must be called by vetoGuard owner", async () => {
       await expect(
-        freezeVoting.connect(tokenVetoer1).unfreeze()
+        freezeLock.connect(tokenVetoer1).unfreeze()
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
-        freezeVoting.connect(tokenVetoer1).updateFreezeVotesThreshold(0)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-      await expect(
-        freezeVoting.connect(tokenVetoer1).updateFreezeProposalPeriod(0)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-      await expect(
-        freezeVoting.connect(tokenVetoer1).updateFreezePeriod(0)
+        freezeLock.connect(tokenVetoer1).updateFreezePeriod(0)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });

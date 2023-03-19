@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
-interface IBaseFreezeVoting {
+interface IFreezeLock {
 
     /// @notice Freezes the DAO
     function startFreeze() external;
