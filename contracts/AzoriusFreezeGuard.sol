@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IBaseFreezeVoting.sol";
+import "./interfaces/IFreezeLock.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
@@ -9,12 +9,12 @@ import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /// @notice A guard contract that prevents an Azorius module from executing transactions if the DAO has been frozen by its parent DAO
 contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
-    IBaseFreezeVoting public freezeVoting;
+    IFreezeLock public freezeLock;
 
     event AzoriusFreezeGuardSetup(
         address indexed creator,
         address indexed owner,
-        address indexed freezeVoting
+        address indexed freezeLock
     );
 
     error DAOFrozen();
@@ -23,15 +23,15 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
-        (address _owner, address _freezeVoting) = abi.decode(
+        (address _owner, address _freezeLock) = abi.decode(
             initializeParams,
             (address, address)
         );
 
         transferOwnership(_owner);
-        freezeVoting = IBaseFreezeVoting(_freezeVoting);
+        freezeLock = IFreezeLock(_freezeLock);
 
-        emit AzoriusFreezeGuardSetup(msg.sender, _owner, _freezeVoting);
+        emit AzoriusFreezeGuardSetup(msg.sender, _owner, _freezeLock);
     }
 
     /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
@@ -49,7 +49,7 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
         bytes memory,
         address
     ) external view override(BaseGuard, IGuard) {
-        if(freezeVoting.isFrozen()) revert DAOFrozen();
+        if(freezeLock.isFrozen()) revert DAOFrozen();
     }
 
     /// @notice Does checks after transaction is executed on the Gnosis Safe
