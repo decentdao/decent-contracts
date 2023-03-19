@@ -3,83 +3,109 @@ pragma solidity =0.8.19;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
-interface IGnosisSafe {
+/**
+ * The specification of methods available on a Safe contract wallet.
+ * 
+ * This interface does not encompass every available function on a Safe,
+ * only those which are used within the Fractal contracts.
+ *
+ * For the complete set of functions available on a Safe, see:
+ * https://github.com/safe-global/safe-contracts/blob/main/contracts/Safe.sol
+ */
+interface IGnosisSafe { // TODO rename to Safe? TODO should we underscore all the parameters?
+
+    /**
+     * Returns the current transaction nonce of the Safe.
+     * Each transaction should has a different nonce to prevent replay attacks.
+     *
+     * @return uint256 current transaction nonce
+     */
     function nonce() external view returns (uint256);
 
-    /// @dev Setup function sets initial storage of contract.
-    /// @param _owners List of Safe owners.
-    /// @param _threshold Number of required confirmations for a Safe transaction.
-    /// @param to Contract address for optional delegate call.
-    /// @param data Data payload for optional delegate call.
-    /// @param fallbackHandler Handler for fallback calls to this contract
-    /// @param paymentToken Token that should be used for the payment (0 is ETH)
-    /// @param payment Value that should be paid
-    /// @param paymentReceiver Address that should receive the payment (or 0 if tx.origin)
-    function setup(
-        address[] calldata _owners,
-        uint256 _threshold,
-        address to,
-        bytes calldata data,
-        address fallbackHandler,
-        address paymentToken,
-        uint256 payment,
-        address payable paymentReceiver
-    ) external;
+    /**
+     * Set a guard contract that checks transactions before execution.
+     * This can only be done via a Safe transaction.
+     *
+     * See https://docs.gnosis-safe.io/learn/safe-tools/guards
+     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/GuardManager.sol
+     * 
+     * @param _guard address of the guard to be used or the 0 address to disable a guard
+     */
+    function setGuard(address _guard) external;
 
-    function setGuard(address guard) external;
-
+    /**
+     * Executes an arbitrary transaction on the Safe.
+     *
+     * @param _to destination address
+     * @param _value ETH value
+     * @param _data data payload
+     * @param _operation Operation type, Call or DelegateCall
+     * @param _safeTxGas gas that should be used for the safe transaction
+     * @param _baseGas gas costs that are independent of the transaction execution
+     * @param _gasPrice max gas price that should be used for this transaction // TODO isn't there a different way to structure transactions now?
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment // TODO what's this paying with other tokens about?
+     * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
+     * @param _signatures packed signature data
+     * @return success bool whether the transaction was successful or not
+     */
     function execTransaction(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address payable refundReceiver,
-        bytes memory signatures
+        address _to,
+        uint256 _value,
+        bytes calldata _data,
+        Enum.Operation _operation,
+        uint256 _safeTxGas,
+        uint256 _baseGas,
+        uint256 _gasPrice,
+        address _gasToken,
+        address payable _refundReceiver,
+        bytes memory _signatures
     ) external payable returns (bool success);
 
     /**
-     * @dev Checks whether the signature provided is valid for the provided data, hash. Will revert otherwise.
-     * @param dataHash Hash of the data (could be either a message hash or transaction hash)
-     * @param data That should be signed (this is passed to an external validator contract)
-     * @param signatures Signature data that should be verified. Can be ECDSA signature, contract signature (EIP-1271) or approved hash.
+     * Checks whether the signature provided is valid for the provided data and hash. Reverts otherwise.
+     *
+     * @param _dataHash Hash of the data (could be either a message hash or transaction hash)
+     * @param _data That should be signed (this is passed to an external validator contract)
+     * @param _signatures Signature data that should be verified.
+     *      Can be packed ECDSA signature ({bytes32 r}{bytes32 s}{uint8 v}), contract 
+     *      signature (EIP-1271) or approved hash.
      */
-    function checkSignatures(
-        bytes32 dataHash,
-        bytes memory data,
-        bytes memory signatures
-    ) external view;
+    function checkSignatures(bytes32 _dataHash, bytes memory _data, bytes memory _signatures) external view;
 
-    /// @dev Returns the bytes that are hashed to be signed by owners.
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
-    /// @param _nonce Transaction nonce.
-    /// @return Transaction hash bytes.
+    /**
+     * Returns the pre-image of the transaction hash.
+     *
+     * @param _to destination address
+     * @param _value ETH value
+     * @param _data data payload
+     * @param _operation Operation type, Call or DelegateCall
+     * @param _safeTxGas gas that should be used for the safe transaction
+     * @param _baseGas gas costs that are independent of the transaction execution
+     * @param _gasPrice max gas price that should be used for this transaction // TODO isn't there a different way to structure transactions now?
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment // TODO what's this paying with other tokens about?
+     * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
+     * @param _nonce transaction nonce
+     * @return bytes hash bytes
+     */
     function encodeTransactionData(
-        address to,
-        uint256 value,
-        bytes calldata data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address refundReceiver,
+        address _to,
+        uint256 _value,
+        bytes calldata _data,
+        Enum.Operation _operation,
+        uint256 _safeTxGas,
+        uint256 _baseGas,
+        uint256 _gasPrice,
+        address _gasToken,
+        address _refundReceiver,
         uint256 _nonce
     ) external view returns (bytes memory);
 
-    /// @notice Returns whether the passed address is an owner
-    /// @param owner The address the check
-    /// @return bool True if the address is an owner
-    function isOwner(address owner) external view returns (bool);
+    /**
+     * Returns if the given address is an owner of the Safe.
+     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/OwnerManager.sol
+     *
+     * @param _owner the address to check
+     * @return bool whether _owner is an owner of the Safe
+     */
+    function isOwner(address _owner) external view returns (bool);
 }

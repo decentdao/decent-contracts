@@ -4,16 +4,34 @@ pragma solidity =0.8.19;
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+/**
+ * A specification for a Safe module contract that allows for a "parent-child"
+ * DAO relationship.
+ *
+ * Adding the module should allow for a designated set of addresses to execute
+ * transactions on the Safe, which in our implementation is the set of parent
+ * DAOs.
+ */
 interface IFractalModule {
-    /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
-    /// @param execTxData Data payload of module transaction.
+    /**
+     * Allows an authorized address to execute arbitrary transactions on the Safe.
+     *
+     * @param execTxData data of the transaction to execute
+     */
     function execTx(bytes memory execTxData) external;
 
-    /// @notice Allows the module owner to add users which may exectxs
-    /// @param _controllers Addresses added to the contoller list
+    /**
+     * Adds _controllers to the list of controllers, which are allowed
+     * to execute transactions on the Safe.
+     *
+     * @param _controllers addresses to add to the contoller list
+     */
     function addControllers(address[] memory _controllers) external;
 
-    /// @notice Allows the module owner to remove users which may exectxs
-    /// @param _controllers Addresses removed to the contoller list
+    /**
+     * Removes _controllers from the list of controllers.
+     *
+     * @param _controllers addresses to remove from the controller list
+     */
     function removeControllers(address[] memory _controllers) external;
 }
