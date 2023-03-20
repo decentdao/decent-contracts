@@ -5,7 +5,7 @@ pragma solidity =0.8.19;
  * The specification for a voting strategy in Azorius.
  *
  * Each IBaseStrategy implementation need only implement the given functions here,
- * which allows for a highly composable and allow for simple or complex voting strategies.
+ * which allows for a highly composable and simple or complex voting strategies.
  *
  * It should be noted that while many voting strategies make use of parameters such as
  * voting period or quorum, that is a detail of the individual strategy itself, and not
