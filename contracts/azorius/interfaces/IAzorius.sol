@@ -6,6 +6,12 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 /**
  * @title Azorius spec - the base interface for the Azorius governance Safe module.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ *
+ * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
+ * (BaseStrategy) for voting that are enabled on the DAO.
+ *
+ * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
+ * as customizable as possible.
  */
 interface IAzorius {
 

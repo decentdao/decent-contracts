@@ -8,6 +8,12 @@ import "./interfaces/IAzorius.sol";
 /**
  * @title Azorius Protocol - a Safe module which allows for composable governance.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ *
+ * The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications
+ * of the transactions that comprise a Proposal, but notably not the state of voting.
+ *
+ * All voting details are delegated to BaseStrategy implementations, of which an Azorius DAO can
+ * have any number.
  */
 contract Azorius is Module, IAzorius {
 
@@ -112,10 +118,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function disableStrategy(
-        address _prevStrategy,
-        address _strategy
-    ) public onlyOwner {
+    function disableStrategy(address _prevStrategy, address _strategy) public onlyOwner {
         if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
             revert InvalidStrategy();
         if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();
@@ -136,9 +139,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _executionPeriod new execution period (in blocks)
      */
-    function updateExecutionPeriod(
-        uint256 _executionPeriod
-    ) external onlyOwner {
+    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
         _updateExecutionPeriod(_executionPeriod);
     }
 
@@ -418,9 +419,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function getProposalTxHashes(
-        uint256 _proposalId
-    ) external view returns (bytes32[] memory) {
+    function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
     }
 
