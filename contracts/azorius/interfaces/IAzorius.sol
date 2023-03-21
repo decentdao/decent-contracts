@@ -146,15 +146,6 @@ interface IAzorius {
     ) external view returns (address[] memory _strategies, address _next);
 
     /**
-     * Returns true if a proposal transaction by index is executed.
-     *
-     * @param _proposalId identifier of the proposal
-     * @param _index index of the transaction within the proposal
-     * @return bool True if the transaction has been executed, otherwise False
-     */
-    function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool);
-
-    /**
      * Gets the state of a Proposal.
      *
      * @param _proposalId identifier of the Proposal

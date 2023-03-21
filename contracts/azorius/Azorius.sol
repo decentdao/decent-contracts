@@ -326,14 +326,6 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function isTxExecuted(
-        uint256 _proposalId,
-        uint256 _index
-    ) external view returns (bool) {
-        return proposals[_proposalId].executionCounter > _index;
-    }
-
-    /// @inheritdoc IAzorius
     function proposalState(
         uint256 _proposalId
     ) public view returns (ProposalState) {
