@@ -793,12 +793,43 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         ""
       );
 
+      const txHash = await azorius.getTxHash(
+        votesERC20.address,
+        BigNumber.from(0),
+        tokenTransferData,
+        0
+      );
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC20Voting.address,
+        [txHash],
+        BigNumber.from("60"),
+        BigNumber.from("60"),
+        BigNumber.from("0"),
+      ]);
+
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users haven't voted yet
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        false
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        false
+      );
 
       // Users vote in support of proposal
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Users have voted
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        true
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        true
+      );
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -823,6 +854,14 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         [tokenTransferData],
         [0]
       );
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC20Voting.address,
+        [txHash],
+        BigNumber.from("60"),
+        BigNumber.from("60"),
+        BigNumber.from("1"),
+      ]);
 
       expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
       expect(await votesERC20.balanceOf(deployer.address)).to.eq(600);
@@ -1052,6 +1091,113 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
 
       // Proposal is executed
       await expect(await azorius.proposalState(0)).to.eq(3);
+    });
+
+    it("Only the owner can update the quorum numerator on the ERC20LinearVoting", async () => {
+      expect(await linearERC20Voting.quorumNumerator()).to.eq(500000);
+
+      await linearERC20Voting
+        .connect(gnosisSafeOwner)
+        .updateQuorumNumerator(600000);
+
+      expect(await linearERC20Voting.quorumNumerator()).to.eq(600000);
+
+      await expect(
+        linearERC20Voting.connect(tokenHolder1).updateQuorumNumerator(700000)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Quorum numerator cannot be updated to a value larger than the denominator", async () => {
+      await expect(
+        linearERC20Voting
+          .connect(gnosisSafeOwner)
+          .updateQuorumNumerator(1000001)
+      ).to.be.revertedWith("InvalidQuorumNumerator()");
+    });
+
+    it("Linear ERC20 voting contract cannot be setup with an invalid governance token address", async () => {
+      const abiCoder = new ethers.utils.AbiCoder();
+
+      // Deploy Linear ERC20 Voting Strategy
+      linearERC20Voting = await new LinearERC20Voting__factory(
+        deployer
+      ).deploy();
+
+      const linearERC20VotingSetupData = abiCoder.encode(
+        ["address", "address", "address", "uint256", "uint256"],
+        [
+          gnosisSafeOwner.address, // owner
+          ethers.constants.AddressZero, // governance token
+          azorius.address, // Azorius module
+          60, // voting period in blocks
+          500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+        ]
+      );
+
+      await expect(
+        linearERC20Voting.setUp(linearERC20VotingSetupData)
+      ).to.be.revertedWith("InvalidTokenAddress()");
+    });
+
+    it("An invalid vote type cannot be cast", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearERC20Voting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users cast invalid vote types
+      await expect(
+        linearERC20Voting.connect(tokenHolder2).vote(0, 3, [0])
+      ).to.be.revertedWith("InvalidVote()");
+      await expect(
+        linearERC20Voting.connect(tokenHolder2).vote(0, 4, [0])
+      ).to.be.revertedWith("InvalidVote()");
+      await expect(
+        linearERC20Voting.connect(tokenHolder2).vote(0, 5, [0])
+      ).to.be.revertedWith("InvalidVote()");
+    });
+
+    it.only("Azorius can be setup with multiple strategies", async () => {
+      const abiCoder = new ethers.utils.AbiCoder();
+
+      // Deploy Azorius module
+      azorius = await new Azorius__factory(deployer).deploy();
+
+      const azoriusSetupData = abiCoder.encode(
+        ["address", "address", "address", "address[]", "uint256", "uint256"],
+        [
+          gnosisSafeOwner.address,
+          gnosisSafe.address,
+          gnosisSafe.address,
+          [tokenHolder1.address, tokenHolder2.address, tokenHolder3.address],
+          60, // timelock period in blocks
+          60, // execution period in blocks
+        ]
+      );
+
+      await azorius.setUp(azoriusSetupData);
+
+      expect(await azorius.isStrategyEnabled(tokenHolder1.address)).to.eq(true);
+      expect(await azorius.isStrategyEnabled(tokenHolder2.address)).to.eq(true);
+      expect(await azorius.isStrategyEnabled(tokenHolder3.address)).to.eq(true);
     });
   });
 });
