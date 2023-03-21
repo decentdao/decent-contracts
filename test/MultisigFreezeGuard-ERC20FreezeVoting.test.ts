@@ -259,6 +259,24 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         signatureBytes
       );
 
+      const latestBlock = await ethers.provider.getBlock("latest");
+
+      const txHash = await freezeGuard.getTransactionHash(
+        tx.to,
+        tx.value,
+        tx.data,
+        tx.operation,
+        tx.safeTxGas,
+        tx.baseGas,
+        tx.gasPrice,
+        tx.gasToken,
+        tx.refundReceiver
+      );
+
+      expect(await freezeGuard.getTransactionTimelockedBlock(txHash)).to.eq(
+        latestBlock.number
+      );
+
       // Move time forward to elapse timelock period
       await time.advanceBlocks(60);
 
@@ -654,6 +672,70 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       ).to.be.revertedWith("Ownable: caller is not the owner");
       await expect(
         freezeVoting.connect(tokenVetoer1).updateFreezePeriod(0)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the freeze voting owner can update the freeze votes threshold", async () => {
+      expect(await freezeVoting.freezeVotesThreshold()).to.eq(1090);
+
+      await freezeVoting
+        .connect(freezeGuardOwner)
+        .updateFreezeVotesThreshold(2000);
+
+      expect(await freezeVoting.freezeVotesThreshold()).to.eq(2000);
+
+      await expect(
+        freezeVoting.connect(tokenVetoer1).updateFreezeVotesThreshold(3000)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the freeze voting owner can update the freeze proposal period", async () => {
+      expect(await freezeVoting.freezeProposalPeriod()).to.eq(10);
+
+      await freezeVoting
+        .connect(freezeGuardOwner)
+        .updateFreezeProposalPeriod(12);
+
+      expect(await freezeVoting.freezeProposalPeriod()).to.eq(12);
+
+      await expect(
+        freezeVoting.connect(tokenVetoer1).updateFreezeProposalPeriod(14)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the freeze voting owner can update the freeze period", async () => {
+      expect(await freezeVoting.freezePeriod()).to.eq(200);
+
+      await freezeVoting.connect(freezeGuardOwner).updateFreezePeriod(300);
+
+      expect(await freezeVoting.freezePeriod()).to.eq(300);
+
+      await expect(
+        freezeVoting.connect(tokenVetoer1).updateFreezePeriod(400)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the freeze guard owner can update the timelock period", async () => {
+      expect(await freezeGuard.timelockPeriod()).to.eq(60);
+
+      await freezeGuard.connect(freezeGuardOwner).updateTimelockPeriod(70);
+
+      expect(await freezeGuard.timelockPeriod()).to.eq(70);
+
+      await expect(
+        freezeGuard.connect(tokenVetoer1).updateTimelockPeriod(80)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the freeze guard owner can update the execution period", async () => {
+      expect(await freezeGuard.executionPeriod()).to.eq(60);
+
+      await freezeGuard.connect(freezeGuardOwner).updateExecutionPeriod(80);
+
+      expect(await freezeGuard.executionPeriod()).to.eq(80);
+
+      await expect(
+        freezeGuard.connect(tokenVetoer1).updateExecutionPeriod(90)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
