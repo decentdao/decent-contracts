@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import "./interfaces/IMultisigFreezeGuard.sol";
 import "./interfaces/IBaseFreezeVoting.sol";
-import "./interfaces/Safe.sol";
+import "./interfaces/ISafe.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
