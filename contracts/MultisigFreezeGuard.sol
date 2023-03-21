@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import "./interfaces/IMultisigFreezeGuard.sol";
 import "./interfaces/IBaseFreezeVoting.sol";
-import "./interfaces/IGnosisSafe.sol";
+import "./interfaces/Safe.sol";
 import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
@@ -20,7 +20,7 @@ contract MultisigFreezeGuard is
     uint256 public timelockPeriod; // Timelock period in number of blocks
     uint256 public executionPeriod; // Execution period in number of blocks
     IBaseFreezeVoting public freezeVoting;
-    IGnosisSafe public childGnosisSafe;
+    ISafe public childGnosisSafe;
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
@@ -62,7 +62,7 @@ contract MultisigFreezeGuard is
         _updateExecutionPeriod(_executionPeriod);
         transferOwnership(_owner);
         freezeVoting = IBaseFreezeVoting(_freezeVoting);
-        childGnosisSafe = IGnosisSafe(_childGnosisSafe);
+        childGnosisSafe = ISafe(_childGnosisSafe);
 
         emit MultisigFreezeGuardSetup(
             msg.sender,

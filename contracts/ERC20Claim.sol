@@ -74,7 +74,7 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     /// @notice This function allows pToken holders to claim cTokens
     /// @param claimer Address which is being claimed for
-    function claimToken(address claimer) external {
+    function claimTokens(address claimer) external {
         uint256 amount = getClaimAmount(claimer); // Get user balance
 
         if (amount == 0) revert NoAllocation();

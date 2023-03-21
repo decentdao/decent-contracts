@@ -2,11 +2,11 @@
 pragma solidity =0.8.19;
 
 import "./BaseFreezeVoting.sol";
-import "./interfaces/IGnosisSafe.sol";
+import "./interfaces/ISafe.sol";
 
 /// @notice A contract for a parent Multisig DAO to cast freeze votes on a child DAO
 contract MultisigFreezeVoting is BaseFreezeVoting {
-    IGnosisSafe public parentGnosisSafe;
+    ISafe public parentGnosisSafe;
 
     event MultisigFreezeVotingSetup(
         address indexed owner,
@@ -35,7 +35,7 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         _updateFreezeVotesThreshold(_freezeVotesThreshold);
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
         _updateFreezePeriod(_freezePeriod);
-        parentGnosisSafe = IGnosisSafe(_parentGnosisSafe);
+        parentGnosisSafe = ISafe(_parentGnosisSafe);
 
         emit MultisigFreezeVotingSetup(_owner, _parentGnosisSafe);
     }

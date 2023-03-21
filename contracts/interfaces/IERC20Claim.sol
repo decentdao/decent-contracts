@@ -14,7 +14,7 @@ interface IERC20Claim {
      * @param claimer address which is being claimed for, allowing any address to
      *      process a claim for any other address
      */
-    function claimToken(address claimer) external; // TODO should the be plural?
+    function claimTokens(address claimer) external;
 
     /**
      * Gets an address' token claim amount.

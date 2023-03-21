@@ -2,7 +2,7 @@
 pragma solidity =0.8.19;
 
 /**
- * A utility contract which logs events pertaining to Fractal DAO metadata. // TODO should we make this upgradeable or split into multiple contracts for each?
+ * A utility contract which logs events pertaining to Fractal DAO metadata.
  */
 interface IFractalRegistry {
 

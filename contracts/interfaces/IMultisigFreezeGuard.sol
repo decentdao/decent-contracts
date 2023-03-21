@@ -15,11 +15,13 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * as the multi-sig child could immediately execute any transactions they would like
  * in response.
  *
- * An execution period is also required // TODO we had a reason to require this, what was that
+ * An execution period is also required. This is to prevent executing the transaction after
+ * a potential freeze period is enacted. Without it a subDAO could just wait for a freeze
+ * period to elapse and then execute their desired transaction.
  *
  * See also https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
  */
-interface IMultisigFreezeGuard { // TODO FreezeGuard name feels off here, as it's not exactly freezing anything, just adding parameters to a multisig
+interface IMultisigFreezeGuard {
 
     /**
      * Allows the caller to begin the "timelock" of a transaction.
@@ -28,7 +30,7 @@ interface IMultisigFreezeGuard { // TODO FreezeGuard name feels off here, as it'
      * executed, after it has passed.  This period is intended to allow the parent DAO
      * sufficient time to potentially freeze the DAO, if they should vote to do so.
      *
-     * The parameters for doing so are identical to IGnosisSafe's execTransaction function.
+     * The parameters for doing so are identical to ISafe's execTransaction function.
      *
      * @param _to destination address
      * @param _value ETH value
@@ -36,8 +38,8 @@ interface IMultisigFreezeGuard { // TODO FreezeGuard name feels off here, as it'
      * @param _operation Operation type, Call or DelegateCall
      * @param _safeTxGas gas that should be used for the safe transaction
      * @param _baseGas gas costs that are independent of the transaction execution
-     * @param _gasPrice max gas price that should be used for this transaction // TODO isn't there a different way to structure transactions now?
-     * @param _gasToken token address (or 0 if ETH) that is used for the payment // TODO what's this paying with other tokens about?
+     * @param _gasPrice max gas price that should be used for this transaction
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment
      * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
      * @param _signatures packed signature data
      */
@@ -59,7 +61,7 @@ interface IMultisigFreezeGuard { // TODO FreezeGuard name feels off here, as it'
      *
      * @param _timelockPeriod new timelock period for the subDAO (in blocks)
      */
-    function updateTimelockPeriod(uint256 _timelockPeriod) external; // TODO change "update" to "set" (also applies to Azorius functions like Voting.sol)
+    function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
     /**
      * Updates the execution period.

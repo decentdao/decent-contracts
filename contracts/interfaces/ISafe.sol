@@ -12,7 +12,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * For the complete set of functions available on a Safe, see:
  * https://github.com/safe-global/safe-contracts/blob/main/contracts/Safe.sol
  */
-interface IGnosisSafe { // TODO rename to Safe? TODO should we underscore all the parameters?
+interface ISafe {
 
     /**
      * Returns the current transaction nonce of the Safe.
@@ -42,8 +42,8 @@ interface IGnosisSafe { // TODO rename to Safe? TODO should we underscore all th
      * @param _operation Operation type, Call or DelegateCall
      * @param _safeTxGas gas that should be used for the safe transaction
      * @param _baseGas gas costs that are independent of the transaction execution
-     * @param _gasPrice max gas price that should be used for this transaction // TODO isn't there a different way to structure transactions now?
-     * @param _gasToken token address (or 0 if ETH) that is used for the payment // TODO what's this paying with other tokens about?
+     * @param _gasPrice max gas price that should be used for this transaction
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment
      * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
      * @param _signatures packed signature data
      * @return success bool whether the transaction was successful or not
@@ -81,8 +81,8 @@ interface IGnosisSafe { // TODO rename to Safe? TODO should we underscore all th
      * @param _operation Operation type, Call or DelegateCall
      * @param _safeTxGas gas that should be used for the safe transaction
      * @param _baseGas gas costs that are independent of the transaction execution
-     * @param _gasPrice max gas price that should be used for this transaction // TODO isn't there a different way to structure transactions now?
-     * @param _gasToken token address (or 0 if ETH) that is used for the payment // TODO what's this paying with other tokens about?
+     * @param _gasPrice max gas price that should be used for this transaction
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment
      * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
      * @param _nonce transaction nonce
      * @return bytes hash bytes
