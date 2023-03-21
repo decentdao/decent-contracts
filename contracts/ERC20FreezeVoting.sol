@@ -5,11 +5,15 @@ import "./BaseFreezeVoting.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
-/// @notice A contract for casting freeze votes with an ERC20 votes token
+/**
+ * A BaseFreezeVoting implementation which handles freezes on ERC20 based token voting DAOs.
+ */
 contract ERC20FreezeVoting is BaseFreezeVoting {
+
+    /** A reference to the ERC20 voting token of the subDAO. */
     IVotes public votesERC20;
 
-    event ERC20FreezeVotingSetup(
+    event ERC20FreezeVotingSetUp(
         address indexed owner,
         address indexed votesERC20
     );
@@ -17,8 +21,11 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
     error NoVotes();
     error AlreadyVoted();
 
-    /// @notice Initialize function, will be triggered when a new proxy is deployed
-    /// @param initializeParams Parameters of initialization encoded
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
@@ -39,15 +46,16 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         freezePeriod = _freezePeriod;
         votesERC20 = IVotes(_votesERC20);
 
-        emit ERC20FreezeVotingSetup(_owner, _votesERC20);
+        emit ERC20FreezeVotingSetUp(_owner, _votesERC20);
     }
 
-    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
+    /// @inheritdoc IBaseFreezeVoting
     function castFreezeVote() external override {
         uint256 userVotes;
 
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
-            // Create freeze proposal, set total votes to msg.sender's vote count
+            // create a new freeze proposal and set total votes to msg.sender's vote count
+
             freezeProposalCreatedBlock = block.number;
 
             userVotes = votesERC20.getPastVotes(
@@ -61,7 +69,8 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
 
             emit FreezeProposalCreated(msg.sender);
         } else {
-            // There is an existing freeze proposal, count user's votes
+            // there is an existing freeze proposal, count user's votes toward it
+
             if (userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock])
                 revert AlreadyVoted();
 

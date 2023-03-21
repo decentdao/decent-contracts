@@ -9,16 +9,16 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
-/// @notice A guard contract that enables functionality for a Multisig to be frozen,
-/// @notice and unable to execute transactions until it is unfrozen
-contract MultisigFreezeGuard is
-    FactoryFriendly,
-    IGuard,
-    IMultisigFreezeGuard,
-    BaseGuard
-{
-    uint256 public timelockPeriod; // Timelock period in number of blocks
-    uint256 public executionPeriod; // Execution period in number of blocks
+/**
+ * A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 
+ * if it has been frozen by its parentDAO.
+ *
+ * see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ */
+contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
+
+    uint256 public timelockPeriod; // timelock period in number of blocks
+    uint256 public executionPeriod; // execution period in number of blocks
     IBaseFreezeVoting public freezeVoting;
     ISafe public childGnosisSafe;
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
@@ -43,8 +43,11 @@ contract MultisigFreezeGuard is
     error Expired();
     error DAOFrozen();
 
-    /// @notice Initialize function, will be triggered when a new proxy is deployed
-    /// @param initializeParams Parameters of initialization encoded
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
@@ -72,17 +75,7 @@ contract MultisigFreezeGuard is
         );
     }
 
-    /// @notice Allows a user to timelock the transaction, requires valid signatures
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
-    /// @param signatures Packed signature data ({bytes32 r}{bytes32 s}{uint8 v})
+    /// @inheritdoc IMultisigFreezeGuard
     function timelockTransaction(
         address to,
         uint256 value,
@@ -128,7 +121,7 @@ contract MultisigFreezeGuard is
                 childGnosisSafe.nonce()
             );
 
-        // If signatures are not valid, this will revert
+        // if signatures are not valid, this will revert
         childGnosisSafe.checkSignatures(
             keccak256(gnosisTransactionHash),
             gnosisTransactionHash,
@@ -140,47 +133,33 @@ contract MultisigFreezeGuard is
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
-    /// @notice Updates the timelock period in blocks, only callable by the owner
-    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
+    /// @inheritdoc IMultisigFreezeGuard
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period in blocks, only callable by the owner
-    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
-    function updateExecutionPeriod(
-        uint256 _executionPeriod
-    ) external onlyOwner {
-        executionPeriod = _executionPeriod;
-    }
-
-    /// @notice Updates the timelock period in blocks
-    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
+    /** Internal implementation of updateTimelockPeriod */
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
-
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
 
-    /// @notice Updates the execution period in blocks
-    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
+    /// @inheritdoc IMultisigFreezeGuard
+    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
+        executionPeriod = _executionPeriod;
+    }
+
+    /** Internal implementation of updateExecutionPeriod */
     function _updateExecutionPeriod(uint256 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
-
         emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
-    /// @notice This function is called by the Gnosis Safe to check if the transaction should be able to be executed
-    /// @notice Reverts if this transaction cannot be executed
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
+    /**
+     * This function is called by the Safe to check if the transaction
+     * is able to be executed and reverts if the guard conditions are
+     * not met.
+     */
     function checkTransaction(
         address to,
         uint256 value,
@@ -224,37 +203,43 @@ contract MultisigFreezeGuard is
         if (freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
-    /// @notice Does checks after transaction is executed on the Gnosis Safe
-    /// @param txHash The hash of the transaction that was executed
-    /// @param success Boolean indicating whether the Gnosis Safe successfully executed the tx
-    function checkAfterExecution(
-        bytes32 txHash,
-        bool success
-    ) external view override(BaseGuard, IGuard) {}
+    /**
+     * A callback performed after a transaction in executed on the Safe.
+     *
+     * @param txHash hash of the transaction that was executed
+     * @param success bool indicating whether the Safe successfully executed the transaction
+     */
+    function checkAfterExecution(bytes32 txHash, bool success) external view override(BaseGuard, IGuard) {
+        // not implementated
+    }
 
-    /// @notice Gets the block number that the transaction was timelocked at
-    /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The block number
-    function getTransactionTimelockedBlock(
-        bytes32 _transactionHash
-    ) public view returns (uint256) {
+    /// @inheritdoc IMultisigFreezeGuard
+    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256) {
         return transactionTimelockedBlock[_transactionHash];
     }
 
-    /// @dev Returns the hash of all the transaction data
-    /// @dev It is important to note that this implementation is different than that in the Gnosis Safe contract
-    /// @dev This implementation does not use the nonce, as this is not part of the Guard contract checkTransaction interface
-    /// @dev This implementation also omits the EIP-712 related values, since these hashes are not being signed by users
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
-    /// @return Transaction hash bytes.
+    /**
+     * Returns the hash of all the transaction data.
+     *
+     * It is important to note that this implementation is different than that 
+     * in the Gnosis Safe contract. This implementation does not use the nonce, 
+     * as this is not part of the Guard contract checkTransaction interface.
+     *
+     * This implementation also omits the EIP-712 related values, since these hashes 
+     * are not being signed by users
+     *
+     * @param to destination address
+     * @param value ETH value
+     * @param data payload
+     * @param operation Operation type
+     * @param safeTxGas gas that should be used for the safe transaction
+     * @param baseGas gas costs for that are independent of the transaction execution
+     *      (e.g. base transaction fee, signature check, payment of the refund)
+     * @param gasPrice maxiumum gas price that should be used for this transaction
+     * @param gasToken token address (or 0 if ETH) that is used for the payment
+     * @param refundReceiver address of receiver of gas payment (or 0 if tx.origin)
+     * @return bytes32 transaction hash bytes
+     */
     function getTransactionHash(
         address to,
         uint256 value,

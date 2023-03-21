@@ -23,4 +23,9 @@ interface IERC20Claim {
      * @return uint256 the given address' claim amount
      */
     function getClaimAmount(address claimer) external view returns (uint256);
+
+    /**
+     * Returns unclaimed tokens after the claim deadline to the funder.
+     */
+    function reclaim() external;
 }

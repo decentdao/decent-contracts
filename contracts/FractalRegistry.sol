@@ -7,6 +7,7 @@ import "./interfaces/IFractalRegistry.sol";
  * Implementation of IFractalRegistry.
  */
 contract FractalRegistry is IFractalRegistry {
+
     event FractalNameUpdated(address indexed daoAddress, string daoName);
     event FractalSubDAODeclared(address indexed parentDAOAddress, address indexed subDAOAddress);
 
