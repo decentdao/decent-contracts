@@ -9,6 +9,7 @@ import "hardhat-tracer";
 import "solidity-coverage";
 import "hardhat-dependency-compiler";
 import "hardhat-gas-reporter";
+import "solidity-docgen";
 
 dotenv.config();
 
@@ -91,6 +92,9 @@ const config: HardhatUserConfig = {
   },
   paths: {
     deploy: "deploy/core",
+  },
+  docgen: {
+    pages: "files",
   },
 };
 
