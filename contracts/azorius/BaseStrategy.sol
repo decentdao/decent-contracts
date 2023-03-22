@@ -27,11 +27,23 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
         _;
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function setAzorius(address _azoriusModule) external onlyOwner {
         azoriusModule = IAzorius(_azoriusModule);
         emit AzoriusSet(_azoriusModule);
     }
+
+    /** @inheritdoc IBaseStrategy*/
+    function initializeProposal(bytes memory _data) external virtual;
+
+    /** @inheritdoc IBaseStrategy*/
+    function isPassed(uint256 _proposalId) external view virtual returns (bool);
+
+    /** @inheritdoc IBaseStrategy*/
+    function isProposer(address _address) external view virtual returns (bool);
+
+    /** @inheritdoc IBaseStrategy*/
+    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
 
     /**
      * Sets the address of the Azorius module contract.
@@ -42,16 +54,4 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
         azoriusModule = IAzorius(_azoriusModule);
         emit AzoriusSet(_azoriusModule);
     }
-
-    /// @inheritdoc IBaseStrategy
-    function initializeProposal(bytes memory _data) external virtual;
-
-    /// @inheritdoc IBaseStrategy
-    function isPassed(uint256 _proposalId) external view virtual returns (bool);
-
-    /// @inheritdoc IBaseStrategy
-    function isProposer(address _address) external view virtual returns (bool);
-
-    /// @inheritdoc IBaseStrategy
-    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
 }

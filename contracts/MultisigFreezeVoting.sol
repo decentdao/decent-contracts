@@ -2,11 +2,14 @@
 pragma solidity =0.8.19;
 
 import "./BaseFreezeVoting.sol";
-import "./interfaces/IGnosisSafe.sol";
+import "./interfaces/ISafe.sol";
 
-/// @notice A contract for a parent Multisig DAO to cast freeze votes on a child DAO
+/**
+ * A BaseFreezeVoting implementation which handles freezes on multisig (Safe) based DAOs.
+ */
 contract MultisigFreezeVoting is BaseFreezeVoting {
-    IGnosisSafe public parentGnosisSafe;
+
+    ISafe public parentGnosisSafe;
 
     event MultisigFreezeVotingSetup(
         address indexed owner,
@@ -16,8 +19,11 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
     error NotOwner();
     error AlreadyVoted();
 
-    /// @notice Initialize function, will be triggered when a new proxy is deployed
-    /// @param initializeParams Parameters of initialization encoded
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
@@ -35,24 +41,26 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         _updateFreezeVotesThreshold(_freezeVotesThreshold);
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
         _updateFreezePeriod(_freezePeriod);
-        parentGnosisSafe = IGnosisSafe(_parentGnosisSafe);
+        parentGnosisSafe = ISafe(_parentGnosisSafe);
 
         emit MultisigFreezeVotingSetup(_owner, _parentGnosisSafe);
     }
 
-    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
+    /** @inheritdoc IBaseFreezeVoting*/
     function castFreezeVote() external override {
         if (!parentGnosisSafe.isOwner(msg.sender)) revert NotOwner();
 
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
-            // Create freeze proposal, count user's vote
+            // create a new freeze proposal and count the caller's vote
+
             freezeProposalCreatedBlock = block.number;
 
             freezeProposalVoteCount = 1;
 
             emit FreezeProposalCreated(msg.sender);
         } else {
-            // There is an existing freeze proposal, count user's vote
+            // there is an existing freeze proposal, count the caller's vote
+
             if (userHasFreezeVoted[msg.sender][freezeProposalCreatedBlock])
                 revert AlreadyVoted();
 

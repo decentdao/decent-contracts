@@ -7,6 +7,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20SnapshotUpgradeable.sol";
 
+/**
+ * An implementation of the Open Zeppelin IVotes voting token standard.
+ */
 contract VotesERC20 is
     IERC20Upgradeable,
     ERC20SnapshotUpgradeable,
@@ -14,14 +17,18 @@ contract VotesERC20 is
     ERC165Storage,
     FactoryFriendly
 {
-    /// @notice Initialize function, will be triggered when a new proxy is deployed
-    /// @param initializeParams Parameters of initialization encoded
+
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         (
-            string memory _name,
-            string memory _symbol,
-            address[] memory _hodlers,
-            uint256[] memory _allocations // Address(0) == msg.sender
+            string memory _name,                    // token name
+            string memory _symbol,                  // token symbol
+            address[] memory _allocationAddresses,  // addresses of initial allocations
+            uint256[] memory _allocationAmounts     // amounts of initial allocations
         ) = abi.decode(
                 initializeParams,
                 (string, string, address[], uint256[])
@@ -31,20 +38,24 @@ contract VotesERC20 is
         __ERC20Permit_init(_name);
         _registerInterface(type(IERC20Upgradeable).interfaceId);
 
-        uint256 hodlersLength = _hodlers.length;
-        for (uint256 i; i < hodlersLength; ) {
-            _mint(_hodlers[i], _allocations[i]);
+        uint256 holderCount = _allocationAddresses.length;
+        for (uint256 i; i < holderCount; ) {
+            _mint(_allocationAddresses[i], _allocationAmounts[i]);
             unchecked {
                 ++i;
             }
         }
     }
 
+    /**
+     * See ERC20SnapshotUpgradeable._snapshot()
+     */
     function captureSnapShot() external returns (uint256 snapId) {
         snapId = _snapshot();
     }
 
-    // The functions below are overrides required by Solidity.
+    // -- The functions below are overrides required by extended contracts. --
+
     function _mint(
         address to,
         uint256 amount

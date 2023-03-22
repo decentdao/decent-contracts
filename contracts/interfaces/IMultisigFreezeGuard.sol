@@ -3,46 +3,83 @@ pragma solidity =0.8.19;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
+/**
+ * A specification for a Safe Guard contract which allows for multi-sig DAOs (Safes)
+ * to operate in a fashion similar to Azorius token voting DAOs.
+ *
+ * This Guard is intended to add a timelock period and execution period to a Safe
+ * multisig contract, allowing parent DAO's to have the ability to properly
+ * freeze multi-sig subDAOs.
+ *
+ * Without a timelock period, a vote to freeze the Safe would not be possible
+ * as the multi-sig child could immediately execute any transactions they would like
+ * in response.
+ *
+ * An execution period is also required. This is to prevent executing the transaction after
+ * a potential freeze period is enacted. Without it a subDAO could just wait for a freeze
+ * period to elapse and then execute their desired transaction.
+ *
+ * See also https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ */
 interface IMultisigFreezeGuard {
-    /// @notice Allows a user to timelock the transaction, requires valid signatures
-    /// @param to Destination address.
-    /// @param value Ether value.
-    /// @param data Data payload.
-    /// @param operation Operation type.
-    /// @param safeTxGas Gas that should be used for the safe transaction.
-    /// @param baseGas Gas costs for that are independent of the transaction execution(e.g. base transaction fee, signature check, payment of the refund)
-    /// @param gasPrice Maximum gas price that should be used for this transaction.
-    /// @param gasToken Token address (or 0 if ETH) that is used for the payment.
-    /// @param refundReceiver Address of receiver of gas payment (or 0 if tx.origin).
-    /// @param signatures Packed signature data ({bytes32 r}{bytes32 s}{uint8 v})
+
+    /**
+     * Allows the caller to begin the "timelock" of a transaction.
+     *
+     * Timelock is the period during which a proposed transaction must wait before being
+     * executed, after it has passed.  This period is intended to allow the parent DAO
+     * sufficient time to potentially freeze the DAO, if they should vote to do so.
+     *
+     * The parameters for doing so are identical to ISafe's execTransaction function.
+     *
+     * @param _to destination address
+     * @param _value ETH value
+     * @param _data data payload
+     * @param _operation Operation type, Call or DelegateCall
+     * @param _safeTxGas gas that should be used for the safe transaction
+     * @param _baseGas gas costs that are independent of the transaction execution
+     * @param _gasPrice max gas price that should be used for this transaction
+     * @param _gasToken token address (or 0 if ETH) that is used for the payment
+     * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
+     * @param _signatures packed signature data
+     */
     function timelockTransaction(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address payable refundReceiver,
-        bytes memory signatures
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation,
+        uint256 _safeTxGas,
+        uint256 _baseGas,
+        uint256 _gasPrice,
+        address _gasToken,
+        address payable _refundReceiver,
+        bytes memory _signatures
     ) external;
 
-    /// @notice Updates the timelock period in blocks, only callable by the owner
-    /// @param _timelockPeriod The number of blocks between when a transaction is timelocked and can be executed
-    function updateTimelockPeriod(uint256 _timelockPeriod)
-        external;
+    /**
+     * Sets the subDAO's timelock period.
+     *
+     * @param _timelockPeriod new timelock period for the subDAO (in blocks)
+     */
+    function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
-    /// @notice Updates the execution period in blocks, only callable by the owner
-    /// @param _executionPeriod The number of blocks a transaction has to be executed after timelock period has ended
-    function updateExecutionPeriod(uint256 _executionPeriod)
-        external;
+    /**
+     * Updates the execution period.
+     *
+     * Execution period is the time period during which a subDAO's passed Proposals must be executed,
+     * otherwise they will be expired.
+     *
+     * This period begins immediately after the timelock period has ended.
+     *
+     * @param _executionPeriod number of blocks a transaction has to be executed within
+     */
+    function updateExecutionPeriod(uint256 _executionPeriod) external;
 
-    /// @notice Gets the block number that the transaction was timelocked at
-    /// @param _transactionHash The hash of the transaction data
-    /// @return uint256 The block number
-    function getTransactionTimelockedBlock(bytes32 _transactionHash)
-        external
-        view
-        returns (uint256);
+    /**
+     * Gets the block number that the given transaction was timelocked at.
+     *
+     * @param _transactionHash hash of the transaction data
+     * @return uint256 block number in which the transaction began its timelock period
+     */
+    function getTransactionTimelockedBlock(bytes32 _transactionHash) external view returns (uint256);
 }

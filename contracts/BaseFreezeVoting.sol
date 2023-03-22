@@ -4,12 +4,31 @@ pragma solidity =0.8.19;
 import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "./interfaces/IBaseFreezeVoting.sol";
 
+/**
+ * The base abstract contract which holds the state of a vote to freeze a childDAO.
+ *
+ * The freeze feature gives a way for parentDAOs to have a limited measure of control
+ * over their created subDAOs.
+ *
+ * Normally a subDAO operates independently, and can vote on or sign transactions, 
+ * however should the parent disagree with a decision made by the subDAO, any parent
+ * token holder can initiate a vote to "freeze" it, making executing transactions impossible
+ * for the time denoted by freezePeriod.
+ *
+ * This requires a number of votes equal to freezeVotesThreshold, within the freezeProposalPeriod
+ * to be successful.
+ *
+ * Following a successful freeze vote, the childDAO will be unable to execute transactions, due to
+ * a Safe Transaction Guard, until the freezePeriod has elapsed.
+ */
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
-    uint256 public freezeVotesThreshold; // Number of freeze votes required to activate a freeze
-    uint256 public freezeProposalCreatedBlock; // Block number the freeze proposal was created at
-    uint256 public freezeProposalVoteCount; // Number of accrued freeze votes
-    uint256 public freezeProposalPeriod; // Number of blocks a freeze proposal has to succeed
-    uint256 public freezePeriod; // Number of blocks a freeze lasts, from time of freeze proposal creation
+
+    uint256 public freezeVotesThreshold; // number of freeze votes required to activate a freeze
+    uint256 public freezeProposalCreatedBlock; // block number the freeze proposal was created at
+    uint256 public freezeProposalVoteCount; // number of accrued freeze votes
+    uint256 public freezeProposalPeriod; // number of blocks a freeze proposal has to succeed
+    uint256 public freezePeriod; // number of blocks a freeze lasts, from time of freeze proposal creation
+
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
     event FreezeVoteCast(address indexed voter, uint256 votesCast);
@@ -18,75 +37,78 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     event FreezePeriodUpdated(uint256 freezePeriod);
     event FreezeProposalPeriodUpdated(uint256 freezeProposalPeriod);
 
-    /// @notice Allows user to cast a freeze vote, creating a freeze proposal if necessary
+    /**
+     * Casts a positive vote to freeze the subDAO. This function is intended to be called
+     * by the individual token holders themselves directly, and will allot their token
+     * holdings a "yes" votes towards freezing.
+     *
+     * Additionally, if a vote to freeze is not already running, calling this will initiate
+     * a new vote to freeze it.
+     */
     function castFreezeVote() external virtual;
 
-    /// @notice Unfreezes the DAO, only callable by the owner
+    /**
+     * Returns true if the DAO is currently frozen, false otherwise.
+     * 
+     * @return bool whether the DAO is currently frozen
+     */
+    function isFrozen() external view returns (bool) {
+        return freezeProposalVoteCount >= freezeVotesThreshold 
+            && block.number < freezeProposalCreatedBlock + freezePeriod;
+    }
+
+    /**
+     * Unfreezes the DAO, only callable by the owner (parentDAO).
+     */
     function unfreeze() external onlyOwner {
         freezeProposalCreatedBlock = 0;
         freezeProposalVoteCount = 0;
     }
 
-    /// @notice Updates the freeze votes threshold, only callable by the owner
-    /// @param _freezeVotesThreshold Number of freeze votes required to activate a freeze
-    function updateFreezeVotesThreshold(
-        uint256 _freezeVotesThreshold
-    ) external onlyOwner {
+    /**
+     * Updates the freeze votes threshold, the number of votes required to enact a freeze.
+     *
+     * @param _freezeVotesThreshold Number of freeze votes required to activate a freeze
+     */
+    function updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) external onlyOwner {
         _updateFreezeVotesThreshold(_freezeVotesThreshold);
     }
 
-    /// @notice Updates the freeze proposal period, only callable by the owner
-    /// @param _freezeProposalPeriod The number of blocks a freeze proposal has to succeed
-    function updateFreezeProposalPeriod(
-        uint256 _freezeProposalPeriod
-    ) external onlyOwner {
+    /**
+     * Updates the freeze proposal period, the time that parent token holders have to cast votes
+     * after a freeze vote has been initiated.
+     *
+     * @param _freezeProposalPeriod number of blocks a freeze vote has to succeed to enact a freeze
+     */
+    function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external onlyOwner {
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
     }
 
-    /// @notice Updates the freeze period, only callable by the owner
-    /// @param _freezePeriod The number of blocks a freeze lasts, from time of freeze proposal creation
+    /**
+     * Updates the freeze period, the time the DAO will be unable to execute transactions for,
+     * should a freeze vote pass.
+     *
+     * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
+     */
     function updateFreezePeriod(uint256 _freezePeriod) external onlyOwner {
         _updateFreezePeriod(_freezePeriod);
     }
 
-    /// @notice Updates the freeze votes threshold
-    /// @param _freezeVotesThreshold Number of freeze votes required to activate a freeze
-    function _updateFreezeVotesThreshold(
-        uint256 _freezeVotesThreshold
-    ) internal {
+    /** Internal implementation of updateFreezeVotesThreshold. */
+    function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal {
         freezeVotesThreshold = _freezeVotesThreshold;
-
         emit FreezeVotesThresholdUpdated(_freezeVotesThreshold);
     }
 
-    /// @notice Updates the freeze proposal period
-    /// @param _freezeProposalPeriod The number of blocks a freeze proposal has to succeed
-    function _updateFreezeProposalPeriod(
-        uint256 _freezeProposalPeriod
-    ) internal {
+    /** Internal implementation of updateFreezeProposalPeriod. */
+    function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
         freezeProposalPeriod = _freezeProposalPeriod;
-
         emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
     }
 
-    /// @notice Updates the freeze period
-    /// @param _freezePeriod The number of blocks a freeze lasts, from time of freeze proposal creation
+    /** Internal implementation of updateFreezePeriod. */
     function _updateFreezePeriod(uint256 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
-
         emit FreezePeriodUpdated(_freezePeriod);
-    }
-
-    /// @notice Returns true if the DAO is currently frozen, false otherwise
-    /// @return bool Indicates whether the DAO is currently frozen
-    function isFrozen() external view returns (bool) {
-        if (
-            freezeProposalVoteCount >= freezeVotesThreshold &&
-            block.number < freezeProposalCreatedBlock + freezePeriod
-        ) {
-            return true;
-        }
-
-        return false;
     }
 }

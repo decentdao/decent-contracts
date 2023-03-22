@@ -1,5 +1,16 @@
 # Fractal Contracts
 
+## Azorius Protocol
+A Safe module which allows for composable governance.
+
+Azorius conforms to the [Zodiac](https://github.com/gnosis/zodiac) pattern for Safe modules.
+
+The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications of the transactions that comprise a Proposal.
+
+All voting details are delegated to BaseStrategy implementations, of which an Azorius DAO can have any number.
+
+Azorius was forked from and heavily based on the [Usul](https://github.com/SekerDAO/Usul) module, by [SekerDAO](https://github.com/SekerDAO).
+
 ## Local Setup & Testing
 
 Clone the repository:
@@ -31,6 +42,11 @@ npm run compile
 Run the tests
 ```shell
 npm run test
+```
+
+Update natspec doc files
+```shell
+npx hardhat docgen
 ```
 
 ## Deploy Contract to <network>

@@ -120,7 +120,7 @@ describe("ERC-20 Token Claiming", function () {
     const amount = await erc20Claim.getClaimAmount(deployer.address);
     // Claim on behalf
     await expect(
-      erc20Claim.connect(userB).claimToken(deployer.address)
+      erc20Claim.connect(userB).claimTokens(deployer.address)
     ).to.emit(erc20Claim, "ERC20Claimed");
     expect(
       await amount
@@ -134,21 +134,21 @@ describe("ERC-20 Token Claiming", function () {
   });
 
   it("Should revert double claim", async () => {
-    await expect(erc20Claim.claimToken(deployer.address)).to.emit(
+    await expect(erc20Claim.claimTokens(deployer.address)).to.emit(
       erc20Claim,
       "ERC20Claimed"
     );
     expect(await erc20Claim.getClaimAmount(deployer.address)).to.eq(0);
     await expect(
-      erc20Claim.connect(userA).claimToken(deployer.address)
+      erc20Claim.connect(userA).claimTokens(deployer.address)
     ).to.revertedWith("NoAllocation()");
-    await expect(erc20Claim.claimToken(deployer.address)).to.revertedWith(
+    await expect(erc20Claim.claimTokens(deployer.address)).to.revertedWith(
       "NoAllocation()"
     );
   });
 
   it("Should revert without an allocation", async () => {
-    await expect(erc20Claim.claimToken(userB.address)).to.revertedWith(
+    await expect(erc20Claim.claimTokens(userB.address)).to.revertedWith(
       "NoAllocation()"
     );
   });
