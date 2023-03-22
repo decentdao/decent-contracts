@@ -172,4 +172,48 @@ describe("ERC-20 Token Claiming", function () {
       ethers.utils.parseUnits("100", 18)
     );
   });
+
+  it("If the deadlineBlock is setup as zero, then calling reclaim will revert", async () => {
+    childERC20 = await new VotesERC20__factory(deployer).deploy();
+
+    erc20Claim = await new ERC20Claim__factory(deployer).deploy();
+
+    const abiCoder = new ethers.utils.AbiCoder(); // encode data
+
+    const childERC20SetupData = abiCoder.encode(
+      ["string", "string", "address[]", "uint256[]"],
+      [
+        "ChildDecent",
+        "cDCNT",
+        [userB.address, deployer.address],
+        [
+          ethers.utils.parseUnits("100", 18),
+          ethers.utils.parseUnits("100", 18),
+        ],
+      ]
+    );
+
+    await childERC20.setUp(childERC20SetupData);
+
+    const erc20ClaimSetupData = abiCoder.encode(
+      ["address", "uint256", "address", "address", "uint256"],
+      [
+        deployer.address,
+        0,
+        parentERC20.address,
+        childERC20.address,
+        ethers.utils.parseUnits("100", 18),
+      ]
+    );
+
+    await childERC20
+      .connect(deployer)
+      .approve(erc20Claim.address, ethers.utils.parseUnits("100", 18));
+
+    await erc20Claim.setUp(erc20ClaimSetupData);
+
+    await expect(erc20Claim.connect(deployer).reclaim()).to.be.revertedWith(
+      "NoDeadline()"
+    );
+  });
 });
