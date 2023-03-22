@@ -49,7 +49,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         emit ERC20FreezeVotingSetUp(_owner, _votesERC20);
     }
 
-    /// @inheritdoc IBaseFreezeVoting
+    /** @inheritdoc IBaseFreezeVoting*/
     function castFreezeVote() external override {
         uint256 userVotes;
 

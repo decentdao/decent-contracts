@@ -52,7 +52,7 @@ contract FractalModule is IFractalModule, Module {
         transferOwnership(_owner);
     }
 
-    /// @inheritdoc IFractalModule
+    /** @inheritdoc IFractalModule*/
     function removeControllers(address[] memory _controllers) external onlyOwner {
         uint256 controllersLength = _controllers.length;
         for (uint256 i; i < controllersLength; ) {
@@ -64,7 +64,7 @@ contract FractalModule is IFractalModule, Module {
         emit ControllersRemoved(_controllers);
     }
 
-    /// @inheritdoc IFractalModule
+    /** @inheritdoc IFractalModule*/
     function execTx(bytes memory execTxData) public onlyAuthorized {
         (
             address _target,
@@ -75,7 +75,7 @@ contract FractalModule is IFractalModule, Module {
         if(!exec(_target, _value, _data, _operation)) revert TxFailed();
     }
 
-    /// @inheritdoc IFractalModule
+    /** @inheritdoc IFractalModule*/
     function addControllers(address[] memory _controllers) public onlyOwner {
         uint256 controllersLength = _controllers.length;
         for (uint256 i; i < controllersLength; ) {

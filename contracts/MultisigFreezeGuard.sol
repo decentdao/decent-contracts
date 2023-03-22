@@ -75,7 +75,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         );
     }
 
-    /// @inheritdoc IMultisigFreezeGuard
+    /** @inheritdoc IMultisigFreezeGuard*/
     function timelockTransaction(
         address to,
         uint256 value,
@@ -133,12 +133,12 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
-    /// @inheritdoc IMultisigFreezeGuard
+    /** @inheritdoc IMultisigFreezeGuard*/
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /// @inheritdoc IMultisigFreezeGuard
+    /** @inheritdoc IMultisigFreezeGuard*/
     function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
         executionPeriod = _executionPeriod;
     }
@@ -201,7 +201,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         // not implementated
     }
 
-    /// @inheritdoc IMultisigFreezeGuard
+    /** @inheritdoc IMultisigFreezeGuard*/
     function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256) {
         return transactionTimelockedBlock[_transactionHash];
     }

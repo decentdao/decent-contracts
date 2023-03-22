@@ -88,7 +88,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
@@ -151,7 +151,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return proposalVotes[_proposalId].hasVoted[_address];
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         if (
             proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
@@ -196,12 +196,12 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             );
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function isProposer(address) public pure override returns (bool) {
         return true; // anyone can submit Proposals
     }
 
-    /// @inheritdoc BaseStrategy
+    /** @inheritdoc BaseStrategy*/
     function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
       return proposalVotes[_proposalId].votingEndBlock;
     }

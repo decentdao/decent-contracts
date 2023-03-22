@@ -46,7 +46,7 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         emit MultisigFreezeVotingSetup(_owner, _parentGnosisSafe);
     }
 
-    /// @inheritdoc IBaseFreezeVoting
+    /** @inheritdoc IBaseFreezeVoting*/
     function castFreezeVote() external override {
         if (!parentGnosisSafe.isOwner(msg.sender)) revert NotOwner();
 

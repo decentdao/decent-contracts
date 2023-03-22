@@ -81,7 +81,7 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         );
     }
 
-    /// @inheritdoc IERC20Claim
+    /** @inheritdoc IERC20Claim*/
     function claimTokens(address claimer) external {
         uint256 amount = getClaimAmount(claimer); // get claimer balance
 
@@ -94,7 +94,7 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         emit ERC20Claimed(parentERC20, childERC20, claimer, amount);
     }
 
-    /// @inheritdoc IERC20Claim
+    /** @inheritdoc IERC20Claim*/
     function reclaim() external {
         if (msg.sender != funder) revert NotTheFunder();
         if (deadlineBlock == 0) revert NoDeadline();
@@ -103,7 +103,7 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         token.safeTransfer(funder, token.balanceOf(address(this)));
     }
 
-    /// @inheritdoc IERC20Claim
+    /** @inheritdoc IERC20Claim*/
     function getClaimAmount(address claimer) public view returns (uint256) {
         return
             claimed[claimer]
