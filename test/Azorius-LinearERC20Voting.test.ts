@@ -1330,6 +1330,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
             ""
           )
       ).to.be.revertedWith("InvalidProposer()");
+
+      expect(await mockVotingStrategy.isPassed(0)).to.eq(false);
+      expect(await mockVotingStrategy.votingEndBlock(0)).to.eq(0);
     });
   });
 });
