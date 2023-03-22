@@ -1342,5 +1342,275 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await mockVotingStrategy.isPassed(0)).to.eq(false);
       expect(await mockVotingStrategy.votingEndBlock(0)).to.eq(0);
     });
+
+    it("A proposal cannot be executed if targets array length is zero", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearERC20Voting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      const txHash = await azorius.getTxHash(
+        votesERC20.address,
+        BigNumber.from(0),
+        tokenTransferData,
+        0
+      );
+
+      const proposalTxHashes = await azorius.getProposalTxHashes(0);
+
+      const proposalTxHash = await azorius.getProposalTxHash(0, 0);
+
+      expect([txHash]).to.deep.eq(proposalTxHashes);
+
+      expect(txHash).to.deep.eq(proposalTxHash);
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC20Voting.address,
+        [txHash],
+        BigNumber.from("60"),
+        BigNumber.from("60"),
+        BigNumber.from("0"),
+      ]);
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users haven't voted yet
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        false
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        false
+      );
+
+      // Users vote in support of proposal
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Users have voted
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        true
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        true
+      );
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(0, [], [], [], [])
+      ).to.be.revertedWith("InvalidTxs()");
+    });
+
+    it("A proposal cannot be executed if unequal array lengths are passed", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearERC20Voting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      const txHash = await azorius.getTxHash(
+        votesERC20.address,
+        BigNumber.from(0),
+        tokenTransferData,
+        0
+      );
+
+      const proposalTxHashes = await azorius.getProposalTxHashes(0);
+
+      const proposalTxHash = await azorius.getProposalTxHash(0, 0);
+
+      expect([txHash]).to.deep.eq(proposalTxHashes);
+
+      expect(txHash).to.deep.eq(proposalTxHash);
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC20Voting.address,
+        [txHash],
+        BigNumber.from("60"),
+        BigNumber.from("60"),
+        BigNumber.from("0"),
+      ]);
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users haven't voted yet
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        false
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        false
+      );
+
+      // Users vote in support of proposal
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Users have voted
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        true
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        true
+      );
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(0, [votesERC20.address], [], [], [0])
+      ).to.be.revertedWith("InvalidArrayLengths()");
+    });
+
+    it("A proposal cannot be executed if too many TXs are passed to it", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearERC20Voting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      const txHash = await azorius.getTxHash(
+        votesERC20.address,
+        BigNumber.from(0),
+        tokenTransferData,
+        0
+      );
+
+      const proposalTxHashes = await azorius.getProposalTxHashes(0);
+
+      const proposalTxHash = await azorius.getProposalTxHash(0, 0);
+
+      expect([txHash]).to.deep.eq(proposalTxHashes);
+
+      expect(txHash).to.deep.eq(proposalTxHash);
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC20Voting.address,
+        [txHash],
+        BigNumber.from("60"),
+        BigNumber.from("60"),
+        BigNumber.from("0"),
+      ]);
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users haven't voted yet
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        false
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        false
+      );
+
+      // Users vote in support of proposal
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Users have voted
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder2.address)).to.eq(
+        true
+      );
+      expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(
+        true
+      );
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(600);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(
+          0,
+          [votesERC20.address, votesERC20.address],
+          [0, 0],
+          [tokenTransferData, tokenTransferData],
+          [0, 0]
+        )
+      ).to.be.revertedWith("InvalidTxs()");
+    });
   });
 });
