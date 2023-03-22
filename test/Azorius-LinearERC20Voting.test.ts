@@ -1175,7 +1175,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).to.be.revertedWith("InvalidVote()");
     });
 
-    it.only("Azorius can be setup with multiple strategies", async () => {
+    it("Azorius can be setup with multiple strategies", async () => {
       const abiCoder = new ethers.utils.AbiCoder();
 
       // Deploy Azorius module

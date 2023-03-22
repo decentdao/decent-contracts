@@ -74,7 +74,6 @@ contract Azorius is Module, IAzorius {
     error TxFailed();
     error InvalidTxs();
     error InvalidArrayLengths();
-    error AlreadySetupStrategies();
 
     function setUp(bytes memory initParams) public override initializer {
         (
@@ -259,8 +258,6 @@ contract Azorius is Module, IAzorius {
      * @param _strategies array of BaseStrategy contract addresses to enable
      */
     function _setUpStrategies(address[] memory _strategies) internal {
-        if (strategies[SENTINEL_STRATEGY] != address(0))
-            revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
         uint256 strategiesLength = _strategies.length;
         for (uint256 i; i < strategiesLength; ) {
