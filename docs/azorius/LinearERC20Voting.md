@@ -123,14 +123,6 @@ Updates the voting time period for new Proposals.
 | ---- | ---- | ----------- |
 | _votingPeriod | uint256 | voting time period (in blocks) |
 
-### _updateVotingPeriod
-
-```solidity
-function _updateVotingPeriod(uint256 _votingPeriod) internal
-```
-
-Internal implementation of updateVotingPeriod above
-
 ### initializeProposal
 
 ```solidity
@@ -153,22 +145,29 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 | _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
 |  | bytes |  |
 
-### _vote
+### getProposal
 
 ```solidity
-function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal
+function getProposal(uint256 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint256 votingStartBlock, uint256 votingEndBlock)
 ```
 
-Internal function for casting a vote on a Proposal.
+Returns the current state of the specified Proposal.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _proposalId | uint256 | id of the Proposal |
-| _voter | address | address casting the vote |
-| _voteType | uint8 | vote support, as defined in VoteType |
-| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| noVotes | uint256 | current count of "NO" votes |
+| yesVotes | uint256 | current count of "YES" votes |
+| abstainVotes | uint256 | current count of "ABSTAIN" votes |
+| votingStartBlock | uint256 | block number voting starts |
+| votingEndBlock | uint256 | block number voting ends |
 
 ### hasVoted
 
@@ -220,30 +219,6 @@ quorum based on the supply at the time of a Proposal's creation.
 | ---- | ---- | ----------- |
 | [0] | uint256 | uint256 the number of votes needed for quorum |
 
-### getProposal
-
-```solidity
-function getProposal(uint256 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint256 votingStartBlock, uint256 votingEndBlock)
-```
-
-Returns the current state of the specified Proposal.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint256 | id of the Proposal |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| noVotes | uint256 | current count of "NO" votes |
-| yesVotes | uint256 | current count of "YES" votes |
-| abstainVotes | uint256 | current count of "ABSTAIN" votes |
-| votingStartBlock | uint256 | block number voting starts |
-| votingEndBlock | uint256 | block number voting ends |
-
 ### getVotingWeight
 
 ```solidity
@@ -290,4 +265,29 @@ Returns the block number voting ends on a given Proposal.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | uint256 | uint256 block number when voting ends on the Proposal |
+
+### _updateVotingPeriod
+
+```solidity
+function _updateVotingPeriod(uint256 _votingPeriod) internal
+```
+
+Internal implementation of updateVotingPeriod above
+
+### _vote
+
+```solidity
+function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal
+```
+
+Internal function for casting a vote on a Proposal.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint256 | id of the Proposal |
+| _voter | address | address casting the vote |
+| _voteType | uint8 | vote support, as defined in VoteType |
+| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
 

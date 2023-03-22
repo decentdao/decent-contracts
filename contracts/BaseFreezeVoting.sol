@@ -48,6 +48,16 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     function castFreezeVote() external virtual;
 
     /**
+     * Returns true if the DAO is currently frozen, false otherwise.
+     * 
+     * @return bool whether the DAO is currently frozen
+     */
+    function isFrozen() external view returns (bool) {
+        return freezeProposalVoteCount >= freezeVotesThreshold 
+            && block.number < freezeProposalCreatedBlock + freezePeriod;
+    }
+
+    /**
      * Unfreezes the DAO, only callable by the owner (parentDAO).
      */
     function unfreeze() external onlyOwner {
@@ -64,12 +74,6 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
         _updateFreezeVotesThreshold(_freezeVotesThreshold);
     }
 
-    /** Internal implementation of updateFreezeVotesThreshold. */
-    function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal {
-        freezeVotesThreshold = _freezeVotesThreshold;
-        emit FreezeVotesThresholdUpdated(_freezeVotesThreshold);
-    }
-
     /**
      * Updates the freeze proposal period, the time that parent token holders have to cast votes
      * after a freeze vote has been initiated.
@@ -78,12 +82,6 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
      */
     function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external onlyOwner {
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
-    }
-
-    /** Internal implementation of updateFreezeProposalPeriod. */
-    function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
-        freezeProposalPeriod = _freezeProposalPeriod;
-        emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
     }
 
     /**
@@ -96,19 +94,21 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
         _updateFreezePeriod(_freezePeriod);
     }
 
+    /** Internal implementation of updateFreezeVotesThreshold. */
+    function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal {
+        freezeVotesThreshold = _freezeVotesThreshold;
+        emit FreezeVotesThresholdUpdated(_freezeVotesThreshold);
+    }
+
+    /** Internal implementation of updateFreezeProposalPeriod. */
+    function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
+        freezeProposalPeriod = _freezeProposalPeriod;
+        emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
+    }
+
     /** Internal implementation of updateFreezePeriod. */
     function _updateFreezePeriod(uint256 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
         emit FreezePeriodUpdated(_freezePeriod);
-    }
-
-    /**
-     * Returns true if the DAO is currently frozen, false otherwise.
-     * 
-     * @return bool whether the DAO is currently frozen
-     */
-    function isFrozen() external view returns (bool) {
-        return freezeProposalVoteCount >= freezeVotesThreshold 
-            && block.number < freezeProposalCreatedBlock + freezePeriod;
     }
 }

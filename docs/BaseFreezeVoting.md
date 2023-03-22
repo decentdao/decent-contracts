@@ -97,6 +97,20 @@ holdings a "yes" votes towards freezing.
 Additionally, if a vote to freeze is not already running, calling this will initiate
 a new vote to freeze it.
 
+### isFrozen
+
+```solidity
+function isFrozen() external view returns (bool)
+```
+
+Returns true if the DAO is currently frozen, false otherwise.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool whether the DAO is currently frozen |
+
 ### unfreeze
 
 ```solidity
@@ -119,14 +133,6 @@ Updates the freeze votes threshold, the number of votes required to enact a free
 | ---- | ---- | ----------- |
 | _freezeVotesThreshold | uint256 | Number of freeze votes required to activate a freeze |
 
-### _updateFreezeVotesThreshold
-
-```solidity
-function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal
-```
-
-Internal implementation of updateFreezeVotesThreshold.
-
 ### updateFreezeProposalPeriod
 
 ```solidity
@@ -141,14 +147,6 @@ after a freeze vote has been initiated.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _freezeProposalPeriod | uint256 | number of blocks a freeze vote has to succeed to enact a freeze |
-
-### _updateFreezeProposalPeriod
-
-```solidity
-function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal
-```
-
-Internal implementation of updateFreezeProposalPeriod.
 
 ### updateFreezePeriod
 
@@ -165,6 +163,22 @@ should a freeze vote pass.
 | ---- | ---- | ----------- |
 | _freezePeriod | uint256 | number of blocks a freeze lasts, from time of freeze proposal creation |
 
+### _updateFreezeVotesThreshold
+
+```solidity
+function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal
+```
+
+Internal implementation of updateFreezeVotesThreshold.
+
+### _updateFreezeProposalPeriod
+
+```solidity
+function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal
+```
+
+Internal implementation of updateFreezeProposalPeriod.
+
 ### _updateFreezePeriod
 
 ```solidity
@@ -172,18 +186,4 @@ function _updateFreezePeriod(uint256 _freezePeriod) internal
 ```
 
 Internal implementation of updateFreezePeriod.
-
-### isFrozen
-
-```solidity
-function isFrozen() external view returns (bool)
-```
-
-Returns true if the DAO is currently frozen, false otherwise.
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether the DAO is currently frozen |
 

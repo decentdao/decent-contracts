@@ -148,14 +148,6 @@ Sets the subDAO's timelock period.
 | ---- | ---- | ----------- |
 | _timelockPeriod | uint256 | new timelock period for the subDAO (in blocks) |
 
-### _updateTimelockPeriod
-
-```solidity
-function _updateTimelockPeriod(uint256 _timelockPeriod) internal
-```
-
-Internal implementation of updateTimelockPeriod
-
 ### updateExecutionPeriod
 
 ```solidity
@@ -174,14 +166,6 @@ This period begins immediately after the timelock period has ended.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _executionPeriod | uint256 | number of blocks a transaction has to be executed within |
-
-### _updateExecutionPeriod
-
-```solidity
-function _updateExecutionPeriod(uint256 _executionPeriod) internal
-```
-
-Internal implementation of updateExecutionPeriod
 
 ### checkTransaction
 
@@ -262,4 +246,20 @@ are not being signed by users
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | bytes32 | bytes32 transaction hash bytes |
+
+### _updateTimelockPeriod
+
+```solidity
+function _updateTimelockPeriod(uint256 _timelockPeriod) internal
+```
+
+Internal implementation of updateTimelockPeriod
+
+### _updateExecutionPeriod
+
+```solidity
+function _updateExecutionPeriod(uint256 _executionPeriod) internal
+```
+
+Internal implementation of updateExecutionPeriod
 

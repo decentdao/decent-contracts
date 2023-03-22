@@ -119,6 +119,14 @@ subDAO during its creation.
 | ---- | ---- | ----------- |
 | claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
 
+### reclaim
+
+```solidity
+function reclaim() external
+```
+
+Returns unclaimed tokens after the claim deadline to the funder.
+
 ### getClaimAmount
 
 ```solidity
@@ -138,12 +146,4 @@ Gets an address' token claim amount.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | uint256 | uint256 the given address' claim amount |
-
-### reclaim
-
-```solidity
-function reclaim() external
-```
-
-Returns unclaimed tokens after the claim deadline to the funder.
 

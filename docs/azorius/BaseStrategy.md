@@ -49,20 +49,6 @@ Sets the address of the Azorius contract this BaseStrategy is being used on.
 | ---- | ---- | ----------- |
 | _azoriusModule | address | address of the Azorius Safe module |
 
-### _setAzorius
-
-```solidity
-function _setAzorius(address _azoriusModule) internal
-```
-
-Sets the address of the Azorius module contract.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _azoriusModule | address | address of the Azorius module |
-
 ### initializeProposal
 
 ```solidity
@@ -142,4 +128,18 @@ Returns the block number voting ends on a given Proposal.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | uint256 | uint256 block number when voting ends on the Proposal |
+
+### _setAzorius
+
+```solidity
+function _setAzorius(address _azoriusModule) internal
+```
+
+Sets the address of the Azorius module contract.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _azoriusModule | address | address of the Azorius module |
 

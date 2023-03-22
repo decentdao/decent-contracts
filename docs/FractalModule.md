@@ -54,6 +54,20 @@ _Initialize function_
 | ---- | ---- | ----------- |
 | initializeParams | bytes | Parameters of initialization encoded |
 
+### removeControllers
+
+```solidity
+function removeControllers(address[] _controllers) external
+```
+
+Allows the module owner to remove users which may exectxs
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _controllers | address[] | Addresses removed to the contoller list |
+
 ### execTx
 
 ```solidity
@@ -81,18 +95,4 @@ Allows the module owner to add users which may exectxs
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _controllers | address[] | Addresses added to the contoller list |
-
-### removeControllers
-
-```solidity
-function removeControllers(address[] _controllers) external
-```
-
-Allows the module owner to remove users which may exectxs
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _controllers | address[] | Addresses removed to the contoller list |
 

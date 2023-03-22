@@ -138,21 +138,9 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /** Internal implementation of updateTimelockPeriod */
-    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
-        timelockPeriod = _timelockPeriod;
-        emit TimelockPeriodUpdated(_timelockPeriod);
-    }
-
     /// @inheritdoc IMultisigFreezeGuard
     function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
         executionPeriod = _executionPeriod;
-    }
-
-    /** Internal implementation of updateExecutionPeriod */
-    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
-        executionPeriod = _executionPeriod;
-        emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
     /**
@@ -265,5 +253,17 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
                     refundReceiver
                 )
             );
+    }
+
+    /** Internal implementation of updateTimelockPeriod */
+    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+        timelockPeriod = _timelockPeriod;
+        emit TimelockPeriodUpdated(_timelockPeriod);
+    }
+    
+    /** Internal implementation of updateExecutionPeriod */
+    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
+        executionPeriod = _executionPeriod;
+        emit ExecutionPeriodUpdated(_executionPeriod);
     }
 }

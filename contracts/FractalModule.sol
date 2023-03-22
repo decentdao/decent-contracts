@@ -40,6 +40,19 @@ contract FractalModule is IFractalModule, Module {
         transferOwnership(_owner);
     }
 
+    /// @notice Allows the module owner to remove users which may exectxs
+    /// @param _controllers Addresses removed to the contoller list
+    function removeControllers(address[] memory _controllers) external onlyOwner {
+        uint256 controllersLength = _controllers.length;
+        for (uint256 i; i < controllersLength; ) {
+            controllers[_controllers[i]] = false;
+            unchecked {
+                ++i;
+            }
+        }
+        emit ControllersRemoved(_controllers);
+    }
+
     /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
     /// @param execTxData Data payload of module transaction.
     function execTx(bytes memory execTxData) public onlyAuthorized {
@@ -63,20 +76,5 @@ contract FractalModule is IFractalModule, Module {
             }
         }
         emit ControllersAdded(_controllers);
-    }
-
-    /// @notice Allows the module owner to remove users which may exectxs
-    /// @param _controllers Addresses removed to the contoller list
-    function removeControllers(
-        address[] memory _controllers
-    ) external onlyOwner {
-        uint256 controllersLength = _controllers.length;
-        for (uint256 i; i < controllersLength; ) {
-            controllers[_controllers[i]] = false;
-            unchecked {
-                ++i;
-            }
-        }
-        emit ControllersRemoved(_controllers);
     }
 }

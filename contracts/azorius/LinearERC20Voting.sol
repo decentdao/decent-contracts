@@ -88,12 +88,6 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /** Internal implementation of updateVotingPeriod above */
-    function _updateVotingPeriod(uint256 _votingPeriod) internal {
-        votingPeriod = _votingPeriod;
-        emit VotingPeriodUpdated(_votingPeriod);
-    }
-
     /// @inheritdoc IBaseStrategy
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
@@ -121,34 +115,29 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     }
 
     /**
-     * Internal function for casting a vote on a Proposal.
+     * Returns the current state of the specified Proposal.
      *
      * @param _proposalId id of the Proposal
-     * @param _voter address casting the vote
-     * @param _voteType vote support, as defined in VoteType
-     * @param _weight amount of voting weight cast, typically the
-     *          total number of tokens delegated
+     * @return noVotes current count of "NO" votes
+     * @return yesVotes current count of "YES" votes
+     * @return abstainVotes current count of "ABSTAIN" votes
+     * @return votingStartBlock block number voting starts
+     * @return votingEndBlock block number voting ends
      */
-    function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal {
-        if (proposalVotes[_proposalId].votingEndBlock == 0)
-            revert InvalidProposal();
-        if (block.number > proposalVotes[_proposalId].votingEndBlock)
-            revert VotingEnded();
-        if (proposalVotes[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
-
-        proposalVotes[_proposalId].hasVoted[_voter] = true;
-
-        if (_voteType == uint8(VoteType.NO)) {
-            proposalVotes[_proposalId].noVotes += _weight;
-        } else if (_voteType == uint8(VoteType.YES)) {
-            proposalVotes[_proposalId].yesVotes += _weight;
-        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
-            proposalVotes[_proposalId].abstainVotes += _weight;
-        } else {
-            revert InvalidVote();
-        }
-
-        emit Voted(_voter, _proposalId, _voteType, _weight);
+    function getProposal(uint256 _proposalId) external view
+        returns (
+            uint256 noVotes,
+            uint256 yesVotes,
+            uint256 abstainVotes,
+            uint256 votingStartBlock,
+            uint256 votingEndBlock
+        )
+    {
+        noVotes = proposalVotes[_proposalId].noVotes;
+        yesVotes = proposalVotes[_proposalId].yesVotes;
+        abstainVotes = proposalVotes[_proposalId].abstainVotes;
+        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
+        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
     /**
@@ -193,32 +182,6 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     }
 
     /**
-     * Returns the current state of the specified Proposal.
-     *
-     * @param _proposalId id of the Proposal
-     * @return noVotes current count of "NO" votes
-     * @return yesVotes current count of "YES" votes
-     * @return abstainVotes current count of "ABSTAIN" votes
-     * @return votingStartBlock block number voting starts
-     * @return votingEndBlock block number voting ends
-     */
-    function getProposal(uint256 _proposalId) external view
-        returns (
-            uint256 noVotes,
-            uint256 yesVotes,
-            uint256 abstainVotes,
-            uint256 votingStartBlock,
-            uint256 votingEndBlock
-        )
-    {
-        noVotes = proposalVotes[_proposalId].noVotes;
-        yesVotes = proposalVotes[_proposalId].yesVotes;
-        abstainVotes = proposalVotes[_proposalId].abstainVotes;
-        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
-        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
-    }
-
-    /**
      * Calculates the voting weight an address has for a specific Proposal.
      *
      * @param _voter address of the voter
@@ -241,5 +204,42 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     /// @inheritdoc BaseStrategy
     function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
       return proposalVotes[_proposalId].votingEndBlock;
+    }
+
+    /** Internal implementation of updateVotingPeriod above */
+    function _updateVotingPeriod(uint256 _votingPeriod) internal {
+        votingPeriod = _votingPeriod;
+        emit VotingPeriodUpdated(_votingPeriod);
+    }
+
+    /**
+     * Internal function for casting a vote on a Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @param _voter address casting the vote
+     * @param _voteType vote support, as defined in VoteType
+     * @param _weight amount of voting weight cast, typically the
+     *          total number of tokens delegated
+     */
+    function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal {
+        if (proposalVotes[_proposalId].votingEndBlock == 0)
+            revert InvalidProposal();
+        if (block.number > proposalVotes[_proposalId].votingEndBlock)
+            revert VotingEnded();
+        if (proposalVotes[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
+
+        proposalVotes[_proposalId].hasVoted[_voter] = true;
+
+        if (_voteType == uint8(VoteType.NO)) {
+            proposalVotes[_proposalId].noVotes += _weight;
+        } else if (_voteType == uint8(VoteType.YES)) {
+            proposalVotes[_proposalId].yesVotes += _weight;
+        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
+            proposalVotes[_proposalId].abstainVotes += _weight;
+        } else {
+            revert InvalidVote();
+        }
+
+        emit Voted(_voter, _proposalId, _voteType, _weight);
     }
 }
