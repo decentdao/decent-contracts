@@ -1612,5 +1612,56 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         )
       ).to.be.revertedWith("InvalidTxs()");
     });
+
+    it("A proposal cannot be executed with the wrong TXs passed to it", async () => {
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData1 = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const tokenTransferData2 = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 700]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
+      await azorius.submitProposal(
+        linearERC20Voting.address,
+        "0x",
+        [proposalTransaction],
+        ""
+      );
+
+      // Users vote in support of proposal
+      await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
+      await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(
+          0,
+          [votesERC20.address],
+          [0],
+          [tokenTransferData2],
+          [0]
+        )
+      ).to.be.revertedWith("InvalidTxHash()");
+    });
   });
 });
