@@ -389,14 +389,6 @@ contract Azorius is Module, IAzorius {
     }
 
     /// @inheritdoc IAzorius
-    function getProposalTxHash(
-        uint256 _proposalId,
-        uint256 _txIndex
-    ) external view returns (bytes32) {
-        return proposals[_proposalId].txHashes[_txIndex];
-    }
-
-    /// @inheritdoc IAzorius
     function getTxHash(
         address _to,
         uint256 _value,
@@ -404,6 +396,14 @@ contract Azorius is Module, IAzorius {
         Enum.Operation _operation
     ) public view returns (bytes32) {
         return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
+    }
+
+    /// @inheritdoc IAzorius
+    function getProposalTxHash(
+        uint256 _proposalId,
+        uint256 _txIndex
+    ) external view returns (bytes32) {
+        return proposals[_proposalId].txHashes[_txIndex];
     }
 
     /// @inheritdoc IAzorius

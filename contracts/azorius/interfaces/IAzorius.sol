@@ -173,15 +173,6 @@ interface IAzorius {
     ) external view returns (bytes memory);
 
     /**
-     * Returns the hash of a transaction in a Proposal.
-     *
-     * @param _proposalId identifier of the Proposal
-     * @param _txIndex index of the transaction within the Proposal
-     * @return bytes32 hash of the specified transaction
-     */
-    function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
-
-    /**
      * Returns the keccak256 hash of the specified transaction.
      *
      * @param _to target address of the transaction
@@ -196,6 +187,15 @@ interface IAzorius {
         bytes memory _data,
         Enum.Operation _operation
     ) external view returns (bytes32);
+
+    /**
+     * Returns the hash of a transaction in a Proposal.
+     *
+     * @param _proposalId identifier of the Proposal
+     * @param _txIndex index of the transaction within the Proposal
+     * @return bytes32 hash of the specified transaction
+     */
+    function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
 
     /**
      * Returns the transaction hashes associated with a given proposalId.
