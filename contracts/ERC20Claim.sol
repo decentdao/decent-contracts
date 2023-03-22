@@ -5,15 +5,21 @@ import "./interfaces/IERC20Claim.sol";
 import "./VotesERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/**
+ * A simple contract that allows for parent DAOs that have created a new ERC-20 
+ * token voting subDAO to allocate a certain amount of those tokens as claimable 
+ * by the parent DAO's token holders.
+ */
 contract ERC20Claim is FactoryFriendly, IERC20Claim {
+
     using SafeERC20 for IERC20;
 
-    address public funder;
-    uint256 public deadlineBlock;
-    address public childERC20;
-    address public parentERC20;
-    uint256 public snapShotId;
-    uint256 public parentAllocation;
+    address public funder;          // the address of the initial holder of the claimable _childERC20 tokens
+    uint256 public deadlineBlock;   // the deadline block to claim tokens by, or 0 for indefinite
+    address public childERC20;      // the parent ERC20 token address, for calculating a snapshot of holdings
+    address public parentERC20;     // the parent ERC20 token address, for calculating a snapshot of holdings
+    uint256 public snapShotId;      // the child ERC20 token address, to calculate the percentage claimbable
+    uint256 public parentAllocation;// the total amount of _childERC20 tokens allocated for claiming by parent holders
     mapping(address => bool) public claimed;
 
     event ERC20Claimed(
@@ -37,8 +43,11 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         uint256 deadline
     );
 
-    /// @notice Initialize function, will be triggered when a new proxy is deployed
-    /// @param initializeParams Parameters of initialization encoded
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
@@ -72,23 +81,29 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
         );
     }
 
-    /// @notice This function allows pToken holders to claim cTokens
-    /// @param claimer Address which is being claimed for
-    function claimToken(address claimer) external {
-        uint256 amount = getClaimAmount(claimer); // Get user balance
+    /** @inheritdoc IERC20Claim*/
+    function claimTokens(address claimer) external {
+        uint256 amount = getClaimAmount(claimer); // get claimer balance
 
-        if (amount == 0) revert NoAllocation();
+        if (amount == 0) revert NoAllocation(); // the claimer has not been allocated tokens to claim
 
         claimed[claimer] = true;
 
-        IERC20(childERC20).safeTransfer(claimer, amount); // transfer user balance
+        IERC20(childERC20).safeTransfer(claimer, amount); // transfer claimer balance
 
         emit ERC20Claimed(parentERC20, childERC20, claimer, amount);
     }
 
-    /// @notice Gets a users child token claimable amount
-    /// @param claimer Address which is being claimed for
-    /// @return cTokenAllocation Users cToken allocation
+    /** @inheritdoc IERC20Claim*/
+    function reclaim() external {
+        if (msg.sender != funder) revert NotTheFunder();
+        if (deadlineBlock == 0) revert NoDeadline();
+        if (block.number < deadlineBlock) revert DeadlinePending();
+        IERC20 token = IERC20(childERC20);
+        token.safeTransfer(funder, token.balanceOf(address(this)));
+    }
+
+    /** @inheritdoc IERC20Claim*/
     function getClaimAmount(address claimer) public view returns (uint256) {
         return
             claimed[claimer]
@@ -96,14 +111,5 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
                 : (VotesERC20(parentERC20).balanceOfAt(claimer, snapShotId) *
                     parentAllocation) /
                     VotesERC20(parentERC20).totalSupplyAt(snapShotId);
-    }
-
-    /// @notice Returns unclaimed tokens after the deadline to the funder.
-    function reclaim() external {
-        if (msg.sender != funder) revert NotTheFunder();
-        if (deadlineBlock == 0) revert NoDeadline();
-        if (block.number < deadlineBlock) revert DeadlinePending();
-        IERC20 token = IERC20(childERC20);
-        token.safeTransfer(funder, token.balanceOf(address(this)));
     }
 }

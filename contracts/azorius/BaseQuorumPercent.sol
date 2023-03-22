@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title BaseQuorumPercent - An Azorius BaseStrategy extension contract
+ * @title BaseQuorumPercent - An Azorius extension contract
  * that enables percent based quorums.
  */
 abstract contract BaseQuorumPercent is OwnableUpgradeable {
@@ -13,7 +13,6 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     uint256 public constant QUORUM_DENOMINATOR = 1_000_000;
 
     error InvalidQuorumNumerator();
-
 
     event QuorumNumeratorUpdated(uint256 quorumNumerator);
 

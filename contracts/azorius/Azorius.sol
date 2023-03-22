@@ -8,6 +8,12 @@ import "./interfaces/IAzorius.sol";
 /**
  * @title Azorius Protocol - a Safe module which allows for composable governance.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ *
+ * The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications
+ * of the transactions that comprise a Proposal, but notably not the state of voting.
+ *
+ * All voting details are delegated to BaseStrategy implementations, of which an Azorius DAO can
+ * have any number.
  */
 contract Azorius is Module, IAzorius {
 
@@ -98,50 +104,12 @@ contract Azorius is Module, IAzorius {
         emit AzoriusSetUp(msg.sender, _owner, _avatar, _target);
     }
 
-    /// @inheritdoc IAzorius
-    function enableStrategy(address _strategy) public override onlyOwner {
-        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
-            revert InvalidStrategy();
-        if (strategies[_strategy] != address(0)) revert StrategyEnabled();
-
-        strategies[_strategy] = strategies[SENTINEL_STRATEGY];
-        strategies[SENTINEL_STRATEGY] = _strategy;
-
-        emit EnabledStrategy(_strategy);
-    }
-
-    /// @inheritdoc IAzorius
-    function disableStrategy(
-        address _prevStrategy,
-        address _strategy
-    ) public onlyOwner {
-        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
-            revert InvalidStrategy();
-        if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();
-
-        strategies[_prevStrategy] = strategies[_strategy];
-        strategies[_strategy] = address(0);
-
-        emit DisabledStrategy(_strategy);
-    }
-
-    /// @inheritdoc IAzorius
+    /** @inheritdoc IAzorius*/
     function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
-    /**
-     * Updates the execution period for future Proposals.
-     *
-     * @param _executionPeriod new execution period (in blocks)
-     */
-    function updateExecutionPeriod(
-        uint256 _executionPeriod
-    ) external onlyOwner {
-        _updateExecutionPeriod(_executionPeriod);
-    }
-
-    /// @inheritdoc IAzorius
+    /** @inheritdoc IAzorius*/
     function submitProposal(
         address _strategy,
         bytes memory _data,
@@ -186,7 +154,7 @@ contract Azorius is Module, IAzorius {
         totalProposalCount++;
     }
 
-    /// @inheritdoc IAzorius
+    /** @inheritdoc IAzorius*/
     function executeProposal(
         uint256 _proposalId,
         address[] memory _targets,
@@ -219,6 +187,175 @@ contract Azorius is Module, IAzorius {
             }
         }
         emit ProposalExecuted(_proposalId, txHashes);
+    }
+
+    /**
+     * Updates the execution period for future Proposals.
+     *
+     * @param _executionPeriod new execution period (in blocks)
+     */
+    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
+        _updateExecutionPeriod(_executionPeriod);
+    }
+
+    /** @inheritdoc IAzorius*/
+    function getStrategies(
+        address _startAddress,
+        uint256 _count
+    ) external view returns (address[] memory _strategies, address _next) {
+        // Init array with max page size
+        _strategies = new address[](_count);
+
+        // Populate return array
+        uint256 strategyCount = 0;
+        address currentStrategy = strategies[_startAddress];
+        while (
+            currentStrategy != address(0x0) &&
+            currentStrategy != SENTINEL_STRATEGY &&
+            strategyCount < _count
+        ) {
+            _strategies[strategyCount] = currentStrategy;
+            currentStrategy = strategies[currentStrategy];
+            strategyCount++;
+        }
+        _next = currentStrategy;
+        // Set correct size of returned array
+        assembly {
+            mstore(_strategies, strategyCount)
+        }
+    }
+
+    /** @inheritdoc IAzorius*/
+    function getProposalTxHash(uint256 _proposalId,uint256 _txIndex) external view returns (bytes32) {
+        return proposals[_proposalId].txHashes[_txIndex];
+    }
+
+    /** @inheritdoc IAzorius*/
+    function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
+        return proposals[_proposalId].txHashes;
+    }
+
+    /** @inheritdoc IAzorius*/
+    function getProposal(uint256 _proposalId) external view
+        returns (
+            address _strategy,
+            bytes32[] memory _txHashes,
+            uint256 _timelockPeriod,
+            uint256 _executionPeriod,
+            uint256 _executionCounter
+        )
+    {
+        _strategy = proposals[_proposalId].strategy;
+        _txHashes = proposals[_proposalId].txHashes;
+        _timelockPeriod = proposals[_proposalId].timelockPeriod;
+        _executionPeriod = proposals[_proposalId].executionPeriod;
+        _executionCounter = proposals[_proposalId].executionCounter;
+    }
+
+    /** @inheritdoc IAzorius*/
+    function enableStrategy(address _strategy) public override onlyOwner {
+        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
+            revert InvalidStrategy();
+        if (strategies[_strategy] != address(0)) revert StrategyEnabled();
+
+        strategies[_strategy] = strategies[SENTINEL_STRATEGY];
+        strategies[SENTINEL_STRATEGY] = _strategy;
+
+        emit EnabledStrategy(_strategy);
+    }
+
+    /** @inheritdoc IAzorius*/
+    function disableStrategy(address _prevStrategy, address _strategy) public onlyOwner {
+        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
+            revert InvalidStrategy();
+        if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();
+
+        strategies[_prevStrategy] = strategies[_strategy];
+        strategies[_strategy] = address(0);
+
+        emit DisabledStrategy(_strategy);
+    }
+
+    /** @inheritdoc IAzorius*/
+    function isStrategyEnabled(address _strategy) public view returns (bool) {
+        return
+            SENTINEL_STRATEGY != _strategy &&
+            strategies[_strategy] != address(0);
+    }
+
+    /** @inheritdoc IAzorius*/
+    function proposalState(uint256 _proposalId) public view returns (ProposalState) {
+        
+        Proposal memory _proposal = proposals[_proposalId];
+
+        if (_proposal.strategy == address(0)) revert InvalidProposal();
+
+        IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
+
+        uint256 votingEndBlock = _strategy.votingEndBlock(_proposalId);
+
+        if (block.number <= votingEndBlock) {
+            return ProposalState.ACTIVE;
+        } else if (!_strategy.isPassed(_proposalId)) {
+            return ProposalState.FAILED;
+        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
+            // a Proposal with 0 transactions goes straight to EXECUTED
+            // this allows for the potential for on-chain voting for 
+            // "off-chain" executed decisions
+            return ProposalState.EXECUTED;
+        } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {
+            return ProposalState.TIMELOCKED;
+        } else if (
+            block.number <=
+            votingEndBlock +
+                _proposal.timelockPeriod +
+                _proposal.executionPeriod
+        ) {
+            return ProposalState.EXECUTABLE;
+        } else {
+            return ProposalState.EXPIRED;
+        }
+    }
+
+    /** @inheritdoc IAzorius*/
+    function generateTxHashData(
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation,
+        uint256 _nonce
+    ) public view returns (bytes memory) {
+        uint256 chainId = block.chainid;
+        bytes32 domainSeparator = keccak256(
+            abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this)
+        );
+        bytes32 transactionHash = keccak256(
+            abi.encode(
+                TRANSACTION_TYPEHASH,
+                _to,
+                _value,
+                keccak256(_data),
+                _operation,
+                _nonce
+            )
+        );
+        return
+            abi.encodePacked(
+                bytes1(0x19),
+                bytes1(0x01),
+                domainSeparator,
+                transactionHash
+            );
+    }
+
+    /** @inheritdoc IAzorius*/
+    function getTxHash(
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        Enum.Operation _operation
+    ) public view returns (bytes32) {
+        return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
     }
 
     /**
@@ -286,147 +423,5 @@ contract Azorius is Module, IAzorius {
     function _updateExecutionPeriod(uint256 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
-    }
-
-    /// @inheritdoc IAzorius
-    function isStrategyEnabled(address _strategy) public view returns (bool) {
-        return
-            SENTINEL_STRATEGY != _strategy &&
-            strategies[_strategy] != address(0);
-    }
-
-    /// @inheritdoc IAzorius
-    function getStrategies(
-        address _startAddress,
-        uint256 _count
-    ) external view returns (address[] memory _strategies, address _next) {
-        // Init array with max page size
-        _strategies = new address[](_count);
-
-        // Populate return array
-        uint256 strategyCount = 0;
-        address currentStrategy = strategies[_startAddress];
-        while (
-            currentStrategy != address(0x0) &&
-            currentStrategy != SENTINEL_STRATEGY &&
-            strategyCount < _count
-        ) {
-            _strategies[strategyCount] = currentStrategy;
-            currentStrategy = strategies[currentStrategy];
-            strategyCount++;
-        }
-        _next = currentStrategy;
-        // Set correct size of returned array
-        assembly {
-            mstore(_strategies, strategyCount)
-        }
-    }
-
-    /// @inheritdoc IAzorius
-    function proposalState(
-        uint256 _proposalId
-    ) public view returns (ProposalState) {
-        Proposal memory _proposal = proposals[_proposalId];
-
-        if (_proposal.strategy == address(0)) revert InvalidProposal();
-
-        IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);
-
-        uint256 votingEndBlock = _strategy.votingEndBlock(_proposalId);
-
-        if (block.number <= votingEndBlock) {
-            return ProposalState.ACTIVE;
-        } else if (!_strategy.isPassed(_proposalId)) {
-            return ProposalState.FAILED;
-        } else if (_proposal.executionCounter == _proposal.txHashes.length) {
-            // a Proposal with 0 transactions goes straight to EXECUTED
-            // this allows for the potential for on-chain voting for 
-            // "off-chain" executed decisions
-            return ProposalState.EXECUTED;
-        } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {
-            return ProposalState.TIMELOCKED;
-        } else if (
-            block.number <=
-            votingEndBlock +
-                _proposal.timelockPeriod +
-                _proposal.executionPeriod
-        ) {
-            return ProposalState.EXECUTABLE;
-        } else {
-            return ProposalState.EXPIRED;
-        }
-    }
-
-    /// @inheritdoc IAzorius
-    function generateTxHashData(
-        address _to,
-        uint256 _value,
-        bytes memory _data,
-        Enum.Operation _operation,
-        uint256 _nonce
-    ) public view returns (bytes memory) {
-        uint256 chainId = block.chainid;
-        bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this)
-        );
-        bytes32 transactionHash = keccak256(
-            abi.encode(
-                TRANSACTION_TYPEHASH,
-                _to,
-                _value,
-                keccak256(_data),
-                _operation,
-                _nonce
-            )
-        );
-        return
-            abi.encodePacked(
-                bytes1(0x19),
-                bytes1(0x01),
-                domainSeparator,
-                transactionHash
-            );
-    }
-
-    /// @inheritdoc IAzorius
-    function getTxHash(
-        address _to,
-        uint256 _value,
-        bytes memory _data,
-        Enum.Operation _operation
-    ) public view returns (bytes32) {
-        return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
-    }
-
-    /// @inheritdoc IAzorius
-    function getProposalTxHash(
-        uint256 _proposalId,
-        uint256 _txIndex
-    ) external view returns (bytes32) {
-        return proposals[_proposalId].txHashes[_txIndex];
-    }
-
-    /// @inheritdoc IAzorius
-    function getProposalTxHashes(
-        uint256 _proposalId
-    ) external view returns (bytes32[] memory) {
-        return proposals[_proposalId].txHashes;
-    }
-
-    /// @inheritdoc IAzorius
-    function getProposal(uint256 _proposalId) external view
-        returns (
-            address _strategy,
-            bytes32[] memory _txHashes,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
-            uint256 _executionCounter
-        )
-    {
-        _strategy = proposals[_proposalId].strategy;
-        _txHashes = proposals[_proposalId].txHashes;
-        _timelockPeriod = proposals[_proposalId].timelockPeriod;
-        _executionPeriod = proposals[_proposalId].executionPeriod;
-        _executionCounter = proposals[_proposalId].executionCounter;
     }
 }

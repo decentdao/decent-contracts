@@ -88,13 +88,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /** Internal implementation of updateVotingPeriod above */
-    function _updateVotingPeriod(uint256 _votingPeriod) internal {
-        votingPeriod = _votingPeriod;
-        emit VotingPeriodUpdated(_votingPeriod);
-    }
-
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
@@ -118,6 +112,104 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             _voteType,
             getVotingWeight(msg.sender, _proposalId)
         );
+    }
+
+    /**
+     * Returns the current state of the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @return noVotes current count of "NO" votes
+     * @return yesVotes current count of "YES" votes
+     * @return abstainVotes current count of "ABSTAIN" votes
+     * @return startBlock block number voting starts
+     * @return endBlock block number voting ends
+     */
+    function getProposalVotes(uint256 _proposalId) external view
+        returns (
+            uint256 noVotes,
+            uint256 yesVotes,
+            uint256 abstainVotes,
+            uint256 startBlock,
+            uint256 endBlock
+        )
+    {
+        noVotes = proposalVotes[_proposalId].noVotes;
+        yesVotes = proposalVotes[_proposalId].yesVotes;
+        abstainVotes = proposalVotes[_proposalId].abstainVotes;
+        startBlock = proposalVotes[_proposalId].votingStartBlock;
+        endBlock = proposalVotes[_proposalId].votingEndBlock;
+    }
+
+    /**
+     * Returns whether an address has voted on the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal to check
+     * @param _address address to check
+     * @return bool true if the address has voted on the Proposal, otherwise false
+     */
+    function hasVoted(uint256 _proposalId, address _address) public view returns (bool) {
+        return proposalVotes[_proposalId].hasVoted[_address];
+    }
+
+    /** @inheritdoc IBaseStrategy*/
+    function isPassed(uint256 _proposalId) public view override returns (bool) {
+        if (
+            proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
+            proposalVotes[_proposalId].yesVotes >=
+            quorum(proposalVotes[_proposalId].votingStartBlock) &&
+            proposalVotes[_proposalId].votingEndBlock != 0 &&
+            block.number > proposalVotes[_proposalId].votingEndBlock
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculates the number of votes needed to achieve quorum at a specific block number.
+     *
+     * Because token supply is not necessarily static, it is required to calculate
+     * quorum based on the supply at the time of a Proposal's creation.
+     *
+     * @param _blockNumber block number to calculate quorum at
+     * @return uint256 the number of votes needed for quorum
+     */
+    function quorum(uint256 _blockNumber) public view override returns (uint256) {
+        return
+            (governanceToken.getPastTotalSupply(_blockNumber) *
+                quorumNumerator) / QUORUM_DENOMINATOR;
+    }
+
+    /**
+     * Calculates the voting weight an address has for a specific Proposal.
+     *
+     * @param _voter address of the voter
+     * @param _proposalId id of the Proposal
+     * @return uint256 the address' voting weight
+     */
+    function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
+        return
+            governanceToken.getPastVotes(
+                _voter,
+                proposalVotes[_proposalId].votingStartBlock
+            );
+    }
+
+    /** @inheritdoc IBaseStrategy*/
+    function isProposer(address) public pure override returns (bool) {
+        return true; // anyone can submit Proposals
+    }
+
+    /** @inheritdoc BaseStrategy*/
+    function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
+      return proposalVotes[_proposalId].votingEndBlock;
+    }
+
+    /** Internal implementation of updateVotingPeriod above */
+    function _updateVotingPeriod(uint256 _votingPeriod) internal {
+        votingPeriod = _votingPeriod;
+        emit VotingPeriodUpdated(_votingPeriod);
     }
 
     /**
@@ -149,97 +241,5 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         }
 
         emit Voted(_voter, _proposalId, _voteType, _weight);
-    }
-
-    /**
-     * Returns whether an address has voted on the specified Proposal.
-     *
-     * @param _proposalId id of the Proposal to check
-     * @param _address address to check
-     * @return bool true if the address has voted on the Proposal, otherwise false
-     */
-    function hasVoted(uint256 _proposalId, address _address) public view returns (bool) {
-        return proposalVotes[_proposalId].hasVoted[_address];
-    }
-
-    /// @inheritdoc IBaseStrategy
-    function isPassed(uint256 _proposalId) public view override returns (bool) {
-        if (
-            proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
-            proposalVotes[_proposalId].yesVotes >=
-            quorum(proposalVotes[_proposalId].votingStartBlock) &&
-            proposalVotes[_proposalId].votingEndBlock != 0 &&
-            block.number > proposalVotes[_proposalId].votingEndBlock
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Calculates the number of votes needed to achieve quorum at a specific block number.
-     *
-     * Because token supply is not necessarily static, it is required to calculate
-     * quorum based on the supply at the time of a Proposal's creation.
-     *
-     * @param _blockNumber block number to calculate quorum at
-     * @return uint256 the number of votes needed for quorum
-     */
-    function quorum(uint256 _blockNumber) public view override returns (uint256) {
-        return
-            (governanceToken.getPastTotalSupply(_blockNumber) *
-                quorumNumerator) / QUORUM_DENOMINATOR;
-    }
-
-    /**
-     * Returns the current state of the specified Proposal.
-     *
-     * @param _proposalId id of the Proposal
-     * @return noVotes current count of "NO" votes
-     * @return yesVotes current count of "YES" votes
-     * @return abstainVotes current count of "ABSTAIN" votes
-     * @return votingStartBlock block number voting starts
-     * @return votingEndBlock block number voting ends
-     */
-    function getProposal(uint256 _proposalId) external view
-        returns (
-            uint256 noVotes,
-            uint256 yesVotes,
-            uint256 abstainVotes,
-            uint256 votingStartBlock,
-            uint256 votingEndBlock
-        )
-    {
-        noVotes = proposalVotes[_proposalId].noVotes;
-        yesVotes = proposalVotes[_proposalId].yesVotes;
-        abstainVotes = proposalVotes[_proposalId].abstainVotes;
-        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
-        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
-    }
-
-    /**
-     * Calculates the voting weight an address has for a specific Proposal.
-     *
-     * @param _voter address of the voter
-     * @param _proposalId id of the Proposal
-     * @return uint256 the address' voting weight
-     */
-    function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256) {
-        return
-            governanceToken.getPastVotes(
-                _voter,
-                proposalVotes[_proposalId].votingStartBlock
-            );
-    }
-
-    /// @inheritdoc IBaseStrategy
-    function isProposer(address) public pure override returns (bool) {
-        return true; // anyone can submit Proposals
-    }
-
-    /// @inheritdoc BaseStrategy
-    function votingEndBlock(uint256 _proposalId) public view override returns (uint256) {
-      return proposalVotes[_proposalId].votingEndBlock;
     }
 }
