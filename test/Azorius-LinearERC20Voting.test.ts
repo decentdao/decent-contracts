@@ -9,6 +9,8 @@ import {
   GnosisSafeProxyFactory,
   LinearERC20Voting,
   LinearERC20Voting__factory,
+  MockVotingStrategy,
+  MockVotingStrategy__factory,
   Azorius,
   Azorius__factory,
   VotesERC20,
@@ -28,6 +30,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   let gnosisSafe: GnosisSafe;
   let azorius: Azorius;
   let linearERC20Voting: LinearERC20Voting;
+  let mockVotingStrategy: MockVotingStrategy;
   let votesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 
@@ -244,6 +247,25 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).to.be.revertedWith("StrategyEnabled()");
     });
 
+    it("An invalid strategy cannot be enabled", async () => {
+      await expect(
+        azorius
+          .connect(gnosisSafeOwner)
+          .enableStrategy(ethers.constants.AddressZero)
+      ).to.be.revertedWith("InvalidStrategy()");
+    });
+
+    it("An invalid strategy cannot be disabled", async () => {
+      await expect(
+        azorius
+          .connect(gnosisSafeOwner)
+          .disableStrategy(
+            ethers.constants.AddressZero,
+            ethers.constants.AddressZero
+          )
+      ).to.be.revertedWith("InvalidStrategy()");
+    });
+
     it("Multiple strategies can be enabled, disabled, and returned", async () => {
       await azorius
         .connect(gnosisSafeOwner)
@@ -265,6 +287,19 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         mockStrategy1.address,
         linearERC20Voting.address,
       ]);
+
+      await azorius
+        .connect(gnosisSafeOwner)
+        .disableStrategy(mockStrategy2.address, mockStrategy1.address);
+
+      expect(
+        (
+          await azorius.getStrategies(
+            "0x0000000000000000000000000000000000000001",
+            3
+          )
+        )._strategies
+      ).to.deep.eq([mockStrategy2.address, linearERC20Voting.address]);
     });
 
     it("The owner can change the Azorius Module on the Strategy", async () => {
@@ -800,6 +835,14 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         0
       );
 
+      const proposalTxHashes = await azorius.getProposalTxHashes(0);
+
+      const proposalTxHash = await azorius.getProposalTxHash(0, 0);
+
+      expect([txHash]).to.deep.eq(proposalTxHashes);
+
+      expect(txHash).to.deep.eq(proposalTxHash);
+
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
@@ -1093,6 +1136,30 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       await expect(await azorius.proposalState(0)).to.eq(3);
     });
 
+    it("Only the owner can update the timelock period on Azorius", async () => {
+      expect(await azorius.timelockPeriod()).to.eq(60);
+
+      await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(70);
+
+      expect(await azorius.timelockPeriod()).to.eq(70);
+
+      await expect(
+        azorius.connect(tokenHolder1).updateTimelockPeriod(80)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the owner can update the execution period on Azorius", async () => {
+      expect(await azorius.executionPeriod()).to.eq(60);
+
+      await azorius.connect(gnosisSafeOwner).updateExecutionPeriod(100);
+
+      expect(await azorius.executionPeriod()).to.eq(100);
+
+      await expect(
+        azorius.connect(tokenHolder1).updateExecutionPeriod(110)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
     it("Only the owner can update the quorum numerator on the ERC20LinearVoting", async () => {
       expect(await linearERC20Voting.quorumNumerator()).to.eq(500000);
 
@@ -1198,6 +1265,71 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.isStrategyEnabled(tokenHolder1.address)).to.eq(true);
       expect(await azorius.isStrategyEnabled(tokenHolder2.address)).to.eq(true);
       expect(await azorius.isStrategyEnabled(tokenHolder3.address)).to.eq(true);
+    });
+
+    it("Only a valid proposer can submit proposals", async () => {
+      const abiCoder = new ethers.utils.AbiCoder();
+
+      // Deploy Mock Voting Strategy
+      mockVotingStrategy = await new MockVotingStrategy__factory(
+        deployer
+      ).deploy();
+
+      const mockVotingStrategySetupData = abiCoder.encode(
+        ["address"],
+        [
+          tokenHolder1.address, // tokenHolder1 is the only valid proposer
+        ]
+      );
+
+      await mockVotingStrategy.setUp(mockVotingStrategySetupData);
+
+      // Enable the Mock Voting strategy on Azorius
+      await azorius
+        .connect(gnosisSafeOwner)
+        .enableStrategy(mockVotingStrategy.address);
+
+      expect(await mockVotingStrategy.isProposer(tokenHolder1.address)).to.eq(
+        true
+      );
+      expect(await mockVotingStrategy.isProposer(tokenHolder2.address)).to.eq(
+        false
+      );
+
+      // Create transaction to transfer tokens to the deployer
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 600]
+      );
+
+      const proposalTransaction = {
+        to: votesERC20.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData,
+        operation: 0,
+      };
+
+      // This user was setup as the proposer on the MockVotingStrategy, so should be able to submit a proposal
+      await azorius
+        .connect(tokenHolder1)
+        .submitProposal(
+          mockVotingStrategy.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      // This user was not setup as the proposer, and so should not be able to submit a proposal
+      await expect(
+        azorius
+          .connect(tokenHolder2)
+          .submitProposal(
+            mockVotingStrategy.address,
+            "0x",
+            [proposalTransaction],
+            ""
+          )
+      ).to.be.revertedWith("InvalidProposer()");
     });
   });
 });
