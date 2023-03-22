@@ -199,23 +199,23 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      * @return noVotes current count of "NO" votes
      * @return yesVotes current count of "YES" votes
      * @return abstainVotes current count of "ABSTAIN" votes
-     * @return votingStartBlock block number voting starts
-     * @return votingEndBlock block number voting ends
+     * @return startBlock block number voting starts
+     * @return endBlock block number voting ends
      */
-    function getProposal(uint256 _proposalId) external view
+    function getProposalVotes(uint256 _proposalId) external view
         returns (
             uint256 noVotes,
             uint256 yesVotes,
             uint256 abstainVotes,
-            uint256 votingStartBlock,
-            uint256 votingEndBlock
+            uint256 startBlock,
+            uint256 endBlock
         )
     {
         noVotes = proposalVotes[_proposalId].noVotes;
         yesVotes = proposalVotes[_proposalId].yesVotes;
         abstainVotes = proposalVotes[_proposalId].abstainVotes;
-        votingStartBlock = proposalVotes[_proposalId].votingStartBlock;
-        votingEndBlock = proposalVotes[_proposalId].votingEndBlock;
+        startBlock = proposalVotes[_proposalId].votingStartBlock;
+        endBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
     /**

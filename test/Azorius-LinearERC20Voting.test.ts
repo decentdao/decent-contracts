@@ -444,22 +444,22 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).yesVotes).to.eq(0);
 
       // Token holder 1 votes but does not have any voting weight
       await linearERC20Voting.connect(tokenHolder1).vote(0, 1, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).yesVotes).to.eq(0);
 
       // Token holder 2 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposalVotes(0)).yesVotes).to.eq(300);
 
       // Token holder 3 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).yesVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposalVotes(0)).yesVotes).to.eq(600);
     });
 
     it("Correctly counts proposal No votes", async () => {
@@ -486,22 +486,22 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).noVotes).to.eq(0);
 
       // Token holder 1 votes but does not have any voting weight
       await linearERC20Voting.connect(tokenHolder1).vote(0, 0, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).noVotes).to.eq(0);
 
       // Token holder 2 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder2).vote(0, 0, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposalVotes(0)).noVotes).to.eq(300);
 
       // Token holder 3 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder3).vote(0, 0, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).noVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposalVotes(0)).noVotes).to.eq(600);
     });
 
     it("Correctly counts proposal Abstain votes", async () => {
@@ -528,22 +528,30 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        0
+      );
 
       // Token holder 1 votes but does not have any voting weight
       await linearERC20Voting.connect(tokenHolder1).vote(0, 2, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(0);
+      expect((await linearERC20Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        0
+      );
 
       // Token holder 2 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder2).vote(0, 2, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(300);
+      expect((await linearERC20Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        300
+      );
 
       // Token holder 3 votes with voting weight of 300
       await linearERC20Voting.connect(tokenHolder3).vote(0, 2, [0]);
 
-      expect((await linearERC20Voting.getProposal(0)).abstainVotes).to.eq(600);
+      expect((await linearERC20Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        600
+      );
     });
 
     it("A proposal is passed with enough Yes votes and quorum", async () => {
