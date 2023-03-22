@@ -145,10 +145,10 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 | _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
 |  | bytes |  |
 
-### getProposal
+### getProposalVotes
 
 ```solidity
-function getProposal(uint256 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint256 votingStartBlock, uint256 votingEndBlock)
+function getProposalVotes(uint256 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint256 startBlock, uint256 endBlock)
 ```
 
 Returns the current state of the specified Proposal.
@@ -166,8 +166,8 @@ Returns the current state of the specified Proposal.
 | noVotes | uint256 | current count of "NO" votes |
 | yesVotes | uint256 | current count of "YES" votes |
 | abstainVotes | uint256 | current count of "ABSTAIN" votes |
-| votingStartBlock | uint256 | block number voting starts |
-| votingEndBlock | uint256 | block number voting ends |
+| startBlock | uint256 | block number voting starts |
+| endBlock | uint256 | block number voting ends |
 
 ### hasVoted
 
