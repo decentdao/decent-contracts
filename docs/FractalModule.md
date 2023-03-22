@@ -2,6 +2,14 @@
 
 ## FractalModule
 
+Implementation of IFractalModule.
+
+A Safe module contract that allows for a "parent-child" DAO relationship.
+
+Adding the module allows for a designated set of addresses to execute
+transactions on the Safe, which in our implementation is the set of parent
+DAOs.
+
 ### controllers
 
 ```solidity
@@ -38,21 +46,19 @@ error TxFailed()
 modifier onlyAuthorized()
 ```
 
-_Throws if called by any account other than the owner._
-
 ### setUp
 
 ```solidity
 function setUp(bytes initializeParams) public
 ```
 
-_Initialize function_
+Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | Parameters of initialization encoded |
+| initializeParams | bytes | encoded initialization parameters |
 
 ### removeControllers
 
@@ -60,13 +66,13 @@ _Initialize function_
 function removeControllers(address[] _controllers) external
 ```
 
-Allows the module owner to remove users which may exectxs
+Removes _controllers from the list of controllers.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _controllers | address[] | Addresses removed to the contoller list |
+| _controllers | address[] | addresses to remove from the controller list |
 
 ### execTx
 
@@ -74,13 +80,13 @@ Allows the module owner to remove users which may exectxs
 function execTx(bytes execTxData) public
 ```
 
-Allows an authorized user to exec a Gnosis Safe tx via the module
+Allows an authorized address to execute arbitrary transactions on the Safe.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| execTxData | bytes | Data payload of module transaction. |
+| execTxData | bytes | data of the transaction to execute |
 
 ### addControllers
 
@@ -88,11 +94,12 @@ Allows an authorized user to exec a Gnosis Safe tx via the module
 function addControllers(address[] _controllers) public
 ```
 
-Allows the module owner to add users which may exectxs
+Adds _controllers to the list of controllers, which are allowed
+to execute transactions on the Safe.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _controllers | address[] | Addresses added to the contoller list |
+| _controllers | address[] | addresses to add to the contoller list |
 
