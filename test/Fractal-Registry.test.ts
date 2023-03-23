@@ -56,6 +56,6 @@ describe("Fractal Registry", () => {
   it("A DAO can declare arbitrary key/value pairs", async () => {
     await expect(keyValue.connect(dao1).updateValue("twitter", "@awesome"))
       .to.emit(keyValue, "ValueUpdated")
-      .withArgs("twitter", "@awesome");
+      .withArgs(dao1.address, "twitter", "@awesome");
   });
 });
