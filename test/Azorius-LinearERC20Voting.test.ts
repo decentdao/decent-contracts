@@ -168,7 +168,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
 
     const linearERC20VotingSetupData = abiCoder.encode(
-      ["address", "address", "address", "uint256", "uint256"],
+      ["address", "address", "address", "uint64", "uint256"],
       [
         gnosisSafeOwner.address, // owner
         votesERC20.address, // governance token

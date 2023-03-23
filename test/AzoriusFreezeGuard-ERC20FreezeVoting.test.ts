@@ -192,7 +192,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     await linearERC20Voting.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "uint256", "uint256"],
+        ["address", "address", "address", "uint64", "uint256"],
         [
           mockParentDAO.address, // owner
           childVotesERC20.address, // governance token

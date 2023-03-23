@@ -214,7 +214,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await linearERC20Voting.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "uint256", "uint256"],
+        ["address", "address", "address", "uint64", "uint256"],
         [
           parentGnosisSafe.address, // owner
           childVotesERC20.address, // governance token

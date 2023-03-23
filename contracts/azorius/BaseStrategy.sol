@@ -43,7 +43,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     function isProposer(address _address) external view virtual returns (bool);
 
     /** @inheritdoc IBaseStrategy*/
-    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
+    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint64);
 
     /**
      * Sets the address of the Azorius module contract.
