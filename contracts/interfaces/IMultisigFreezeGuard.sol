@@ -61,7 +61,7 @@ interface IMultisigFreezeGuard {
      *
      * @param _timelockPeriod new timelock period for the subDAO (in blocks)
      */
-    function updateTimelockPeriod(uint256 _timelockPeriod) external;
+    function updateTimelockPeriod(uint64 _timelockPeriod) external;
 
     /**
      * Updates the execution period.
@@ -73,13 +73,13 @@ interface IMultisigFreezeGuard {
      *
      * @param _executionPeriod number of blocks a transaction has to be executed within
      */
-    function updateExecutionPeriod(uint256 _executionPeriod) external;
+    function updateExecutionPeriod(uint64 _executionPeriod) external;
 
     /**
      * Gets the block number that the given transaction was timelocked at.
      *
      * @param _transactionHash hash of the transaction data
-     * @return uint256 block number in which the transaction began its timelock period
+     * @return uint64 block number in which the transaction began its timelock period
      */
-    function getTransactionTimelockedBlock(bytes32 _transactionHash) external view returns (uint256);
+    function getTransactionTimelockedBlock(bytes32 _transactionHash) external view returns (uint64);
 }

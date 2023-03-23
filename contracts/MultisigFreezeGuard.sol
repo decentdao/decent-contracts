@@ -17,11 +17,11 @@ import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
  */
 contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
 
-    uint256 public timelockPeriod; // timelock period in number of blocks
-    uint256 public executionPeriod; // execution period in number of blocks
+    uint64 public timelockPeriod; // timelock period in number of blocks
+    uint64 public executionPeriod; // execution period in number of blocks
     IBaseFreezeVoting public freezeVoting;
     ISafe public childGnosisSafe;
-    mapping(bytes32 => uint256) internal transactionTimelockedBlock;
+    mapping(bytes32 => uint64) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
         address creator,
@@ -34,8 +34,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         bytes32 indexed transactionHash,
         bytes indexed signatures
     );
-    event TimelockPeriodUpdated(uint256 timelockPeriod);
-    event ExecutionPeriodUpdated(uint256 executionPeriod);
+    event TimelockPeriodUpdated(uint64 timelockPeriod);
+    event ExecutionPeriodUpdated(uint64 executionPeriod);
 
     error NotTimelockable();
     error NotTimelocked();
@@ -51,14 +51,14 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
+            uint64 _timelockPeriod,
+            uint64 _executionPeriod,
             address _owner,
             address _freezeVoting,
             address _childGnosisSafe
         ) = abi.decode(
                 initializeParams,
-                (uint256, uint256, address, address, address)
+                (uint64, uint64, address, address, address)
             );
 
         _updateTimelockPeriod(_timelockPeriod);
@@ -128,18 +128,18 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
             signatures
         );
 
-        transactionTimelockedBlock[transactionHash] = block.number;
+        transactionTimelockedBlock[transactionHash] = uint64(block.number);
 
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
+    function updateTimelockPeriod(uint64 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
+    function updateExecutionPeriod(uint64 _executionPeriod) external onlyOwner {
         executionPeriod = _executionPeriod;
     }
 
@@ -202,7 +202,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256) {
+    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint64) {
         return transactionTimelockedBlock[_transactionHash];
     }
 
@@ -256,13 +256,13 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /** Internal implementation of updateTimelockPeriod */
-    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+    function _updateTimelockPeriod(uint64 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
     
     /** Internal implementation of updateExecutionPeriod */
-    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
+    function _updateExecutionPeriod(uint64 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
     }
