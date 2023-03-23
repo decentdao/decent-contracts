@@ -27,21 +27,21 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         uint256 noVotes; // current number of NO votes for the Proposal
         uint256 yesVotes; // current number of YES votes for the Proposal
         uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
-        uint64 votingStartBlock; // block that voting starts at
-        uint64 votingEndBlock; // block that voting ends
+        uint32 votingStartBlock; // block that voting starts at
+        uint32 votingEndBlock; // block that voting ends
         mapping(address => bool) hasVoted; // whether a given address has voted yet or not
     }
 
     ERC20Votes public governanceToken;
 
     /** Number of blocks a new Proposal can be voted on. */
-    uint64 public votingPeriod;
+    uint32 public votingPeriod;
 
     /** proposalId to ProposalVotes, the voting state of a Proposal */
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
-    event VotingPeriodUpdated(uint64 votingPeriod);
-    event ProposalInitialized(uint256 proposalId, uint64 votingEndBlock);
+    event VotingPeriodUpdated(uint32 votingPeriod);
+    event ProposalInitialized(uint256 proposalId, uint32 votingEndBlock);
     event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight);
 
     error InvalidProposal();
@@ -60,11 +60,11 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             address _owner,
             ERC20Votes _governanceToken,
             address _azoriusModule,
-            uint64 _votingPeriod,
+            uint32 _votingPeriod,
             uint256 _quorumNumerator
         ) = abi.decode(
                 initParams,
-                (address, ERC20Votes, address, uint64, uint256)
+                (address, ERC20Votes, address, uint32, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
@@ -84,17 +84,17 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      *
      * @param _votingPeriod voting time period (in blocks)
      */
-    function updateVotingPeriod(uint64 _votingPeriod) external onlyOwner {
+    function updateVotingPeriod(uint32 _votingPeriod) external onlyOwner {
         _updateVotingPeriod(_votingPeriod);
     }
 
     /** @inheritdoc IBaseStrategy*/
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
-        uint64 _votingEndBlock = uint64(block.number) + votingPeriod;
+        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
 
         proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
-        proposalVotes[proposalId].votingStartBlock = uint64(block.number);
+        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
 
         emit ProposalInitialized(proposalId, _votingEndBlock);
     }
@@ -129,8 +129,8 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             uint256 noVotes,
             uint256 yesVotes,
             uint256 abstainVotes,
-            uint64 startBlock,
-            uint64 endBlock
+            uint32 startBlock,
+            uint32 endBlock
         )
     {
         noVotes = proposalVotes[_proposalId].noVotes;
@@ -202,12 +202,12 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     }
 
     /** @inheritdoc BaseStrategy*/
-    function votingEndBlock(uint256 _proposalId) public view override returns (uint64) {
+    function votingEndBlock(uint256 _proposalId) public view override returns (uint32) {
       return proposalVotes[_proposalId].votingEndBlock;
     }
 
     /** Internal implementation of updateVotingPeriod above */
-    function _updateVotingPeriod(uint64 _votingPeriod) internal {
+    function _updateVotingPeriod(uint32 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
         emit VotingPeriodUpdated(_votingPeriod);
     }

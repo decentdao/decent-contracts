@@ -30,12 +30,12 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         (
             address _owner,
             uint256 _freezeVotesThreshold,
-            uint64 _freezeProposalPeriod,
-            uint64 _freezePeriod,
+            uint32 _freezeProposalPeriod,
+            uint32 _freezePeriod,
             address _votesERC20
         ) = abi.decode(
                 initializeParams,
-                (address, uint256, uint64, uint64, address)
+                (address, uint256, uint32, uint32, address)
             );
 
         __Ownable_init();
@@ -56,7 +56,7 @@ contract ERC20FreezeVoting is BaseFreezeVoting {
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // create a new freeze proposal and set total votes to msg.sender's vote count
 
-            freezeProposalCreatedBlock = uint64(block.number);
+            freezeProposalCreatedBlock = uint32(block.number);
 
             userVotes = votesERC20.getPastVotes(
                 msg.sender,

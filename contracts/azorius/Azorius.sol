@@ -44,9 +44,9 @@ contract Azorius is Module, IAzorius {
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
+    uint32 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
+    uint32 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
     uint256 public totalProposalCount; // total number of submitted proposals
-    uint64 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
-    uint64 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
 
     mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
     mapping(address => address) internal strategies; // linked list of BaseStrategies
@@ -87,11 +87,11 @@ contract Azorius is Module, IAzorius {
             address _avatar,
             address _target,
             address[] memory _strategies,
-            uint64 _timelockPeriod,
-            uint64 _executionPeriod
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod
         ) = abi.decode(
                 initParams,
-                (address, address, address, address[], uint64, uint64)
+                (address, address, address, address[], uint32, uint32)
             );
         __Ownable_init();
         avatar = _avatar;
@@ -105,12 +105,12 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function updateTimelockPeriod(uint64 _timelockPeriod) external onlyOwner {
+    function updateTimelockPeriod(uint32 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
     /** @inheritdoc IAzorius*/
-    function updateExecutionPeriod(uint64 _executionPeriod) external onlyOwner {
+    function updateExecutionPeriod(uint32 _executionPeriod) external onlyOwner {
         _updateExecutionPeriod(_executionPeriod);
     }
 
@@ -405,7 +405,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _timelockPeriod new timelock period (in blocks)
      */
-    function _updateTimelockPeriod(uint64 _timelockPeriod) internal {
+    function _updateTimelockPeriod(uint32 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
@@ -415,7 +415,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _executionPeriod new execution period (in blocks)
      */
-    function _updateExecutionPeriod(uint64 _executionPeriod) internal {
+    function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
     }

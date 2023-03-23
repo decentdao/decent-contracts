@@ -197,7 +197,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await azoriusModule.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint64", "uint64"],
+        ["address", "address", "address", "address[]", "uint32", "uint32"],
         [
           azoriusModuleOwner.address,
           childGnosisSafe.address,
@@ -214,7 +214,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await linearERC20Voting.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "uint64", "uint256"],
+        ["address", "address", "address", "uint32", "uint256"],
         [
           parentGnosisSafe.address, // owner
           childVotesERC20.address, // governance token
@@ -236,7 +236,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
     // Setup MultisigFreezeVoting contract
     await freezeVoting.setUp(
       abiCoder.encode(
-        ["address", "uint256", "uint64", "uint64", "address"],
+        ["address", "uint256", "uint32", "uint32", "address"],
         [
           freezeVotingOwner.address, // owner
           2, // freeze votes threshold

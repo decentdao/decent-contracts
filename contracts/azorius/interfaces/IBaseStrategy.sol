@@ -53,7 +53,7 @@ interface IBaseStrategy {
      * Returns the block number voting ends on a given Proposal.
      *
      * @param _proposalId proposalId to check
-     * @return uint64 block number when voting ends on the Proposal
+     * @return uint32 block number when voting ends on the Proposal
      */
-    function votingEndBlock(uint256 _proposalId) external view returns (uint64);
+    function votingEndBlock(uint256 _proposalId) external view returns (uint32);
 }

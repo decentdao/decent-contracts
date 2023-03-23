@@ -8,7 +8,6 @@ import "./interfaces/ISafe.sol";
  * A BaseFreezeVoting implementation which handles freezes on multisig (Safe) based DAOs.
  */
 contract MultisigFreezeVoting is BaseFreezeVoting {
-
     ISafe public parentGnosisSafe;
 
     event MultisigFreezeVotingSetup(
@@ -28,12 +27,12 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         (
             address _owner,
             uint256 _freezeVotesThreshold,
-            uint64 _freezeProposalPeriod,
-            uint64 _freezePeriod,
+            uint32 _freezeProposalPeriod,
+            uint32 _freezePeriod,
             address _parentGnosisSafe
         ) = abi.decode(
                 initializeParams,
-                (address, uint256, uint64, uint64, address)
+                (address, uint256, uint32, uint32, address)
             );
 
         __Ownable_init();
@@ -53,7 +52,7 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // create a new freeze proposal and count the caller's vote
 
-            freezeProposalCreatedBlock = uint64(block.number);
+            freezeProposalCreatedBlock = uint32(block.number);
 
             freezeProposalVoteCount = 1;
 
