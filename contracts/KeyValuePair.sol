@@ -1,15 +1,31 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IKeyValuePair.sol";
+import "./interfaces/IKeyValuePairs.sol";
 
 /**
- * A simple contract to log key/value pair events for the calling address.
+ * Implementation of IKeyValuePairs, a utility contract to log key/value 
+ * pair events for the calling address.
  */
-contract KeyValuePair is IKeyValuePair {
+contract KeyValuePairs is IKeyValuePairs {
 
-    /** @inheritdoc IKeyValuePair*/
-    function updateValue(string memory _key, string memory _value) external {
-        emit ValueUpdated(msg.sender, _key, _value);
+    event ValueUpdated(address indexed theAddress, string key, string value);
+
+    error IncorrectValueCount();
+
+    /** @inheritdoc IKeyValuePairs*/
+    function updateValues(string[] memory _keys, string[] memory _values) external {
+
+        uint256 keyCount = _keys.length;
+
+        if (keyCount != _values.length)
+            revert IncorrectValueCount();
+
+        for (uint256 i; i < keyCount; ) {
+            emit ValueUpdated(msg.sender, _keys[i], _values[i]);
+            unchecked {
+                ++i;
+            }
+        }
     }
 }

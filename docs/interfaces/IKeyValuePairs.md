@@ -1,21 +1,8 @@
 # Solidity API
 
-## KeyValuePairs
+## IKeyValuePairs
 
-Implementation of IKeyValuePairs, a utility contract to log key/value 
-pair events for the calling address.
-
-### ValueUpdated
-
-```solidity
-event ValueUpdated(address theAddress, string key, string value)
-```
-
-### IncorrectValueCount
-
-```solidity
-error IncorrectValueCount()
-```
+A utility contract to log key/value pair events for the calling address.
 
 ### updateValues
 
