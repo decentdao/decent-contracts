@@ -14,8 +14,8 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     using SafeERC20 for IERC20;
 
+    uint64 public deadlineBlock;   // the deadline block to claim tokens by, or 0 for indefinite
     address public funder;          // the address of the initial holder of the claimable _childERC20 tokens
-    uint256 public deadlineBlock;   // the deadline block to claim tokens by, or 0 for indefinite
     address public childERC20;      // the parent ERC20 token address, for calculating a snapshot of holdings
     address public parentERC20;     // the parent ERC20 token address, for calculating a snapshot of holdings
     uint256 public snapShotId;      // the child ERC20 token address, to calculate the percentage claimbable
@@ -51,12 +51,12 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
+            uint64 _deadlineBlock,
             address _childTokenFunder,
-            uint256 _deadlineBlock,
             address _parentERC20,
             address _childERC20,
             uint256 _parentAllocation
-        ) = abi.decode(initializeParams, (address, uint256, address, address, uint256));
+        ) = abi.decode(initializeParams, (uint64, address, address, address, uint256));
 
         funder = _childTokenFunder;
         deadlineBlock = _deadlineBlock;
