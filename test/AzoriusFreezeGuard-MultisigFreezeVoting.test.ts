@@ -236,7 +236,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
     // Setup MultisigFreezeVoting contract
     await freezeVoting.setUp(
       abiCoder.encode(
-        ["address", "uint256", "uint256", "uint256", "address"],
+        ["address", "uint256", "uint64", "uint64", "address"],
         [
           freezeVotingOwner.address, // owner
           2, // freeze votes threshold

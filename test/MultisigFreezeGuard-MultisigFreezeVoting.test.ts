@@ -189,7 +189,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     // Initialize MultisigFreezeVoting contract
     const freezeVotingSetupData = abiCoder.encode(
-      ["address", "uint256", "uint256", "uint256", "address"],
+      ["address", "uint256", "uint64", "uint64", "address"],
       [
         freezeGuardOwner.address,
         2, // freeze votes threshold

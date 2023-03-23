@@ -23,11 +23,11 @@ import "./interfaces/IBaseFreezeVoting.sol";
  */
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
 
+    uint64 public freezeProposalCreatedBlock; // block number the freeze proposal was created at
+    uint64 public freezeProposalPeriod; // number of blocks a freeze proposal has to succeed
+    uint64 public freezePeriod; // number of blocks a freeze lasts, from time of freeze proposal creation
     uint256 public freezeVotesThreshold; // number of freeze votes required to activate a freeze
-    uint256 public freezeProposalCreatedBlock; // block number the freeze proposal was created at
     uint256 public freezeProposalVoteCount; // number of accrued freeze votes
-    uint256 public freezeProposalPeriod; // number of blocks a freeze proposal has to succeed
-    uint256 public freezePeriod; // number of blocks a freeze lasts, from time of freeze proposal creation
 
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
@@ -80,7 +80,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
      *
      * @param _freezeProposalPeriod number of blocks a freeze vote has to succeed to enact a freeze
      */
-    function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external onlyOwner {
+    function updateFreezeProposalPeriod(uint64 _freezeProposalPeriod) external onlyOwner {
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
     }
 
@@ -90,7 +90,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
      *
      * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
      */
-    function updateFreezePeriod(uint256 _freezePeriod) external onlyOwner {
+    function updateFreezePeriod(uint64 _freezePeriod) external onlyOwner {
         _updateFreezePeriod(_freezePeriod);
     }
 
@@ -101,13 +101,13 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /** Internal implementation of updateFreezeProposalPeriod. */
-    function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
+    function _updateFreezeProposalPeriod(uint64 _freezeProposalPeriod) internal {
         freezeProposalPeriod = _freezeProposalPeriod;
         emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
     }
 
     /** Internal implementation of updateFreezePeriod. */
-    function _updateFreezePeriod(uint256 _freezePeriod) internal {
+    function _updateFreezePeriod(uint64 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
         emit FreezePeriodUpdated(_freezePeriod);
     }

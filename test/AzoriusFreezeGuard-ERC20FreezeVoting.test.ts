@@ -213,7 +213,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     await freezeVoting.setUp(
       abiCoder.encode(
-        ["address", "uint256", "uint256", "uint256", "address"],
+        ["address", "uint256", "uint64", "uint64", "address"],
         [
           mockParentDAO.address, // owner
           150, // freeze votes threshold

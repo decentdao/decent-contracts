@@ -28,12 +28,12 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         (
             address _owner,
             uint256 _freezeVotesThreshold,
-            uint256 _freezeProposalPeriod,
-            uint256 _freezePeriod,
+            uint64 _freezeProposalPeriod,
+            uint64 _freezePeriod,
             address _parentGnosisSafe
         ) = abi.decode(
                 initializeParams,
-                (address, uint256, uint256, uint256, address)
+                (address, uint256, uint64, uint64, address)
             );
 
         __Ownable_init();
@@ -53,7 +53,7 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // create a new freeze proposal and count the caller's vote
 
-            freezeProposalCreatedBlock = block.number;
+            freezeProposalCreatedBlock = uint64(block.number);
 
             freezeProposalVoteCount = 1;
 

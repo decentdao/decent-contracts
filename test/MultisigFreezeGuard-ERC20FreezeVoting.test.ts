@@ -151,7 +151,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
     // Initialize FreezeVoting contract
     const freezeVotingSetupData = abiCoder.encode(
-      ["address", "uint256", "uint256", "uint256", "address", "address"],
+      ["address", "uint256", "uint64", "uint64", "address", "address"],
       [
         freezeGuardOwner.address,
         1090, // freeze votes threshold

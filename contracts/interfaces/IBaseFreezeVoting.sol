@@ -44,7 +44,7 @@ interface IBaseFreezeVoting {
      *
      * @param _freezeProposalPeriod number of blocks a freeze proposal has to succeed
      */
-    function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external;
+    function updateFreezeProposalPeriod(uint64 _freezeProposalPeriod) external;
 
     /**
      * Updates the freeze period. This is the length of time (in blocks) the subDAO is actually
@@ -55,7 +55,7 @@ interface IBaseFreezeVoting {
      *
      * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
      */
-    function updateFreezePeriod(uint256 _freezePeriod) external;
+    function updateFreezePeriod(uint64 _freezePeriod) external;
 
     /**
      * Returns true if the DAO is currently frozen, false otherwise.
