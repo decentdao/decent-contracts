@@ -47,8 +47,8 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: true,
-    outputFile: "gas-report",
-    rst: true,
+    outputFile: "gas-report.txt",
+    noColors: true,
   },
   dependencyCompiler: {
     paths: [
