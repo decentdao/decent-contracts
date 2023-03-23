@@ -285,7 +285,6 @@ contract Azorius is Module, IAzorius {
 
     /** @inheritdoc IAzorius*/
     function proposalState(uint256 _proposalId) public view returns (ProposalState) {
-        
         Proposal memory _proposal = proposals[_proposalId];
 
         if (_proposal.strategy == address(0)) revert InvalidProposal();
