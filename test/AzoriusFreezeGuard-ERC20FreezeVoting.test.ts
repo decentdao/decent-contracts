@@ -175,7 +175,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     await azoriusModule.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint256", "uint256"],
+        ["address", "address", "address", "address[]", "uint64", "uint64"],
         [
           mockParentDAO.address,
           childGnosisSafe.address,

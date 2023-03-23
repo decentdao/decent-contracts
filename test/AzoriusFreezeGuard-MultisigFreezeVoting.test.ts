@@ -197,7 +197,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await azoriusModule.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint256", "uint256"],
+        ["address", "address", "address", "address[]", "uint64", "uint64"],
         [
           azoriusModuleOwner.address,
           childGnosisSafe.address,

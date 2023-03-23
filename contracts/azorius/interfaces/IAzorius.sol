@@ -91,7 +91,14 @@ interface IAzorius {
      * This has no effect on existing Proposals, either ACTIVE or completed.
      * @param _timelockPeriod The timelockPeriod (in blocks) to be used for new Proposals.
      */
-    function updateTimelockPeriod(uint256 _timelockPeriod) external;
+    function updateTimelockPeriod(uint64 _timelockPeriod) external;
+
+    /**
+     * Updates the execution period for future Proposals.
+     *
+     * @param _executionPeriod new execution period (in blocks)
+     */
+    function updateExecutionPeriod(uint64 _executionPeriod) external;
 
     /**
      * Submits a new Proposal, using one of the enabled BaseStrategies.
