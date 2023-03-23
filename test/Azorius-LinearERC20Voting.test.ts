@@ -302,6 +302,14 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).to.deep.eq([mockStrategy2.address, linearERC20Voting.address]);
     });
 
+    it("An invalid strategy cannot be disabled", async () => {
+      await expect(
+        azorius
+          .connect(gnosisSafeOwner)
+          .disableStrategy(ethers.constants.AddressZero, mockStrategy2.address)
+      ).to.be.revertedWith("StrategyDisabled()");
+    });
+
     it("The owner can change the Azorius Module on the Strategy", async () => {
       await linearERC20Voting
         .connect(gnosisSafeOwner)
