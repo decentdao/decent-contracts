@@ -16,7 +16,7 @@ import "./interfaces/IFractalModule.sol";
 contract FractalModule is IFractalModule, Module {
 
     /** Mapping of whether an address is a controller (typically a parentDAO). */
-    mapping(address => bool) public controllers; // TODO why can't this be address => address, for the DAO hierarchy?
+    mapping(address => bool) public controllers;
 
     event ControllersAdded(address[] controllers);
     event ControllersRemoved(address[] controllers);
