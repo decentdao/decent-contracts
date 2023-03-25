@@ -166,15 +166,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return false;
     }
 
-    /**
-     * Calculates the number of votes needed to achieve quorum at a specific block number.
-     *
-     * Because token supply is not necessarily static, it is required to calculate
-     * quorum based on the supply at the time of a Proposal's creation.
-     *
-     * @param _blockNumber block number to calculate quorum at
-     * @return uint256 the number of votes needed for quorum
-     */
+    /** @inheritdoc BaseQuorumPercent*/
     function quorum(uint256 _blockNumber) public view override returns (uint256) {
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
