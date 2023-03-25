@@ -168,13 +168,23 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
 
     const linearERC20VotingSetupData = abiCoder.encode(
-      ["address", "address", "address", "uint256", "uint256"],
+      [
+        "address",
+        "address",
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "uint256",
+      ],
       [
         gnosisSafeOwner.address, // owner
         votesERC20.address, // governance token
         azorius.address, // Azorius module
         60, // voting period in blocks
+        0, // proposer weight
         500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+        500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
       ]
     );
 
@@ -1207,13 +1217,23 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).deploy();
 
       const linearERC20VotingSetupData = abiCoder.encode(
-        ["address", "address", "address", "uint256", "uint256"],
+        [
+          "address",
+          "address",
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "uint256",
+        ],
         [
           gnosisSafeOwner.address, // owner
           ethers.constants.AddressZero, // governance token
           azorius.address, // Azorius module
           60, // voting period in blocks
+          0, // proposer weight
           500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+          500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
         ]
       );
 

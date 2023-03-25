@@ -4,12 +4,13 @@ pragma solidity =0.8.19;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "./BaseStrategy.sol";
 import "./BaseQuorumPercent.sol";
+import "./BaseVotingBasisPercent.sol";
 
  /**
   * @title LinearERC20Voting - An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
   * Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
   */
-contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
+contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPercent {
 
     /**
      * The voting options for a Proposal.
@@ -65,10 +66,12 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             ERC20Votes _governanceToken,
             address _azoriusModule,
             uint256 _votingPeriod,
-            uint256 _quorumNumerator
+            uint256 _proposerWeight,
+            uint256 _quorumNumerator,
+            uint256 _basisNumerator
         ) = abi.decode(
                 initParams,
-                (address, ERC20Votes, address, uint256, uint256)
+                (address, ERC20Votes, address, uint256, uint256, uint256, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
@@ -78,8 +81,9 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         transferOwnership(_owner);
         _setAzorius(_azoriusModule);
         _updateQuorumNumerator(_quorumNumerator);
+        _updateBasisNumerator(_basisNumerator);
         _updateVotingPeriod(_votingPeriod);
-        _updateProposerWeight(0); // anyone can create Proposals by default
+        _updateProposerWeight(_proposerWeight);
 
         emit StrategySetUp(_azoriusModule, _owner);
     }
@@ -167,17 +171,14 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
 
     /** @inheritdoc IBaseStrategy*/
     function isPassed(uint256 _proposalId) public view override returns (bool) {
-        if (
-            proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
-            proposalVotes[_proposalId].yesVotes >=
-            quorum(proposalVotes[_proposalId].votingStartBlock) &&
-            proposalVotes[_proposalId].votingEndBlock != 0 &&
-            block.number > proposalVotes[_proposalId].votingEndBlock
-        ) {
-            return true;
-        }
-
-        return false;
+        return (
+            proposalVotes[_proposalId].votingEndBlock != 0 && // end block wasn't set to 0 TODO why do we need this?
+            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period hasn't ended yet
+            proposalVotes[_proposalId].yesVotes >= quorum(proposalVotes[_proposalId].votingStartBlock) && // yes votes meets the quorum
+            block.number > proposalVotes[_proposalId].votingEndBlock && // more yes votes than no (simple majority)
+            proposalVotes[_proposalId].yesVotes / (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) 
+                > basis(proposalVotes[_proposalId].votingStartBlock) // yes votes meets the basis
+        );
     }
 
     /**
@@ -193,6 +194,13 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
                 quorumNumerator) / QUORUM_DENOMINATOR;
+    }
+
+    /** @inheritdoc BaseVotingBasisPercent*/
+    function basis(uint256 _blockNumber) public view override returns (uint256) {
+        return
+            (governanceToken.getPastTotalSupply(_blockNumber) *
+                basisNumerator) / BASIS_DENOMINATOR;
     }
 
     /**

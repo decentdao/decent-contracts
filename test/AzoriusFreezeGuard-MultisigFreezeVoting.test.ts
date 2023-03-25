@@ -214,13 +214,23 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     await linearERC20Voting.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "uint256", "uint256"],
+        [
+          "address",
+          "address",
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "uint256",
+        ],
         [
           parentGnosisSafe.address, // owner
           childVotesERC20.address, // governance token
           azoriusModule.address, // Azorius module
           60, // voting period in blocks
+          0, // proposer weight
           500000, // quorom numerator, denominator is 1,000,000
+          500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
         ]
       )
     );
