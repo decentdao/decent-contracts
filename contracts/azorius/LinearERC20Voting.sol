@@ -37,10 +37,14 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     /** Number of blocks a new Proposal can be voted on. */
     uint256 public votingPeriod;
 
+    /** Voting weight required to be able to submit Proposals. */
+    uint256 public proposerWeight;
+
     /** proposalId to ProposalVotes, the voting state of a Proposal */
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 votingPeriod);
+    event ProposerWeightUpdated(uint256 proposerWeight);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
     event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight);
 
@@ -75,6 +79,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _setAzorius(_azoriusModule);
         _updateQuorumNumerator(_quorumNumerator);
         _updateVotingPeriod(_votingPeriod);
+        _updateProposerWeight(0); // anyone can create Proposals by default
 
         emit StrategySetUp(_azoriusModule, _owner);
     }
@@ -86,6 +91,15 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      */
     function updateVotingPeriod(uint256 _votingPeriod) external onlyOwner {
         _updateVotingPeriod(_votingPeriod);
+    }
+
+    /**
+     * Updates the voting weight required to submit new Proposals.
+     *
+     * @param _proposerWeight voting time period (in blocks)
+     */
+    function updateProposerWeight(uint256 _proposerWeight) external onlyOwner {
+        _updateProposerWeight(_proposerWeight);
     }
 
     /** @inheritdoc IBaseStrategy*/
@@ -197,8 +211,11 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     }
 
     /** @inheritdoc IBaseStrategy*/
-    function isProposer(address) public pure override returns (bool) {
-        return true; // anyone can submit Proposals
+    function isProposer(address _address) public view override returns (bool) {
+        return governanceToken.getPastVotes(
+            _address,
+            block.number
+        ) >= proposerWeight;
     }
 
     /** @inheritdoc BaseStrategy*/
@@ -210,6 +227,12 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     function _updateVotingPeriod(uint256 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
         emit VotingPeriodUpdated(_votingPeriod);
+    }
+
+    /** Internal implementation of updateProposerWeight above */
+    function _updateProposerWeight(uint256 _proposerWeight) internal {
+        proposerWeight = _proposerWeight;
+        emit ProposerWeightUpdated(_proposerWeight);
     }
 
     /**
