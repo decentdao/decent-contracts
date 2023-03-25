@@ -1050,4 +1050,19 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     expect(await freezeVoting.isFrozen()).to.eq(false);
   });
+
+  it("A user with no freeze votes cannot cast freeze votes", async () => {
+    // User has no freeze votes
+    await expect(
+      freezeVoting.connect(childTokenHolder1).castFreezeVote()
+    ).to.be.revertedWith("NoVotes()");
+
+    // Freeze proposal is created
+    await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
+
+    // User has no freeze votes
+    await expect(
+      freezeVoting.connect(childTokenHolder1).castFreezeVote()
+    ).to.be.revertedWith("NoVotes()");
+  });
 });

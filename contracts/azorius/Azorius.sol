@@ -80,7 +80,6 @@ contract Azorius is Module, IAzorius {
     error TxFailed();
     error InvalidTxs();
     error InvalidArrayLengths();
-    error AlreadySetupStrategies();
 
     function setUp(bytes memory initParams) public override initializer {
         (
@@ -227,24 +226,13 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposalTxHash(
-        uint256 _proposalId,
-        uint256 _txIndex
-    ) external view returns (bytes32) {
+    function getProposalTxHash(uint256 _proposalId,uint256 _txIndex) external view returns (bytes32) {
         return proposals[_proposalId].txHashes[_txIndex];
     }
 
     /** @inheritdoc IAzorius*/
     function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
-    }
-
-    /** @inheritdoc IAzorius*/
-    function isTxExecuted(
-        uint256 _proposalId,
-        uint256 _index
-    ) external view returns (bool) {
-        return proposals[_proposalId].executionCounter > _index;
     }
 
     /** @inheritdoc IAzorius*/
@@ -297,7 +285,6 @@ contract Azorius is Module, IAzorius {
 
     /** @inheritdoc IAzorius*/
     function proposalState(uint256 _proposalId) public view returns (ProposalState) {
-        
         Proposal memory _proposal = proposals[_proposalId];
 
         if (_proposal.strategy == address(0)) revert InvalidProposal();
@@ -407,8 +394,6 @@ contract Azorius is Module, IAzorius {
      * @param _strategies array of BaseStrategy contract addresses to enable
      */
     function _setUpStrategies(address[] memory _strategies) internal {
-        if (strategies[SENTINEL_STRATEGY] != address(0))
-            revert AlreadySetupStrategies();
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
         uint256 strategiesLength = _strategies.length;
         for (uint256 i; i < strategiesLength; ) {

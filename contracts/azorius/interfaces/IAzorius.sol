@@ -152,15 +152,6 @@ interface IAzorius {
     ) external view returns (address[] memory _strategies, address _next);
 
     /**
-     * Returns true if a proposal transaction by index is executed.
-     *
-     * @param _proposalId identifier of the proposal
-     * @param _index index of the transaction within the proposal
-     * @return bool True if the transaction has been executed, otherwise False
-     */
-    function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool);
-
-    /**
      * Gets the state of a Proposal.
      *
      * @param _proposalId identifier of the Proposal
@@ -188,15 +179,6 @@ interface IAzorius {
     ) external view returns (bytes memory);
 
     /**
-     * Returns the hash of a transaction in a Proposal.
-     *
-     * @param _proposalId identifier of the Proposal
-     * @param _txIndex index of the transaction within the Proposal
-     * @return bytes32 hash of the specified transaction
-     */
-    function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
-
-    /**
      * Returns the keccak256 hash of the specified transaction.
      *
      * @param _to target address of the transaction
@@ -211,6 +193,15 @@ interface IAzorius {
         bytes memory _data,
         Enum.Operation _operation
     ) external view returns (bytes32);
+
+    /**
+     * Returns the hash of a transaction in a Proposal.
+     *
+     * @param _proposalId identifier of the Proposal
+     * @param _txIndex index of the transaction within the Proposal
+     * @return bytes32 hash of the specified transaction
+     */
+    function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
 
     /**
      * Returns the transaction hashes associated with a given proposalId.
