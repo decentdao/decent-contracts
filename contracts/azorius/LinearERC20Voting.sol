@@ -214,7 +214,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     function isProposer(address _address) public view override returns (bool) {
         return governanceToken.getPastVotes(
             _address,
-            block.number
+            block.number - 1
         ) >= proposerWeight;
     }
 
