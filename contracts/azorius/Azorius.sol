@@ -248,7 +248,6 @@ contract Azorius is Module, IAzorius {
         return proposals[_proposalId].txHashes;
     }
 
-    // TODO can we get rid of this?
     /** @inheritdoc IAzorius*/
     function getProposal(uint256 _proposalId) external view
         returns (
