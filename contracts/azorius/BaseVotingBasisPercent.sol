@@ -14,21 +14,38 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  */
 abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
     
+    /** The numerator to use when calculating basis (adjustable). */
     uint256 public basisNumerator;
+
+    /** The denominator to use when calculating basis (1,000,000). */
     uint256 public constant BASIS_DENOMINATOR = 1_000_000;
 
     error InvalidBasisNumerator();
 
     event BasisNumeratorUpdated(uint256 basisNumerator);
 
+    /**
+     * Calculates the basis percentage for a Proposal on the strategy to pass.
+     *
+     * In a simple majority, the basis would be 50% (500,000 / 1,000,000).
+     *
+     * Adjusting the basisNumerator allows for strategies to use any basis
+     * above simple majority, such as 2/3, 90%, etc.
+     */
     function basis() public view virtual returns (uint256) {
         return basisNumerator / BASIS_DENOMINATOR;
     }
 
+    /**
+     * Updates the basisNumerator for future Proposals.
+     *
+     * @param _basisNumerator numerator to use
+     */
     function updateBasisNumerator(uint256 _basisNumerator) public virtual onlyOwner {
         _updateBasisNumerator(_basisNumerator);
     }
 
+    /** Internal implementation of updateBasisNumerator. */
     function _updateBasisNumerator(uint256 _basisNumerator) internal virtual {
         if (_basisNumerator > BASIS_DENOMINATOR)
             revert InvalidBasisNumerator();

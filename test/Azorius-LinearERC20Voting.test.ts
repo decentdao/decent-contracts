@@ -1208,6 +1208,38 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       ).to.be.revertedWith("InvalidQuorumNumerator()");
     });
 
+    it("Only the owner can update the basis numerator on the ERC20LinearVoting", async () => {
+      expect(await linearERC20Voting.basisNumerator()).to.eq(500000);
+
+      await linearERC20Voting
+        .connect(gnosisSafeOwner)
+        .updateBasisNumerator(600000);
+
+      expect(await linearERC20Voting.basisNumerator()).to.eq(600000);
+
+      await expect(
+        linearERC20Voting.connect(tokenHolder1).updateBasisNumerator(700000)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Basis numerator cannot be updated to a value larger than the denominator", async () => {
+      await expect(
+        linearERC20Voting.connect(gnosisSafeOwner).updateBasisNumerator(1000001)
+      ).to.be.revertedWith("InvalidBasisNumerator()");
+    });
+
+    it("Only the owner can update the proposer weight on the ERC20LinearVoting", async () => {
+      expect(await linearERC20Voting.proposerWeight()).to.eq(0);
+
+      await linearERC20Voting.connect(gnosisSafeOwner).updateProposerWeight(1);
+
+      expect(await linearERC20Voting.proposerWeight()).to.eq(1);
+
+      await expect(
+        linearERC20Voting.connect(tokenHolder1).updateProposerWeight(2)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
     it("Linear ERC20 voting contract cannot be setup with an invalid governance token address", async () => {
       const abiCoder = new ethers.utils.AbiCoder();
 
