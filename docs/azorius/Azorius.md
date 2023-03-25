@@ -168,6 +168,12 @@ error InvalidTxs()
 error InvalidArrayLengths()
 ```
 
+### AlreadySetupStrategies
+
+```solidity
+error AlreadySetupStrategies()
+```
+
 ### setUp
 
 ```solidity
@@ -305,6 +311,27 @@ Returns the transaction hashes associated with a given proposalId.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | bytes32[] | bytes32[] array of transaction hashes |
+
+### isTxExecuted
+
+```solidity
+function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool)
+```
+
+Returns true if a proposal transaction by index is executed.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint256 | identifier of the proposal |
+| _index | uint256 | index of the transaction within the proposal |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool True if the transaction has been executed, otherwise False |
 
 ### getProposal
 
