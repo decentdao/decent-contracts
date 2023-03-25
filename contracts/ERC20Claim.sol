@@ -14,12 +14,25 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     using SafeERC20 for IERC20;
 
-    address public funder;          // the address of the initial holder of the claimable _childERC20 tokens
-    uint256 public deadlineBlock;   // the deadline block to claim tokens by, or 0 for indefinite
-    address public childERC20;      // the parent ERC20 token address, for calculating a snapshot of holdings
-    address public parentERC20;     // the parent ERC20 token address, for calculating a snapshot of holdings
-    uint256 public snapShotId;      // the child ERC20 token address, to calculate the percentage claimbable
-    uint256 public parentAllocation;// the total amount of _childERC20 tokens allocated for claiming by parent holders
+    /** The address of the initial holder of the claimable _childERC20 tokens. */
+    address public funder;
+
+    /** The deadline block to claim tokens by, or 0 for indefinite. */
+    uint256 public deadlineBlock;
+
+    /** Child ERC20 token address, to calculate the percentage claimable. */
+    address public childERC20;
+
+    /** Parent ERC20 token address, for calculating a snapshot of holdings. */
+    address public parentERC20;
+
+    /** Id of a snapshot of token holdings for this claim (see VotesERC20). */
+    uint256 public snapShotId;
+
+    /** Total amount of _childERC20 tokens allocated for claiming by parent holders. */
+    uint256 public parentAllocation;
+
+    /** Mapping of address to bool of whether the address has claimed already. */
     mapping(address => bool) public claimed;
 
     event ERC20Claimed(

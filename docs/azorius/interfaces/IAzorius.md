@@ -2,6 +2,15 @@
 
 ## IAzorius
 
+The base interface for the Azorius governance Safe module.
+Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+
+Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
+(BaseStrategy) for voting that are enabled on the DAO.
+
+Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
+as customizable as possible.
+
 ### Transaction
 
 ```solidity
@@ -53,7 +62,7 @@ created using any of the currently enabled strategies.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _strategy | address | contract address of the BaseStrategy to be enabled. |
+| _strategy | address | contract address of the BaseStrategy to be enabled |
 
 ### disableStrategy
 
@@ -61,15 +70,15 @@ created using any of the currently enabled strategies.
 function disableStrategy(address _prevStrategy, address _strategy) external
 ```
 
-Disables a previously enabled BaseStrategy implementation for new proposal.
+Disables a previously enabled BaseStrategy implementation for new proposals.
 This has no effect on existing Proposals, either ACTIVE or completed.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _prevStrategy | address | BaseStrategy that pointed to the strategy to be removed in the linked list |
-| _strategy | address | BaseStrategy implementation to be removed |
+| _prevStrategy | address | BaseStrategy address that pointed in the linked list to the strategy to be removed |
+| _strategy | address | address of the BaseStrategy to be removed |
 
 ### updateTimelockPeriod
 
@@ -84,7 +93,7 @@ This has no effect on existing Proposals, either ACTIVE or completed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | The timelockPeriod (in blocks) to be used for new Proposals. |
+| _timelockPeriod | uint256 | timelockPeriod (in blocks) to be used for new Proposals |
 
 ### submitProposal
 
@@ -99,7 +108,7 @@ New Proposals begin immediately in the ACTIVE state.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _strategy | address | address of the BaseStrategy implementation which the Proposal will use. |
+| _strategy | address | address of the BaseStrategy implementation which the Proposal will use |
 | _data | bytes | arbitrary data passed to the BaseStrategy implementation |
 | _transactions | struct IAzorius.Transaction[] | array of transactions to propose |
 | _metadata | string | additional data such as a title/description to submit with the proposal |
@@ -111,6 +120,7 @@ function executeProposal(uint256 _proposalId, address[] _targets, uint256[] _val
 ```
 
 Executes all transactions within a Proposal.
+This will only be able to be called if the Proposal passed.
 
 #### Parameters
 
@@ -168,27 +178,6 @@ returning the whole list at once.
 | _strategies | address[] | array of BaseStrategies |
 | _next | address | next BaseStrategy contract address in the linked list |
 
-### isTxExecuted
-
-```solidity
-function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool)
-```
-
-Returns true if a proposal transaction by index is executed.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the proposal |
-| _index | uint256 | index of the transaction within the proposal |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool True if the transaction has been executed, otherwise False |
-
 ### proposalState
 
 ```solidity
@@ -207,7 +196,7 @@ Gets the state of a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing of the         current state of the proposal |
+| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the         current state of the proposal |
 
 ### generateTxHashData
 
@@ -233,27 +222,6 @@ Generates the data for the module transaction hash (required for signing).
 | ---- | ---- | ----------- |
 | [0] | bytes | bytes hashed transaction data |
 
-### getProposalTxHash
-
-```solidity
-function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32)
-```
-
-Returns the hash of a transaction in a Proposal.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal |
-| _txIndex | uint256 | index of the transaction within the Proposal |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | bytes32 hash of the specified transaction |
-
 ### getTxHash
 
 ```solidity
@@ -276,6 +244,27 @@ Returns the keccak256 hash of the specified transaction.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | bytes32 | bytes32 transaction hash |
+
+### getProposalTxHash
+
+```solidity
+function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32)
+```
+
+Returns the hash of a transaction in a Proposal.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint256 | identifier of the Proposal |
+| _txIndex | uint256 | index of the transaction within the Proposal |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bytes32 | bytes32 hash of the specified transaction |
 
 ### getProposalTxHashes
 

@@ -6,7 +6,7 @@ import "./interfaces/IBaseStrategy.sol";
 import "./interfaces/IAzorius.sol";
 
 /**
- * @title Azorius Protocol - a Safe module which allows for composable governance.
+ * A Safe module which allows for composable governance.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
  *
  * The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications
@@ -19,7 +19,8 @@ contract Azorius is Module, IAzorius {
 
     /**
      * The sentinel node of the linked list of enabled BaseStrategies.
-     * https://en.wikipedia.org/wiki/Sentinel_node
+     *
+     * See https://en.wikipedia.org/wiki/Sentinel_node.
      */
     address internal constant SENTINEL_STRATEGY = address(0x1);
 
@@ -29,6 +30,7 @@ contract Azorius is Module, IAzorius {
      * );
      *
      * A unique hash intended to prevent signature collisions.
+     *
      * See https://eips.ethereum.org/EIPS/eip-712 for details.
      */
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
@@ -44,12 +46,20 @@ contract Azorius is Module, IAzorius {
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
-    uint256 public totalProposalCount; // total number of submitted proposals
-    uint256 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
-    uint256 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
+    /** Total number of submitted proposals. */
+    uint256 public totalProposalCount;
 
-    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
-    mapping(address => address) internal strategies; // linked list of BaseStrategies
+    /** Delay (in blocks) between when a Proposal is passed and when it can be executed. */
+    uint256 public timelockPeriod;
+
+    /** Time (in blocks) between when timelock ends and the Proposal expires. */
+    uint256 public executionPeriod;
+
+    /** Proposals by proposalId. */
+    mapping(uint256 => Proposal) internal proposals;
+
+    /** A linked list of enabled BaseStrategies. */
+    mapping(address => address) internal strategies;
 
     event AzoriusSetUp(
         address indexed creator,
@@ -81,14 +91,17 @@ contract Azorius is Module, IAzorius {
     error InvalidTxs();
     error InvalidArrayLengths();
 
+    /**
+     * Initial setup of the Azorius instance.
+     */
     function setUp(bytes memory initParams) public override initializer {
         (
-            address _owner,
+            address _owner,                 // TODO what should these say?
             address _avatar,
-            address _target,
-            address[] memory _strategies,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod
+            address _target,                
+            address[] memory _strategies,   // enabled BaseStrategies
+            uint256 _timelockPeriod,        // initial timelockPeriod
+            uint256 _executionPeriod        // initial executionPeriod
         ) = abi.decode(
                 initParams,
                 (address, address, address, address[], uint256, uint256)
@@ -235,6 +248,7 @@ contract Azorius is Module, IAzorius {
         return proposals[_proposalId].txHashes;
     }
 
+    // TODO can we get rid of this?
     /** @inheritdoc IAzorius*/
     function getProposal(uint256 _proposalId) external view
         returns (
@@ -405,7 +419,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Updates the timelock period for future Proposals.
+     * Updates the timelockPeriod for future Proposals.
      *
      * @param _timelockPeriod new timelock period (in blocks)
      */
@@ -415,7 +429,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Updates the execution period for future Proposals.
+     * Updates the executionPeriod for future Proposals.
      *
      * @param _executionPeriod new execution period (in blocks)
      */

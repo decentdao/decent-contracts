@@ -15,7 +15,8 @@ import "./interfaces/IFractalModule.sol";
   */
 contract FractalModule is IFractalModule, Module {
 
-    mapping(address => bool) public controllers; // A DAO may authorize users to act on the behalf of the parent DAO.
+    /** Mapping of whether an address is a controller (typically a parentDAO). */
+    mapping(address => bool) public controllers; // TODO why can't this be address => address, for the DAO hierarchy?
 
     event ControllersAdded(address[] controllers);
     event ControllersRemoved(address[] controllers);
@@ -23,6 +24,7 @@ contract FractalModule is IFractalModule, Module {
     error Unauthorized();
     error TxFailed();
 
+    /** Allows only authorized controllers to execute transactions on the Safe. */
     modifier onlyAuthorized() {
         if (owner() != msg.sender && !controllers[msg.sender])
             revert Unauthorized();

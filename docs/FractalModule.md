@@ -16,6 +16,8 @@ DAOs.
 mapping(address => bool) controllers
 ```
 
+Mapping of whether an address is a controller (typically a parentDAO).
+
 ### ControllersAdded
 
 ```solidity
@@ -45,6 +47,8 @@ error TxFailed()
 ```solidity
 modifier onlyAuthorized()
 ```
+
+Allows only authorized controllers to execute transactions on the Safe.
 
 ### setUp
 

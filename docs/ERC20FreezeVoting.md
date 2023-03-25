@@ -50,3 +50,10 @@ Initialize function, will be triggered when a new instance is deployed.
 function castFreezeVote() external
 ```
 
+Casts a positive vote to freeze the subDAO. This function is intended to be called
+by the individual token holders themselves directly, and will allot their token
+holdings a "yes" votes towards freezing.
+
+Additionally, if a vote to freeze is not already running, calling this will initiate
+a new vote to freeze it.
+

@@ -6,7 +6,7 @@ import "./BaseStrategy.sol";
 import "./BaseQuorumPercent.sol";
 
  /**
-  * @title LinearERC20Voting - An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
+  * An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
   * Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
   */
 contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
@@ -37,7 +37,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     /** Number of blocks a new Proposal can be voted on. */
     uint256 public votingPeriod;
 
-    /** proposalId to ProposalVotes, the voting state of a Proposal */
+    /** proposalId to ProposalVotes, the voting state of a Proposal. */
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 votingPeriod);
@@ -88,7 +88,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint256 proposalId = abi.decode(_data, (uint256));
         uint256 _votingEndBlock = block.number + votingPeriod;
@@ -105,7 +105,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      * @param _proposalId id of the Proposal to vote on
      * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)
      */
-    function vote(uint256 _proposalId, uint8 _voteType, bytes memory) external {
+    function vote(uint256 _proposalId, uint8 _voteType, bytes memory) external { // TODO what's this unused parameter???
         _vote(
             _proposalId,
             msg.sender,
@@ -151,7 +151,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return proposalVotes[_proposalId].hasVoted[_address];
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         if (
             proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
@@ -196,7 +196,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             );
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function isProposer(address) public pure override returns (bool) {
         return true; // anyone can submit Proposals
     }

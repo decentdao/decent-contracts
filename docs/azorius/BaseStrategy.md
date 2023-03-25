@@ -2,6 +2,8 @@
 
 ## BaseStrategy
 
+The base abstract contract for all voting strategies in Azorius.
+
 ### AzoriusSet
 
 ```solidity

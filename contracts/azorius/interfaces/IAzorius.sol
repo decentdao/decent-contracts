@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
- * @title Azorius spec - the base interface for the Azorius governance Safe module.
+ * The base interface for the Azorius governance Safe module.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
  *
  * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
@@ -73,23 +73,23 @@ interface IAzorius {
      * Multiple strategies can be enabled, and new Proposals will be able to be
      * created using any of the currently enabled strategies.
      *
-     * @param _strategy contract address of the BaseStrategy to be enabled.
+     * @param _strategy contract address of the BaseStrategy to be enabled
      */
     function enableStrategy(address _strategy) external;
 
     /**
-     * Disables a previously enabled BaseStrategy implementation for new proposal.
+     * Disables a previously enabled BaseStrategy implementation for new proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
      *
-     * @param _prevStrategy BaseStrategy that pointed to the strategy to be removed in the linked list
-     * @param _strategy BaseStrategy implementation to be removed
+     * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed
+     * @param _strategy address of the BaseStrategy to be removed
      */
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
     /**
      * Updates the timelockPeriod for newly created Proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
-     * @param _timelockPeriod The timelockPeriod (in blocks) to be used for new Proposals.
+     * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals
      */
     function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
@@ -97,7 +97,7 @@ interface IAzorius {
      * Submits a new Proposal, using one of the enabled BaseStrategies.
      * New Proposals begin immediately in the ACTIVE state.
      *
-     * @param _strategy address of the BaseStrategy implementation which the Proposal will use.
+     * @param _strategy address of the BaseStrategy implementation which the Proposal will use
      * @param _data arbitrary data passed to the BaseStrategy implementation
      * @param _transactions array of transactions to propose
      * @param _metadata additional data such as a title/description to submit with the proposal
@@ -111,6 +111,7 @@ interface IAzorius {
 
     /**
      * Executes all transactions within a Proposal.
+     * This will only be able to be called if the Proposal passed.
      *
      * @param _proposalId identifier of the Proposal
      * @param _targets target contracts for each transaction
@@ -155,7 +156,7 @@ interface IAzorius {
      * Gets the state of a Proposal.
      *
      * @param _proposalId identifier of the Proposal
-     * @return ProposalState uint256 ProposalState enum value representing of the
+     * @return ProposalState uint256 ProposalState enum value representing the
      *         current state of the proposal
      */
     function proposalState(uint256 _proposalId) external view returns (ProposalState);

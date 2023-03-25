@@ -32,11 +32,15 @@ See ERC20SnapshotUpgradeable._snapshot()
 function _mint(address to, uint256 amount) internal virtual
 ```
 
+Overridden without modification.
+
 ### _burn
 
 ```solidity
 function _burn(address account, uint256 amount) internal virtual
 ```
+
+Overridden without modification.
 
 ### _beforeTokenTransfer
 
@@ -44,9 +48,13 @@ function _burn(address account, uint256 amount) internal virtual
 function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual
 ```
 
+Overridden without modification.
+
 ### _afterTokenTransfer
 
 ```solidity
 function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual
 ```
+
+Overridden without modification.
 

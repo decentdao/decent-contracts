@@ -10,17 +10,23 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
- * A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 
- * if it has been frozen by its parentDAO.
- *
- * see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ * Implementation of IMultisigFreezeGuard. See the IMultisigFreezeGuard doc more for details.
  */
 contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
 
-    uint256 public timelockPeriod; // timelock period in number of blocks
-    uint256 public executionPeriod; // execution period in number of blocks
+    /** Timelock period (in blocks). */
+    uint256 public timelockPeriod;
+
+    /** Execution period (in blocks). */
+    uint256 public executionPeriod;
+
+    /** Reference to the IBaseFreezeVoting implementation that determines whether the Safe is frozen. */
     IBaseFreezeVoting public freezeVoting;
+
+    /** Reference to the Safe that can be frozen. */
     ISafe public childGnosisSafe;
+
+    /** Mapping of transaction hash to the block during which it was timelocked. */
     mapping(bytes32 => uint256) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(

@@ -23,12 +23,25 @@ import "./interfaces/IBaseFreezeVoting.sol";
  */
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
 
-    uint256 public freezeVotesThreshold; // number of freeze votes required to activate a freeze
-    uint256 public freezeProposalCreatedBlock; // block number the freeze proposal was created at
-    uint256 public freezeProposalVoteCount; // number of accrued freeze votes
-    uint256 public freezeProposalPeriod; // number of blocks a freeze proposal has to succeed
-    uint256 public freezePeriod; // number of blocks a freeze lasts, from time of freeze proposal creation
+    /** Number of freeze votes required to activate a freeze. */
+    uint256 public freezeVotesThreshold;
 
+    /** Block number the freeze proposal was created at. */
+    uint256 public freezeProposalCreatedBlock;
+
+    /** Number of accrued freeze votes. */
+    uint256 public freezeProposalVoteCount;
+
+    /** Number of blocks a freeze proposal has to succeed. */
+    uint256 public freezeProposalPeriod;
+
+    /** Number of blocks a freeze lasts, from time of freeze proposal creation. */
+    uint256 public freezePeriod;
+
+    /**
+    * Mapping of address to the block the freeze vote was started to 
+    * whether the address has voted yet on the freeze proposal.
+    */
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
     event FreezeVoteCast(address indexed voter, uint256 votesCast);

@@ -56,6 +56,7 @@ contract VotesERC20 is
 
     // -- The functions below are overrides required by extended contracts. --
 
+    /** Overridden without modification. */
     function _mint(
         address to,
         uint256 amount
@@ -63,6 +64,7 @@ contract VotesERC20 is
         super._mint(to, amount);
     }
 
+    /** Overridden without modification. */
     function _burn(
         address account,
         uint256 amount
@@ -70,6 +72,7 @@ contract VotesERC20 is
         super._burn(account, amount);
     }
 
+    /** Overridden without modification. */
     function _beforeTokenTransfer(
         address from,
         address to,
@@ -78,6 +81,7 @@ contract VotesERC20 is
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    /** Overridden without modification. */
     function _afterTokenTransfer(
         address from,
         address to,

@@ -7,7 +7,7 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title BaseStrategy - the base abstract contract for all voting strategies in Azorius.
+ * The base abstract contract for all voting strategies in Azorius.
  */
 abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
 

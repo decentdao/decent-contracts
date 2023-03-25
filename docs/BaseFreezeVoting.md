@@ -24,11 +24,15 @@ a Safe Transaction Guard, until the freezePeriod has elapsed.
 uint256 freezeVotesThreshold
 ```
 
+Number of freeze votes required to activate a freeze.
+
 ### freezeProposalCreatedBlock
 
 ```solidity
 uint256 freezeProposalCreatedBlock
 ```
+
+Block number the freeze proposal was created at.
 
 ### freezeProposalVoteCount
 
@@ -36,11 +40,15 @@ uint256 freezeProposalCreatedBlock
 uint256 freezeProposalVoteCount
 ```
 
+Number of accrued freeze votes.
+
 ### freezeProposalPeriod
 
 ```solidity
 uint256 freezeProposalPeriod
 ```
+
+Number of blocks a freeze proposal has to succeed.
 
 ### freezePeriod
 
@@ -48,11 +56,16 @@ uint256 freezeProposalPeriod
 uint256 freezePeriod
 ```
 
+Number of blocks a freeze lasts, from time of freeze proposal creation.
+
 ### userHasFreezeVoted
 
 ```solidity
 mapping(address => mapping(uint256 => bool)) userHasFreezeVoted
 ```
+
+Mapping of address to the block the freeze vote was started to 
+whether the address has voted yet on the freeze proposal.
 
 ### FreezeVoteCast
 

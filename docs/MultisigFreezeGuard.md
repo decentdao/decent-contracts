@@ -2,10 +2,7 @@
 
 ## MultisigFreezeGuard
 
-A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 
-if it has been frozen by its parentDAO.
-
-see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+Implementation of IMultisigFreezeGuard. See the IMultisigFreezeGuard doc more for details.
 
 ### timelockPeriod
 
@@ -13,11 +10,15 @@ see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
 uint256 timelockPeriod
 ```
 
+Timelock period (in blocks).
+
 ### executionPeriod
 
 ```solidity
 uint256 executionPeriod
 ```
+
+Execution period (in blocks).
 
 ### freezeVoting
 
@@ -25,17 +26,23 @@ uint256 executionPeriod
 contract IBaseFreezeVoting freezeVoting
 ```
 
+Reference to the IBaseFreezeVoting implementation that determines whether the Safe is frozen.
+
 ### childGnosisSafe
 
 ```solidity
 contract ISafe childGnosisSafe
 ```
 
+Reference to the Safe that can be frozen.
+
 ### transactionTimelockedBlock
 
 ```solidity
 mapping(bytes32 => uint256) transactionTimelockedBlock
 ```
+
+Mapping of transaction hash to the block during which it was timelocked.
 
 ### MultisigFreezeGuardSetup
 
