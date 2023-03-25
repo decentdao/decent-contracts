@@ -173,11 +173,10 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         return (
             proposalVotes[_proposalId].votingEndBlock != 0 && // end block wasn't set to 0 TODO why do we need this?
-            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period hasn't ended yet
+            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
             proposalVotes[_proposalId].yesVotes >= quorum(proposalVotes[_proposalId].votingStartBlock) && // yes votes meets the quorum
             block.number > proposalVotes[_proposalId].votingEndBlock && // more yes votes than no (simple majority)
-            proposalVotes[_proposalId].yesVotes / (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) 
-                > basis(proposalVotes[_proposalId].votingStartBlock) // yes votes meets the basis
+            proposalVotes[_proposalId].yesVotes / (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) > basis() // yes votes meets the basis
         );
     }
 
@@ -194,13 +193,6 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
                 quorumNumerator) / QUORUM_DENOMINATOR;
-    }
-
-    /** @inheritdoc BaseVotingBasisPercent*/
-    function basis(uint256 _blockNumber) public view override returns (uint256) {
-        return
-            (governanceToken.getPastTotalSupply(_blockNumber) *
-                basisNumerator) / BASIS_DENOMINATOR;
     }
 
     /**

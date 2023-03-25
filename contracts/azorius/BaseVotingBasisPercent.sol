@@ -21,7 +21,9 @@ abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
 
     event BasisNumeratorUpdated(uint256 basisNumerator);
 
-    function basis(uint256 _blockNumber) public view virtual returns (uint256);
+    function basis() public view virtual returns (uint256) {
+        return basisNumerator / BASIS_DENOMINATOR;
+    }
 
     function updateBasisNumerator(uint256 _basisNumerator) public virtual onlyOwner {
         _updateBasisNumerator(_basisNumerator);
