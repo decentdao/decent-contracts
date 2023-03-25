@@ -2,11 +2,17 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { FractalRegistry, FractalRegistry__factory } from "../typechain-types";
+import {
+  FractalRegistry,
+  FractalRegistry__factory,
+  KeyValuePairs,
+  KeyValuePairs__factory,
+} from "../typechain-types";
 
 describe("Fractal Registry", () => {
   // Deployed contracts
   let fractalRegistry: FractalRegistry;
+  let keyValues: KeyValuePairs;
 
   // Addresses
   let deployer: SignerWithAddress;
@@ -18,6 +24,7 @@ describe("Fractal Registry", () => {
 
     // Deploy the Fractal Name Registry
     fractalRegistry = await new FractalRegistry__factory(deployer).deploy();
+    keyValues = await new KeyValuePairs__factory(deployer).deploy();
   });
 
   it("A DAO can update its name", async () => {
@@ -44,5 +51,13 @@ describe("Fractal Registry", () => {
     await expect(fractalRegistry.connect(dao1).declareSubDAO(dao2.address))
       .to.emit(fractalRegistry, "FractalSubDAODeclared")
       .withArgs(dao1.address, dao2.address);
+  });
+
+  it("A DAO can declare arbitrary key/value pairs", async () => {
+    await expect(
+      keyValues.connect(dao1).updateValues(["twitter"], ["@awesome"])
+    )
+      .to.emit(keyValues, "ValueUpdated")
+      .withArgs(dao1.address, "twitter", "@awesome");
   });
 });
