@@ -41,7 +41,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     mapping(uint32 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint32 votingPeriod);
-    event ProposalInitialized(uint256 proposalId, uint32 votingEndBlock);
+    event ProposalInitialized(uint32 proposalId, uint32 votingEndBlock);
     event Voted(address voter, uint32 proposalId, uint8 voteType, uint256 weight);
 
     error InvalidProposal();
