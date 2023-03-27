@@ -32,7 +32,7 @@ the `EXECUTED`, `EXPIRED`, or `FAILED` state.
 `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has
          elapsed will be `EXPIRED`, and can no longer be executed.
 
-`FAILED` - a failed proposal (as defined by its [BaseStrategy](./BaseStrategy.md) 
+`FAILED` - a failed proposal (as defined by its [BaseStrategy](../BaseStrategy.md) 
          `isPassed` function). For a basic strategy, this would mean it received more 
          NO votes than YES or did not achieve quorum.
 
@@ -96,7 +96,7 @@ function disableStrategy(address _prevStrategy, address _strategy) external
 ```
 
 Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
-This has no effect on existing Proposals, either ACTIVE or completed.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
@@ -111,8 +111,8 @@ This has no effect on existing Proposals, either ACTIVE or completed.
 function updateTimelockPeriod(uint256 _timelockPeriod) external
 ```
 
-Updates the timelockPeriod for newly created Proposals.
-This has no effect on existing Proposals, either ACTIVE or completed.
+Updates the `timelockPeriod` for newly created Proposals.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
@@ -127,7 +127,7 @@ function submitProposal(address _strategy, bytes _data, struct IAzorius.Transact
 ```
 
 Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
-New Proposals begin immediately in the ACTIVE state.
+New Proposals begin immediately in the `ACTIVE` state.
 
 #### Parameters
 

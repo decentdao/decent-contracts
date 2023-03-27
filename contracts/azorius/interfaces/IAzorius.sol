@@ -34,13 +34,13 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has
  *          elapsed will be `EXPIRED`, and can no longer be executed.
  *
- * `FAILED` - a failed proposal (as defined by its [BaseStrategy](./BaseStrategy.md) 
+ * `FAILED` - a failed proposal (as defined by its [BaseStrategy](../BaseStrategy.md) 
  *          `isPassed` function). For a basic strategy, this would mean it received more 
  *          NO votes than YES or did not achieve quorum. 
  */
 interface IAzorius {
 
-    /** A struct which represents a transaction to perform on the blockchain. */
+    /** Represents a transaction to perform on the blockchain. */
     struct Transaction {
         address to; // destination address of the transaction
         uint256 value; // amount of ETH to transfer with the transaction
@@ -48,7 +48,7 @@ interface IAzorius {
         Enum.Operation operation; // Operation type, Call or DelegateCall
     }
 
-    /** A struct which holds details pertaining to a single proposal. */
+    /** Holds details pertaining to a single proposal. */
     struct Proposal {
         address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
@@ -79,7 +79,7 @@ interface IAzorius {
 
     /**
      * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
-     * This has no effect on existing Proposals, either ACTIVE or completed.
+     * This has no effect on existing Proposals, either `ACTIVE` or completed.
      *
      * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed
      * @param _strategy address of the BaseStrategy to be removed
@@ -87,8 +87,8 @@ interface IAzorius {
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
     /**
-     * Updates the timelockPeriod for newly created Proposals.
-     * This has no effect on existing Proposals, either ACTIVE or completed.
+     * Updates the `timelockPeriod` for newly created Proposals.
+     * This has no effect on existing Proposals, either `ACTIVE` or completed.
      *
      * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals
      */
@@ -96,7 +96,7 @@ interface IAzorius {
 
     /**
      * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
-     * New Proposals begin immediately in the ACTIVE state.
+     * New Proposals begin immediately in the `ACTIVE` state.
      *
      * @param _strategy address of the BaseStrategy implementation which the Proposal will use
      * @param _data arbitrary data passed to the BaseStrategy implementation

@@ -74,12 +74,10 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
     }
 
     /**
-     * A callback performed after a transaction in executed on the Safe.
-     *
-     * @param txHash hash of the transaction that was executed
-     * @param success bool indicating whether the Safe successfully executed the transaction
+     * A callback performed after a transaction is executed on the Safe. This is a required
+     * function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
      */
-    function checkAfterExecution(bytes32 txHash, bool success) external view override(BaseGuard, IGuard) {
+    function checkAfterExecution(bytes32, bool) external view override(BaseGuard, IGuard) {
         // not implementated
     }
 }

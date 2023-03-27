@@ -181,24 +181,17 @@ This period begins immediately after the timelock period has ended.
 function checkTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes, address) external view
 ```
 
-This function is called by the Safe to check if the transaction
-is able to be executed and reverts if the guard conditions are
-not met.
+Called by the Safe to check if the transaction is able to be executed and reverts 
+if the guard conditions are not met.
 
 ### checkAfterExecution
 
 ```solidity
-function checkAfterExecution(bytes32 txHash, bool success) external view
+function checkAfterExecution(bytes32, bool) external view
 ```
 
-A callback performed after a transaction in executed on the Safe.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| txHash | bytes32 | hash of the transaction that was executed |
-| success | bool | bool indicating whether the Safe successfully executed the transaction |
+A callback performed after a transaction is executed on the Safe. This is a required
+function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 
 ### getTransactionTimelockedBlock
 

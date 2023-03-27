@@ -5,7 +5,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
  * A specification for a Safe Guard contract which allows for multi-sig DAOs (Safes)
- * to operate in a fashion similar to Azorius token voting DAOs.
+ * to operate in a fashion similar to [Azorius](../azorius/Azorius.md) token voting DAOs.
  *
  * This Guard is intended to add a timelock period and execution period to a Safe
  * multi-sig contract, allowing parent DAOs to have the ability to properly

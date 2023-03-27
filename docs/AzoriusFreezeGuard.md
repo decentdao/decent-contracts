@@ -57,15 +57,9 @@ In our implementation, this reverts if the DAO is frozen.
 ### checkAfterExecution
 
 ```solidity
-function checkAfterExecution(bytes32 txHash, bool success) external view
+function checkAfterExecution(bytes32, bool) external view
 ```
 
-A callback performed after a transaction in executed on the Safe.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| txHash | bytes32 | hash of the transaction that was executed |
-| success | bool | bool indicating whether the Safe successfully executed the transaction |
+A callback performed after a transaction is executed on the Safe. This is a required
+function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 

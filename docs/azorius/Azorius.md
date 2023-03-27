@@ -35,7 +35,7 @@ keccak256(
 
 A unique hash intended to prevent signature collisions.
 
-See https://eips.ethereum.org/EIPS/eip-712 for details.
+See https://eips.ethereum.org/EIPS/eip-712.
 
 ### TRANSACTION_TYPEHASH
 
@@ -49,7 +49,7 @@ keccak256(
 );
 ```
 
-See https://eips.ethereum.org/EIPS/eip-712 for details.
+See https://eips.ethereum.org/EIPS/eip-712.
 
 ### totalProposalCount
 
@@ -213,8 +213,8 @@ Initial setup of the Azorius instance.
 function updateTimelockPeriod(uint256 _timelockPeriod) external
 ```
 
-Updates the timelockPeriod for newly created Proposals.
-This has no effect on existing Proposals, either ACTIVE or completed.
+Updates the `timelockPeriod` for newly created Proposals.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
@@ -229,7 +229,7 @@ function submitProposal(address _strategy, bytes _data, struct IAzorius.Transact
 ```
 
 Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
-New Proposals begin immediately in the ACTIVE state.
+New Proposals begin immediately in the `ACTIVE` state.
 
 #### Parameters
 
@@ -388,7 +388,7 @@ function disableStrategy(address _prevStrategy, address _strategy) public
 ```
 
 Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
-This has no effect on existing Proposals, either ACTIVE or completed.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
@@ -490,7 +490,7 @@ Returns the `keccak256` hash of the specified transaction.
 function _executeProposalTx(uint256 _proposalId, address _target, uint256 _value, bytes _data, enum Enum.Operation _operation) internal returns (bytes32 txHash)
 ```
 
-Executes the specified transaction in a `Proposal`, by index.
+Executes the specified transaction in a Proposal, by index.
 Transactions in a Proposal must be called in order.
 
 #### Parameters

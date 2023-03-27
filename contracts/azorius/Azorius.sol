@@ -33,7 +33,7 @@ contract Azorius is Module, IAzorius {
      *
      * A unique hash intended to prevent signature collisions.
      *
-     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     * See https://eips.ethereum.org/EIPS/eip-712.
      */
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
@@ -45,7 +45,7 @@ contract Azorius is Module, IAzorius {
      * );
      * ```
      *
-     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     * See https://eips.ethereum.org/EIPS/eip-712.
      */
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
@@ -379,7 +379,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Executes the specified transaction in a `Proposal`, by index.
+     * Executes the specified transaction in a Proposal, by index.
      * Transactions in a Proposal must be called in order.
      *
      * @param _proposalId identifier of the proposal

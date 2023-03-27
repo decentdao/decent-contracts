@@ -34,7 +34,7 @@ contract IAzorius azoriusModule
 modifier onlyAzorius()
 ```
 
-Ensures that only the Azorius contract that pertains to this 
+Ensures that only the [Azorius](./Azorius.md) contract that pertains to this 
 [BaseStrategy](./BaseStrategy.md) can call functions on it.
 
 ### setAzorius

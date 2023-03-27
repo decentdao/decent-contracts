@@ -7,6 +7,7 @@ pragma solidity =0.8.19;
  * amount of those tokens as claimable by the parent DAO token holders or signers.
  */
 interface IERC20Claim {
+
     /**
      * Allows parent token holders to claim tokens allocated by a 
      * subDAO during its creation.

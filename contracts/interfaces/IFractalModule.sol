@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  * DAOs.
  */
 interface IFractalModule {
+
     /**
      * Allows an authorized address to execute arbitrary transactions on the Safe.
      *

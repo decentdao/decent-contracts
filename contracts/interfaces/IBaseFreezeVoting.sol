@@ -7,7 +7,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * A specification for a contract which manages the ability to call for and cast a vote
  * to freeze a subDAO.
  *
- * This participants of this vote are parent token holders or signers. The DAO should be
+ * The participants of this vote are parent token holders or signers. The DAO should be
  * able to operate as normal throughout the freeze voting process, however if the vote
  * passes, further transaction executions on the subDAO should be blocked via a Safe guard
  * module (see [MultisigFreezeGuard](../MultisigFreezeGuard.md) / [AzoriusFreezeGuard](../AzoriusFreezeGuard.md)).
