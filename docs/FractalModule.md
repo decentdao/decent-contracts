@@ -2,7 +2,7 @@
 
 ## FractalModule
 
-Implementation of IFractalModule.
+Implementation of [IFractalModule](./interfaces/IFractalModule.md).
 
 A Safe module contract that allows for a "parent-child" DAO relationship.
 
@@ -15,6 +15,8 @@ DAOs.
 ```solidity
 mapping(address => bool) controllers
 ```
+
+Mapping of whether an address is a controller (typically a parentDAO).
 
 ### ControllersAdded
 
@@ -46,6 +48,8 @@ error TxFailed()
 modifier onlyAuthorized()
 ```
 
+Allows only authorized controllers to execute transactions on the Safe.
+
 ### setUp
 
 ```solidity
@@ -58,7 +62,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _avatar`, `address _target`, `address[] memory _controllers` |
 
 ### removeControllers
 
@@ -66,7 +70,7 @@ Initialize function, will be triggered when a new instance is deployed.
 function removeControllers(address[] _controllers) external
 ```
 
-Removes _controllers from the list of controllers.
+Removes `_controllers` from the list of controllers.
 
 #### Parameters
 
@@ -94,7 +98,7 @@ Allows an authorized address to execute arbitrary transactions on the Safe.
 function addControllers(address[] _controllers) public
 ```
 
-Adds _controllers to the list of controllers, which are allowed
+Adds `_controllers` to the list of controllers, which are allowed
 to execute transactions on the Safe.
 
 #### Parameters

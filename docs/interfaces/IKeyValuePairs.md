@@ -2,7 +2,7 @@
 
 ## IKeyValuePairs
 
-A utility contract to log key/value pair events for the calling address.
+A utility contract to log key / value pair events for the calling address.
 
 ### updateValues
 
@@ -10,7 +10,7 @@ A utility contract to log key/value pair events for the calling address.
 function updateValues(string[] _keys, string[] _values) external
 ```
 
-Logs the given key/value pairs, along with the caller's address.
+Logs the given key / value pairs, along with the caller's address.
 
 #### Parameters
 

@@ -2,10 +2,7 @@
 
 ## MultisigFreezeGuard
 
-A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 
-if it has been frozen by its parentDAO.
-
-see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
 
 ### timelockPeriod
 
@@ -13,11 +10,15 @@ see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
 uint256 timelockPeriod
 ```
 
+Timelock period (in blocks).
+
 ### executionPeriod
 
 ```solidity
 uint256 executionPeriod
 ```
+
+Execution period (in blocks).
 
 ### freezeVoting
 
@@ -25,17 +26,24 @@ uint256 executionPeriod
 contract IBaseFreezeVoting freezeVoting
 ```
 
+Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
+implementation that determines whether the Safe is frozen.
+
 ### childGnosisSafe
 
 ```solidity
 contract ISafe childGnosisSafe
 ```
 
+Reference to the Safe that can be frozen.
+
 ### transactionTimelockedBlock
 
 ```solidity
 mapping(bytes32 => uint256) transactionTimelockedBlock
 ```
+
+Mapping of transaction hash to the block during which it was timelocked.
 
 ### MultisigFreezeGuardSetup
 
@@ -103,7 +111,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `uint256 _timelockPeriod`, `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe` |
 
 ### timelockTransaction
 
@@ -111,13 +119,13 @@ Initialize function, will be triggered when a new instance is deployed.
 function timelockTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes signatures) external
 ```
 
-Allows the caller to begin the "timelock" of a transaction.
+Allows the caller to begin the `timelock` of a transaction.
 
 Timelock is the period during which a proposed transaction must wait before being
 executed, after it has passed.  This period is intended to allow the parent DAO
 sufficient time to potentially freeze the DAO, if they should vote to do so.
 
-The parameters for doing so are identical to ISafe's execTransaction function.
+The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
 
 #### Parameters
 
@@ -173,24 +181,17 @@ This period begins immediately after the timelock period has ended.
 function checkTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes, address) external view
 ```
 
-This function is called by the Safe to check if the transaction
-is able to be executed and reverts if the guard conditions are
-not met.
+Called by the Safe to check if the transaction is able to be executed and reverts 
+if the guard conditions are not met.
 
 ### checkAfterExecution
 
 ```solidity
-function checkAfterExecution(bytes32 txHash, bool success) external view
+function checkAfterExecution(bytes32, bool) external view
 ```
 
-A callback performed after a transaction in executed on the Safe.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| txHash | bytes32 | hash of the transaction that was executed |
-| success | bool | bool indicating whether the Safe successfully executed the transaction |
+A callback performed after a transaction is executed on the Safe. This is a required
+function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 
 ### getTransactionTimelockedBlock
 
@@ -222,10 +223,10 @@ Returns the hash of all the transaction data.
 
 It is important to note that this implementation is different than that 
 in the Gnosis Safe contract. This implementation does not use the nonce, 
-as this is not part of the Guard contract checkTransaction interface.
+as this is not part of the Guard contract `checkTransaction` interface.
 
 This implementation also omits the EIP-712 related values, since these hashes 
-are not being signed by users
+are not being signed by users.
 
 #### Parameters
 
@@ -253,7 +254,7 @@ are not being signed by users
 function _updateTimelockPeriod(uint256 _timelockPeriod) internal
 ```
 
-Internal implementation of updateTimelockPeriod
+Internal implementation of `updateTimelockPeriod`
 
 ### _updateExecutionPeriod
 
@@ -261,5 +262,5 @@ Internal implementation of updateTimelockPeriod
 function _updateExecutionPeriod(uint256 _executionPeriod) internal
 ```
 
-Internal implementation of updateExecutionPeriod
+Internal implementation of `updateExecutionPeriod`
 

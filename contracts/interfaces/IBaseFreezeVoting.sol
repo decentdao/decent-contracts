@@ -7,10 +7,10 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * A specification for a contract which manages the ability to call for and cast a vote
  * to freeze a subDAO.
  *
- * This participants of this vote are parent token holders or signers. The DAO should be
+ * The participants of this vote are parent token holders or signers. The DAO should be
  * able to operate as normal throughout the freeze voting process, however if the vote
- * passed, further transaction executions on the subDAO should be blocked via a Safe guard
- * module (see MultisigFreezeGuard / AzoriusFreezeGuard).
+ * passes, further transaction executions on the subDAO should be blocked via a Safe guard
+ * module (see [MultisigFreezeGuard](../MultisigFreezeGuard.md) / [AzoriusFreezeGuard](../AzoriusFreezeGuard.md)).
  */
 interface IBaseFreezeVoting {
 
@@ -50,8 +50,8 @@ interface IBaseFreezeVoting {
      * Updates the freeze period. This is the length of time (in blocks) the subDAO is actually
      * frozen for if a freeze vote passes.
      *
-     * This period can be overridden by a call to unfreeze(), which would require a passed Proposal
-     * from the subDAO.
+     * This period can be overridden by a call to `unfreeze()`, which would require a passed Proposal
+     * from the parentDAO.
      *
      * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
      */

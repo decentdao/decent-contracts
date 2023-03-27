@@ -6,50 +6,64 @@ import "./interfaces/IBaseStrategy.sol";
 import "./interfaces/IAzorius.sol";
 
 /**
- * @title Azorius Protocol - a Safe module which allows for composable governance.
- * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
+ * A Safe module which allows for composable governance.
+ * Azorius conforms to the [Zodiac pattern](https://github.com/gnosis/zodiac) for Safe modules.
  *
  * The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications
  * of the transactions that comprise a Proposal, but notably not the state of voting.
  *
- * All voting details are delegated to BaseStrategy implementations, of which an Azorius DAO can
+ * All voting details are delegated to [BaseStrategy](./BaseStrategy.md) implementations, of which an Azorius DAO can
  * have any number.
  */
 contract Azorius is Module, IAzorius {
 
     /**
-     * The sentinel node of the linked list of enabled BaseStrategies.
-     * https://en.wikipedia.org/wiki/Sentinel_node
+     * The sentinel node of the linked list of enabled [BaseStrategies](./BaseStrategy.md).
+     *
+     * See https://en.wikipedia.org/wiki/Sentinel_node.
      */
     address internal constant SENTINEL_STRATEGY = address(0x1);
 
     /**
+     * ```
      * keccak256(
      *      "EIP712Domain(uint256 chainId,address verifyingContract)"
      * );
+     * ```
      *
      * A unique hash intended to prevent signature collisions.
-     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     *
+     * See https://eips.ethereum.org/EIPS/eip-712.
      */
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
 
     /**
+     * ```
      * keccak256(
      *      "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
      * );
+     * ```
      *
-     * See https://eips.ethereum.org/EIPS/eip-712 for details.
+     * See https://eips.ethereum.org/EIPS/eip-712.
      */
     bytes32 public constant TRANSACTION_TYPEHASH =
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
-    uint256 public totalProposalCount; // total number of submitted proposals
-    uint256 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
-    uint256 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
+    /** Total number of submitted Proposals. */
+    uint256 public totalProposalCount;
 
-    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
-    mapping(address => address) internal strategies; // linked list of BaseStrategies
+    /** Delay (in blocks) between when a Proposal is passed and when it can be executed. */
+    uint256 public timelockPeriod;
+
+    /** Time (in blocks) between when timelock ends and the Proposal expires. */
+    uint256 public executionPeriod;
+
+    /** Proposals by `proposalId`. */
+    mapping(uint256 => Proposal) internal proposals;
+
+    /** A linked list of enabled [BaseStrategies](./BaseStrategy.md). */
+    mapping(address => address) internal strategies;
 
     event AzoriusSetUp(
         address indexed creator,
@@ -81,16 +95,23 @@ contract Azorius is Module, IAzorius {
     error InvalidTxs();
     error InvalidArrayLengths();
 
-    function setUp(bytes memory initParams) public override initializer {
+    /**
+     * Initial setup of the Azorius instance.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`, 
+     * `address _avatar`, `address _target`, `address[] memory _strategies`,
+     * `uint256 _timelockPeriod`, `uint256 _executionPeriod`
+     */
+    function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
             address _avatar,
-            address _target,
-            address[] memory _strategies,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod
+            address _target,                
+            address[] memory _strategies,   // enabled BaseStrategies
+            uint256 _timelockPeriod,        // initial timelockPeriod
+            uint256 _executionPeriod        // initial executionPeriod
         ) = abi.decode(
-                initParams,
+                initializeParams,
                 (address, address, address, address[], uint256, uint256)
             );
         __Ownable_init();
@@ -203,10 +224,10 @@ contract Azorius is Module, IAzorius {
         address _startAddress,
         uint256 _count
     ) external view returns (address[] memory _strategies, address _next) {
-        // Init array with max page size
+        // init array with max page size
         _strategies = new address[](_count);
 
-        // Populate return array
+        // populate return array
         uint256 strategyCount = 0;
         address currentStrategy = strategies[_startAddress];
         while (
@@ -219,7 +240,7 @@ contract Azorius is Module, IAzorius {
             strategyCount++;
         }
         _next = currentStrategy;
-        // Set correct size of returned array
+        // set correct size of returned array
         assembly {
             mstore(_strategies, strategyCount)
         }
@@ -359,7 +380,7 @@ contract Azorius is Module, IAzorius {
 
     /**
      * Executes the specified transaction in a Proposal, by index.
-     * Transactions in a proposal must be called in order.
+     * Transactions in a Proposal must be called in order.
      *
      * @param _proposalId identifier of the proposal
      * @param _target contract to be called by the avatar
@@ -389,9 +410,9 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Enables the specified array of BaseStrategy contract addresses.
+     * Enables the specified array of [BaseStrategy](./BaseStrategy.md) contract addresses.
      *
-     * @param _strategies array of BaseStrategy contract addresses to enable
+     * @param _strategies array of `BaseStrategy` contract addresses to enable
      */
     function _setUpStrategies(address[] memory _strategies) internal {
         strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
@@ -405,7 +426,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Updates the timelock period for future Proposals.
+     * Updates the `timelockPeriod` for future Proposals.
      *
      * @param _timelockPeriod new timelock period (in blocks)
      */
@@ -415,7 +436,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /**
-     * Updates the execution period for future Proposals.
+     * Updates the `executionPeriod` for future Proposals.
      *
      * @param _executionPeriod new execution period (in blocks)
      */

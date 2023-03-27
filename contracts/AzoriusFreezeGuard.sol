@@ -8,10 +8,10 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
- * A Safe Transaction Guard contract that prevents an Azorius subDAO from executing transactions 
- * if it has been frozen by its parentDAO.
+ * A Safe Transaction Guard contract that prevents an [Azorius](./azorius/Azorius.md) 
+ * subDAO from executing transactions if it has been frozen by its parentDAO.
  *
- * see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ * See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
  */
 contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
 
@@ -32,7 +32,8 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _freezeVoting`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
@@ -73,12 +74,10 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
     }
 
     /**
-     * A callback performed after a transaction in executed on the Safe.
-     *
-     * @param txHash hash of the transaction that was executed
-     * @param success bool indicating whether the Safe successfully executed the transaction
+     * A callback performed after a transaction is executed on the Safe. This is a required
+     * function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
      */
-    function checkAfterExecution(bytes32 txHash, bool success) external view override(BaseGuard, IGuard) {
+    function checkAfterExecution(bytes32, bool) external view override(BaseGuard, IGuard) {
         // not implementated
     }
 }

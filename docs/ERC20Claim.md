@@ -12,11 +12,15 @@ by the parent DAO's token holders.
 address funder
 ```
 
+The address of the initial holder of the claimable `childERC20` tokens.
+
 ### deadlineBlock
 
 ```solidity
 uint256 deadlineBlock
 ```
+
+The deadline block to claim tokens by, or 0 for indefinite.
 
 ### childERC20
 
@@ -24,11 +28,15 @@ uint256 deadlineBlock
 address childERC20
 ```
 
+Child ERC20 token address, to calculate the percentage claimable.
+
 ### parentERC20
 
 ```solidity
 address parentERC20
 ```
+
+Parent ERC20 token address, for calculating a snapshot of holdings.
 
 ### snapShotId
 
@@ -36,17 +44,23 @@ address parentERC20
 uint256 snapShotId
 ```
 
+Id of a snapshot of token holdings for this claim (see [VotesERC20](./VotesERC20.md)).
+
 ### parentAllocation
 
 ```solidity
 uint256 parentAllocation
 ```
 
+Total amount of `childERC20` tokens allocated for claiming by parent holders.
+
 ### claimed
 
 ```solidity
 mapping(address => bool) claimed
 ```
+
+Mapping of address to bool of whether the address has claimed already.
 
 ### ERC20Claimed
 
@@ -102,7 +116,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
 
 ### claimTokens
 

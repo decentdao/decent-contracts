@@ -13,22 +13,35 @@ import "./interfaces/IBaseFreezeVoting.sol";
  * Normally a subDAO operates independently, and can vote on or sign transactions, 
  * however should the parent disagree with a decision made by the subDAO, any parent
  * token holder can initiate a vote to "freeze" it, making executing transactions impossible
- * for the time denoted by freezePeriod.
+ * for the time denoted by `freezePeriod`.
  *
- * This requires a number of votes equal to freezeVotesThreshold, within the freezeProposalPeriod
+ * This requires a number of votes equal to `freezeVotesThreshold`, within the `freezeProposalPeriod`
  * to be successful.
  *
  * Following a successful freeze vote, the childDAO will be unable to execute transactions, due to
- * a Safe Transaction Guard, until the freezePeriod has elapsed.
+ * a Safe Transaction Guard, until the `freezePeriod` has elapsed.
  */
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
 
-    uint256 public freezeVotesThreshold; // number of freeze votes required to activate a freeze
-    uint256 public freezeProposalCreatedBlock; // block number the freeze proposal was created at
-    uint256 public freezeProposalVoteCount; // number of accrued freeze votes
-    uint256 public freezeProposalPeriod; // number of blocks a freeze proposal has to succeed
-    uint256 public freezePeriod; // number of blocks a freeze lasts, from time of freeze proposal creation
+    /** Number of freeze votes required to activate a freeze. */
+    uint256 public freezeVotesThreshold;
 
+    /** Block number the freeze proposal was created at. */
+    uint256 public freezeProposalCreatedBlock;
+
+    /** Number of accrued freeze votes. */
+    uint256 public freezeProposalVoteCount;
+
+    /** Number of blocks a freeze proposal has to succeed. */
+    uint256 public freezeProposalPeriod;
+
+    /** Number of blocks a freeze lasts, from time of freeze proposal creation. */
+    uint256 public freezePeriod;
+
+    /**
+    * Mapping of address to the block the freeze vote was started to 
+    * whether the address has voted yet on the freeze proposal.
+    */
     mapping(address => mapping(uint256 => bool)) public userHasFreezeVoted;
 
     event FreezeVoteCast(address indexed voter, uint256 votesCast);
@@ -68,7 +81,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     /**
      * Updates the freeze votes threshold, the number of votes required to enact a freeze.
      *
-     * @param _freezeVotesThreshold Number of freeze votes required to activate a freeze
+     * @param _freezeVotesThreshold number of freeze votes required to activate a freeze
      */
     function updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) external onlyOwner {
         _updateFreezeVotesThreshold(_freezeVotesThreshold);
@@ -94,19 +107,19 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
         _updateFreezePeriod(_freezePeriod);
     }
 
-    /** Internal implementation of updateFreezeVotesThreshold. */
+    /** Internal implementation of `updateFreezeVotesThreshold`. */
     function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal {
         freezeVotesThreshold = _freezeVotesThreshold;
         emit FreezeVotesThresholdUpdated(_freezeVotesThreshold);
     }
 
-    /** Internal implementation of updateFreezeProposalPeriod. */
+    /** Internal implementation of `updateFreezeProposalPeriod`. */
     function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
         freezeProposalPeriod = _freezeProposalPeriod;
         emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
     }
 
-    /** Internal implementation of updateFreezePeriod. */
+    /** Internal implementation of `updateFreezePeriod`. */
     function _updateFreezePeriod(uint256 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
         emit FreezePeriodUpdated(_freezePeriod);
