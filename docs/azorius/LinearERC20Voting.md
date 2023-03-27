@@ -4,7 +4,7 @@
 
 An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
 enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
-in an `ERC20Votes` token equals 1 vote for a Proposal. // TODO we're actually using ERC20Votes here?
+in an `ERC20Votes` token equals 1 vote for a Proposal.
 
 ### VoteType
 
@@ -145,7 +145,7 @@ Called by the [Azorius](../Azorius.md) module. This notifies this
 ### vote
 
 ```solidity
-function vote(uint256 _proposalId, uint8 _voteType, bytes) external
+function vote(uint256 _proposalId, uint8 _voteType) external
 ```
 
 Casts votes for a Proposal, equal to the caller's token delegation.
@@ -156,7 +156,6 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 | ---- | ---- | ----------- |
 | _proposalId | uint256 | id of the Proposal to vote on |
 | _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
-|  | bytes |  |
 
 ### getProposalVotes
 

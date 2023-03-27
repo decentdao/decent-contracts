@@ -104,7 +104,7 @@ contract Azorius is Module, IAzorius {
      */
     function setUp(bytes memory initializeParams) public override initializer {
         (
-            address _owner,                 // TODO what should these say?
+            address _owner,
             address _avatar,
             address _target,                
             address[] memory _strategies,   // enabled BaseStrategies

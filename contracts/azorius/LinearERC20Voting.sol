@@ -8,7 +8,7 @@ import "./BaseQuorumPercent.sol";
  /**
   * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
   * enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
-  * in an `ERC20Votes` token equals 1 vote for a Proposal. // TODO we're actually using ERC20Votes here?
+  * in an `ERC20Votes` token equals 1 vote for a Proposal.
   */
 contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
 
@@ -108,7 +108,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      * @param _proposalId id of the Proposal to vote on
      * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)
      */
-    function vote(uint256 _proposalId, uint8 _voteType, bytes memory) external { // TODO what's this unused parameter???
+    function vote(uint256 _proposalId, uint8 _voteType) external {
         _vote(
             _proposalId,
             msg.sender,
