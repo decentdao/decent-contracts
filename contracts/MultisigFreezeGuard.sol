@@ -55,7 +55,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `uint256 _timelockPeriod`,
+     * `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();

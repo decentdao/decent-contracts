@@ -2,6 +2,9 @@
 
 ## MockVotingStrategy
 
+A mock [BaseStrategy](../BaseStrategy.md) used only for testing purposes.
+Not intended for actual on-chain use.
+
 ### proposer
 
 ```solidity
@@ -11,7 +14,7 @@ address proposer
 ### setUp
 
 ```solidity
-function setUp(bytes initParams) public
+function setUp(bytes initializeParams) public
 ```
 
 Sets up the contract with its initial parameters.
@@ -20,7 +23,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initParams | bytes | initial setup parameters, encoded as bytes |
+| initializeParams | bytes | encoded initialization parameters |
 
 ### initializeProposal
 

@@ -116,7 +116,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
 
 ### claimTokens
 

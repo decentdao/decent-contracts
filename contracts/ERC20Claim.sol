@@ -59,7 +59,9 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _childTokenFunder`,
+     * `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`,
+     * `uint256 _parentAllocation`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();

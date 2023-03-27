@@ -21,7 +21,9 @@ contract VotesERC20 is
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `string memory _name`,
+     * `string memory _symbol`, `address[] memory _allocationAddresses`, 
+     * `uint256[] memory _allocationAmounts`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         (

@@ -97,8 +97,12 @@ contract Azorius is Module, IAzorius {
 
     /**
      * Initial setup of the Azorius instance.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`, 
+     * `address _avatar`, `address _target`, `address[] memory _strategies`,
+     * `uint256 _timelockPeriod`, `uint256 _executionPeriod`
      */
-    function setUp(bytes memory initParams) public override initializer {
+    function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,                 // TODO what should these say?
             address _avatar,
@@ -107,7 +111,7 @@ contract Azorius is Module, IAzorius {
             uint256 _timelockPeriod,        // initial timelockPeriod
             uint256 _executionPeriod        // initial executionPeriod
         ) = abi.decode(
-                initParams,
+                initializeParams,
                 (address, address, address, address[], uint256, uint256)
             );
         __Ownable_init();

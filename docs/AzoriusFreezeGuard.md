@@ -40,7 +40,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _freezeVoting` |
 
 ### checkTransaction
 

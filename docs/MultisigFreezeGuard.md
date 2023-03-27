@@ -111,7 +111,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `uint256 _timelockPeriod`, `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe` |
 
 ### timelockTransaction
 

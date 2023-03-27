@@ -102,7 +102,7 @@ error InvalidTokenAddress()
 ### setUp
 
 ```solidity
-function setUp(bytes initParams) public
+function setUp(bytes initializeParams) public
 ```
 
 Sets up the contract with its initial parameters.
@@ -111,7 +111,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initParams | bytes | initial setup parameters, encoded as bytes |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator` |
 
 ### updateVotingPeriod
 

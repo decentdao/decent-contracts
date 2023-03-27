@@ -196,10 +196,16 @@ error InvalidArrayLengths()
 ### setUp
 
 ```solidity
-function setUp(bytes initParams) public
+function setUp(bytes initializeParams) public
 ```
 
 Initial setup of the Azorius instance.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
 
 ### updateTimelockPeriod
 

@@ -32,7 +32,8 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _freezeVoting`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();

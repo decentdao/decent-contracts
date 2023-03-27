@@ -34,7 +34,8 @@ contract FractalModule is IFractalModule, Module {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _avatar`, `address _target`, `address[] memory _controllers`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();

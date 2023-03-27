@@ -22,7 +22,9 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `uint256 _freezeVotesThreshold`, `uint256 _freezeProposalPeriod`, `uint256 _freezePeriod`,
+     * `address _parentGnosisSafe`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         (
