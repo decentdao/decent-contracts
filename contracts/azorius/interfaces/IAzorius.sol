@@ -12,12 +12,35 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  *
  * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
  * as customizable as possible.
+ *
+ * Proposals begin in the `ACTIVE` state and will ultimately end in either
+ * the `EXECUTED`, `EXPIRED`, or `FAILED` state.
+ *
+ * `ACTIVE` - a new proposal begins in this state, and stays in this state
+ *          for the duration of its voting period.
+ *
+ * `TIMELOCKED` - A proposal that passes enters the `TIMELOCKED` state, during which
+ *          it cannot yet be executed.  This is to allow time for token holders
+ *          to potentially exit their position, as well as parent DAOs time to
+ *          initiate a freeze, if they choose to do so. A proposal stays timelocked
+ *          for the duration of its `timelockPeriod`.
+ *
+ * `EXECUTABLE` - Following the `TIMELOCKED` state, a passed proposal becomes `EXECUTABLE`,
+ *          and can then finally be executed on chain by anyone.
+ *
+ * `EXECUTED` - the final state for a passed proposal.  The proposal has been executed
+ *          on the blockchain.
+ *
+ * `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has
+ *          elapsed will be `EXPIRED`, and can no longer be executed.
+ *
+ * `FAILED` - a failed proposal (as defined by its [BaseStrategy](./BaseStrategy.md) 
+ *          `isPassed` function). For a basic strategy, this would mean it received more 
+ *          NO votes than YES or did not achieve quorum. 
  */
 interface IAzorius {
 
-    /**
-     * A struct which represents a transaction to perform on the blockchain.
-     */
+    /** A struct which represents a transaction to perform on the blockchain. */
     struct Transaction {
         address to; // destination address of the transaction
         uint256 value; // amount of ETH to transfer with the transaction
@@ -25,9 +48,7 @@ interface IAzorius {
         Enum.Operation operation; // Operation type, Call or DelegateCall
     }
 
-    /**
-     * A struct which holds details pertaining to a single proposal.
-     */
+    /** A struct which holds details pertaining to a single proposal. */
     struct Proposal {
         address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
@@ -36,28 +57,7 @@ interface IAzorius {
         uint256 executionCounter; // count of transactions that have been executed within the proposal
     }
 
-    /**
-     * The list of states in which a Proposal can be in at any given time.
-     *
-     * Proposals begin in the ACTIVE state and will ultimately end in either
-     * the EXECUTED, EXPIRED, or FAILED state.
-     *
-     * ACTIVE - a new proposal begins in this state, and stays in this state
-     *          for the duration of its voting period.
-     * TIMELOCKED - A proposal that passes enters the TIMELOCKED state, during which
-     *          it cannot yet be executed.  This is to allow time for token holders
-     *          to potentially exit their position, as well as parent DAOs time to
-     *          initiate a Freeze, if they choose to do so. A proposal stays timelocked
-     *          for the duration of its timelockPeriod.
-     * EXECUTABLE - Following the TIMELOCKED state, a passed proposal becomes executable,
-     *          and can then finally be executed on chain by anyone.
-     * EXECUTED - the final state for a passed proposal.  The proposal has been executed
-     *          on the blockchain.
-     * EXPIRED - a passed proposal which is not executed before its executionPeriod has
-     *          elapsed will be EXPIRED, and can no longer be executed.
-     * FAILED - a failed proposal (as defined in its BaseStrategy isPassed function).
-     *          For a basic strategy, this would mean it received more NO votes than YES. 
-     */
+    /** The list of states in which a Proposal can be in at any given time. */
     enum ProposalState {
         ACTIVE,
         TIMELOCKED,

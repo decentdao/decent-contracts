@@ -11,6 +11,31 @@ Azorius manages the state of Proposals submitted to a DAO, along with the associ
 Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
 as customizable as possible.
 
+Proposals begin in the `ACTIVE` state and will ultimately end in either
+the `EXECUTED`, `EXPIRED`, or `FAILED` state.
+
+`ACTIVE` - a new proposal begins in this state, and stays in this state
+         for the duration of its voting period.
+
+`TIMELOCKED` - A proposal that passes enters the `TIMELOCKED` state, during which
+         it cannot yet be executed.  This is to allow time for token holders
+         to potentially exit their position, as well as parent DAOs time to
+         initiate a freeze, if they choose to do so. A proposal stays timelocked
+         for the duration of its `timelockPeriod`.
+
+`EXECUTABLE` - Following the `TIMELOCKED` state, a passed proposal becomes `EXECUTABLE`,
+         and can then finally be executed on chain by anyone.
+
+`EXECUTED` - the final state for a passed proposal.  The proposal has been executed
+         on the blockchain.
+
+`EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has
+         elapsed will be `EXPIRED`, and can no longer be executed.
+
+`FAILED` - a failed proposal (as defined by its [BaseStrategy](./BaseStrategy.md) 
+         `isPassed` function). For a basic strategy, this would mean it received more 
+         NO votes than YES or did not achieve quorum.
+
 ### Transaction
 
 ```solidity
