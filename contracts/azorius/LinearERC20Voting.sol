@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import "./BaseStrategy.sol";
-import "./BaseQuorumPercent.sol";
+import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { BaseStrategy, IBaseStrategy } from "./BaseStrategy.sol";
+import { BaseQuorumPercent } from "./BaseQuorumPercent.sol";
 
  /**
   * @title LinearERC20Voting - An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/zodiac/contracts/core/Module.sol";
-import "./interfaces/IBaseStrategy.sol";
-import "./interfaces/IAzorius.sol";
+import { Module } from "@gnosis.pm/zodiac/contracts/core/Module.sol";
+import { IBaseStrategy } from "./interfaces/IBaseStrategy.sol";
+import { IAzorius, Enum } from "./interfaces/IAzorius.sol";
 
 /**
  * @title Azorius Protocol - a Safe module which allows for composable governance.

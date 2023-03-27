@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "../BaseStrategy.sol";
+import { BaseStrategy, IBaseStrategy } from "../BaseStrategy.sol";
 
 /**
  * @title MockVotingStrategy - A mock strategy used only for testing purposes. Not intended for actual on-chain use.

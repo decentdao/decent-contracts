@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "./interfaces/IAzorius.sol";
-import "./interfaces/IBaseStrategy.sol";
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IAzorius } from "./interfaces/IAzorius.sol";
+import { IBaseStrategy } from "./interfaces/IBaseStrategy.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title BaseStrategy - the base abstract contract for all voting strategies in Azorius.

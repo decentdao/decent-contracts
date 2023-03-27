@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IFractalRegistry.sol";
+import { IFractalRegistry } from "./interfaces/IFractalRegistry.sol";
 
 /**
  * Implementation of IFractalRegistry.

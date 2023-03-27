@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./BaseFreezeVoting.sol";
-import "./interfaces/ISafe.sol";
+import { BaseFreezeVoting, IBaseFreezeVoting } from "./BaseFreezeVoting.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
 
 /**
  * A BaseFreezeVoting implementation which handles freezes on multisig (Safe) based DAOs.

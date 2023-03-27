@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./BaseFreezeVoting.sol";
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
-import "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { BaseFreezeVoting, IBaseFreezeVoting } from "./BaseFreezeVoting.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /**
  * A BaseFreezeVoting implementation which handles freezes on ERC20 based token voting DAOs.

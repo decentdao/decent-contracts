@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IMultisigFreezeGuard.sol";
-import "./interfaces/IBaseFreezeVoting.sol";
-import "./interfaces/ISafe.sol";
-import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
-import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
+import { IMultisigFreezeGuard } from "./interfaces/IMultisigFreezeGuard.sol";
+import { IBaseFreezeVoting } from "./interfaces/IBaseFreezeVoting.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
+import { IGuard } from "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { BaseGuard } from "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
  * A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 

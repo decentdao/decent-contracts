@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "./interfaces/IBaseFreezeVoting.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { IBaseFreezeVoting } from "./interfaces/IBaseFreezeVoting.sol";
 
 /**
  * The base abstract contract which holds the state of a vote to freeze a childDAO.
