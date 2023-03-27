@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import "./BaseStrategy.sol";
 import "./BaseQuorumPercent.sol";
 
@@ -33,7 +33,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         mapping(address => bool) hasVoted; // whether a given address has voted yet or not
     }
 
-    ERC20Votes public governanceToken;
+    IVotes public governanceToken;
 
     /** Number of blocks a new Proposal can be voted on. */
     uint256 public votingPeriod;
@@ -61,13 +61,13 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
-            ERC20Votes _governanceToken,
+            IVotes _governanceToken,
             address _azoriusModule,
             uint256 _votingPeriod,
             uint256 _quorumNumerator
         ) = abi.decode(
                 initializeParams,
-                (address, ERC20Votes, address, uint256, uint256)
+                (address, IVotes, address, uint256, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
