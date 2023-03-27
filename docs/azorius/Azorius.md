@@ -2,14 +2,24 @@
 
 ## Azorius
 
+A Safe module which allows for composable governance.
+Azorius conforms to the [Zodiac pattern](https://github.com/gnosis/zodiac) for Safe modules.
+
+The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications
+of the transactions that comprise a Proposal, but notably not the state of voting.
+
+All voting details are delegated to [BaseStrategy](./BaseStrategy.md) implementations, of which an Azorius DAO can
+have any number.
+
 ### SENTINEL_STRATEGY
 
 ```solidity
 address SENTINEL_STRATEGY
 ```
 
-The sentinel node of the linked list of enabled BaseStrategies.
-https://en.wikipedia.org/wiki/Sentinel_node
+The sentinel node of the linked list of enabled [BaseStrategies](./BaseStrategy.md).
+
+See https://en.wikipedia.org/wiki/Sentinel_node.
 
 ### DOMAIN_SEPARATOR_TYPEHASH
 
@@ -17,12 +27,15 @@ https://en.wikipedia.org/wiki/Sentinel_node
 bytes32 DOMAIN_SEPARATOR_TYPEHASH
 ```
 
+```
 keccak256(
      "EIP712Domain(uint256 chainId,address verifyingContract)"
 );
+```
 
 A unique hash intended to prevent signature collisions.
-See https://eips.ethereum.org/EIPS/eip-712 for details.
+
+See https://eips.ethereum.org/EIPS/eip-712.
 
 ### TRANSACTION_TYPEHASH
 
@@ -30,11 +43,13 @@ See https://eips.ethereum.org/EIPS/eip-712 for details.
 bytes32 TRANSACTION_TYPEHASH
 ```
 
+```
 keccak256(
      "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
 );
+```
 
-See https://eips.ethereum.org/EIPS/eip-712 for details.
+See https://eips.ethereum.org/EIPS/eip-712.
 
 ### totalProposalCount
 
@@ -42,11 +57,15 @@ See https://eips.ethereum.org/EIPS/eip-712 for details.
 uint256 totalProposalCount
 ```
 
+Total number of submitted Proposals.
+
 ### timelockPeriod
 
 ```solidity
 uint256 timelockPeriod
 ```
+
+Delay (in blocks) between when a Proposal is passed and when it can be executed.
 
 ### executionPeriod
 
@@ -54,17 +73,23 @@ uint256 timelockPeriod
 uint256 executionPeriod
 ```
 
+Time (in blocks) between when timelock ends and the Proposal expires.
+
 ### proposals
 
 ```solidity
 mapping(uint256 => struct IAzorius.Proposal) proposals
 ```
 
+Proposals by `proposalId`.
+
 ### strategies
 
 ```solidity
 mapping(address => address) strategies
 ```
+
+A linked list of enabled [BaseStrategies](./BaseStrategy.md).
 
 ### AzoriusSetUp
 
@@ -168,17 +193,19 @@ error InvalidTxs()
 error InvalidArrayLengths()
 ```
 
-### AlreadySetupStrategies
-
-```solidity
-error AlreadySetupStrategies()
-```
-
 ### setUp
 
 ```solidity
-function setUp(bytes initParams) public
+function setUp(bytes initializeParams) public
 ```
+
+Initial setup of the Azorius instance.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
 
 ### updateTimelockPeriod
 
@@ -186,14 +213,14 @@ function setUp(bytes initParams) public
 function updateTimelockPeriod(uint256 _timelockPeriod) external
 ```
 
-Updates the timelockPeriod for newly created Proposals.
-This has no effect on existing Proposals, either ACTIVE or completed.
+Updates the `timelockPeriod` for newly created Proposals.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | The timelockPeriod (in blocks) to be used for new Proposals. |
+| _timelockPeriod | uint256 | timelockPeriod (in blocks) to be used for new Proposals |
 
 ### submitProposal
 
@@ -201,14 +228,14 @@ This has no effect on existing Proposals, either ACTIVE or completed.
 function submitProposal(address _strategy, bytes _data, struct IAzorius.Transaction[] _transactions, string _metadata) external
 ```
 
-Submits a new Proposal, using one of the enabled BaseStrategies.
-New Proposals begin immediately in the ACTIVE state.
+Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
+New Proposals begin immediately in the `ACTIVE` state.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _strategy | address | address of the BaseStrategy implementation which the Proposal will use. |
+| _strategy | address | address of the BaseStrategy implementation which the Proposal will use |
 | _data | bytes | arbitrary data passed to the BaseStrategy implementation |
 | _transactions | struct IAzorius.Transaction[] | array of transactions to propose |
 | _metadata | string | additional data such as a title/description to submit with the proposal |
@@ -220,6 +247,7 @@ function executeProposal(uint256 _proposalId, address[] _targets, uint256[] _val
 ```
 
 Executes all transactions within a Proposal.
+This will only be able to be called if the Proposal passed.
 
 #### Parameters
 
@@ -251,7 +279,7 @@ Updates the execution period for future Proposals.
 function getStrategies(address _startAddress, uint256 _count) external view returns (address[] _strategies, address _next)
 ```
 
-Returns an array of enabled BaseStrategy contract addresses.
+Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.
 Because the list of BaseStrategies is technically unbounded, this
 requires the address of the first strategy you would like, along
 with the total count of strategies to return, rather than
@@ -298,7 +326,7 @@ Returns the hash of a transaction in a Proposal.
 function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[])
 ```
 
-Returns the transaction hashes associated with a given proposalId.
+Returns the transaction hashes associated with a given `proposalId`.
 
 #### Parameters
 
@@ -311,27 +339,6 @@ Returns the transaction hashes associated with a given proposalId.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | bytes32[] | bytes32[] array of transaction hashes |
-
-### isTxExecuted
-
-```solidity
-function isTxExecuted(uint256 _proposalId, uint256 _index) external view returns (bool)
-```
-
-Returns true if a proposal transaction by index is executed.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the proposal |
-| _index | uint256 | index of the transaction within the proposal |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool True if the transaction has been executed, otherwise False |
 
 ### getProposal
 
@@ -363,7 +370,7 @@ Returns details about the specified Proposal.
 function enableStrategy(address _strategy) public
 ```
 
-Enables a BaseStrategy implementation for newly created Proposals.
+Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.
 
 Multiple strategies can be enabled, and new Proposals will be able to be
 created using any of the currently enabled strategies.
@@ -372,7 +379,7 @@ created using any of the currently enabled strategies.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _strategy | address | contract address of the BaseStrategy to be enabled. |
+| _strategy | address | contract address of the BaseStrategy to be enabled |
 
 ### disableStrategy
 
@@ -380,15 +387,15 @@ created using any of the currently enabled strategies.
 function disableStrategy(address _prevStrategy, address _strategy) public
 ```
 
-Disables a previously enabled BaseStrategy implementation for new proposal.
-This has no effect on existing Proposals, either ACTIVE or completed.
+Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
+This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _prevStrategy | address | BaseStrategy that pointed to the strategy to be removed in the linked list |
-| _strategy | address | BaseStrategy implementation to be removed |
+| _prevStrategy | address | BaseStrategy address that pointed in the linked list to the strategy to be removed |
+| _strategy | address | address of the BaseStrategy to be removed |
 
 ### isStrategyEnabled
 
@@ -396,7 +403,7 @@ This has no effect on existing Proposals, either ACTIVE or completed.
 function isStrategyEnabled(address _strategy) public view returns (bool)
 ```
 
-Returns whether a BaseStrategy implementation is enabled.
+Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
 
 #### Parameters
 
@@ -428,7 +435,7 @@ Gets the state of a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing of the         current state of the proposal |
+| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the         current state of the proposal |
 
 ### generateTxHashData
 
@@ -460,7 +467,7 @@ Generates the data for the module transaction hash (required for signing).
 function getTxHash(address _to, uint256 _value, bytes _data, enum Enum.Operation _operation) public view returns (bytes32)
 ```
 
-Returns the keccak256 hash of the specified transaction.
+Returns the `keccak256` hash of the specified transaction.
 
 #### Parameters
 
@@ -484,7 +491,7 @@ function _executeProposalTx(uint256 _proposalId, address _target, uint256 _value
 ```
 
 Executes the specified transaction in a Proposal, by index.
-Transactions in a proposal must be called in order.
+Transactions in a Proposal must be called in order.
 
 #### Parameters
 
@@ -502,13 +509,13 @@ Transactions in a proposal must be called in order.
 function _setUpStrategies(address[] _strategies) internal
 ```
 
-Enables the specified array of BaseStrategy contract addresses.
+Enables the specified array of [BaseStrategy](./BaseStrategy.md) contract addresses.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _strategies | address[] | array of BaseStrategy contract addresses to enable |
+| _strategies | address[] | array of `BaseStrategy` contract addresses to enable |
 
 ### _updateTimelockPeriod
 
@@ -516,7 +523,7 @@ Enables the specified array of BaseStrategy contract addresses.
 function _updateTimelockPeriod(uint256 _timelockPeriod) internal
 ```
 
-Updates the timelock period for future Proposals.
+Updates the `timelockPeriod` for future Proposals.
 
 #### Parameters
 
@@ -530,7 +537,7 @@ Updates the timelock period for future Proposals.
 function _updateExecutionPeriod(uint256 _executionPeriod) internal
 ```
 
-Updates the execution period for future Proposals.
+Updates the `executionPeriod` for future Proposals.
 
 #### Parameters
 

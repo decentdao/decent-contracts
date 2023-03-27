@@ -5,7 +5,7 @@
 The specification of methods available on a Safe contract wallet.
 
 This interface does not encompass every available function on a Safe,
-only those which are used within the Fractal contracts.
+only those which are used within the Azorius contracts.
 
 For the complete set of functions available on a Safe, see:
 https://github.com/safe-global/safe-contracts/blob/main/contracts/Safe.sol
@@ -34,8 +34,8 @@ function setGuard(address _guard) external
 Set a guard contract that checks transactions before execution.
 This can only be done via a Safe transaction.
 
-See https://docs.gnosis-safe.io/learn/safe-tools/guards
-See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/GuardManager.sol
+See https://docs.gnosis-safe.io/learn/safe-tools/guards.
+See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/GuardManager.sol.
 
 #### Parameters
 
@@ -86,7 +86,7 @@ Checks whether the signature provided is valid for the provided data and hash. R
 | ---- | ---- | ----------- |
 | _dataHash | bytes32 | Hash of the data (could be either a message hash or transaction hash) |
 | _data | bytes | That should be signed (this is passed to an external validator contract) |
-| _signatures | bytes | Signature data that should be verified.      Can be packed ECDSA signature ({bytes32 r}{bytes32 s}{uint8 v}), contract       signature (EIP-1271) or approved hash. |
+| _signatures | bytes | Signature data that should be verified. Can be packed ECDSA signature       ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash. |
 
 ### encodeTransactionData
 
@@ -124,7 +124,8 @@ function isOwner(address _owner) external view returns (bool)
 ```
 
 Returns if the given address is an owner of the Safe.
-See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/OwnerManager.sol
+
+See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/OwnerManager.sol.
 
 #### Parameters
 

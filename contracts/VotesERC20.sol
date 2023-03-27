@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpg
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20SnapshotUpgradeable.sol";
 
 /**
- * An implementation of the Open Zeppelin IVotes voting token standard.
+ * An implementation of the Open Zeppelin `IVotes` voting token standard.
  */
 contract VotesERC20 is
     IERC20Upgradeable,
@@ -21,7 +21,9 @@ contract VotesERC20 is
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `string memory _name`,
+     * `string memory _symbol`, `address[] memory _allocationAddresses`, 
+     * `uint256[] memory _allocationAmounts`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         (
@@ -48,7 +50,7 @@ contract VotesERC20 is
     }
 
     /**
-     * See ERC20SnapshotUpgradeable._snapshot()
+     * See `ERC20SnapshotUpgradeable._snapshot()`.
      */
     function captureSnapShot() external returns (uint256 snapId) {
         snapId = _snapshot();
@@ -56,6 +58,7 @@ contract VotesERC20 is
 
     // -- The functions below are overrides required by extended contracts. --
 
+    /** Overridden without modification. */
     function _mint(
         address to,
         uint256 amount
@@ -63,6 +66,7 @@ contract VotesERC20 is
         super._mint(to, amount);
     }
 
+    /** Overridden without modification. */
     function _burn(
         address account,
         uint256 amount
@@ -70,6 +74,7 @@ contract VotesERC20 is
         super._burn(account, amount);
     }
 
+    /** Overridden without modification. */
     function _beforeTokenTransfer(
         address from,
         address to,
@@ -78,6 +83,7 @@ contract VotesERC20 is
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    /** Overridden without modification. */
     function _afterTokenTransfer(
         address from,
         address to,

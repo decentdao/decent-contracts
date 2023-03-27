@@ -4,8 +4,8 @@ pragma solidity =0.8.19;
 import "./interfaces/IKeyValuePairs.sol";
 
 /**
- * Implementation of IKeyValuePairs, a utility contract to log key/value 
- * pair events for the calling address.
+ * Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility 
+ * contract to log key / value pair events for the calling address.
  */
 contract KeyValuePairs is IKeyValuePairs {
 

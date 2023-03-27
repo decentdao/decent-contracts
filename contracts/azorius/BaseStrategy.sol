@@ -7,7 +7,7 @@ import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title BaseStrategy - the base abstract contract for all voting strategies in Azorius.
+ * The base abstract contract for all voting strategies in Azorius.
  */
 abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {
 
@@ -19,8 +19,8 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     IAzorius public azoriusModule;
 
     /**
-     * Ensures that only the Azorius contract that pertains to this BaseStrategy
-     * can call functions on it.
+     * Ensures that only the [Azorius](./Azorius.md) contract that pertains to this 
+     * [BaseStrategy](./BaseStrategy.md) can call functions on it.
      */
     modifier onlyAzorius() {
         if (msg.sender != address(azoriusModule)) revert OnlyAzorius();
@@ -46,7 +46,7 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
 
     /**
-     * Sets the address of the Azorius module contract.
+     * Sets the address of the [Azorius](Azorius.md) module contract.
      *
      * @param _azoriusModule address of the Azorius module
      */

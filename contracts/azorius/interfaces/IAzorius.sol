@@ -4,20 +4,43 @@ pragma solidity =0.8.19;
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
- * @title Azorius spec - the base interface for the Azorius governance Safe module.
+ * The base interface for the Azorius governance Safe module.
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
  *
  * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
- * (BaseStrategy) for voting that are enabled on the DAO.
+ * ([BaseStrategy](../BaseStrategy.md)) for voting that are enabled on the DAO.
  *
  * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
  * as customizable as possible.
+ *
+ * Proposals begin in the `ACTIVE` state and will ultimately end in either
+ * the `EXECUTED`, `EXPIRED`, or `FAILED` state.
+ *
+ * `ACTIVE` - a new proposal begins in this state, and stays in this state
+ *          for the duration of its voting period.
+ *
+ * `TIMELOCKED` - A proposal that passes enters the `TIMELOCKED` state, during which
+ *          it cannot yet be executed.  This is to allow time for token holders
+ *          to potentially exit their position, as well as parent DAOs time to
+ *          initiate a freeze, if they choose to do so. A proposal stays timelocked
+ *          for the duration of its `timelockPeriod`.
+ *
+ * `EXECUTABLE` - Following the `TIMELOCKED` state, a passed proposal becomes `EXECUTABLE`,
+ *          and can then finally be executed on chain by anyone.
+ *
+ * `EXECUTED` - the final state for a passed proposal.  The proposal has been executed
+ *          on the blockchain.
+ *
+ * `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has
+ *          elapsed will be `EXPIRED`, and can no longer be executed.
+ *
+ * `FAILED` - a failed proposal (as defined by its [BaseStrategy](../BaseStrategy.md) 
+ *          `isPassed` function). For a basic strategy, this would mean it received more 
+ *          NO votes than YES or did not achieve quorum. 
  */
 interface IAzorius {
 
-    /**
-     * A struct which represents a transaction to perform on the blockchain.
-     */
+    /** Represents a transaction to perform on the blockchain. */
     struct Transaction {
         address to; // destination address of the transaction
         uint256 value; // amount of ETH to transfer with the transaction
@@ -25,9 +48,7 @@ interface IAzorius {
         Enum.Operation operation; // Operation type, Call or DelegateCall
     }
 
-    /**
-     * A struct which holds details pertaining to a single proposal.
-     */
+    /** Holds details pertaining to a single proposal. */
     struct Proposal {
         address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
@@ -36,28 +57,7 @@ interface IAzorius {
         uint256 executionCounter; // count of transactions that have been executed within the proposal
     }
 
-    /**
-     * The list of states in which a Proposal can be in at any given time.
-     *
-     * Proposals begin in the ACTIVE state and will ultimately end in either
-     * the EXECUTED, EXPIRED, or FAILED state.
-     *
-     * ACTIVE - a new proposal begins in this state, and stays in this state
-     *          for the duration of its voting period.
-     * TIMELOCKED - A proposal that passes enters the TIMELOCKED state, during which
-     *          it cannot yet be executed.  This is to allow time for token holders
-     *          to potentially exit their position, as well as parent DAOs time to
-     *          initiate a Freeze, if they choose to do so. A proposal stays timelocked
-     *          for the duration of its timelockPeriod.
-     * EXECUTABLE - Following the TIMELOCKED state, a passed proposal becomes executable,
-     *          and can then finally be executed on chain by anyone.
-     * EXECUTED - the final state for a passed proposal.  The proposal has been executed
-     *          on the blockchain.
-     * EXPIRED - a passed proposal which is not executed before its executionPeriod has
-     *          elapsed will be EXPIRED, and can no longer be executed.
-     * FAILED - a failed proposal (as defined in its BaseStrategy isPassed function).
-     *          For a basic strategy, this would mean it received more NO votes than YES. 
-     */
+    /** The list of states in which a Proposal can be in at any given time. */
     enum ProposalState {
         ACTIVE,
         TIMELOCKED,
@@ -68,36 +68,37 @@ interface IAzorius {
     }
 
     /**
-     * Enables a BaseStrategy implementation for newly created Proposals.
+     * Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.
      *
      * Multiple strategies can be enabled, and new Proposals will be able to be
      * created using any of the currently enabled strategies.
      *
-     * @param _strategy contract address of the BaseStrategy to be enabled.
+     * @param _strategy contract address of the BaseStrategy to be enabled
      */
     function enableStrategy(address _strategy) external;
 
     /**
-     * Disables a previously enabled BaseStrategy implementation for new proposal.
-     * This has no effect on existing Proposals, either ACTIVE or completed.
+     * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
+     * This has no effect on existing Proposals, either `ACTIVE` or completed.
      *
-     * @param _prevStrategy BaseStrategy that pointed to the strategy to be removed in the linked list
-     * @param _strategy BaseStrategy implementation to be removed
+     * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed
+     * @param _strategy address of the BaseStrategy to be removed
      */
     function disableStrategy(address _prevStrategy, address _strategy) external;
 
     /**
-     * Updates the timelockPeriod for newly created Proposals.
-     * This has no effect on existing Proposals, either ACTIVE or completed.
-     * @param _timelockPeriod The timelockPeriod (in blocks) to be used for new Proposals.
+     * Updates the `timelockPeriod` for newly created Proposals.
+     * This has no effect on existing Proposals, either `ACTIVE` or completed.
+     *
+     * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals
      */
     function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
     /**
-     * Submits a new Proposal, using one of the enabled BaseStrategies.
-     * New Proposals begin immediately in the ACTIVE state.
+     * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
+     * New Proposals begin immediately in the `ACTIVE` state.
      *
-     * @param _strategy address of the BaseStrategy implementation which the Proposal will use.
+     * @param _strategy address of the BaseStrategy implementation which the Proposal will use
      * @param _data arbitrary data passed to the BaseStrategy implementation
      * @param _transactions array of transactions to propose
      * @param _metadata additional data such as a title/description to submit with the proposal
@@ -111,6 +112,7 @@ interface IAzorius {
 
     /**
      * Executes all transactions within a Proposal.
+     * This will only be able to be called if the Proposal passed.
      *
      * @param _proposalId identifier of the Proposal
      * @param _targets target contracts for each transaction
@@ -127,7 +129,7 @@ interface IAzorius {
     ) external;
 
     /**
-     * Returns whether a BaseStrategy implementation is enabled.
+     * Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
      *
      * @param _strategy contract address of the BaseStrategy to check
      * @return bool True if the strategy is enabled, otherwise False
@@ -135,7 +137,7 @@ interface IAzorius {
     function isStrategyEnabled(address _strategy) external view returns (bool);
 
     /**
-     * Returns an array of enabled BaseStrategy contract addresses.
+     * Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.
      * Because the list of BaseStrategies is technically unbounded, this
      * requires the address of the first strategy you would like, along
      * with the total count of strategies to return, rather than
@@ -155,7 +157,7 @@ interface IAzorius {
      * Gets the state of a Proposal.
      *
      * @param _proposalId identifier of the Proposal
-     * @return ProposalState uint256 ProposalState enum value representing of the
+     * @return ProposalState uint256 ProposalState enum value representing the
      *         current state of the proposal
      */
     function proposalState(uint256 _proposalId) external view returns (ProposalState);
@@ -179,7 +181,7 @@ interface IAzorius {
     ) external view returns (bytes memory);
 
     /**
-     * Returns the keccak256 hash of the specified transaction.
+     * Returns the `keccak256` hash of the specified transaction.
      *
      * @param _to target address of the transaction
      * @param _value ETH value to send with the transaction
@@ -204,7 +206,7 @@ interface IAzorius {
     function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
 
     /**
-     * Returns the transaction hashes associated with a given proposalId.
+     * Returns the transaction hashes associated with a given `proposalId`.
      *
      * @param _proposalId identifier of the Proposal to get transaction hashes for
      * @return bytes32[] array of transaction hashes
