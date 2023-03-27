@@ -34,7 +34,7 @@ contract MockVotingStrategy is BaseStrategy {
     }
 
     /** @inheritdoc IBaseStrategy*/
-    function votingEndBlock(uint32) external pure override returns (uint256) {
+    function votingEndBlock(uint32) external pure override returns (uint32) {
         return 0;
     }
 }
