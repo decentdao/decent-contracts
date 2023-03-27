@@ -12,7 +12,7 @@ All voting details are delegated to BaseStrategy implementations, of which an Az
 Azorius was forked from and heavily based on the [Usul](https://github.com/SekerDAO/Usul) module, by [SekerDAO](https://github.com/SekerDAO).
 
 ## Contract Documentation
-[NatSpec](https://docs.soliditylang.org/en/v0.8.17/natspec-format.html) documentation for Azorius Protocol contracts [are available here](https://github.com/decent-dao/fractal-contracts/tree/main/docs).
+[NatSpec](https://docs.soliditylang.org/en/v0.8.17/natspec-format.html) documentation for Azorius Protocol contracts [are available here](./docs).
 
 ## Local Setup & Testing
 

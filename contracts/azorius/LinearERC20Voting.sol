@@ -6,8 +6,9 @@ import "./BaseStrategy.sol";
 import "./BaseQuorumPercent.sol";
 
  /**
-  * An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
-  * Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
+  * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
+  * enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
+  * in an `ERC20Votes` token equals 1 vote for a Proposal. // TODO we're actually using ERC20Votes here?
   */
 contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
 
@@ -37,7 +38,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     /** Number of blocks a new Proposal can be voted on. */
     uint256 public votingPeriod;
 
-    /** proposalId to ProposalVotes, the voting state of a Proposal. */
+    /** `proposalId` to `ProposalVotes`, the voting state of a Proposal. */
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 votingPeriod);
@@ -198,7 +199,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
       return proposalVotes[_proposalId].votingEndBlock;
     }
 
-    /** Internal implementation of updateVotingPeriod above */
+    /** Internal implementation of `updateVotingPeriod`. */
     function _updateVotingPeriod(uint256 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
         emit VotingPeriodUpdated(_votingPeriod);

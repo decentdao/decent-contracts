@@ -6,7 +6,7 @@ The base interface for the Azorius governance Safe module.
 Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
 
 Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
-(BaseStrategy) for voting that are enabled on the DAO.
+([BaseStrategy](../BaseStrategy.md)) for voting that are enabled on the DAO.
 
 Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
 as customizable as possible.
@@ -53,7 +53,7 @@ enum ProposalState {
 function enableStrategy(address _strategy) external
 ```
 
-Enables a BaseStrategy implementation for newly created Proposals.
+Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.
 
 Multiple strategies can be enabled, and new Proposals will be able to be
 created using any of the currently enabled strategies.
@@ -70,7 +70,7 @@ created using any of the currently enabled strategies.
 function disableStrategy(address _prevStrategy, address _strategy) external
 ```
 
-Disables a previously enabled BaseStrategy implementation for new proposals.
+Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
 This has no effect on existing Proposals, either ACTIVE or completed.
 
 #### Parameters
@@ -101,7 +101,7 @@ This has no effect on existing Proposals, either ACTIVE or completed.
 function submitProposal(address _strategy, bytes _data, struct IAzorius.Transaction[] _transactions, string _metadata) external
 ```
 
-Submits a new Proposal, using one of the enabled BaseStrategies.
+Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
 New Proposals begin immediately in the ACTIVE state.
 
 #### Parameters
@@ -138,7 +138,7 @@ This will only be able to be called if the Proposal passed.
 function isStrategyEnabled(address _strategy) external view returns (bool)
 ```
 
-Returns whether a BaseStrategy implementation is enabled.
+Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
 
 #### Parameters
 
@@ -158,7 +158,7 @@ Returns whether a BaseStrategy implementation is enabled.
 function getStrategies(address _startAddress, uint256 _count) external view returns (address[] _strategies, address _next)
 ```
 
-Returns an array of enabled BaseStrategy contract addresses.
+Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.
 Because the list of BaseStrategies is technically unbounded, this
 requires the address of the first strategy you would like, along
 with the total count of strategies to return, rather than
@@ -228,7 +228,7 @@ Generates the data for the module transaction hash (required for signing).
 function getTxHash(address _to, uint256 _value, bytes _data, enum Enum.Operation _operation) external view returns (bytes32)
 ```
 
-Returns the keccak256 hash of the specified transaction.
+Returns the `keccak256` hash of the specified transaction.
 
 #### Parameters
 
@@ -272,7 +272,7 @@ Returns the hash of a transaction in a Proposal.
 function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[])
 ```
 
-Returns the transaction hashes associated with a given proposalId.
+Returns the transaction hashes associated with a given `proposalId`.
 
 #### Parameters
 

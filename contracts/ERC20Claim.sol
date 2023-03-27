@@ -14,7 +14,7 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     using SafeERC20 for IERC20;
 
-    /** The address of the initial holder of the claimable _childERC20 tokens. */
+    /** The address of the initial holder of the claimable `childERC20` tokens. */
     address public funder;
 
     /** The deadline block to claim tokens by, or 0 for indefinite. */
@@ -26,10 +26,10 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     /** Parent ERC20 token address, for calculating a snapshot of holdings. */
     address public parentERC20;
 
-    /** Id of a snapshot of token holdings for this claim (see VotesERC20). */
+    /** Id of a snapshot of token holdings for this claim (see [VotesERC20](./VotesERC20.md)). */
     uint256 public snapShotId;
 
-    /** Total amount of _childERC20 tokens allocated for claiming by parent holders. */
+    /** Total amount of `childERC20` tokens allocated for claiming by parent holders. */
     uint256 public parentAllocation;
 
     /** Mapping of address to bool of whether the address has claimed already. */

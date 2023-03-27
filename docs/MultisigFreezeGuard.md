@@ -2,7 +2,7 @@
 
 ## MultisigFreezeGuard
 
-Implementation of IMultisigFreezeGuard. See the IMultisigFreezeGuard doc more for details.
+Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
 
 ### timelockPeriod
 
@@ -26,7 +26,8 @@ Execution period (in blocks).
 contract IBaseFreezeVoting freezeVoting
 ```
 
-Reference to the IBaseFreezeVoting implementation that determines whether the Safe is frozen.
+Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
+implementation that determines whether the Safe is frozen.
 
 ### childGnosisSafe
 
@@ -118,13 +119,13 @@ Initialize function, will be triggered when a new instance is deployed.
 function timelockTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes signatures) external
 ```
 
-Allows the caller to begin the "timelock" of a transaction.
+Allows the caller to begin the `timelock` of a transaction.
 
 Timelock is the period during which a proposed transaction must wait before being
 executed, after it has passed.  This period is intended to allow the parent DAO
 sufficient time to potentially freeze the DAO, if they should vote to do so.
 
-The parameters for doing so are identical to ISafe's execTransaction function.
+The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
 
 #### Parameters
 
@@ -229,10 +230,10 @@ Returns the hash of all the transaction data.
 
 It is important to note that this implementation is different than that 
 in the Gnosis Safe contract. This implementation does not use the nonce, 
-as this is not part of the Guard contract checkTransaction interface.
+as this is not part of the Guard contract `checkTransaction` interface.
 
 This implementation also omits the EIP-712 related values, since these hashes 
-are not being signed by users
+are not being signed by users.
 
 #### Parameters
 
@@ -260,7 +261,7 @@ are not being signed by users
 function _updateTimelockPeriod(uint256 _timelockPeriod) internal
 ```
 
-Internal implementation of updateTimelockPeriod
+Internal implementation of `updateTimelockPeriod`
 
 ### _updateExecutionPeriod
 
@@ -268,5 +269,5 @@ Internal implementation of updateTimelockPeriod
 function _updateExecutionPeriod(uint256 _executionPeriod) internal
 ```
 
-Internal implementation of updateExecutionPeriod
+Internal implementation of `updateExecutionPeriod`
 

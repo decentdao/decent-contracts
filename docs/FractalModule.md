@@ -2,7 +2,7 @@
 
 ## FractalModule
 
-Implementation of IFractalModule.
+Implementation of [IFractalModule](./interfaces/IFractalModule.md).
 
 A Safe module contract that allows for a "parent-child" DAO relationship.
 
@@ -70,7 +70,7 @@ Initialize function, will be triggered when a new instance is deployed.
 function removeControllers(address[] _controllers) external
 ```
 
-Removes _controllers from the list of controllers.
+Removes `_controllers` from the list of controllers.
 
 #### Parameters
 
@@ -98,7 +98,7 @@ Allows an authorized address to execute arbitrary transactions on the Safe.
 function addControllers(address[] _controllers) public
 ```
 
-Adds _controllers to the list of controllers, which are allowed
+Adds `_controllers` to the list of controllers, which are allowed
 to execute transactions on the Safe.
 
 #### Parameters

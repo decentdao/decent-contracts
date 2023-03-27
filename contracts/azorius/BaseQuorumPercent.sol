@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * An Azorius extension contract that enables percent based quorums.
- * Intended to be implemented by BaseStrategy implementations.
+ * Intended to be implemented by [BaseStrategy](./BaseStrategy.md) implementations.
  */
 abstract contract BaseQuorumPercent is OwnableUpgradeable {
     
@@ -40,7 +40,7 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
         _updateQuorumNumerator(_quorumNumerator);
     }
 
-    /** Internal implementation of updateQuorumNumerator. */
+    /** Internal implementation of `updateQuorumNumerator`. */
     function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual {
         if (_quorumNumerator > QUORUM_DENOMINATOR)
             revert InvalidQuorumNumerator();

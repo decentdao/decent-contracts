@@ -29,7 +29,7 @@ Allows an authorized address to execute arbitrary transactions on the Safe.
 function addControllers(address[] _controllers) external
 ```
 
-Adds _controllers to the list of controllers, which are allowed
+Adds `_controllers` to the list of controllers, which are allowed
 to execute transactions on the Safe.
 
 #### Parameters
@@ -44,7 +44,7 @@ to execute transactions on the Safe.
 function removeControllers(address[] _controllers) external
 ```
 
-Removes _controllers from the list of controllers.
+Removes `_controllers` from the list of controllers.
 
 #### Parameters
 

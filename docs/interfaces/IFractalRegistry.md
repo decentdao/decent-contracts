@@ -32,7 +32,7 @@ to allow us to find the list of "potential" subDAOs of any
 given Safe address.
 
 Given the list of declaring events, we can then check each
-Safe still has a FractalModule attached.
+Safe still has a [FractalModule](../FractalModule.md) attached.
 
 If no FractalModule is attached, we'll exclude it from the
 DAO hierarchy.

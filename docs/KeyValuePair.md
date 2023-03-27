@@ -2,8 +2,8 @@
 
 ## KeyValuePairs
 
-Implementation of IKeyValuePairs, a utility contract to log key/value 
-pair events for the calling address.
+Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility 
+contract to log key / value pair events for the calling address.
 
 ### ValueUpdated
 
@@ -23,7 +23,7 @@ error IncorrectValueCount()
 function updateValues(string[] _keys, string[] _values) external
 ```
 
-Logs the given key/value pairs, along with the caller's address.
+Logs the given key / value pairs, along with the caller's address.
 
 #### Parameters
 

@@ -2,7 +2,7 @@
 
 ## VotesERC20
 
-An implementation of the Open Zeppelin IVotes voting token standard.
+An implementation of the Open Zeppelin `IVotes` voting token standard.
 
 ### setUp
 
@@ -24,7 +24,7 @@ Initialize function, will be triggered when a new instance is deployed.
 function captureSnapShot() external returns (uint256 snapId)
 ```
 
-See ERC20SnapshotUpgradeable._snapshot()
+See `ERC20SnapshotUpgradeable._snapshot()`.
 
 ### _mint
 

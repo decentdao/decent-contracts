@@ -2,10 +2,10 @@
 
 ## AzoriusFreezeGuard
 
-A Safe Transaction Guard contract that prevents an Azorius subDAO from executing transactions 
-if it has been frozen by its parentDAO.
+A Safe Transaction Guard contract that prevents an [Azorius](./azorius/Azorius.md) 
+subDAO from executing transactions if it has been frozen by its parentDAO.
 
-see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
 
 ### freezeVoting
 

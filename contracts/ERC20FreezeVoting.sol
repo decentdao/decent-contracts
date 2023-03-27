@@ -6,7 +6,8 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /**
- * A BaseFreezeVoting implementation which handles freezes on ERC20 based token voting DAOs.
+ * A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles 
+ * freezes on ERC20 based token voting DAOs.
  */
 contract ERC20FreezeVoting is BaseFreezeVoting {
 

@@ -10,7 +10,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
- * Implementation of IMultisigFreezeGuard. See the IMultisigFreezeGuard doc more for details.
+ * Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
  */
 contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
 
@@ -20,7 +20,10 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     /** Execution period (in blocks). */
     uint256 public executionPeriod;
 
-    /** Reference to the IBaseFreezeVoting implementation that determines whether the Safe is frozen. */
+    /**
+     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
+     * implementation that determines whether the Safe is frozen. 
+     */
     IBaseFreezeVoting public freezeVoting;
 
     /** Reference to the Safe that can be frozen. */
@@ -217,10 +220,10 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
      *
      * It is important to note that this implementation is different than that 
      * in the Gnosis Safe contract. This implementation does not use the nonce, 
-     * as this is not part of the Guard contract checkTransaction interface.
+     * as this is not part of the Guard contract `checkTransaction` interface.
      *
      * This implementation also omits the EIP-712 related values, since these hashes 
-     * are not being signed by users
+     * are not being signed by users.
      *
      * @param to destination address
      * @param value ETH value
@@ -261,13 +264,13 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
             );
     }
 
-    /** Internal implementation of updateTimelockPeriod */
+    /** Internal implementation of `updateTimelockPeriod` */
     function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
     
-    /** Internal implementation of updateExecutionPeriod */
+    /** Internal implementation of `updateExecutionPeriod` */
     function _updateExecutionPeriod(uint256 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);

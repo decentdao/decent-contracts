@@ -5,7 +5,7 @@ import "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import "./interfaces/IFractalModule.sol";
 
  /**
-  * Implementation of IFractalModule.
+  * Implementation of [IFractalModule](./interfaces/IFractalModule.md).
   *
   * A Safe module contract that allows for a "parent-child" DAO relationship.
   *

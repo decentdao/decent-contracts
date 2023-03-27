@@ -12,7 +12,7 @@ by the parent DAO's token holders.
 address funder
 ```
 
-The address of the initial holder of the claimable _childERC20 tokens.
+The address of the initial holder of the claimable `childERC20` tokens.
 
 ### deadlineBlock
 
@@ -44,7 +44,7 @@ Parent ERC20 token address, for calculating a snapshot of holdings.
 uint256 snapShotId
 ```
 
-Id of a snapshot of token holdings for this claim (see VotesERC20).
+Id of a snapshot of token holdings for this claim (see [VotesERC20](./VotesERC20.md)).
 
 ### parentAllocation
 
@@ -52,7 +52,7 @@ Id of a snapshot of token holdings for this claim (see VotesERC20).
 uint256 parentAllocation
 ```
 
-Total amount of _childERC20 tokens allocated for claiming by parent holders.
+Total amount of `childERC20` tokens allocated for claiming by parent holders.
 
 ### claimed
 

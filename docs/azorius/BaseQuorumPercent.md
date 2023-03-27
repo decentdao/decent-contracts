@@ -3,7 +3,7 @@
 ## BaseQuorumPercent
 
 An Azorius extension contract that enables percent based quorums.
-Intended to be implemented by BaseStrategy implementations.
+Intended to be implemented by [BaseStrategy](./BaseStrategy.md) implementations.
 
 ### quorumNumerator
 
@@ -78,5 +78,5 @@ Updates the quorum required for future Proposals.
 function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual
 ```
 
-Internal implementation of updateQuorumNumerator.
+Internal implementation of `updateQuorumNumerator`.
 

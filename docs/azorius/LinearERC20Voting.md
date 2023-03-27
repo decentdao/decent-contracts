@@ -2,8 +2,9 @@
 
 ## LinearERC20Voting
 
-An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
-Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
+An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
+enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
+in an `ERC20Votes` token equals 1 vote for a Proposal. // TODO we're actually using ERC20Votes here?
 
 ### VoteType
 
@@ -48,7 +49,7 @@ Number of blocks a new Proposal can be voted on.
 mapping(uint256 => struct LinearERC20Voting.ProposalVotes) proposalVotes
 ```
 
-proposalId to ProposalVotes, the voting state of a Proposal.
+`proposalId` to `ProposalVotes`, the voting state of a Proposal.
 
 ### VotingPeriodUpdated
 
@@ -132,8 +133,8 @@ Updates the voting time period for new Proposals.
 function initializeProposal(bytes _data) external virtual
 ```
 
-Called by the Azorius module. This notifies this BaseStrategy that a new
-Proposal has been created.
+Called by the [Azorius](../Azorius.md) module. This notifies this 
+[BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
 
 #### Parameters
 
@@ -273,7 +274,7 @@ function isProposer(address) public pure returns (bool)
 ```
 
 Returns whether the specified address can submit a Proposal with
-this BaseStrategy.
+this [BaseStrategy](../BaseStrategy.md).
 
 This allows a BaseStrategy to place any limits it would like on
 who can create new Proposals, such as requiring a minimum token
@@ -317,7 +318,7 @@ Returns the block number voting ends on a given Proposal.
 function _updateVotingPeriod(uint256 _votingPeriod) internal
 ```
 
-Internal implementation of updateVotingPeriod above
+Internal implementation of `updateVotingPeriod`.
 
 ### _vote
 

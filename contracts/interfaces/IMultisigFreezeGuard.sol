@@ -8,7 +8,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * to operate in a fashion similar to Azorius token voting DAOs.
  *
  * This Guard is intended to add a timelock period and execution period to a Safe
- * multisig contract, allowing parent DAO's to have the ability to properly
+ * multi-sig contract, allowing parent DAOs to have the ability to properly
  * freeze multi-sig subDAOs.
  *
  * Without a timelock period, a vote to freeze the Safe would not be possible
@@ -19,18 +19,18 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * a potential freeze period is enacted. Without it a subDAO could just wait for a freeze
  * period to elapse and then execute their desired transaction.
  *
- * See also https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ * See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
  */
 interface IMultisigFreezeGuard {
 
     /**
-     * Allows the caller to begin the "timelock" of a transaction.
+     * Allows the caller to begin the `timelock` of a transaction.
      *
      * Timelock is the period during which a proposed transaction must wait before being
      * executed, after it has passed.  This period is intended to allow the parent DAO
      * sufficient time to potentially freeze the DAO, if they should vote to do so.
      *
-     * The parameters for doing so are identical to ISafe's execTransaction function.
+     * The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
      *
      * @param _to destination address
      * @param _value ETH value

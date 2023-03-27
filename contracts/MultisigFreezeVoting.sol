@@ -5,7 +5,7 @@ import "./BaseFreezeVoting.sol";
 import "./interfaces/ISafe.sol";
 
 /**
- * A BaseFreezeVoting implementation which handles freezes on multisig (Safe) based DAOs.
+ * A BaseFreezeVoting implementation which handles freezes on multi-sig (Safe) based DAOs.
  */
 contract MultisigFreezeVoting is BaseFreezeVoting {
 

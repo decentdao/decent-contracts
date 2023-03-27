@@ -14,15 +14,16 @@ pragma solidity =0.8.19;
 interface IBaseStrategy {
 
     /**
-     * Sets the address of the Azorius contract this BaseStrategy is being used on.
+     * Sets the address of the [Azorius](../Azorius.md) contract this 
+     * [BaseStrategy](../BaseStrategy.md) is being used on.
      *
      * @param _azoriusModule address of the Azorius Safe module
      */
     function setAzorius(address _azoriusModule) external;
 
     /**
-     * Called by the Azorius module. This notifies this BaseStrategy that a new
-     * Proposal has been created.
+     * Called by the [Azorius](../Azorius.md) module. This notifies this 
+     * [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
      *
      * @param _data arbitrary data to pass to this BaseStrategy
      */
@@ -38,7 +39,7 @@ interface IBaseStrategy {
 
     /**
      * Returns whether the specified address can submit a Proposal with
-     * this BaseStrategy.
+     * this [BaseStrategy](../BaseStrategy.md).
      *
      * This allows a BaseStrategy to place any limits it would like on
      * who can create new Proposals, such as requiring a minimum token

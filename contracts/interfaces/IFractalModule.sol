@@ -21,7 +21,7 @@ interface IFractalModule {
     function execTx(bytes memory execTxData) external;
 
     /**
-     * Adds _controllers to the list of controllers, which are allowed
+     * Adds `_controllers` to the list of controllers, which are allowed
      * to execute transactions on the Safe.
      *
      * @param _controllers addresses to add to the contoller list
@@ -29,7 +29,7 @@ interface IFractalModule {
     function addControllers(address[] memory _controllers) external;
 
     /**
-     * Removes _controllers from the list of controllers.
+     * Removes `_controllers` from the list of controllers.
      *
      * @param _controllers addresses to remove from the controller list
      */

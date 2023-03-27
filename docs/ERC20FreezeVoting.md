@@ -2,7 +2,8 @@
 
 ## ERC20FreezeVoting
 
-A BaseFreezeVoting implementation which handles freezes on ERC20 based token voting DAOs.
+A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles 
+freezes on ERC20 based token voting DAOs.
 
 ### votesERC20
 

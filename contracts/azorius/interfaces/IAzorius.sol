@@ -8,7 +8,7 @@ import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac
  *
  * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies
- * (BaseStrategy) for voting that are enabled on the DAO.
+ * ([BaseStrategy](../BaseStrategy.md)) for voting that are enabled on the DAO.
  *
  * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be
  * as customizable as possible.
@@ -68,7 +68,7 @@ interface IAzorius {
     }
 
     /**
-     * Enables a BaseStrategy implementation for newly created Proposals.
+     * Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.
      *
      * Multiple strategies can be enabled, and new Proposals will be able to be
      * created using any of the currently enabled strategies.
@@ -78,7 +78,7 @@ interface IAzorius {
     function enableStrategy(address _strategy) external;
 
     /**
-     * Disables a previously enabled BaseStrategy implementation for new proposals.
+     * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
      *
      * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed
@@ -89,12 +89,13 @@ interface IAzorius {
     /**
      * Updates the timelockPeriod for newly created Proposals.
      * This has no effect on existing Proposals, either ACTIVE or completed.
+     *
      * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals
      */
     function updateTimelockPeriod(uint256 _timelockPeriod) external;
 
     /**
-     * Submits a new Proposal, using one of the enabled BaseStrategies.
+     * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
      * New Proposals begin immediately in the ACTIVE state.
      *
      * @param _strategy address of the BaseStrategy implementation which the Proposal will use
@@ -128,7 +129,7 @@ interface IAzorius {
     ) external;
 
     /**
-     * Returns whether a BaseStrategy implementation is enabled.
+     * Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
      *
      * @param _strategy contract address of the BaseStrategy to check
      * @return bool True if the strategy is enabled, otherwise False
@@ -136,7 +137,7 @@ interface IAzorius {
     function isStrategyEnabled(address _strategy) external view returns (bool);
 
     /**
-     * Returns an array of enabled BaseStrategy contract addresses.
+     * Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.
      * Because the list of BaseStrategies is technically unbounded, this
      * requires the address of the first strategy you would like, along
      * with the total count of strategies to return, rather than
@@ -180,7 +181,7 @@ interface IAzorius {
     ) external view returns (bytes memory);
 
     /**
-     * Returns the keccak256 hash of the specified transaction.
+     * Returns the `keccak256` hash of the specified transaction.
      *
      * @param _to target address of the transaction
      * @param _value ETH value to send with the transaction
@@ -205,7 +206,7 @@ interface IAzorius {
     function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
 
     /**
-     * Returns the transaction hashes associated with a given proposalId.
+     * Returns the transaction hashes associated with a given `proposalId`.
      *
      * @param _proposalId identifier of the Proposal to get transaction hashes for
      * @return bytes32[] array of transaction hashes

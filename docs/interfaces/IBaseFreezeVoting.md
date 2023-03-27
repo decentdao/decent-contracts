@@ -7,8 +7,8 @@ to freeze a subDAO.
 
 This participants of this vote are parent token holders or signers. The DAO should be
 able to operate as normal throughout the freeze voting process, however if the vote
-passed, further transaction executions on the subDAO should be blocked via a Safe guard
-module (see MultisigFreezeGuard / AzoriusFreezeGuard).
+passes, further transaction executions on the subDAO should be blocked via a Safe guard
+module (see [MultisigFreezeGuard](../MultisigFreezeGuard.md) / [AzoriusFreezeGuard](../AzoriusFreezeGuard.md)).
 
 ### castFreezeVote
 
@@ -71,8 +71,8 @@ function updateFreezePeriod(uint256 _freezePeriod) external
 Updates the freeze period. This is the length of time (in blocks) the subDAO is actually
 frozen for if a freeze vote passes.
 
-This period can be overridden by a call to unfreeze(), which would require a passed Proposal
-from the subDAO.
+This period can be overridden by a call to `unfreeze()`, which would require a passed Proposal
+from the parentDAO.
 
 #### Parameters
 

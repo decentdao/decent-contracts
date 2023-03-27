@@ -10,13 +10,13 @@ over their created subDAOs.
 Normally a subDAO operates independently, and can vote on or sign transactions, 
 however should the parent disagree with a decision made by the subDAO, any parent
 token holder can initiate a vote to "freeze" it, making executing transactions impossible
-for the time denoted by freezePeriod.
+for the time denoted by `freezePeriod`.
 
-This requires a number of votes equal to freezeVotesThreshold, within the freezeProposalPeriod
+This requires a number of votes equal to `freezeVotesThreshold`, within the `freezeProposalPeriod`
 to be successful.
 
 Following a successful freeze vote, the childDAO will be unable to execute transactions, due to
-a Safe Transaction Guard, until the freezePeriod has elapsed.
+a Safe Transaction Guard, until the `freezePeriod` has elapsed.
 
 ### freezeVotesThreshold
 
@@ -144,7 +144,7 @@ Updates the freeze votes threshold, the number of votes required to enact a free
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _freezeVotesThreshold | uint256 | Number of freeze votes required to activate a freeze |
+| _freezeVotesThreshold | uint256 | number of freeze votes required to activate a freeze |
 
 ### updateFreezeProposalPeriod
 
@@ -182,7 +182,7 @@ should a freeze vote pass.
 function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal
 ```
 
-Internal implementation of updateFreezeVotesThreshold.
+Internal implementation of `updateFreezeVotesThreshold`.
 
 ### _updateFreezeProposalPeriod
 
@@ -190,7 +190,7 @@ Internal implementation of updateFreezeVotesThreshold.
 function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal
 ```
 
-Internal implementation of updateFreezeProposalPeriod.
+Internal implementation of `updateFreezeProposalPeriod`.
 
 ### _updateFreezePeriod
 
@@ -198,5 +198,5 @@ Internal implementation of updateFreezeProposalPeriod.
 function _updateFreezePeriod(uint256 _freezePeriod) internal
 ```
 
-Internal implementation of updateFreezePeriod.
+Internal implementation of `updateFreezePeriod`.
 

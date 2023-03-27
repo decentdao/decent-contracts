@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpg
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20SnapshotUpgradeable.sol";
 
 /**
- * An implementation of the Open Zeppelin IVotes voting token standard.
+ * An implementation of the Open Zeppelin `IVotes` voting token standard.
  */
 contract VotesERC20 is
     IERC20Upgradeable,
@@ -48,7 +48,7 @@ contract VotesERC20 is
     }
 
     /**
-     * See ERC20SnapshotUpgradeable._snapshot()
+     * See `ERC20SnapshotUpgradeable._snapshot()`.
      */
     function captureSnapShot() external returns (uint256 snapId) {
         snapId = _snapshot();
