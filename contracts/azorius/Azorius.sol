@@ -46,9 +46,9 @@ contract Azorius is Module, IAzorius {
 
     uint32 public timelockPeriod; // delay (in blocks) between when a Proposal is passed and when it can be executed
     uint32 public executionPeriod; // time (in blocks) between when timelock ends and the Proposal expires
-    uint256 public totalProposalCount; // total number of submitted proposals
+    uint32 public totalProposalCount; // total number of submitted proposals
 
-    mapping(uint256 => Proposal) internal proposals; // Proposals by proposalId
+    mapping(uint32 => Proposal) internal proposals; // Proposals by proposalId
     mapping(address => address) internal strategies; // linked list of BaseStrategies
 
     event AzoriusSetUp(
@@ -64,11 +64,11 @@ contract Azorius is Module, IAzorius {
         Transaction[] transactions,
         string metadata
     );
-    event ProposalExecuted(uint256 proposalId, bytes32[] txHashes);
+    event ProposalExecuted(uint32 proposalId, bytes32[] txHashes);
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
-    event TimelockPeriodUpdated(uint256 timelockPeriod);
-    event ExecutionPeriodUpdated(uint256 executionPeriod);
+    event TimelockPeriodUpdated(uint32 timelockPeriod);
+    event ExecutionPeriodUpdated(uint32 executionPeriod);
 
     error InvalidStrategy();
     error StrategyEnabled();
@@ -161,7 +161,7 @@ contract Azorius is Module, IAzorius {
 
     /** @inheritdoc IAzorius*/
     function executeProposal(
-        uint256 _proposalId,
+        uint32 _proposalId,
         address[] memory _targets,
         uint256[] memory _values,
         bytes[] memory _data,
@@ -222,23 +222,23 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposalTxHash(uint256 _proposalId,uint256 _txIndex) external view returns (bytes32) {
+    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32) {
         return proposals[_proposalId].txHashes[_txIndex];
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
+    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposal(uint256 _proposalId) external view
+    function getProposal(uint32 _proposalId) external view
         returns (
             address _strategy,
             bytes32[] memory _txHashes,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
-            uint256 _executionCounter
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod,
+            uint32 _executionCounter
         )
     {
         _strategy = proposals[_proposalId].strategy;
@@ -280,7 +280,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function proposalState(uint256 _proposalId) public view returns (ProposalState) {
+    function proposalState(uint32 _proposalId) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
 
         if (_proposal.strategy == address(0)) revert InvalidProposal();
@@ -364,7 +364,7 @@ contract Azorius is Module, IAzorius {
      * @param _operation Call or Delegatecall
      */
     function _executeProposalTx(
-        uint256 _proposalId,
+        uint32 _proposalId,
         address _target,
         uint256 _value,
         bytes memory _data,

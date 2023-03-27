@@ -34,8 +34,8 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     event FreezeVoteCast(address indexed voter, uint256 votesCast);
     event FreezeProposalCreated(address indexed creator);
     event FreezeVotesThresholdUpdated(uint256 freezeVotesThreshold);
-    event FreezePeriodUpdated(uint256 freezePeriod);
-    event FreezeProposalPeriodUpdated(uint256 freezeProposalPeriod);
+    event FreezePeriodUpdated(uint32 freezePeriod);
+    event FreezeProposalPeriodUpdated(uint32 freezeProposalPeriod);
 
     /**
      * Casts a positive vote to freeze the subDAO. This function is intended to be called
