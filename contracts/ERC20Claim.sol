@@ -14,12 +14,25 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     using SafeERC20 for IERC20;
 
-    uint32 public deadlineBlock;   // the deadline block to claim tokens by, or 0 for indefinite
-    address public funder;          // the address of the initial holder of the claimable _childERC20 tokens
-    address public childERC20;      // the parent ERC20 token address, for calculating a snapshot of holdings
-    address public parentERC20;     // the parent ERC20 token address, for calculating a snapshot of holdings
-    uint256 public snapShotId;      // the child ERC20 token address, to calculate the percentage claimbable
-    uint256 public parentAllocation;// the total amount of _childERC20 tokens allocated for claiming by parent holders
+    /** The deadline block to claim tokens by, or 0 for indefinite. */
+    uint32 public deadlineBlock;
+
+    /** The address of the initial holder of the claimable `childERC20` tokens. */
+    address public funder;
+
+    /** Child ERC20 token address, to calculate the percentage claimable. */
+    address public childERC20;
+
+    /** Parent ERC20 token address, for calculating a snapshot of holdings. */
+    address public parentERC20;
+
+    /** Id of a snapshot of token holdings for this claim (see [VotesERC20](./VotesERC20.md)). */
+    uint256 public snapShotId;
+
+    /** Total amount of `childERC20` tokens allocated for claiming by parent holders. */
+    uint256 public parentAllocation;
+
+    /** Mapping of address to bool of whether the address has claimed already. */
     mapping(address => bool) public claimed;
 
     event ERC20Claimed(
@@ -46,7 +59,9 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _childTokenFunder`,
+     * `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`,
+     * `uint256 _parentAllocation`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();

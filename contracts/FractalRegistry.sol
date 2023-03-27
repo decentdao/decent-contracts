@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import { IFractalRegistry } from "./interfaces/IFractalRegistry.sol";
 
 /**
- * Implementation of IFractalRegistry.
+ * Implementation of [IFractalRegistry](./interfaces/IFractalRegistry.md).
  */
 contract FractalRegistry is IFractalRegistry {
 

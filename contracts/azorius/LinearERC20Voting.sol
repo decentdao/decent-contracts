@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { BaseStrategy, IBaseStrategy } from "./BaseStrategy.sol";
 import { BaseQuorumPercent } from "./BaseQuorumPercent.sol";
 
  /**
-  * @title LinearERC20Voting - An Azorius BaseStrategy implementation that enables linear (i.e. 1 to 1) token voting.
-  * Each token delegated to a given address in an ERC20Votes token equals 1 vote for a Proposal.
+  * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
+  * enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
+  * in an `ERC20Votes` token equals 1 vote for a Proposal.
   */
 contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
 
@@ -32,13 +33,13 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         mapping(address => bool) hasVoted; // whether a given address has voted yet or not
     }
 
-    ERC20Votes public governanceToken;
+    IVotes public governanceToken;
 
     /** Number of blocks a new Proposal can be voted on. */
     uint32 public votingPeriod;
 
-    /** proposalId to ProposalVotes, the voting state of a Proposal */
-    mapping(uint32 => ProposalVotes) internal proposalVotes;
+    /** `proposalId` to `ProposalVotes`, the voting state of a Proposal. */
+    mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint32 votingPeriod);
     event ProposalInitialized(uint32 proposalId, uint32 votingEndBlock);
@@ -53,18 +54,20 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
     /**
      * Sets up the contract with its initial parameters.
      *
-     * @param initParams initial setup parameters, encoded as bytes
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`,
+     * `uint256 _quorumNumerator`
      */
-    function setUp(bytes memory initParams) public override initializer {
+    function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
-            ERC20Votes _governanceToken,
+            IVotes _governanceToken,
             address _azoriusModule,
             uint32 _votingPeriod,
             uint256 _quorumNumerator
         ) = abi.decode(
-                initParams,
-                (address, ERC20Votes, address, uint32, uint256)
+                initializeParams,
+                (address, IVotes, address, uint32, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
@@ -88,7 +91,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         _updateVotingPeriod(_votingPeriod);
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
         uint32 proposalId = abi.decode(_data, (uint32));
         uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
@@ -105,7 +108,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
      * @param _proposalId id of the Proposal to vote on
      * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)
      */
-    function vote(uint32 _proposalId, uint8 _voteType, bytes memory) external {
+    function vote(uint32 _proposalId, uint8 _voteType) external {
         _vote(
             _proposalId,
             msg.sender,
@@ -151,7 +154,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return proposalVotes[_proposalId].hasVoted[_address];
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function isPassed(uint32 _proposalId) public view override returns (bool) {
         if (
             proposalVotes[_proposalId].yesVotes > proposalVotes[_proposalId].noVotes &&
@@ -166,15 +169,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
         return false;
     }
 
-    /**
-     * Calculates the number of votes needed to achieve quorum at a specific block number.
-     *
-     * Because token supply is not necessarily static, it is required to calculate
-     * quorum based on the supply at the time of a Proposal's creation.
-     *
-     * @param _blockNumber block number to calculate quorum at
-     * @return uint256 the number of votes needed for quorum
-     */
+    /** @inheritdoc BaseQuorumPercent*/
     function quorum(uint256 _blockNumber) public view override returns (uint256) {
         return
             (governanceToken.getPastTotalSupply(_blockNumber) *
@@ -196,7 +191,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
             );
     }
 
-    /** @inheritdoc IBaseStrategy*/
+    /** @inheritdoc BaseStrategy*/
     function isProposer(address) public pure override returns (bool) {
         return true; // anyone can submit Proposals
     }
@@ -206,7 +201,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent {
       return proposalVotes[_proposalId].votingEndBlock;
     }
 
-    /** Internal implementation of updateVotingPeriod above */
+    /** Internal implementation of `updateVotingPeriod`. */
     function _updateVotingPeriod(uint32 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
         emit VotingPeriodUpdated(_votingPeriod);

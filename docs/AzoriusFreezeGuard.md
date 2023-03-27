@@ -2,10 +2,10 @@
 
 ## AzoriusFreezeGuard
 
-A Safe Transaction Guard contract that prevents an Azorius subDAO from executing transactions 
-if it has been frozen by its parentDAO.
+A Safe Transaction Guard contract that prevents an [Azorius](./azorius/Azorius.md) 
+subDAO from executing transactions if it has been frozen by its parentDAO.
 
-see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
 
 ### freezeVoting
 
@@ -40,7 +40,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _freezeVoting` |
 
 ### checkTransaction
 
@@ -57,15 +57,9 @@ In our implementation, this reverts if the DAO is frozen.
 ### checkAfterExecution
 
 ```solidity
-function checkAfterExecution(bytes32 txHash, bool success) external view
+function checkAfterExecution(bytes32, bool) external view
 ```
 
-A callback performed after a transaction in executed on the Safe.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| txHash | bytes32 | hash of the transaction that was executed |
-| success | bool | bool indicating whether the Safe successfully executed the transaction |
+A callback performed after a transaction is executed on the Safe. This is a required
+function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 

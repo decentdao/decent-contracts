@@ -2,6 +2,8 @@
 
 ## BaseStrategy
 
+The base abstract contract for all voting strategies in Azorius.
+
 ### AzoriusSet
 
 ```solidity
@@ -32,8 +34,8 @@ contract IAzorius azoriusModule
 modifier onlyAzorius()
 ```
 
-Ensures that only the Azorius contract that pertains to this BaseStrategy
-can call functions on it.
+Ensures that only the [Azorius](./Azorius.md) contract that pertains to this 
+[BaseStrategy](./BaseStrategy.md) can call functions on it.
 
 ### setAzorius
 
@@ -41,7 +43,8 @@ can call functions on it.
 function setAzorius(address _azoriusModule) external
 ```
 
-Sets the address of the Azorius contract this BaseStrategy is being used on.
+Sets the address of the [Azorius](../Azorius.md) contract this 
+[BaseStrategy](../BaseStrategy.md) is being used on.
 
 #### Parameters
 
@@ -55,8 +58,8 @@ Sets the address of the Azorius contract this BaseStrategy is being used on.
 function initializeProposal(bytes _data) external virtual
 ```
 
-Called by the Azorius module. This notifies this BaseStrategy that a new
-Proposal has been created.
+Called by the [Azorius](../Azorius.md) module. This notifies this 
+[BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
 
 #### Parameters
 
@@ -91,7 +94,7 @@ function isProposer(address _address) external view virtual returns (bool)
 ```
 
 Returns whether the specified address can submit a Proposal with
-this BaseStrategy.
+this [BaseStrategy](../BaseStrategy.md).
 
 This allows a BaseStrategy to place any limits it would like on
 who can create new Proposals, such as requiring a minimum token
@@ -135,7 +138,7 @@ Returns the block number voting ends on a given Proposal.
 function _setAzorius(address _azoriusModule) internal
 ```
 
-Sets the address of the Azorius module contract.
+Sets the address of the [Azorius](Azorius.md) module contract.
 
 #### Parameters
 

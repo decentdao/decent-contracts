@@ -7,7 +7,7 @@ import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
  * The specification of methods available on a Safe contract wallet.
  * 
  * This interface does not encompass every available function on a Safe,
- * only those which are used within the Fractal contracts.
+ * only those which are used within the Azorius contracts.
  *
  * For the complete set of functions available on a Safe, see:
  * https://github.com/safe-global/safe-contracts/blob/main/contracts/Safe.sol
@@ -26,8 +26,8 @@ interface ISafe {
      * Set a guard contract that checks transactions before execution.
      * This can only be done via a Safe transaction.
      *
-     * See https://docs.gnosis-safe.io/learn/safe-tools/guards
-     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/GuardManager.sol
+     * See https://docs.gnosis-safe.io/learn/safe-tools/guards.
+     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/GuardManager.sol.
      * 
      * @param _guard address of the guard to be used or the 0 address to disable a guard
      */
@@ -66,9 +66,8 @@ interface ISafe {
      *
      * @param _dataHash Hash of the data (could be either a message hash or transaction hash)
      * @param _data That should be signed (this is passed to an external validator contract)
-     * @param _signatures Signature data that should be verified.
-     *      Can be packed ECDSA signature ({bytes32 r}{bytes32 s}{uint8 v}), contract 
-     *      signature (EIP-1271) or approved hash.
+     * @param _signatures Signature data that should be verified. Can be packed ECDSA signature 
+     *      ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash.
      */
     function checkSignatures(bytes32 _dataHash, bytes memory _data, bytes memory _signatures) external view;
 
@@ -102,7 +101,8 @@ interface ISafe {
 
     /**
      * Returns if the given address is an owner of the Safe.
-     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/OwnerManager.sol
+     *
+     * See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/OwnerManager.sol.
      *
      * @param _owner the address to check
      * @return bool whether _owner is an owner of the Safe

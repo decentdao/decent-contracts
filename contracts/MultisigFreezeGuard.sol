@@ -10,17 +10,26 @@ import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import { BaseGuard } from "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
- * A Safe Transaction Guard contract that prevents an multisig (Safe) subDAO from executing transactions 
- * if it has been frozen by its parentDAO.
- *
- * see https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+ * Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
  */
 contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
 
-    uint32 public timelockPeriod; // timelock period in number of blocks
-    uint32 public executionPeriod; // execution period in number of blocks
+    /** Timelock period (in blocks). */
+    uint32 public timelockPeriod;
+
+    /** Execution period (in blocks). */
+    uint32 public executionPeriod;
+
+    /**
+     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
+     * implementation that determines whether the Safe is frozen. 
+     */
     IBaseFreezeVoting public freezeVoting;
+
+    /** Reference to the Safe that can be frozen. */
     ISafe public childGnosisSafe;
+
+    /** Mapping of transaction hash to the block during which it was timelocked. */
     mapping(bytes32 => uint32) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
@@ -46,7 +55,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `uint256 _timelockPeriod`,
+     * `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
@@ -144,9 +154,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /**
-     * This function is called by the Safe to check if the transaction
-     * is able to be executed and reverts if the guard conditions are
-     * not met.
+     * Called by the Safe to check if the transaction is able to be executed and reverts 
+     * if the guard conditions are not met.
      */
     function checkTransaction(
         address to,
@@ -192,12 +201,10 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /**
-     * A callback performed after a transaction in executed on the Safe.
-     *
-     * @param txHash hash of the transaction that was executed
-     * @param success bool indicating whether the Safe successfully executed the transaction
+     * A callback performed after a transaction is executed on the Safe. This is a required
+     * function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
      */
-    function checkAfterExecution(bytes32 txHash, bool success) external view override(BaseGuard, IGuard) {
+    function checkAfterExecution(bytes32, bool) external view override(BaseGuard, IGuard) {
         // not implementated
     }
 
@@ -211,10 +218,10 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
      *
      * It is important to note that this implementation is different than that 
      * in the Gnosis Safe contract. This implementation does not use the nonce, 
-     * as this is not part of the Guard contract checkTransaction interface.
+     * as this is not part of the Guard contract `checkTransaction` interface.
      *
      * This implementation also omits the EIP-712 related values, since these hashes 
-     * are not being signed by users
+     * are not being signed by users.
      *
      * @param to destination address
      * @param value ETH value
@@ -255,13 +262,13 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
             );
     }
 
-    /** Internal implementation of updateTimelockPeriod */
+    /** Internal implementation of `updateTimelockPeriod` */
     function _updateTimelockPeriod(uint32 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
     
-    /** Internal implementation of updateExecutionPeriod */
+    /** Internal implementation of `updateExecutionPeriod` */
     function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);

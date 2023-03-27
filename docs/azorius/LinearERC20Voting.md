@@ -2,6 +2,10 @@
 
 ## LinearERC20Voting
 
+An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
+enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
+in an `ERC20Votes` token equals 1 vote for a Proposal.
+
 ### VoteType
 
 ```solidity
@@ -45,7 +49,7 @@ Number of blocks a new Proposal can be voted on.
 mapping(uint256 => struct LinearERC20Voting.ProposalVotes) proposalVotes
 ```
 
-proposalId to ProposalVotes, the voting state of a Proposal
+`proposalId` to `ProposalVotes`, the voting state of a Proposal.
 
 ### VotingPeriodUpdated
 
@@ -98,7 +102,7 @@ error InvalidTokenAddress()
 ### setUp
 
 ```solidity
-function setUp(bytes initParams) public
+function setUp(bytes initializeParams) public
 ```
 
 Sets up the contract with its initial parameters.
@@ -107,7 +111,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initParams | bytes | initial setup parameters, encoded as bytes |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator` |
 
 ### updateVotingPeriod
 
@@ -129,10 +133,19 @@ Updates the voting time period for new Proposals.
 function initializeProposal(bytes _data) external virtual
 ```
 
+Called by the [Azorius](../Azorius.md) module. This notifies this 
+[BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _data | bytes | arbitrary data to pass to this BaseStrategy |
+
 ### vote
 
 ```solidity
-function vote(uint256 _proposalId, uint8 _voteType, bytes) external
+function vote(uint256 _proposalId, uint8 _voteType) external
 ```
 
 Casts votes for a Proposal, equal to the caller's token delegation.
@@ -143,7 +156,6 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 | ---- | ---- | ----------- |
 | _proposalId | uint256 | id of the Proposal to vote on |
 | _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
-|  | bytes |  |
 
 ### getProposalVotes
 
@@ -196,6 +208,20 @@ Returns whether an address has voted on the specified Proposal.
 function isPassed(uint256 _proposalId) public view returns (bool)
 ```
 
+Returns whether a Proposal has been passed.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint256 | proposalId to check |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool true if the proposal has passed, otherwise false |
+
 ### quorum
 
 ```solidity
@@ -246,6 +272,25 @@ Calculates the voting weight an address has for a specific Proposal.
 function isProposer(address) public pure returns (bool)
 ```
 
+Returns whether the specified address can submit a Proposal with
+this [BaseStrategy](../BaseStrategy.md).
+
+This allows a BaseStrategy to place any limits it would like on
+who can create new Proposals, such as requiring a minimum token
+delegation.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+|  | address |  |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bool | bool true if the address can submit a Proposal, otherwise false |
+
 ### votingEndBlock
 
 ```solidity
@@ -272,7 +317,7 @@ Returns the block number voting ends on a given Proposal.
 function _updateVotingPeriod(uint256 _votingPeriod) internal
 ```
 
-Internal implementation of updateVotingPeriod above
+Internal implementation of `updateVotingPeriod`.
 
 ### _vote
 

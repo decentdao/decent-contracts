@@ -5,7 +5,7 @@ import { Module, Enum } from "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import { IFractalModule } from "./interfaces/IFractalModule.sol";
 
  /**
-  * Implementation of IFractalModule.
+  * Implementation of [IFractalModule](./interfaces/IFractalModule.md).
   *
   * A Safe module contract that allows for a "parent-child" DAO relationship.
   *
@@ -15,7 +15,8 @@ import { IFractalModule } from "./interfaces/IFractalModule.sol";
   */
 contract FractalModule is IFractalModule, Module {
 
-    mapping(address => bool) public controllers; // A DAO may authorize users to act on the behalf of the parent DAO.
+    /** Mapping of whether an address is a controller (typically a parentDAO). */
+    mapping(address => bool) public controllers;
 
     event ControllersAdded(address[] controllers);
     event ControllersRemoved(address[] controllers);
@@ -23,6 +24,7 @@ contract FractalModule is IFractalModule, Module {
     error Unauthorized();
     error TxFailed();
 
+    /** Allows only authorized controllers to execute transactions on the Safe. */
     modifier onlyAuthorized() {
         if (owner() != msg.sender && !controllers[msg.sender])
             revert Unauthorized();
@@ -32,7 +34,8 @@ contract FractalModule is IFractalModule, Module {
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
-     * @param initializeParams encoded initialization parameters
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _avatar`, `address _target`, `address[] memory _controllers`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
