@@ -25,19 +25,7 @@ abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
     event BasisNumeratorUpdated(uint256 basisNumerator);
 
     /**
-     * Calculates the basis percentage for a Proposal on the strategy to pass.
-     *
-     * In a simple majority, the basis would be 50% (500,000 / 1,000,000).
-     *
-     * Adjusting the basisNumerator allows for strategies to use any basis
-     * above simple majority, such as 2/3, 90%, etc.
-     */
-    function basis() public view virtual returns (uint256) {
-        return basisNumerator / BASIS_DENOMINATOR;
-    }
-
-    /**
-     * Updates the basisNumerator for future Proposals.
+     * Updates the `basisNumerator` for future Proposals.
      *
      * @param _basisNumerator numerator to use
      */
@@ -45,9 +33,9 @@ abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
         _updateBasisNumerator(_basisNumerator);
     }
 
-    /** Internal implementation of updateBasisNumerator. */
+    /** Internal implementation of `updateBasisNumerator`. */
     function _updateBasisNumerator(uint256 _basisNumerator) internal virtual {
-        if (_basisNumerator > BASIS_DENOMINATOR)
+        if (_basisNumerator > BASIS_DENOMINATOR || _basisNumerator < BASIS_DENOMINATOR / 2)
             revert InvalidBasisNumerator();
 
         basisNumerator = _basisNumerator;

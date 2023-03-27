@@ -39,13 +39,13 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     uint256 public votingPeriod;
 
     /** Voting weight required to be able to submit Proposals. */
-    uint256 public proposerWeight;
+    uint256 public requiredProposerWeight;
 
     /** proposalId to ProposalVotes, the voting state of a Proposal */
     mapping(uint256 => ProposalVotes) internal proposalVotes;
 
     event VotingPeriodUpdated(uint256 votingPeriod);
-    event ProposerWeightUpdated(uint256 proposerWeight);
+    event RequiredProposerWeightUpdated(uint256 requiredProposerWeight);
     event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock);
     event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight);
 
@@ -66,7 +66,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
             ERC20Votes _governanceToken,
             address _azoriusModule,
             uint256 _votingPeriod,
-            uint256 _proposerWeight,
+            uint256 _requiredProposerWeight,
             uint256 _quorumNumerator,
             uint256 _basisNumerator
         ) = abi.decode(
@@ -83,7 +83,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         _updateQuorumNumerator(_quorumNumerator);
         _updateBasisNumerator(_basisNumerator);
         _updateVotingPeriod(_votingPeriod);
-        _updateProposerWeight(_proposerWeight);
+        _updateRequiredProposerWeight(_requiredProposerWeight);
 
         emit StrategySetUp(_azoriusModule, _owner);
     }
@@ -100,10 +100,10 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     /**
      * Updates the voting weight required to submit new Proposals.
      *
-     * @param _proposerWeight voting time period (in blocks)
+     * @param _requiredProposerWeight required token voting weight
      */
-    function updateProposerWeight(uint256 _proposerWeight) external onlyOwner {
-        _updateProposerWeight(_proposerWeight);
+    function updateRequiredProposerWeight(uint256 _requiredProposerWeight) external onlyOwner {
+        _updateRequiredProposerWeight(_requiredProposerWeight);
     }
 
     /** @inheritdoc IBaseStrategy*/
@@ -172,11 +172,9 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     /** @inheritdoc IBaseStrategy*/
     function isPassed(uint256 _proposalId) public view override returns (bool) {
         return (
-            proposalVotes[_proposalId].votingEndBlock != 0 && // end block wasn't set to 0 TODO why do we need this?
             block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
             proposalVotes[_proposalId].yesVotes >= quorum(proposalVotes[_proposalId].votingStartBlock) && // yes votes meets the quorum
-            block.number > proposalVotes[_proposalId].votingEndBlock && // more yes votes than no (simple majority)
-            proposalVotes[_proposalId].yesVotes / (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) > basis() // yes votes meets the basis
+            proposalVotes[_proposalId].yesVotes > (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) * basisNumerator / BASIS_DENOMINATOR // yes votes meets the basis
         );
     }
 
@@ -215,7 +213,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         return governanceToken.getPastVotes(
             _address,
             block.number - 1
-        ) >= proposerWeight;
+        ) >= requiredProposerWeight;
     }
 
     /** @inheritdoc BaseStrategy*/
@@ -229,10 +227,10 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         emit VotingPeriodUpdated(_votingPeriod);
     }
 
-    /** Internal implementation of updateProposerWeight above */
-    function _updateProposerWeight(uint256 _proposerWeight) internal {
-        proposerWeight = _proposerWeight;
-        emit ProposerWeightUpdated(_proposerWeight);
+    /** Internal implementation of `updateRequiredProposerWeight`. */
+    function _updateRequiredProposerWeight(uint256 _requiredProposerWeight) internal {
+        requiredProposerWeight = _requiredProposerWeight;
+        emit RequiredProposerWeightUpdated(_requiredProposerWeight);
     }
 
     /**
