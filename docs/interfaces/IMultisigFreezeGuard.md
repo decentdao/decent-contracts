@@ -3,10 +3,10 @@
 ## IMultisigFreezeGuard
 
 A specification for a Safe Guard contract which allows for multi-sig DAOs (Safes)
-to operate in a fashion similar to Azorius token voting DAOs.
+to operate in a fashion similar to [Azorius](../azorius/Azorius.md) token voting DAOs.
 
 This Guard is intended to add a timelock period and execution period to a Safe
-multisig contract, allowing parent DAO's to have the ability to properly
+multi-sig contract, allowing parent DAOs to have the ability to properly
 freeze multi-sig subDAOs.
 
 Without a timelock period, a vote to freeze the Safe would not be possible
@@ -17,7 +17,7 @@ An execution period is also required. This is to prevent executing the transacti
 a potential freeze period is enacted. Without it a subDAO could just wait for a freeze
 period to elapse and then execute their desired transaction.
 
-See also https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
+See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
 
 ### timelockTransaction
 
@@ -25,13 +25,13 @@ See also https://docs.safe.global/learn/safe-core/safe-core-protocol/guards
 function timelockTransaction(address _to, uint256 _value, bytes _data, enum Enum.Operation _operation, uint256 _safeTxGas, uint256 _baseGas, uint256 _gasPrice, address _gasToken, address payable _refundReceiver, bytes _signatures) external
 ```
 
-Allows the caller to begin the "timelock" of a transaction.
+Allows the caller to begin the `timelock` of a transaction.
 
 Timelock is the period during which a proposed transaction must wait before being
 executed, after it has passed.  This period is intended to allow the parent DAO
 sufficient time to potentially freeze the DAO, if they should vote to do so.
 
-The parameters for doing so are identical to ISafe's execTransaction function.
+The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
 
 #### Parameters
 

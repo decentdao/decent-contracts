@@ -4,7 +4,8 @@ pragma solidity =0.8.19;
 import "../BaseStrategy.sol";
 
 /**
- * @title MockVotingStrategy - A mock strategy used only for testing purposes. Not intended for actual on-chain use.
+ * A mock [BaseStrategy](../BaseStrategy.md) used only for testing purposes.
+ * Not intended for actual on-chain use.
  */
 contract MockVotingStrategy is BaseStrategy {
     address public proposer;
@@ -12,28 +13,28 @@ contract MockVotingStrategy is BaseStrategy {
     /**
      * Sets up the contract with its initial parameters.
      *
-     * @param initParams initial setup parameters, encoded as bytes
+     * @param initializeParams encoded initialization parameters
      */
-    function setUp(bytes memory initParams) public override initializer {
-        address _proposer = abi.decode(initParams, (address));
+    function setUp(bytes memory initializeParams) public override initializer {
+        address _proposer = abi.decode(initializeParams, (address));
         proposer = _proposer;
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function initializeProposal(bytes memory _data) external override {}
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function isPassed(uint32) external pure override returns (bool) {
         return false;
     }
 
-    /// @inheritdoc IBaseStrategy
+    /** @inheritdoc IBaseStrategy*/
     function isProposer(address _proposer) external view override returns (bool) {
         return _proposer == proposer;
     }
 
-    /// @inheritdoc IBaseStrategy
-    function votingEndBlock(uint32) external pure override returns (uint32) {
+    /** @inheritdoc IBaseStrategy*/
+    function votingEndBlock(uint32) external pure override returns (uint256) {
         return 0;
     }
 }
