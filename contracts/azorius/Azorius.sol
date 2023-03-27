@@ -112,7 +112,7 @@ contract Azorius is Module, IAzorius {
             uint32 _executionPeriod        // initial executionPeriod
         ) = abi.decode(
                 initializeParams,
-                (address, address, address, address[], uint256, uint256)
+                (address, address, address, address[], uint32, uint32)
             );
         __Ownable_init();
         avatar = _avatar;
