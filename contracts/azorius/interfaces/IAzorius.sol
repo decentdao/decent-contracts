@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
  * The base interface for the Azorius governance Safe module.
@@ -50,11 +50,11 @@ interface IAzorius {
 
     /** Holds details pertaining to a single proposal. */
     struct Proposal {
+        uint32 executionCounter; // count of transactions that have been executed within the proposal
+        uint32 timelockPeriod; // time (in blocks) this proposal will be timelocked for if it passes
+        uint32 executionPeriod; // time (in blocks) this proposal has to be executed after timelock ends before it is expired
         address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
-        uint256 timelockPeriod; // time (in blocks) this proposal will be timelocked for if it passes
-        uint256 executionPeriod; // time (in blocks) this proposal has to be executed after timelock ends before it is expired
-        uint256 executionCounter; // count of transactions that have been executed within the proposal
     }
 
     /** The list of states in which a Proposal can be in at any given time. */
@@ -92,7 +92,14 @@ interface IAzorius {
      *
      * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals
      */
-    function updateTimelockPeriod(uint256 _timelockPeriod) external;
+    function updateTimelockPeriod(uint32 _timelockPeriod) external;
+
+    /**
+     * Updates the execution period for future Proposals.
+     *
+     * @param _executionPeriod new execution period (in blocks)
+     */
+    function updateExecutionPeriod(uint32 _executionPeriod) external;
 
     /**
      * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
@@ -121,7 +128,7 @@ interface IAzorius {
      * @param _operations Calls or Delegatecalls
      */
     function executeProposal(
-        uint256 _proposalId,
+        uint32 _proposalId,
         address[] memory _targets,
         uint256[] memory _values,
         bytes[] memory _data,
@@ -160,7 +167,7 @@ interface IAzorius {
      * @return ProposalState uint256 ProposalState enum value representing the
      *         current state of the proposal
      */
-    function proposalState(uint256 _proposalId) external view returns (ProposalState);
+    function proposalState(uint32 _proposalId) external view returns (ProposalState);
 
     /**
      * Generates the data for the module transaction hash (required for signing).
@@ -203,7 +210,7 @@ interface IAzorius {
      * @param _txIndex index of the transaction within the Proposal
      * @return bytes32 hash of the specified transaction
      */
-    function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32);
+    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32);
 
     /**
      * Returns the transaction hashes associated with a given `proposalId`.
@@ -211,7 +218,7 @@ interface IAzorius {
      * @param _proposalId identifier of the Proposal to get transaction hashes for
      * @return bytes32[] array of transaction hashes
      */
-    function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory);
+    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory);
 
     /**
      * Returns details about the specified Proposal.
@@ -223,12 +230,12 @@ interface IAzorius {
      * @return _executionPeriod time (in blocks) the Proposal must be executed within, after timelock ends
      * @return _executionCounter counter of how many of the Proposals transactions have been executed
      */
-    function getProposal(uint256 _proposalId) external view
+    function getProposal(uint32 _proposalId) external view
         returns (
             address _strategy,
             bytes32[] memory _txHashes,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
-            uint256 _executionCounter
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod,
+            uint32 _executionCounter
         );
 }

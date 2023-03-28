@@ -45,6 +45,11 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  gasReporter: {
+    enabled: true,
+    outputFile: "gas-report.txt",
+    noColors: true,
+  },
   dependencyCompiler: {
     paths: [
       "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",

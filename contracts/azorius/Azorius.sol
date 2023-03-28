@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/zodiac/contracts/core/Module.sol";
-import "./interfaces/IBaseStrategy.sol";
-import "./interfaces/IAzorius.sol";
+import { Module } from "@gnosis.pm/zodiac/contracts/core/Module.sol";
+import { IBaseStrategy } from "./interfaces/IBaseStrategy.sol";
+import { IAzorius, Enum } from "./interfaces/IAzorius.sol";
 
 /**
  * A Safe module which allows for composable governance.
@@ -51,13 +51,13 @@ contract Azorius is Module, IAzorius {
         0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
 
     /** Total number of submitted Proposals. */
-    uint256 public totalProposalCount;
+    uint32 public totalProposalCount;
 
     /** Delay (in blocks) between when a Proposal is passed and when it can be executed. */
-    uint256 public timelockPeriod;
+    uint32 public timelockPeriod;
 
     /** Time (in blocks) between when timelock ends and the Proposal expires. */
-    uint256 public executionPeriod;
+    uint32 public executionPeriod;
 
     /** Proposals by `proposalId`. */
     mapping(uint256 => Proposal) internal proposals;
@@ -78,11 +78,11 @@ contract Azorius is Module, IAzorius {
         Transaction[] transactions,
         string metadata
     );
-    event ProposalExecuted(uint256 proposalId, bytes32[] txHashes);
+    event ProposalExecuted(uint32 proposalId, bytes32[] txHashes);
     event EnabledStrategy(address strategy);
     event DisabledStrategy(address strategy);
-    event TimelockPeriodUpdated(uint256 timelockPeriod);
-    event ExecutionPeriodUpdated(uint256 executionPeriod);
+    event TimelockPeriodUpdated(uint32 timelockPeriod);
+    event ExecutionPeriodUpdated(uint32 executionPeriod);
 
     error InvalidStrategy();
     error StrategyEnabled();
@@ -108,11 +108,11 @@ contract Azorius is Module, IAzorius {
             address _avatar,
             address _target,                
             address[] memory _strategies,   // enabled BaseStrategies
-            uint256 _timelockPeriod,        // initial timelockPeriod
-            uint256 _executionPeriod        // initial executionPeriod
+            uint32 _timelockPeriod,        // initial timelockPeriod
+            uint32 _executionPeriod        // initial executionPeriod
         ) = abi.decode(
                 initializeParams,
-                (address, address, address, address[], uint256, uint256)
+                (address, address, address, address[], uint32, uint32)
             );
         __Ownable_init();
         avatar = _avatar;
@@ -126,8 +126,13 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
+    function updateTimelockPeriod(uint32 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
+    }
+
+    /** @inheritdoc IAzorius*/
+    function updateExecutionPeriod(uint32 _executionPeriod) external onlyOwner {
+        _updateExecutionPeriod(_executionPeriod);
     }
 
     /** @inheritdoc IAzorius*/
@@ -177,7 +182,7 @@ contract Azorius is Module, IAzorius {
 
     /** @inheritdoc IAzorius*/
     function executeProposal(
-        uint256 _proposalId,
+        uint32 _proposalId,
         address[] memory _targets,
         uint256[] memory _values,
         bytes[] memory _data,
@@ -210,15 +215,6 @@ contract Azorius is Module, IAzorius {
         emit ProposalExecuted(_proposalId, txHashes);
     }
 
-    /**
-     * Updates the execution period for future Proposals.
-     *
-     * @param _executionPeriod new execution period (in blocks)
-     */
-    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
-        _updateExecutionPeriod(_executionPeriod);
-    }
-
     /** @inheritdoc IAzorius*/
     function getStrategies(
         address _startAddress,
@@ -247,23 +243,23 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposalTxHash(uint256 _proposalId,uint256 _txIndex) external view returns (bytes32) {
+    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32) {
         return proposals[_proposalId].txHashes[_txIndex];
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[] memory) {
+    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
     }
 
     /** @inheritdoc IAzorius*/
-    function getProposal(uint256 _proposalId) external view
+    function getProposal(uint32 _proposalId) external view
         returns (
             address _strategy,
             bytes32[] memory _txHashes,
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
-            uint256 _executionCounter
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod,
+            uint32 _executionCounter
         )
     {
         _strategy = proposals[_proposalId].strategy;
@@ -305,7 +301,7 @@ contract Azorius is Module, IAzorius {
     }
 
     /** @inheritdoc IAzorius*/
-    function proposalState(uint256 _proposalId) public view returns (ProposalState) {
+    function proposalState(uint32 _proposalId) public view returns (ProposalState) {
         Proposal memory _proposal = proposals[_proposalId];
 
         if (_proposal.strategy == address(0)) revert InvalidProposal();
@@ -389,7 +385,7 @@ contract Azorius is Module, IAzorius {
      * @param _operation Call or Delegatecall
      */
     function _executeProposalTx(
-        uint256 _proposalId,
+        uint32 _proposalId,
         address _target,
         uint256 _value,
         bytes memory _data,
@@ -430,7 +426,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _timelockPeriod new timelock period (in blocks)
      */
-    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+    function _updateTimelockPeriod(uint32 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
@@ -440,7 +436,7 @@ contract Azorius is Module, IAzorius {
      *
      * @param _executionPeriod new execution period (in blocks)
      */
-    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
+    function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
     }

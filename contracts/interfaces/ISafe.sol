@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
  * The specification of methods available on a Safe contract wallet.
