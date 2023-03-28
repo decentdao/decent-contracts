@@ -61,7 +61,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
      *
      * @param initializeParams encoded initialization parameters: `address _owner`,
      * `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`,
-     * `uint256 _quorumNumerator`
+     * `uint256 _quorumNumerator`, `uint256 _basisNumerator`
      */
     function setUp(bytes memory initializeParams) public override initializer {
         (
@@ -74,7 +74,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
             uint256 _basisNumerator
         ) = abi.decode(
                 initializeParams,
-                (address, IVotes, address, uint32, uint256)
+                (address, IVotes, address, uint32, uint256, uint256, uint256)
             );
         if (address(_governanceToken) == address(0))
             revert InvalidTokenAddress();
