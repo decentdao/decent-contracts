@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IKeyValuePairs.sol";
+import { IKeyValuePairs } from "./interfaces/IKeyValuePairs.sol";
 
 /**
  * Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility 

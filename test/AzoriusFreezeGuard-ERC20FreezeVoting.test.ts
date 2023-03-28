@@ -175,7 +175,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     await azoriusModule.setUp(
       abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint256", "uint256"],
+        ["address", "address", "address", "address[]", "uint32", "uint32"],
         [
           mockParentDAO.address,
           childGnosisSafe.address,
@@ -196,7 +196,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
           "address",
           "address",
           "address",
-          "uint256",
+          "uint32",
           "uint256",
           "uint256",
           "uint256",
@@ -223,7 +223,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     await freezeVoting.setUp(
       abiCoder.encode(
-        ["address", "uint256", "uint256", "uint256", "address"],
+        ["address", "uint256", "uint32", "uint32", "address"],
         [
           mockParentDAO.address, // owner
           150, // freeze votes threshold

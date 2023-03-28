@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IERC20Claim.sol";
-import "./VotesERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20Claim } from "./interfaces/IERC20Claim.sol";
+import { VotesERC20, FactoryFriendly } from "./VotesERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * A simple contract that allows for parent DAOs that have created a new ERC-20 
@@ -14,11 +14,11 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
 
     using SafeERC20 for IERC20;
 
+    /** The deadline block to claim tokens by, or 0 for indefinite. */
+    uint32 public deadlineBlock;
+
     /** The address of the initial holder of the claimable `childERC20` tokens. */
     address public funder;
-
-    /** The deadline block to claim tokens by, or 0 for indefinite. */
-    uint256 public deadlineBlock;
 
     /** Child ERC20 token address, to calculate the percentage claimable. */
     address public childERC20;
@@ -66,12 +66,12 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
+            uint32 _deadlineBlock,
             address _childTokenFunder,
-            uint256 _deadlineBlock,
             address _parentERC20,
             address _childERC20,
             uint256 _parentAllocation
-        ) = abi.decode(initializeParams, (address, uint256, address, address, uint256));
+        ) = abi.decode(initializeParams, (uint32, address, address, address, uint256));
 
         funder = _childTokenFunder;
         deadlineBlock = _deadlineBlock;

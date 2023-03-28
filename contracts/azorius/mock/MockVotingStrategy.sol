@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "../BaseStrategy.sol";
+import { BaseStrategy, IBaseStrategy } from "../BaseStrategy.sol";
 
 /**
  * A mock [BaseStrategy](../BaseStrategy.md) used only for testing purposes.
@@ -24,7 +24,7 @@ contract MockVotingStrategy is BaseStrategy {
     function initializeProposal(bytes memory _data) external override {}
 
     /** @inheritdoc IBaseStrategy*/
-    function isPassed(uint256) external pure override returns (bool) {
+    function isPassed(uint32) external pure override returns (bool) {
         return false;
     }
 
@@ -34,7 +34,7 @@ contract MockVotingStrategy is BaseStrategy {
     }
 
     /** @inheritdoc IBaseStrategy*/
-    function votingEndBlock(uint256) external pure override returns (uint256) {
+    function votingEndBlock(uint32) external pure override returns (uint32) {
         return 0;
     }
 }

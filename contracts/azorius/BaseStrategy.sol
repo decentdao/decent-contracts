@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import "./interfaces/IAzorius.sol";
-import "./interfaces/IBaseStrategy.sol";
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IAzorius } from "./interfaces/IAzorius.sol";
+import { IBaseStrategy } from "./interfaces/IBaseStrategy.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * The base abstract contract for all voting strategies in Azorius.
@@ -37,13 +37,13 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
     function initializeProposal(bytes memory _data) external virtual;
 
     /** @inheritdoc IBaseStrategy*/
-    function isPassed(uint256 _proposalId) external view virtual returns (bool);
+    function isPassed(uint32 _proposalId) external view virtual returns (bool);
 
     /** @inheritdoc IBaseStrategy*/
     function isProposer(address _address) external view virtual returns (bool);
 
     /** @inheritdoc IBaseStrategy*/
-    function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256);
+    function votingEndBlock(uint32 _proposalId) external view virtual returns (uint32);
 
     /**
      * Sets the address of the [Azorius](Azorius.md) module contract.

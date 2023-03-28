@@ -70,7 +70,7 @@ Called by the [Azorius](../Azorius.md) module. This notifies this
 ### isPassed
 
 ```solidity
-function isPassed(uint256 _proposalId) external view virtual returns (bool)
+function isPassed(uint32 _proposalId) external view virtual returns (bool)
 ```
 
 Returns whether a Proposal has been passed.
@@ -79,7 +79,7 @@ Returns whether a Proposal has been passed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | proposalId to check |
+| _proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
@@ -115,7 +115,7 @@ delegation.
 ### votingEndBlock
 
 ```solidity
-function votingEndBlock(uint256 _proposalId) external view virtual returns (uint256)
+function votingEndBlock(uint32 _proposalId) external view virtual returns (uint32)
 ```
 
 Returns the block number voting ends on a given Proposal.
@@ -124,13 +124,13 @@ Returns the block number voting ends on a given Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | proposalId to check |
+| _proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | uint256 block number when voting ends on the Proposal |
+| [0] | uint32 | uint32 block number when voting ends on the Proposal |
 
 ### _setAzorius
 

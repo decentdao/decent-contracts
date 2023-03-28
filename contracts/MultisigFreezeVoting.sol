@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./BaseFreezeVoting.sol";
-import "./interfaces/ISafe.sol";
+import { BaseFreezeVoting, IBaseFreezeVoting } from "./BaseFreezeVoting.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
 
 /**
  * A BaseFreezeVoting implementation which handles freezes on multi-sig (Safe) based DAOs.
  */
 contract MultisigFreezeVoting is BaseFreezeVoting {
-
     ISafe public parentGnosisSafe;
 
     event MultisigFreezeVotingSetup(
@@ -30,12 +29,12 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         (
             address _owner,
             uint256 _freezeVotesThreshold,
-            uint256 _freezeProposalPeriod,
-            uint256 _freezePeriod,
+            uint32 _freezeProposalPeriod,
+            uint32 _freezePeriod,
             address _parentGnosisSafe
         ) = abi.decode(
                 initializeParams,
-                (address, uint256, uint256, uint256, address)
+                (address, uint256, uint32, uint32, address)
             );
 
         __Ownable_init();
@@ -55,7 +54,7 @@ contract MultisigFreezeVoting is BaseFreezeVoting {
         if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
             // create a new freeze proposal and count the caller's vote
 
-            freezeProposalCreatedBlock = block.number;
+            freezeProposalCreatedBlock = uint32(block.number);
 
             freezeProposalVoteCount = 1;
 

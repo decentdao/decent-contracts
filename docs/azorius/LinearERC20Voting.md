@@ -20,11 +20,11 @@ enum VoteType {
 
 ```solidity
 struct ProposalVotes {
+  uint32 votingStartBlock;
+  uint32 votingEndBlock;
   uint256 noVotes;
   uint256 yesVotes;
   uint256 abstainVotes;
-  uint256 votingStartBlock;
-  uint256 votingEndBlock;
   mapping(address => bool) hasVoted;
 }
 ```
@@ -32,13 +32,13 @@ struct ProposalVotes {
 ### governanceToken
 
 ```solidity
-contract ERC20Votes governanceToken
+contract IVotes governanceToken
 ```
 
 ### votingPeriod
 
 ```solidity
-uint256 votingPeriod
+uint32 votingPeriod
 ```
 
 Number of blocks a new Proposal can be voted on.
@@ -54,19 +54,19 @@ mapping(uint256 => struct LinearERC20Voting.ProposalVotes) proposalVotes
 ### VotingPeriodUpdated
 
 ```solidity
-event VotingPeriodUpdated(uint256 votingPeriod)
+event VotingPeriodUpdated(uint32 votingPeriod)
 ```
 
 ### ProposalInitialized
 
 ```solidity
-event ProposalInitialized(uint256 proposalId, uint256 votingEndBlock)
+event ProposalInitialized(uint32 proposalId, uint32 votingEndBlock)
 ```
 
 ### Voted
 
 ```solidity
-event Voted(address voter, uint256 proposalId, uint8 voteType, uint256 weight)
+event Voted(address voter, uint32 proposalId, uint8 voteType, uint256 weight)
 ```
 
 ### InvalidProposal
@@ -116,7 +116,7 @@ Sets up the contract with its initial parameters.
 ### updateVotingPeriod
 
 ```solidity
-function updateVotingPeriod(uint256 _votingPeriod) external
+function updateVotingPeriod(uint32 _votingPeriod) external
 ```
 
 Updates the voting time period for new Proposals.
@@ -125,7 +125,7 @@ Updates the voting time period for new Proposals.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _votingPeriod | uint256 | voting time period (in blocks) |
+| _votingPeriod | uint32 | voting time period (in blocks) |
 
 ### initializeProposal
 
@@ -145,7 +145,7 @@ Called by the [Azorius](../Azorius.md) module. This notifies this
 ### vote
 
 ```solidity
-function vote(uint256 _proposalId, uint8 _voteType) external
+function vote(uint32 _proposalId, uint8 _voteType) external
 ```
 
 Casts votes for a Proposal, equal to the caller's token delegation.
@@ -154,13 +154,13 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | id of the Proposal to vote on |
+| _proposalId | uint32 | id of the Proposal to vote on |
 | _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
 
 ### getProposalVotes
 
 ```solidity
-function getProposalVotes(uint256 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint256 startBlock, uint256 endBlock)
+function getProposalVotes(uint32 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint32 startBlock, uint32 endBlock)
 ```
 
 Returns the current state of the specified Proposal.
@@ -169,7 +169,7 @@ Returns the current state of the specified Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | id of the Proposal |
+| _proposalId | uint32 | id of the Proposal |
 
 #### Return Values
 
@@ -178,13 +178,13 @@ Returns the current state of the specified Proposal.
 | noVotes | uint256 | current count of "NO" votes |
 | yesVotes | uint256 | current count of "YES" votes |
 | abstainVotes | uint256 | current count of "ABSTAIN" votes |
-| startBlock | uint256 | block number voting starts |
-| endBlock | uint256 | block number voting ends |
+| startBlock | uint32 | block number voting starts |
+| endBlock | uint32 | block number voting ends |
 
 ### hasVoted
 
 ```solidity
-function hasVoted(uint256 _proposalId, address _address) public view returns (bool)
+function hasVoted(uint32 _proposalId, address _address) public view returns (bool)
 ```
 
 Returns whether an address has voted on the specified Proposal.
@@ -193,7 +193,7 @@ Returns whether an address has voted on the specified Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | id of the Proposal to check |
+| _proposalId | uint32 | id of the Proposal to check |
 | _address | address | address to check |
 
 #### Return Values
@@ -205,7 +205,7 @@ Returns whether an address has voted on the specified Proposal.
 ### isPassed
 
 ```solidity
-function isPassed(uint256 _proposalId) public view returns (bool)
+function isPassed(uint32 _proposalId) public view returns (bool)
 ```
 
 Returns whether a Proposal has been passed.
@@ -214,7 +214,7 @@ Returns whether a Proposal has been passed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | proposalId to check |
+| _proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
@@ -248,7 +248,7 @@ quorum based on the supply at the time of a Proposal's creation.
 ### getVotingWeight
 
 ```solidity
-function getVotingWeight(address _voter, uint256 _proposalId) public view returns (uint256)
+function getVotingWeight(address _voter, uint32 _proposalId) public view returns (uint256)
 ```
 
 Calculates the voting weight an address has for a specific Proposal.
@@ -258,7 +258,7 @@ Calculates the voting weight an address has for a specific Proposal.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _voter | address | address of the voter |
-| _proposalId | uint256 | id of the Proposal |
+| _proposalId | uint32 | id of the Proposal |
 
 #### Return Values
 
@@ -294,7 +294,7 @@ delegation.
 ### votingEndBlock
 
 ```solidity
-function votingEndBlock(uint256 _proposalId) public view returns (uint256)
+function votingEndBlock(uint32 _proposalId) public view returns (uint32)
 ```
 
 Returns the block number voting ends on a given Proposal.
@@ -303,18 +303,18 @@ Returns the block number voting ends on a given Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | proposalId to check |
+| _proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | uint256 block number when voting ends on the Proposal |
+| [0] | uint32 | uint32 block number when voting ends on the Proposal |
 
 ### _updateVotingPeriod
 
 ```solidity
-function _updateVotingPeriod(uint256 _votingPeriod) internal
+function _updateVotingPeriod(uint32 _votingPeriod) internal
 ```
 
 Internal implementation of `updateVotingPeriod`.
@@ -322,7 +322,7 @@ Internal implementation of `updateVotingPeriod`.
 ### _vote
 
 ```solidity
-function _vote(uint256 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal
+function _vote(uint32 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal
 ```
 
 Internal function for casting a vote on a Proposal.
@@ -331,7 +331,7 @@ Internal function for casting a vote on a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | id of the Proposal |
+| _proposalId | uint32 | id of the Proposal |
 | _voter | address | address casting the vote |
 | _voteType | uint8 | vote support, as defined in VoteType |
 | _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |

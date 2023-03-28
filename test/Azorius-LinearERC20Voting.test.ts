@@ -151,7 +151,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     azorius = await new Azorius__factory(deployer).deploy();
 
     const azoriusSetupData = abiCoder.encode(
-      ["address", "address", "address", "address[]", "uint256", "uint256"],
+      ["address", "address", "address", "address[]", "uint32", "uint32"],
       [
         gnosisSafeOwner.address,
         gnosisSafe.address,
@@ -172,7 +172,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         "address",
         "address",
         "address",
-        "uint256",
+        "uint32",
         "uint256",
         "uint256",
         "uint256",
@@ -872,9 +872,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
-        BigNumber.from("60"),
-        BigNumber.from("60"),
-        BigNumber.from("0"),
+        60,
+        60,
+        0,
       ]);
 
       // Proposal is active
@@ -927,9 +927,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
-        BigNumber.from("60"),
-        BigNumber.from("60"),
-        BigNumber.from("1"),
+        60,
+        60,
+        1,
       ]);
 
       expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
@@ -1442,9 +1442,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
-        BigNumber.from("60"),
-        BigNumber.from("60"),
-        BigNumber.from("0"),
+        60,
+        60,
+        0,
       ]);
 
       // Proposal is active
@@ -1530,9 +1530,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
-        BigNumber.from("60"),
-        BigNumber.from("60"),
-        BigNumber.from("0"),
+        60,
+        60,
+        0,
       ]);
 
       // Proposal is active
@@ -1618,9 +1618,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       expect(await azorius.getProposal(0)).to.deep.eq([
         linearERC20Voting.address,
         [txHash],
-        BigNumber.from("60"),
-        BigNumber.from("60"),
-        BigNumber.from("0"),
+        60,
+        60,
+        0,
       ]);
 
       // Proposal is active

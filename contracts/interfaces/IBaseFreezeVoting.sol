@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
 /**
  * A specification for a contract which manages the ability to call for and cast a vote
@@ -44,7 +44,7 @@ interface IBaseFreezeVoting {
      *
      * @param _freezeProposalPeriod number of blocks a freeze proposal has to succeed
      */
-    function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external;
+    function updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) external;
 
     /**
      * Updates the freeze period. This is the length of time (in blocks) the subDAO is actually
@@ -55,7 +55,7 @@ interface IBaseFreezeVoting {
      *
      * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
      */
-    function updateFreezePeriod(uint256 _freezePeriod) external;
+    function updateFreezePeriod(uint32 _freezePeriod) external;
 
     /**
      * Returns true if the DAO is currently frozen, false otherwise.

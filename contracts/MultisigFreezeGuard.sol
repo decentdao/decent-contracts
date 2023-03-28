@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "./interfaces/IMultisigFreezeGuard.sol";
-import "./interfaces/IBaseFreezeVoting.sol";
-import "./interfaces/ISafe.sol";
-import "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
-import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
+import { IMultisigFreezeGuard } from "./interfaces/IMultisigFreezeGuard.sol";
+import { IBaseFreezeVoting } from "./interfaces/IBaseFreezeVoting.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
+import { IGuard } from "@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { Enum } from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
+import { BaseGuard } from "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 
 /**
  * Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
@@ -15,10 +15,10 @@ import "@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol";
 contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, BaseGuard {
 
     /** Timelock period (in blocks). */
-    uint256 public timelockPeriod;
+    uint32 public timelockPeriod;
 
     /** Execution period (in blocks). */
-    uint256 public executionPeriod;
+    uint32 public executionPeriod;
 
     /**
      * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
@@ -30,7 +30,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     ISafe public childGnosisSafe;
 
     /** Mapping of transaction hash to the block during which it was timelocked. */
-    mapping(bytes32 => uint256) internal transactionTimelockedBlock;
+    mapping(bytes32 => uint32) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
         address creator,
@@ -43,8 +43,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         bytes32 indexed transactionHash,
         bytes indexed signatures
     );
-    event TimelockPeriodUpdated(uint256 timelockPeriod);
-    event ExecutionPeriodUpdated(uint256 executionPeriod);
+    event TimelockPeriodUpdated(uint32 timelockPeriod);
+    event ExecutionPeriodUpdated(uint32 executionPeriod);
 
     error NotTimelockable();
     error NotTimelocked();
@@ -61,14 +61,14 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
-            uint256 _timelockPeriod,
-            uint256 _executionPeriod,
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod,
             address _owner,
             address _freezeVoting,
             address _childGnosisSafe
         ) = abi.decode(
                 initializeParams,
-                (uint256, uint256, address, address, address)
+                (uint32, uint32, address, address, address)
             );
 
         _updateTimelockPeriod(_timelockPeriod);
@@ -138,18 +138,18 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
             signatures
         );
 
-        transactionTimelockedBlock[transactionHash] = block.number;
+        transactionTimelockedBlock[transactionHash] = uint32(block.number);
 
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function updateTimelockPeriod(uint256 _timelockPeriod) external onlyOwner {
+    function updateTimelockPeriod(uint32 _timelockPeriod) external onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function updateExecutionPeriod(uint256 _executionPeriod) external onlyOwner {
+    function updateExecutionPeriod(uint32 _executionPeriod) external onlyOwner {
         executionPeriod = _executionPeriod;
     }
 
@@ -209,7 +209,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256) {
+    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint32) {
         return transactionTimelockedBlock[_transactionHash];
     }
 
@@ -263,13 +263,13 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /** Internal implementation of `updateTimelockPeriod` */
-    function _updateTimelockPeriod(uint256 _timelockPeriod) internal {
+    function _updateTimelockPeriod(uint32 _timelockPeriod) internal {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
     
     /** Internal implementation of `updateExecutionPeriod` */
-    function _updateExecutionPeriod(uint256 _executionPeriod) internal {
+    function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
     }

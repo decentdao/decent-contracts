@@ -35,7 +35,7 @@ interface IBaseStrategy {
      * @param _proposalId proposalId to check
      * @return bool true if the proposal has passed, otherwise false
      */
-    function isPassed(uint256 _proposalId) external view returns (bool);
+    function isPassed(uint32 _proposalId) external view returns (bool);
 
     /**
      * Returns whether the specified address can submit a Proposal with
@@ -54,7 +54,7 @@ interface IBaseStrategy {
      * Returns the block number voting ends on a given Proposal.
      *
      * @param _proposalId proposalId to check
-     * @return uint256 block number when voting ends on the Proposal
+     * @return uint32 block number when voting ends on the Proposal
      */
-    function votingEndBlock(uint256 _proposalId) external view returns (uint256);
+    function votingEndBlock(uint32 _proposalId) external view returns (uint32);
 }

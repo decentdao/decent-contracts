@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
-import "./interfaces/IBaseFreezeVoting.sol";
+import { FactoryFriendly } from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import { IBaseFreezeVoting } from "./interfaces/IBaseFreezeVoting.sol";
 
 /**
  * The base abstract contract which holds the state of a vote to freeze a childDAO.
@@ -23,20 +23,20 @@ import "./interfaces/IBaseFreezeVoting.sol";
  */
 abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
 
+    /** Block number the freeze proposal was created at. */
+    uint32 public freezeProposalCreatedBlock;
+
+    /** Number of blocks a freeze proposal has to succeed. */
+    uint32 public freezeProposalPeriod;
+
+    /** Number of blocks a freeze lasts, from time of freeze proposal creation. */
+    uint32 public freezePeriod;
+
     /** Number of freeze votes required to activate a freeze. */
     uint256 public freezeVotesThreshold;
 
-    /** Block number the freeze proposal was created at. */
-    uint256 public freezeProposalCreatedBlock;
-
     /** Number of accrued freeze votes. */
     uint256 public freezeProposalVoteCount;
-
-    /** Number of blocks a freeze proposal has to succeed. */
-    uint256 public freezeProposalPeriod;
-
-    /** Number of blocks a freeze lasts, from time of freeze proposal creation. */
-    uint256 public freezePeriod;
 
     /**
     * Mapping of address to the block the freeze vote was started to 
@@ -47,8 +47,8 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     event FreezeVoteCast(address indexed voter, uint256 votesCast);
     event FreezeProposalCreated(address indexed creator);
     event FreezeVotesThresholdUpdated(uint256 freezeVotesThreshold);
-    event FreezePeriodUpdated(uint256 freezePeriod);
-    event FreezeProposalPeriodUpdated(uint256 freezeProposalPeriod);
+    event FreezePeriodUpdated(uint32 freezePeriod);
+    event FreezeProposalPeriodUpdated(uint32 freezeProposalPeriod);
 
     /**
      * Casts a positive vote to freeze the subDAO. This function is intended to be called
@@ -93,7 +93,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
      *
      * @param _freezeProposalPeriod number of blocks a freeze vote has to succeed to enact a freeze
      */
-    function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external onlyOwner {
+    function updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) external onlyOwner {
         _updateFreezeProposalPeriod(_freezeProposalPeriod);
     }
 
@@ -103,7 +103,7 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
      *
      * @param _freezePeriod number of blocks a freeze lasts, from time of freeze proposal creation
      */
-    function updateFreezePeriod(uint256 _freezePeriod) external onlyOwner {
+    function updateFreezePeriod(uint32 _freezePeriod) external onlyOwner {
         _updateFreezePeriod(_freezePeriod);
     }
 
@@ -114,13 +114,13 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     }
 
     /** Internal implementation of `updateFreezeProposalPeriod`. */
-    function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal {
+    function _updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) internal {
         freezeProposalPeriod = _freezeProposalPeriod;
         emit FreezeProposalPeriodUpdated(_freezeProposalPeriod);
     }
 
     /** Internal implementation of `updateFreezePeriod`. */
-    function _updateFreezePeriod(uint256 _freezePeriod) internal {
+    function _updateFreezePeriod(uint32 _freezePeriod) internal {
         freezePeriod = _freezePeriod;
         emit FreezePeriodUpdated(_freezePeriod);
     }
