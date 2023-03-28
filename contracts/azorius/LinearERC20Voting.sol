@@ -177,7 +177,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         return (
             block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
             proposalVotes[_proposalId].yesVotes >= quorum(proposalVotes[_proposalId].votingStartBlock) && // yes votes meets the quorum
-            proposalVotes[_proposalId].yesVotes > (proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].noVotes) * basisNumerator / BASIS_DENOMINATOR // yes votes meets the basis
+            meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
         );
     }
 

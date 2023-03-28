@@ -42,4 +42,8 @@ abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
 
         emit BasisNumeratorUpdated(_basisNumerator);
     }
+
+    function meetsBasis(uint256 _yesVotes, uint256 _noVotes) public view returns (bool) {
+        return _yesVotes > (_yesVotes + _noVotes) * basisNumerator / BASIS_DENOMINATOR;
+    }
 }
