@@ -1231,7 +1231,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     it("Only the owner can update the proposer weight on the ERC20LinearVoting", async () => {
       expect(await linearERC20Voting.requiredProposerWeight()).to.eq(0);
 
-      await linearERC20Voting.connect(gnosisSafeOwner).updateRequiredProposerWeight(1);
+      await linearERC20Voting
+        .connect(gnosisSafeOwner)
+        .updateRequiredProposerWeight(1);
 
       expect(await linearERC20Voting.requiredProposerWeight()).to.eq(1);
 
