@@ -7,7 +7,7 @@ Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
 ### timelockPeriod
 
 ```solidity
-uint256 timelockPeriod
+uint32 timelockPeriod
 ```
 
 Timelock period (in blocks).
@@ -15,7 +15,7 @@ Timelock period (in blocks).
 ### executionPeriod
 
 ```solidity
-uint256 executionPeriod
+uint32 executionPeriod
 ```
 
 Execution period (in blocks).
@@ -40,7 +40,7 @@ Reference to the Safe that can be frozen.
 ### transactionTimelockedBlock
 
 ```solidity
-mapping(bytes32 => uint256) transactionTimelockedBlock
+mapping(bytes32 => uint32) transactionTimelockedBlock
 ```
 
 Mapping of transaction hash to the block during which it was timelocked.
@@ -60,13 +60,13 @@ event TransactionTimelocked(address timelocker, bytes32 transactionHash, bytes s
 ### TimelockPeriodUpdated
 
 ```solidity
-event TimelockPeriodUpdated(uint256 timelockPeriod)
+event TimelockPeriodUpdated(uint32 timelockPeriod)
 ```
 
 ### ExecutionPeriodUpdated
 
 ```solidity
-event ExecutionPeriodUpdated(uint256 executionPeriod)
+event ExecutionPeriodUpdated(uint32 executionPeriod)
 ```
 
 ### NotTimelockable
@@ -145,7 +145,7 @@ The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransact
 ### updateTimelockPeriod
 
 ```solidity
-function updateTimelockPeriod(uint256 _timelockPeriod) external
+function updateTimelockPeriod(uint32 _timelockPeriod) external
 ```
 
 Sets the subDAO's timelock period.
@@ -154,12 +154,12 @@ Sets the subDAO's timelock period.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | new timelock period for the subDAO (in blocks) |
+| _timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
 
 ### updateExecutionPeriod
 
 ```solidity
-function updateExecutionPeriod(uint256 _executionPeriod) external
+function updateExecutionPeriod(uint32 _executionPeriod) external
 ```
 
 Updates the execution period.
@@ -173,7 +173,7 @@ This period begins immediately after the timelock period has ended.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _executionPeriod | uint256 | number of blocks a transaction has to be executed within |
+| _executionPeriod | uint32 | number of blocks a transaction has to be executed within |
 
 ### checkTransaction
 
@@ -196,7 +196,7 @@ function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 ### getTransactionTimelockedBlock
 
 ```solidity
-function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256)
+function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint32)
 ```
 
 Gets the block number that the given transaction was timelocked at.
@@ -211,7 +211,7 @@ Gets the block number that the given transaction was timelocked at.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | uint256 block number in which the transaction began its timelock period |
+| [0] | uint32 | uint32 block number in which the transaction began its timelock period |
 
 ### getTransactionHash
 
@@ -251,7 +251,7 @@ are not being signed by users.
 ### _updateTimelockPeriod
 
 ```solidity
-function _updateTimelockPeriod(uint256 _timelockPeriod) internal
+function _updateTimelockPeriod(uint32 _timelockPeriod) internal
 ```
 
 Internal implementation of `updateTimelockPeriod`
@@ -259,7 +259,7 @@ Internal implementation of `updateTimelockPeriod`
 ### _updateExecutionPeriod
 
 ```solidity
-function _updateExecutionPeriod(uint256 _executionPeriod) internal
+function _updateExecutionPeriod(uint32 _executionPeriod) internal
 ```
 
 Internal implementation of `updateExecutionPeriod`

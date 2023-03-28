@@ -51,11 +51,11 @@ struct Transaction {
 
 ```solidity
 struct Proposal {
+  uint32 executionCounter;
+  uint32 timelockPeriod;
+  uint32 executionPeriod;
   address strategy;
   bytes32[] txHashes;
-  uint256 timelockPeriod;
-  uint256 executionPeriod;
-  uint256 executionCounter;
 }
 ```
 
@@ -108,7 +108,7 @@ This has no effect on existing Proposals, either `ACTIVE` or completed.
 ### updateTimelockPeriod
 
 ```solidity
-function updateTimelockPeriod(uint256 _timelockPeriod) external
+function updateTimelockPeriod(uint32 _timelockPeriod) external
 ```
 
 Updates the `timelockPeriod` for newly created Proposals.
@@ -118,7 +118,21 @@ This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | timelockPeriod (in blocks) to be used for new Proposals |
+| _timelockPeriod | uint32 | timelockPeriod (in blocks) to be used for new Proposals |
+
+### updateExecutionPeriod
+
+```solidity
+function updateExecutionPeriod(uint32 _executionPeriod) external
+```
+
+Updates the execution period for future Proposals.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _executionPeriod | uint32 | new execution period (in blocks) |
 
 ### submitProposal
 
@@ -141,7 +155,7 @@ New Proposals begin immediately in the `ACTIVE` state.
 ### executeProposal
 
 ```solidity
-function executeProposal(uint256 _proposalId, address[] _targets, uint256[] _values, bytes[] _data, enum Enum.Operation[] _operations) external
+function executeProposal(uint32 _proposalId, address[] _targets, uint256[] _values, bytes[] _data, enum Enum.Operation[] _operations) external
 ```
 
 Executes all transactions within a Proposal.
@@ -151,7 +165,7 @@ This will only be able to be called if the Proposal passed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal |
+| _proposalId | uint32 | identifier of the Proposal |
 | _targets | address[] | target contracts for each transaction |
 | _values | uint256[] | ETH values to be sent with each transaction |
 | _data | bytes[] | transaction data to be executed |
@@ -206,7 +220,7 @@ returning the whole list at once.
 ### proposalState
 
 ```solidity
-function proposalState(uint256 _proposalId) external view returns (enum IAzorius.ProposalState)
+function proposalState(uint32 _proposalId) external view returns (enum IAzorius.ProposalState)
 ```
 
 Gets the state of a Proposal.
@@ -215,7 +229,7 @@ Gets the state of a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal |
+| _proposalId | uint32 | identifier of the Proposal |
 
 #### Return Values
 
@@ -273,7 +287,7 @@ Returns the `keccak256` hash of the specified transaction.
 ### getProposalTxHash
 
 ```solidity
-function getProposalTxHash(uint256 _proposalId, uint256 _txIndex) external view returns (bytes32)
+function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32)
 ```
 
 Returns the hash of a transaction in a Proposal.
@@ -282,8 +296,8 @@ Returns the hash of a transaction in a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal |
-| _txIndex | uint256 | index of the transaction within the Proposal |
+| _proposalId | uint32 | identifier of the Proposal |
+| _txIndex | uint32 | index of the transaction within the Proposal |
 
 #### Return Values
 
@@ -294,7 +308,7 @@ Returns the hash of a transaction in a Proposal.
 ### getProposalTxHashes
 
 ```solidity
-function getProposalTxHashes(uint256 _proposalId) external view returns (bytes32[])
+function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[])
 ```
 
 Returns the transaction hashes associated with a given `proposalId`.
@@ -303,7 +317,7 @@ Returns the transaction hashes associated with a given `proposalId`.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal to get transaction hashes for |
+| _proposalId | uint32 | identifier of the Proposal to get transaction hashes for |
 
 #### Return Values
 
@@ -314,7 +328,7 @@ Returns the transaction hashes associated with a given `proposalId`.
 ### getProposal
 
 ```solidity
-function getProposal(uint256 _proposalId) external view returns (address _strategy, bytes32[] _txHashes, uint256 _timelockPeriod, uint256 _executionPeriod, uint256 _executionCounter)
+function getProposal(uint32 _proposalId) external view returns (address _strategy, bytes32[] _txHashes, uint32 _timelockPeriod, uint32 _executionPeriod, uint32 _executionCounter)
 ```
 
 Returns details about the specified Proposal.
@@ -323,7 +337,7 @@ Returns details about the specified Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _proposalId | uint256 | identifier of the Proposal |
+| _proposalId | uint32 | identifier of the Proposal |
 
 #### Return Values
 
@@ -331,7 +345,7 @@ Returns details about the specified Proposal.
 | ---- | ---- | ----------- |
 | _strategy | address | address of the BaseStrategy contract the Proposal is on |
 | _txHashes | bytes32[] | hashes of the transactions the Proposal contains |
-| _timelockPeriod | uint256 | time (in blocks) the Proposal is timelocked for |
-| _executionPeriod | uint256 | time (in blocks) the Proposal must be executed within, after timelock ends |
-| _executionCounter | uint256 | counter of how many of the Proposals transactions have been executed |
+| _timelockPeriod | uint32 | time (in blocks) the Proposal is timelocked for |
+| _executionPeriod | uint32 | time (in blocks) the Proposal must be executed within, after timelock ends |
+| _executionCounter | uint32 | counter of how many of the Proposals transactions have been executed |
 
