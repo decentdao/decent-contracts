@@ -20,17 +20,6 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
 
     event QuorumNumeratorUpdated(uint256 quorumNumerator);
 
-    /**
-     * Calculates the number of votes needed to achieve quorum at a specific block number.
-     *
-     * Because token supply is not necessarily static, it is required to calculate
-     * quorum based on the supply at the time of a Proposal's creation.
-     *
-     * @param _blockNumber block number to calculate quorum at
-     * @return uint256 the number of votes needed for quorum
-     */
-    function quorum(uint256 _blockNumber) public view virtual returns (uint256);
-
     /** 
      * Updates the quorum required for future Proposals.
      *
@@ -48,5 +37,18 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
         quorumNumerator = _quorumNumerator;
 
         emit QuorumNumeratorUpdated(_quorumNumerator);
+    }
+
+    /**
+     * Calculates whether a vote meets quorum. This is calculated based on yes votes + abstain
+     * votes.
+     *
+     * @param _totalSupply the total supply of tokens
+     * @param _yesVotes number of votes in favor
+     * @param _abstainVotes number of votes abstaining
+     * @return bool whether the total number of yes votes + abstain meets the quorum
+     */
+    function meetsQuorum(uint256 _totalSupply, uint256 _yesVotes, uint256 _abstainVotes) public view returns (bool) {
+        return _yesVotes + _abstainVotes >= (_totalSupply * quorumNumerator) / QUORUM_DENOMINATOR;
     }
 }

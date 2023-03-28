@@ -174,18 +174,14 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
 
     /** @inheritdoc BaseStrategy*/
     function isPassed(uint32 _proposalId) public view override returns (bool) {
+        // because token supply is not necessarily static, it is required to calculate
+        // quorum based on the supply at the time of a Proposal's creation.
         return (
             block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
-            proposalVotes[_proposalId].yesVotes >= quorum(proposalVotes[_proposalId].votingStartBlock) && // yes votes meets the quorum
+            meetsQuorum(governanceToken.getPastTotalSupply(proposalVotes[_proposalId].votingStartBlock), 
+                proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].abstainVotes) && // yes + abstain votes meets the quorum
             meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
         );
-    }
-
-    /** @inheritdoc BaseQuorumPercent*/
-    function quorum(uint256 _blockNumber) public view override returns (uint256) {
-        return
-            (governanceToken.getPastTotalSupply(_blockNumber) *
-                quorumNumerator) / QUORUM_DENOMINATOR;
     }
 
     /**
