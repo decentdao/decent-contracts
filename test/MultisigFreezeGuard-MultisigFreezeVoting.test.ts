@@ -910,6 +910,55 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       ).to.emit(childGnosisSafe, "ExecutionSuccess");
     });
 
+    it("A transaction cannot be timelocked twice", async () => {
+      // Create transaction to set the guard address
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 1000]
+      );
+
+      const tx = buildSafeTransaction({
+        to: votesERC20.address,
+        data: tokenTransferData,
+        safeTxGas: 1000000,
+        nonce: await childGnosisSafe.nonce(),
+      });
+
+      const sigs = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
+      ];
+      const signatureBytes = buildSignatureBytes(sigs);
+
+      await freezeGuard.timelockTransaction(
+        tx.to,
+        tx.value,
+        tx.data,
+        tx.operation,
+        tx.safeTxGas,
+        tx.baseGas,
+        tx.gasPrice,
+        tx.gasToken,
+        tx.refundReceiver,
+        signatureBytes
+      );
+
+      await expect(
+        freezeGuard.timelockTransaction(
+          tx.to,
+          tx.value,
+          tx.data,
+          tx.operation,
+          tx.safeTxGas,
+          tx.baseGas,
+          tx.gasPrice,
+          tx.gasToken,
+          tx.refundReceiver,
+          signatureBytes
+        )
+      ).to.be.revertedWith("NotTimelockable()");
+    });
+
     it("You must be a parent multisig owner to cast a freeze vote", async () => {
       await expect(
         freezeVoting.connect(freezeGuardOwner).castFreezeVote()
