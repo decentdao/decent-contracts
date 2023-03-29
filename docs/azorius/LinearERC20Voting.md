@@ -43,6 +43,14 @@ uint32 votingPeriod
 
 Number of blocks a new Proposal can be voted on.
 
+### requiredProposerWeight
+
+```solidity
+uint256 requiredProposerWeight
+```
+
+Voting weight required to be able to submit Proposals.
+
 ### proposalVotes
 
 ```solidity
@@ -55,6 +63,12 @@ mapping(uint256 => struct LinearERC20Voting.ProposalVotes) proposalVotes
 
 ```solidity
 event VotingPeriodUpdated(uint32 votingPeriod)
+```
+
+### RequiredProposerWeightUpdated
+
+```solidity
+event RequiredProposerWeightUpdated(uint256 requiredProposerWeight)
 ```
 
 ### ProposalInitialized
@@ -111,7 +125,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
 
 ### updateVotingPeriod
 
@@ -126,6 +140,20 @@ Updates the voting time period for new Proposals.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _votingPeriod | uint32 | voting time period (in blocks) |
+
+### updateRequiredProposerWeight
+
+```solidity
+function updateRequiredProposerWeight(uint256 _requiredProposerWeight) external
+```
+
+Updates the voting weight required to submit new Proposals.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _requiredProposerWeight | uint256 | required token voting weight |
 
 ### initializeProposal
 
@@ -222,29 +250,6 @@ Returns whether a Proposal has been passed.
 | ---- | ---- | ----------- |
 | [0] | bool | bool true if the proposal has passed, otherwise false |
 
-### quorum
-
-```solidity
-function quorum(uint256 _blockNumber) public view returns (uint256)
-```
-
-Calculates the number of votes needed to achieve quorum at a specific block number.
-
-Because token supply is not necessarily static, it is required to calculate
-quorum based on the supply at the time of a Proposal's creation.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _blockNumber | uint256 | block number to calculate quorum at |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 the number of votes needed for quorum |
-
 ### getVotingWeight
 
 ```solidity
@@ -269,7 +274,7 @@ Calculates the voting weight an address has for a specific Proposal.
 ### isProposer
 
 ```solidity
-function isProposer(address) public pure returns (bool)
+function isProposer(address _address) public view returns (bool)
 ```
 
 Returns whether the specified address can submit a Proposal with
@@ -283,7 +288,7 @@ delegation.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-|  | address |  |
+| _address | address | address to check |
 
 #### Return Values
 
@@ -318,6 +323,14 @@ function _updateVotingPeriod(uint32 _votingPeriod) internal
 ```
 
 Internal implementation of `updateVotingPeriod`.
+
+### _updateRequiredProposerWeight
+
+```solidity
+function _updateRequiredProposerWeight(uint256 _requiredProposerWeight) internal
+```
+
+Internal implementation of `updateRequiredProposerWeight`.
 
 ### _vote
 

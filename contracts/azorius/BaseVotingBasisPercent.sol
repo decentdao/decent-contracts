@@ -43,6 +43,13 @@ abstract contract BaseVotingBasisPercent is OwnableUpgradeable {
         emit BasisNumeratorUpdated(_basisNumerator);
     }
 
+    /**
+     * Calculates whether a vote meets its basis.
+     *
+     * @param _yesVotes number of votes in favor
+     * @param _noVotes number of votes against
+     * @return bool whether the yes votes meets the set basis
+     */
     function meetsBasis(uint256 _yesVotes, uint256 _noVotes) public view returns (bool) {
         return _yesVotes > (_yesVotes + _noVotes) * basisNumerator / BASIS_DENOMINATOR;
     }
