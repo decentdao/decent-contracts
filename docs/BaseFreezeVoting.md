@@ -18,30 +18,6 @@ to be successful.
 Following a successful freeze vote, the childDAO will be unable to execute transactions, due to
 a Safe Transaction Guard, until the `freezePeriod` has elapsed.
 
-### freezeProposalCreatedBlock
-
-```solidity
-uint32 freezeProposalCreatedBlock
-```
-
-Block number the freeze proposal was created at.
-
-### freezeProposalPeriod
-
-```solidity
-uint32 freezeProposalPeriod
-```
-
-Number of blocks a freeze proposal has to succeed.
-
-### freezePeriod
-
-```solidity
-uint32 freezePeriod
-```
-
-Number of blocks a freeze lasts, from time of freeze proposal creation.
-
 ### freezeVotesThreshold
 
 ```solidity
@@ -50,6 +26,14 @@ uint256 freezeVotesThreshold
 
 Number of freeze votes required to activate a freeze.
 
+### freezeProposalCreatedBlock
+
+```solidity
+uint256 freezeProposalCreatedBlock
+```
+
+Block number the freeze proposal was created at.
+
 ### freezeProposalVoteCount
 
 ```solidity
@@ -57,6 +41,22 @@ uint256 freezeProposalVoteCount
 ```
 
 Number of accrued freeze votes.
+
+### freezeProposalPeriod
+
+```solidity
+uint256 freezeProposalPeriod
+```
+
+Number of blocks a freeze proposal has to succeed.
+
+### freezePeriod
+
+```solidity
+uint256 freezePeriod
+```
+
+Number of blocks a freeze lasts, from time of freeze proposal creation.
 
 ### userHasFreezeVoted
 
@@ -88,13 +88,13 @@ event FreezeVotesThresholdUpdated(uint256 freezeVotesThreshold)
 ### FreezePeriodUpdated
 
 ```solidity
-event FreezePeriodUpdated(uint32 freezePeriod)
+event FreezePeriodUpdated(uint256 freezePeriod)
 ```
 
 ### FreezeProposalPeriodUpdated
 
 ```solidity
-event FreezeProposalPeriodUpdated(uint32 freezeProposalPeriod)
+event FreezeProposalPeriodUpdated(uint256 freezeProposalPeriod)
 ```
 
 ### castFreezeVote
@@ -149,7 +149,7 @@ Updates the freeze votes threshold, the number of votes required to enact a free
 ### updateFreezeProposalPeriod
 
 ```solidity
-function updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) external
+function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external
 ```
 
 Updates the freeze proposal period, the time that parent token holders have to cast votes
@@ -159,12 +159,12 @@ after a freeze vote has been initiated.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _freezeProposalPeriod | uint32 | number of blocks a freeze vote has to succeed to enact a freeze |
+| _freezeProposalPeriod | uint256 | number of blocks a freeze vote has to succeed to enact a freeze |
 
 ### updateFreezePeriod
 
 ```solidity
-function updateFreezePeriod(uint32 _freezePeriod) external
+function updateFreezePeriod(uint256 _freezePeriod) external
 ```
 
 Updates the freeze period, the time the DAO will be unable to execute transactions for,
@@ -174,7 +174,7 @@ should a freeze vote pass.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
+| _freezePeriod | uint256 | number of blocks a freeze lasts, from time of freeze proposal creation |
 
 ### _updateFreezeVotesThreshold
 
@@ -187,7 +187,7 @@ Internal implementation of `updateFreezeVotesThreshold`.
 ### _updateFreezeProposalPeriod
 
 ```solidity
-function _updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) internal
+function _updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) internal
 ```
 
 Internal implementation of `updateFreezeProposalPeriod`.
@@ -195,7 +195,7 @@ Internal implementation of `updateFreezeProposalPeriod`.
 ### _updateFreezePeriod
 
 ```solidity
-function _updateFreezePeriod(uint32 _freezePeriod) internal
+function _updateFreezePeriod(uint256 _freezePeriod) internal
 ```
 
 Internal implementation of `updateFreezePeriod`.
