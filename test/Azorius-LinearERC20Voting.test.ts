@@ -1915,5 +1915,9 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Basis requires MORE than 50% yes votes
       expect(await linearERC20Voting.isPassed(2)).to.eq(false);
     });
+
+    it("An proposal that hasn't been submitted yet is not passed", async () => {
+      expect(await linearERC20Voting.isPassed(0)).to.eq(false);
+    });
   });
 });
