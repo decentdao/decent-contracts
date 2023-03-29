@@ -21,5 +21,11 @@ module.exports = {
       { ignores: ["modules"] },
     ],
     camelcase: ["error", { ignoreImports: true }],
+    "prettier/prettier": [
+      1,
+      {
+        endOfLine: "auto",
+      },
+    ],
   },
 };
