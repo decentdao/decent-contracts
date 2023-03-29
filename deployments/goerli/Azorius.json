@@ -1,0 +1,1354 @@
+{
+  "address": "0x6B1975f551bdBf732Ebf505217D3e36Ee1D7a049",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "InvalidArrayLengths",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidProposal",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidProposer",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidStrategy",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidTxHash",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidTxs",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "guard_",
+          "type": "address"
+        }
+      ],
+      "name": "NotIERC165Compliant",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ProposalNotExecutable",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "StrategyDisabled",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "StrategyEnabled",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TxFailed",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousAvatar",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newAvatar",
+          "type": "address"
+        }
+      ],
+      "name": "AvatarSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "avatar",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AzoriusSetUp",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "guard",
+          "type": "address"
+        }
+      ],
+      "name": "ChangedGuard",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "strategy",
+          "type": "address"
+        }
+      ],
+      "name": "DisabledStrategy",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "strategy",
+          "type": "address"
+        }
+      ],
+      "name": "EnabledStrategy",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "executionPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "ExecutionPeriodUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "strategy",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "proposer",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Enum.Operation",
+              "name": "operation",
+              "type": "uint8"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IAzorius.Transaction[]",
+          "name": "transactions",
+          "type": "tuple[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "metadata",
+          "type": "string"
+        }
+      ],
+      "name": "ProposalCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "proposalId",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32[]",
+          "name": "txHashes",
+          "type": "bytes32[]"
+        }
+      ],
+      "name": "ProposalExecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousTarget",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newTarget",
+          "type": "address"
+        }
+      ],
+      "name": "TargetSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "timelockPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "TimelockPeriodUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DOMAIN_SEPARATOR_TYPEHASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TRANSACTION_TYPEHASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "avatar",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_prevStrategy",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_strategy",
+          "type": "address"
+        }
+      ],
+      "name": "disableStrategy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_strategy",
+          "type": "address"
+        }
+      ],
+      "name": "enableStrategy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address[]",
+          "name": "_targets",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_values",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes[]",
+          "name": "_data",
+          "type": "bytes[]"
+        },
+        {
+          "internalType": "enum Enum.Operation[]",
+          "name": "_operations",
+          "type": "uint8[]"
+        }
+      ],
+      "name": "executeProposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "executionPeriod",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        },
+        {
+          "internalType": "enum Enum.Operation",
+          "name": "_operation",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_nonce",
+          "type": "uint256"
+        }
+      ],
+      "name": "generateTxHashData",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getGuard",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "_guard",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getProposal",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "_strategy",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "_txHashes",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_timelockPeriod",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_executionPeriod",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_executionCounter",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "_txIndex",
+          "type": "uint32"
+        }
+      ],
+      "name": "getProposalTxHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getProposalTxHashes",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_startAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_count",
+          "type": "uint256"
+        }
+      ],
+      "name": "getStrategies",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "_strategies",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "_next",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        },
+        {
+          "internalType": "enum Enum.Operation",
+          "name": "_operation",
+          "type": "uint8"
+        }
+      ],
+      "name": "getTxHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "guard",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_strategy",
+          "type": "address"
+        }
+      ],
+      "name": "isStrategyEnabled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "proposalState",
+      "outputs": [
+        {
+          "internalType": "enum IAzorius.ProposalState",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_avatar",
+          "type": "address"
+        }
+      ],
+      "name": "setAvatar",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_guard",
+          "type": "address"
+        }
+      ],
+      "name": "setGuard",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_target",
+          "type": "address"
+        }
+      ],
+      "name": "setTarget",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "initializeParams",
+          "type": "bytes"
+        }
+      ],
+      "name": "setUp",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_strategy",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Enum.Operation",
+              "name": "operation",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAzorius.Transaction[]",
+          "name": "_transactions",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "string",
+          "name": "_metadata",
+          "type": "string"
+        }
+      ],
+      "name": "submitProposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "target",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "timelockPeriod",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalProposalCount",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_executionPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "updateExecutionPeriod",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_timelockPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "updateTimelockPeriod",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x93092adddd586295a37a101f361b8fd9d7370f3c042229576ab3210aca12430d",
+  "receipt": {
+    "to": null,
+    "from": "0x7930DdA80157Fcc47ba9c3836398c82d89C16416",
+    "contractAddress": "0x6B1975f551bdBf732Ebf505217D3e36Ee1D7a049",
+    "transactionIndex": 24,
+    "gasUsed": "2397230",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xd07cdb882b7f9adb3f5c3642f07e220d758bb3608d44d4533579f40c95c93457",
+    "transactionHash": "0x93092adddd586295a37a101f361b8fd9d7370f3c042229576ab3210aca12430d",
+    "logs": [],
+    "blockNumber": 8740302,
+    "cumulativeGasUsed": "3693791",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "47e1125d24b18568844b42c32fd9e135",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"InvalidArrayLengths\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidProposal\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidProposer\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidStrategy\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidTxHash\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidTxs\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"guard_\",\"type\":\"address\"}],\"name\":\"NotIERC165Compliant\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ProposalNotExecutable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"StrategyDisabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"StrategyEnabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TxFailed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousAvatar\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newAvatar\",\"type\":\"address\"}],\"name\":\"AvatarSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avatar\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AzoriusSetUp\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"guard\",\"type\":\"address\"}],\"name\":\"ChangedGuard\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"}],\"name\":\"DisabledStrategy\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"}],\"name\":\"EnabledStrategy\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"executionPeriod\",\"type\":\"uint32\"}],\"name\":\"ExecutionPeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"strategy\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"proposer\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"operation\",\"type\":\"uint8\"}],\"indexed\":false,\"internalType\":\"struct IAzorius.Transaction[]\",\"name\":\"transactions\",\"type\":\"tuple[]\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"}],\"name\":\"ProposalCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"proposalId\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"bytes32[]\",\"name\":\"txHashes\",\"type\":\"bytes32[]\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousTarget\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newTarget\",\"type\":\"address\"}],\"name\":\"TargetSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"timelockPeriod\",\"type\":\"uint32\"}],\"name\":\"TimelockPeriodUpdated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DOMAIN_SEPARATOR_TYPEHASH\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TRANSACTION_TYPEHASH\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"avatar\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_prevStrategy\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"}],\"name\":\"disableStrategy\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"}],\"name\":\"enableStrategy\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"_targets\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_values\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_data\",\"type\":\"bytes[]\"},{\"internalType\":\"enum Enum.Operation[]\",\"name\":\"_operations\",\"type\":\"uint8[]\"}],\"name\":\"executeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"executionPeriod\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"_operation\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\"}],\"name\":\"generateTxHashData\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getGuard\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"_guard\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"getProposal\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"bytes32[]\",\"name\":\"_txHashes\",\"type\":\"bytes32[]\"},{\"internalType\":\"uint32\",\"name\":\"_timelockPeriod\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_executionPeriod\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_executionCounter\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"_txIndex\",\"type\":\"uint32\"}],\"name\":\"getProposalTxHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"getProposalTxHashes\",\"outputs\":[{\"internalType\":\"bytes32[]\",\"name\":\"\",\"type\":\"bytes32[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_startAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_count\",\"type\":\"uint256\"}],\"name\":\"getStrategies\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"_strategies\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"_next\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"_operation\",\"type\":\"uint8\"}],\"name\":\"getTxHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"guard\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"}],\"name\":\"isStrategyEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"proposalState\",\"outputs\":[{\"internalType\":\"enum IAzorius.ProposalState\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_avatar\",\"type\":\"address\"}],\"name\":\"setAvatar\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_guard\",\"type\":\"address\"}],\"name\":\"setGuard\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_target\",\"type\":\"address\"}],\"name\":\"setTarget\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"initializeParams\",\"type\":\"bytes\"}],\"name\":\"setUp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_strategy\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"enum Enum.Operation\",\"name\":\"operation\",\"type\":\"uint8\"}],\"internalType\":\"struct IAzorius.Transaction[]\",\"name\":\"_transactions\",\"type\":\"tuple[]\"},{\"internalType\":\"string\",\"name\":\"_metadata\",\"type\":\"string\"}],\"name\":\"submitProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"target\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"timelockPeriod\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalProposalCount\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_executionPeriod\",\"type\":\"uint32\"}],\"name\":\"updateExecutionPeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_timelockPeriod\",\"type\":\"uint32\"}],\"name\":\"updateTimelockPeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"AvatarSet(address,address)\":{\"details\":\"Emitted each time the avatar is set.\"},\"Initialized(uint8)\":{\"details\":\"Triggered when the contract has been initialized or reinitialized.\"},\"TargetSet(address,address)\":{\"details\":\"Emitted each time the Target is set.\"}},\"kind\":\"dev\",\"methods\":{\"disableStrategy(address,address)\":{\"params\":{\"_prevStrategy\":\"BaseStrategy address that pointed in the linked list to the strategy to be removed\",\"_strategy\":\"address of the BaseStrategy to be removed\"}},\"enableStrategy(address)\":{\"params\":{\"_strategy\":\"contract address of the BaseStrategy to be enabled\"}},\"executeProposal(uint32,address[],uint256[],bytes[],uint8[])\":{\"params\":{\"_data\":\"transaction data to be executed\",\"_operations\":\"Calls or Delegatecalls\",\"_proposalId\":\"identifier of the Proposal\",\"_targets\":\"target contracts for each transaction\",\"_values\":\"ETH values to be sent with each transaction\"}},\"generateTxHashData(address,uint256,bytes,uint8,uint256)\":{\"params\":{\"_data\":\"encoded function call data of the transaction\",\"_nonce\":\"Safe nonce of the transaction\",\"_operation\":\"Enum.Operation to use for the transaction\",\"_to\":\"target address of the transaction\",\"_value\":\"ETH value to send with the transaction\"},\"returns\":{\"_0\":\"bytes hashed transaction data\"}},\"getProposal(uint32)\":{\"params\":{\"_proposalId\":\"identifier of the Proposal\"},\"returns\":{\"_executionCounter\":\"counter of how many of the Proposals transactions have been executed\",\"_executionPeriod\":\"time (in blocks) the Proposal must be executed within, after timelock ends\",\"_strategy\":\"address of the BaseStrategy contract the Proposal is on\",\"_timelockPeriod\":\"time (in blocks) the Proposal is timelocked for\",\"_txHashes\":\"hashes of the transactions the Proposal contains\"}},\"getProposalTxHash(uint32,uint32)\":{\"params\":{\"_proposalId\":\"identifier of the Proposal\",\"_txIndex\":\"index of the transaction within the Proposal\"},\"returns\":{\"_0\":\"bytes32 hash of the specified transaction\"}},\"getProposalTxHashes(uint32)\":{\"params\":{\"_proposalId\":\"identifier of the Proposal to get transaction hashes for\"},\"returns\":{\"_0\":\"bytes32[] array of transaction hashes\"}},\"getStrategies(address,uint256)\":{\"params\":{\"_count\":\"maximum number of BaseStrategies that should be returned\",\"_startAddress\":\"contract address of the BaseStrategy to start with\"},\"returns\":{\"_next\":\"next BaseStrategy contract address in the linked list\",\"_strategies\":\"array of BaseStrategies\"}},\"getTxHash(address,uint256,bytes,uint8)\":{\"params\":{\"_data\":\"encoded function call data of the transaction\",\"_operation\":\"Enum.Operation to use for the transaction\",\"_to\":\"target address of the transaction\",\"_value\":\"ETH value to send with the transaction\"},\"returns\":{\"_0\":\"bytes32 transaction hash\"}},\"isStrategyEnabled(address)\":{\"params\":{\"_strategy\":\"contract address of the BaseStrategy to check\"},\"returns\":{\"_0\":\"bool True if the strategy is enabled, otherwise False\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"proposalState(uint32)\":{\"params\":{\"_proposalId\":\"identifier of the Proposal\"},\"returns\":{\"_0\":\"ProposalState uint256 ProposalState enum value representing the         current state of the proposal\"}},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"setAvatar(address)\":{\"details\":\"Sets the avatar to a new avatar (`newAvatar`).\"},\"setGuard(address)\":{\"details\":\"Set a guard that checks transactions before execution.\",\"params\":{\"_guard\":\"The address of the guard to be used or the 0 address to disable the guard.\"}},\"setTarget(address)\":{\"details\":\"Sets the target to a new target (`newTarget`).\"},\"setUp(bytes)\":{\"params\":{\"initializeParams\":\"encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod`\"}},\"submitProposal(address,bytes,(address,uint256,bytes,uint8)[],string)\":{\"params\":{\"_data\":\"arbitrary data passed to the BaseStrategy implementation\",\"_metadata\":\"additional data such as a title/description to submit with the proposal\",\"_strategy\":\"address of the BaseStrategy implementation which the Proposal will use\",\"_transactions\":\"array of transactions to propose\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"},\"updateExecutionPeriod(uint32)\":{\"params\":{\"_executionPeriod\":\"new execution period (in blocks)\"}},\"updateTimelockPeriod(uint32)\":{\"params\":{\"_timelockPeriod\":\"timelockPeriod (in blocks) to be used for new Proposals\"}}},\"version\":1},\"userdoc\":{\"errors\":{\"NotIERC165Compliant(address)\":[{\"notice\":\"`guard_` does not implement IERC165.\"}]},\"kind\":\"user\",\"methods\":{\"DOMAIN_SEPARATOR_TYPEHASH()\":{\"notice\":\"``` keccak256(      \\\"EIP712Domain(uint256 chainId,address verifyingContract)\\\" ); ``` A unique hash intended to prevent signature collisions. See https://eips.ethereum.org/EIPS/eip-712.\"},\"TRANSACTION_TYPEHASH()\":{\"notice\":\"``` keccak256(      \\\"Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)\\\" ); ``` See https://eips.ethereum.org/EIPS/eip-712.\"},\"disableStrategy(address,address)\":{\"notice\":\"Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals. This has no effect on existing Proposals, either `ACTIVE` or completed.\"},\"enableStrategy(address)\":{\"notice\":\"Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals. Multiple strategies can be enabled, and new Proposals will be able to be created using any of the currently enabled strategies.\"},\"executeProposal(uint32,address[],uint256[],bytes[],uint8[])\":{\"notice\":\"Executes all transactions within a Proposal. This will only be able to be called if the Proposal passed.\"},\"executionPeriod()\":{\"notice\":\"Time (in blocks) between when timelock ends and the Proposal expires. \"},\"generateTxHashData(address,uint256,bytes,uint8,uint256)\":{\"notice\":\"Generates the data for the module transaction hash (required for signing).\"},\"getProposal(uint32)\":{\"notice\":\"Returns details about the specified Proposal.\"},\"getProposalTxHash(uint32,uint32)\":{\"notice\":\"Returns the hash of a transaction in a Proposal.\"},\"getProposalTxHashes(uint32)\":{\"notice\":\"Returns the transaction hashes associated with a given `proposalId`.\"},\"getStrategies(address,uint256)\":{\"notice\":\"Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses. Because the list of BaseStrategies is technically unbounded, this requires the address of the first strategy you would like, along with the total count of strategies to return, rather than returning the whole list at once.\"},\"getTxHash(address,uint256,bytes,uint8)\":{\"notice\":\"Returns the `keccak256` hash of the specified transaction.\"},\"isStrategyEnabled(address)\":{\"notice\":\"Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.\"},\"proposalState(uint32)\":{\"notice\":\"Gets the state of a Proposal.\"},\"setAvatar(address)\":{\"notice\":\"Can only be called by the current owner.\"},\"setTarget(address)\":{\"notice\":\"Can only be called by the current owner.\"},\"setUp(bytes)\":{\"notice\":\"Initial setup of the Azorius instance.\"},\"submitProposal(address,bytes,(address,uint256,bytes,uint8)[],string)\":{\"notice\":\"Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md). New Proposals begin immediately in the `ACTIVE` state.\"},\"timelockPeriod()\":{\"notice\":\"Delay (in blocks) between when a Proposal is passed and when it can be executed. \"},\"totalProposalCount()\":{\"notice\":\"Total number of submitted Proposals. \"},\"updateExecutionPeriod(uint32)\":{\"notice\":\"Updates the execution period for future Proposals.\"},\"updateTimelockPeriod(uint32)\":{\"notice\":\"Updates the `timelockPeriod` for newly created Proposals. This has no effect on existing Proposals, either `ACTIVE` or completed.\"}},\"notice\":\"A Safe module which allows for composable governance. Azorius conforms to the [Zodiac pattern](https://github.com/gnosis/zodiac) for Safe modules. The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications of the transactions that comprise a Proposal, but notably not the state of voting. All voting details are delegated to [BaseStrategy](./BaseStrategy.md) implementations, of which an Azorius DAO can have any number.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/azorius/Azorius.sol\":\"Azorius\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.7.0 <0.9.0;\\n\\n/// @title Enum - Collection of enums\\n/// @author Richard Meissner - <richard@gnosis.pm>\\ncontract Enum {\\n    enum Operation {Call, DelegateCall}\\n}\\n\",\"keccak256\":\"0x473e45b1a5cc47be494b0e123c9127f0c11c1e0992a321ae5a644c0bfdb2c14f\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/core/Module.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\n\\n/// @title Module Interface - A contract that can pass messages to a Module Manager contract if enabled by that contract.\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"../interfaces/IAvatar.sol\\\";\\nimport \\\"../factory/FactoryFriendly.sol\\\";\\nimport \\\"../guard/Guardable.sol\\\";\\n\\nabstract contract Module is FactoryFriendly, Guardable {\\n    /// @dev Address that will ultimately execute function calls.\\n    address public avatar;\\n    /// @dev Address that this module will pass transactions to.\\n    address public target;\\n\\n    /// @dev Emitted each time the avatar is set.\\n    event AvatarSet(address indexed previousAvatar, address indexed newAvatar);\\n    /// @dev Emitted each time the Target is set.\\n    event TargetSet(address indexed previousTarget, address indexed newTarget);\\n\\n    /// @dev Sets the avatar to a new avatar (`newAvatar`).\\n    /// @notice Can only be called by the current owner.\\n    function setAvatar(address _avatar) public onlyOwner {\\n        address previousAvatar = avatar;\\n        avatar = _avatar;\\n        emit AvatarSet(previousAvatar, _avatar);\\n    }\\n\\n    /// @dev Sets the target to a new target (`newTarget`).\\n    /// @notice Can only be called by the current owner.\\n    function setTarget(address _target) public onlyOwner {\\n        address previousTarget = target;\\n        target = _target;\\n        emit TargetSet(previousTarget, _target);\\n    }\\n\\n    /// @dev Passes a transaction to be executed by the avatar.\\n    /// @notice Can only be called by this contract.\\n    /// @param to Destination address of module transaction.\\n    /// @param value Ether value of module transaction.\\n    /// @param data Data payload of module transaction.\\n    /// @param operation Operation type of module transaction: 0 == call, 1 == delegate call.\\n    function exec(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation\\n    ) internal returns (bool success) {\\n        /// Check if a transactioon guard is enabled.\\n        if (guard != address(0)) {\\n            IGuard(guard).checkTransaction(\\n                /// Transaction info used by module transactions.\\n                to,\\n                value,\\n                data,\\n                operation,\\n                /// Zero out the redundant transaction information only used for Safe multisig transctions.\\n                0,\\n                0,\\n                0,\\n                address(0),\\n                payable(0),\\n                bytes(\\\"0x\\\"),\\n                msg.sender\\n            );\\n        }\\n        success = IAvatar(target).execTransactionFromModule(\\n            to,\\n            value,\\n            data,\\n            operation\\n        );\\n        if (guard != address(0)) {\\n            IGuard(guard).checkAfterExecution(bytes32(\\\"0x\\\"), success);\\n        }\\n        return success;\\n    }\\n\\n    /// @dev Passes a transaction to be executed by the target and returns data.\\n    /// @notice Can only be called by this contract.\\n    /// @param to Destination address of module transaction.\\n    /// @param value Ether value of module transaction.\\n    /// @param data Data payload of module transaction.\\n    /// @param operation Operation type of module transaction: 0 == call, 1 == delegate call.\\n    function execAndReturnData(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation\\n    ) internal returns (bool success, bytes memory returnData) {\\n        /// Check if a transactioon guard is enabled.\\n        if (guard != address(0)) {\\n            IGuard(guard).checkTransaction(\\n                /// Transaction info used by module transactions.\\n                to,\\n                value,\\n                data,\\n                operation,\\n                /// Zero out the redundant transaction information only used for Safe multisig transctions.\\n                0,\\n                0,\\n                0,\\n                address(0),\\n                payable(0),\\n                bytes(\\\"0x\\\"),\\n                msg.sender\\n            );\\n        }\\n        (success, returnData) = IAvatar(target)\\n            .execTransactionFromModuleReturnData(to, value, data, operation);\\n        if (guard != address(0)) {\\n            IGuard(guard).checkAfterExecution(bytes32(\\\"0x\\\"), success);\\n        }\\n        return (success, returnData);\\n    }\\n}\\n\",\"keccak256\":\"0x1b9b6f3b43db68f3c142b326544115d1b1fa1f319c980922ea0a29aa80f53664\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\n\\n/// @title Zodiac FactoryFriendly - A contract that allows other contracts to be initializable and pass bytes as arguments to define contract state\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\n\\nabstract contract FactoryFriendly is OwnableUpgradeable {\\n    function setUp(bytes memory initializeParams) public virtual;\\n}\\n\",\"keccak256\":\"0x96e61585b7340a901a54eb4c157ce28b630bff3d9d4597dfaac692128ea458c4\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/guard/BaseGuard.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\nimport \\\"@openzeppelin/contracts/utils/introspection/IERC165.sol\\\";\\nimport \\\"../interfaces/IGuard.sol\\\";\\n\\nabstract contract BaseGuard is IERC165 {\\n    function supportsInterface(bytes4 interfaceId)\\n        external\\n        pure\\n        override\\n        returns (bool)\\n    {\\n        return\\n            interfaceId == type(IGuard).interfaceId || // 0xe6d7a83a\\n            interfaceId == type(IERC165).interfaceId; // 0x01ffc9a7\\n    }\\n\\n    /// @dev Module transactions only use the first four parameters: to, value, data, and operation.\\n    /// Module.sol hardcodes the remaining parameters as 0 since they are not used for module transactions.\\n    /// @notice This interface is used to maintain compatibilty with Gnosis Safe transaction guards.\\n    function checkTransaction(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation,\\n        uint256 safeTxGas,\\n        uint256 baseGas,\\n        uint256 gasPrice,\\n        address gasToken,\\n        address payable refundReceiver,\\n        bytes memory signatures,\\n        address msgSender\\n    ) external virtual;\\n\\n    function checkAfterExecution(bytes32 txHash, bool success) external virtual;\\n}\\n\",\"keccak256\":\"0xa825848d06a1fc3cb7ad86727c669c8fc6b3bd8dbe419a617830ddcd5e245e47\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/guard/Guardable.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\nimport \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\nimport \\\"./BaseGuard.sol\\\";\\n\\n/// @title Guardable - A contract that manages fallback calls made to this contract\\ncontract Guardable is OwnableUpgradeable {\\n    address public guard;\\n\\n    event ChangedGuard(address guard);\\n\\n    /// `guard_` does not implement IERC165.\\n    error NotIERC165Compliant(address guard_);\\n\\n    /// @dev Set a guard that checks transactions before execution.\\n    /// @param _guard The address of the guard to be used or the 0 address to disable the guard.\\n    function setGuard(address _guard) external onlyOwner {\\n        if (_guard != address(0)) {\\n            if (!BaseGuard(_guard).supportsInterface(type(IGuard).interfaceId))\\n                revert NotIERC165Compliant(_guard);\\n        }\\n        guard = _guard;\\n        emit ChangedGuard(guard);\\n    }\\n\\n    function getGuard() external view returns (address _guard) {\\n        return guard;\\n    }\\n}\\n\",\"keccak256\":\"0xebdcfbe7f0822d8afcc21a1ca8d809417b438cc8b27c3547190a1627a9f5110f\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\n\\n/// @title Zodiac Avatar - A contract that manages modules that can execute transactions via this contract.\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\n\\ninterface IAvatar {\\n    event EnabledModule(address module);\\n    event DisabledModule(address module);\\n    event ExecutionFromModuleSuccess(address indexed module);\\n    event ExecutionFromModuleFailure(address indexed module);\\n\\n    /// @dev Enables a module on the avatar.\\n    /// @notice Can only be called by the avatar.\\n    /// @notice Modules should be stored as a linked list.\\n    /// @notice Must emit EnabledModule(address module) if successful.\\n    /// @param module Module to be enabled.\\n    function enableModule(address module) external;\\n\\n    /// @dev Disables a module on the avatar.\\n    /// @notice Can only be called by the avatar.\\n    /// @notice Must emit DisabledModule(address module) if successful.\\n    /// @param prevModule Address that pointed to the module to be removed in the linked list\\n    /// @param module Module to be removed.\\n    function disableModule(address prevModule, address module) external;\\n\\n    /// @dev Allows a Module to execute a transaction.\\n    /// @notice Can only be called by an enabled module.\\n    /// @notice Must emit ExecutionFromModuleSuccess(address module) if successful.\\n    /// @notice Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\\n    /// @param to Destination address of module transaction.\\n    /// @param value Ether value of module transaction.\\n    /// @param data Data payload of module transaction.\\n    /// @param operation Operation type of module transaction: 0 == call, 1 == delegate call.\\n    function execTransactionFromModule(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation\\n    ) external returns (bool success);\\n\\n    /// @dev Allows a Module to execute a transaction and return data\\n    /// @notice Can only be called by an enabled module.\\n    /// @notice Must emit ExecutionFromModuleSuccess(address module) if successful.\\n    /// @notice Must emit ExecutionFromModuleFailure(address module) if unsuccessful.\\n    /// @param to Destination address of module transaction.\\n    /// @param value Ether value of module transaction.\\n    /// @param data Data payload of module transaction.\\n    /// @param operation Operation type of module transaction: 0 == call, 1 == delegate call.\\n    function execTransactionFromModuleReturnData(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation\\n    ) external returns (bool success, bytes memory returnData);\\n\\n    /// @dev Returns if an module is enabled\\n    /// @return True if the module is enabled\\n    function isModuleEnabled(address module) external view returns (bool);\\n\\n    /// @dev Returns array of modules.\\n    /// @param start Start of the page.\\n    /// @param pageSize Maximum number of modules that should be returned.\\n    /// @return array Array of modules.\\n    /// @return next Start of the next page.\\n    function getModulesPaginated(address start, uint256 pageSize)\\n        external\\n        view\\n        returns (address[] memory array, address next);\\n}\\n\",\"keccak256\":\"0xcd5508ffe596eef8fbccfd5fc4f10a34397773547ce64e212d48b5212865ec1f\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/interfaces/IGuard.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\n\\ninterface IGuard {\\n    function checkTransaction(\\n        address to,\\n        uint256 value,\\n        bytes memory data,\\n        Enum.Operation operation,\\n        uint256 safeTxGas,\\n        uint256 baseGas,\\n        uint256 gasPrice,\\n        address gasToken,\\n        address payable refundReceiver,\\n        bytes memory signatures,\\n        address msgSender\\n    ) external;\\n\\n    function checkAfterExecution(bytes32 txHash, bool success) external;\\n}\\n\",\"keccak256\":\"0xd0d855accbc5fba81c67ab22cdbb03325a8a4d7f6b7e981d1ff0fec3178e464d\",\"license\":\"LGPL-3.0-only\"},\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../utils/ContextUpgradeable.sol\\\";\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * By default, the owner account will be the one that deploys the contract. This\\n * can later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {\\n    address private _owner;\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    function __Ownable_init() internal onlyInitializing {\\n        __Ownable_init_unchained();\\n    }\\n\\n    function __Ownable_init_unchained() internal onlyInitializing {\\n        _transferOwnership(_msgSender());\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        require(owner() == _msgSender(), \\\"Ownable: caller is not the owner\\\");\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        require(newOwner != address(0), \\\"Ownable: new owner is the zero address\\\");\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[49] private __gap;\\n}\\n\",\"keccak256\":\"0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)\\n\\npragma solidity ^0.8.0;\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract ContextUpgradeable is Initializable {\\n    function __Context_init() internal onlyInitializing {\\n    }\\n\\n    function __Context_init_unchained() internal onlyInitializing {\\n    }\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[50] private __gap;\\n}\\n\",\"keccak256\":\"0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[EIP].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\"},\"contracts/azorius/Azorius.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\r\\npragma solidity =0.8.19;\\r\\n\\r\\nimport { Module } from \\\"@gnosis.pm/zodiac/contracts/core/Module.sol\\\";\\r\\nimport { IBaseStrategy } from \\\"./interfaces/IBaseStrategy.sol\\\";\\r\\nimport { IAzorius, Enum } from \\\"./interfaces/IAzorius.sol\\\";\\r\\n\\r\\n/**\\r\\n * A Safe module which allows for composable governance.\\r\\n * Azorius conforms to the [Zodiac pattern](https://github.com/gnosis/zodiac) for Safe modules.\\r\\n *\\r\\n * The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications\\r\\n * of the transactions that comprise a Proposal, but notably not the state of voting.\\r\\n *\\r\\n * All voting details are delegated to [BaseStrategy](./BaseStrategy.md) implementations, of which an Azorius DAO can\\r\\n * have any number.\\r\\n */\\r\\ncontract Azorius is Module, IAzorius {\\r\\n\\r\\n    /**\\r\\n     * The sentinel node of the linked list of enabled [BaseStrategies](./BaseStrategy.md).\\r\\n     *\\r\\n     * See https://en.wikipedia.org/wiki/Sentinel_node.\\r\\n     */\\r\\n    address internal constant SENTINEL_STRATEGY = address(0x1);\\r\\n\\r\\n    /**\\r\\n     * ```\\r\\n     * keccak256(\\r\\n     *      \\\"EIP712Domain(uint256 chainId,address verifyingContract)\\\"\\r\\n     * );\\r\\n     * ```\\r\\n     *\\r\\n     * A unique hash intended to prevent signature collisions.\\r\\n     *\\r\\n     * See https://eips.ethereum.org/EIPS/eip-712.\\r\\n     */\\r\\n    bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =\\r\\n        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;\\r\\n\\r\\n    /**\\r\\n     * ```\\r\\n     * keccak256(\\r\\n     *      \\\"Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)\\\"\\r\\n     * );\\r\\n     * ```\\r\\n     *\\r\\n     * See https://eips.ethereum.org/EIPS/eip-712.\\r\\n     */\\r\\n    bytes32 public constant TRANSACTION_TYPEHASH =\\r\\n        0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;\\r\\n\\r\\n    /** Total number of submitted Proposals. */\\r\\n    uint32 public totalProposalCount;\\r\\n\\r\\n    /** Delay (in blocks) between when a Proposal is passed and when it can be executed. */\\r\\n    uint32 public timelockPeriod;\\r\\n\\r\\n    /** Time (in blocks) between when timelock ends and the Proposal expires. */\\r\\n    uint32 public executionPeriod;\\r\\n\\r\\n    /** Proposals by `proposalId`. */\\r\\n    mapping(uint256 => Proposal) internal proposals;\\r\\n\\r\\n    /** A linked list of enabled [BaseStrategies](./BaseStrategy.md). */\\r\\n    mapping(address => address) internal strategies;\\r\\n\\r\\n    event AzoriusSetUp(\\r\\n        address indexed creator,\\r\\n        address indexed owner,\\r\\n        address indexed avatar,\\r\\n        address target\\r\\n    );\\r\\n    event ProposalCreated(\\r\\n        address strategy,\\r\\n        uint256 proposalId,\\r\\n        address proposer,\\r\\n        Transaction[] transactions,\\r\\n        string metadata\\r\\n    );\\r\\n    event ProposalExecuted(uint32 proposalId, bytes32[] txHashes);\\r\\n    event EnabledStrategy(address strategy);\\r\\n    event DisabledStrategy(address strategy);\\r\\n    event TimelockPeriodUpdated(uint32 timelockPeriod);\\r\\n    event ExecutionPeriodUpdated(uint32 executionPeriod);\\r\\n\\r\\n    error InvalidStrategy();\\r\\n    error StrategyEnabled();\\r\\n    error StrategyDisabled();\\r\\n    error InvalidProposal();\\r\\n    error InvalidProposer();\\r\\n    error ProposalNotExecutable();\\r\\n    error InvalidTxHash();\\r\\n    error TxFailed();\\r\\n    error InvalidTxs();\\r\\n    error InvalidArrayLengths();\\r\\n\\r\\n    /**\\r\\n     * Initial setup of the Azorius instance.\\r\\n     *\\r\\n     * @param initializeParams encoded initialization parameters: `address _owner`, \\r\\n     * `address _avatar`, `address _target`, `address[] memory _strategies`,\\r\\n     * `uint256 _timelockPeriod`, `uint256 _executionPeriod`\\r\\n     */\\r\\n    function setUp(bytes memory initializeParams) public override initializer {\\r\\n        (\\r\\n            address _owner,\\r\\n            address _avatar,\\r\\n            address _target,                \\r\\n            address[] memory _strategies,   // enabled BaseStrategies\\r\\n            uint32 _timelockPeriod,        // initial timelockPeriod\\r\\n            uint32 _executionPeriod        // initial executionPeriod\\r\\n        ) = abi.decode(\\r\\n                initializeParams,\\r\\n                (address, address, address, address[], uint32, uint32)\\r\\n            );\\r\\n        __Ownable_init();\\r\\n        avatar = _avatar;\\r\\n        target = _target;\\r\\n        _setUpStrategies(_strategies);\\r\\n        transferOwnership(_owner);\\r\\n        _updateTimelockPeriod(_timelockPeriod);\\r\\n        _updateExecutionPeriod(_executionPeriod);\\r\\n\\r\\n        emit AzoriusSetUp(msg.sender, _owner, _avatar, _target);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function updateTimelockPeriod(uint32 _timelockPeriod) external onlyOwner {\\r\\n        _updateTimelockPeriod(_timelockPeriod);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function updateExecutionPeriod(uint32 _executionPeriod) external onlyOwner {\\r\\n        _updateExecutionPeriod(_executionPeriod);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function submitProposal(\\r\\n        address _strategy,\\r\\n        bytes memory _data,\\r\\n        Transaction[] calldata _transactions,\\r\\n        string calldata _metadata\\r\\n    ) external {\\r\\n        if (!isStrategyEnabled(_strategy)) revert StrategyDisabled();\\r\\n        if (!IBaseStrategy(_strategy).isProposer(msg.sender))\\r\\n            revert InvalidProposer();\\r\\n\\r\\n        bytes32[] memory txHashes = new bytes32[](_transactions.length);\\r\\n        uint256 transactionsLength = _transactions.length;\\r\\n        for (uint256 i; i < transactionsLength; ) {\\r\\n            txHashes[i] = getTxHash(\\r\\n                _transactions[i].to,\\r\\n                _transactions[i].value,\\r\\n                _transactions[i].data,\\r\\n                _transactions[i].operation\\r\\n            );\\r\\n            unchecked {\\r\\n                ++i;\\r\\n            }\\r\\n        }\\r\\n\\r\\n        proposals[totalProposalCount].strategy = _strategy;\\r\\n        proposals[totalProposalCount].txHashes = txHashes;\\r\\n        proposals[totalProposalCount].timelockPeriod = timelockPeriod;\\r\\n        proposals[totalProposalCount].executionPeriod = executionPeriod;\\r\\n\\r\\n        IBaseStrategy(_strategy).initializeProposal(\\r\\n            abi.encode(totalProposalCount, txHashes, _data)\\r\\n        );\\r\\n\\r\\n        emit ProposalCreated(\\r\\n            _strategy,\\r\\n            totalProposalCount,\\r\\n            msg.sender,\\r\\n            _transactions,\\r\\n            _metadata\\r\\n        );\\r\\n\\r\\n        totalProposalCount++;\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function executeProposal(\\r\\n        uint32 _proposalId,\\r\\n        address[] memory _targets,\\r\\n        uint256[] memory _values,\\r\\n        bytes[] memory _data,\\r\\n        Enum.Operation[] memory _operations\\r\\n    ) external {\\r\\n        if (_targets.length == 0) revert InvalidTxs();\\r\\n        if (\\r\\n            _targets.length != _values.length ||\\r\\n            _targets.length != _data.length ||\\r\\n            _targets.length != _operations.length\\r\\n        ) revert InvalidArrayLengths();\\r\\n        if (\\r\\n            proposals[_proposalId].executionCounter + _targets.length >\\r\\n            proposals[_proposalId].txHashes.length\\r\\n        ) revert InvalidTxs();\\r\\n        uint256 targetsLength = _targets.length;\\r\\n        bytes32[] memory txHashes = new bytes32[](targetsLength);\\r\\n        for (uint256 i; i < targetsLength; ) {\\r\\n            txHashes[i] = _executeProposalTx(\\r\\n                _proposalId,\\r\\n                _targets[i],\\r\\n                _values[i],\\r\\n                _data[i],\\r\\n                _operations[i]\\r\\n            );\\r\\n            unchecked {\\r\\n                ++i;\\r\\n            }\\r\\n        }\\r\\n        emit ProposalExecuted(_proposalId, txHashes);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function getStrategies(\\r\\n        address _startAddress,\\r\\n        uint256 _count\\r\\n    ) external view returns (address[] memory _strategies, address _next) {\\r\\n        // init array with max page size\\r\\n        _strategies = new address[](_count);\\r\\n\\r\\n        // populate return array\\r\\n        uint256 strategyCount = 0;\\r\\n        address currentStrategy = strategies[_startAddress];\\r\\n        while (\\r\\n            currentStrategy != address(0x0) &&\\r\\n            currentStrategy != SENTINEL_STRATEGY &&\\r\\n            strategyCount < _count\\r\\n        ) {\\r\\n            _strategies[strategyCount] = currentStrategy;\\r\\n            currentStrategy = strategies[currentStrategy];\\r\\n            strategyCount++;\\r\\n        }\\r\\n        _next = currentStrategy;\\r\\n        // set correct size of returned array\\r\\n        assembly {\\r\\n            mstore(_strategies, strategyCount)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32) {\\r\\n        return proposals[_proposalId].txHashes[_txIndex];\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory) {\\r\\n        return proposals[_proposalId].txHashes;\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function getProposal(uint32 _proposalId) external view\\r\\n        returns (\\r\\n            address _strategy,\\r\\n            bytes32[] memory _txHashes,\\r\\n            uint32 _timelockPeriod,\\r\\n            uint32 _executionPeriod,\\r\\n            uint32 _executionCounter\\r\\n        )\\r\\n    {\\r\\n        _strategy = proposals[_proposalId].strategy;\\r\\n        _txHashes = proposals[_proposalId].txHashes;\\r\\n        _timelockPeriod = proposals[_proposalId].timelockPeriod;\\r\\n        _executionPeriod = proposals[_proposalId].executionPeriod;\\r\\n        _executionCounter = proposals[_proposalId].executionCounter;\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function enableStrategy(address _strategy) public override onlyOwner {\\r\\n        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)\\r\\n            revert InvalidStrategy();\\r\\n        if (strategies[_strategy] != address(0)) revert StrategyEnabled();\\r\\n\\r\\n        strategies[_strategy] = strategies[SENTINEL_STRATEGY];\\r\\n        strategies[SENTINEL_STRATEGY] = _strategy;\\r\\n\\r\\n        emit EnabledStrategy(_strategy);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function disableStrategy(address _prevStrategy, address _strategy) public onlyOwner {\\r\\n        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)\\r\\n            revert InvalidStrategy();\\r\\n        if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();\\r\\n\\r\\n        strategies[_prevStrategy] = strategies[_strategy];\\r\\n        strategies[_strategy] = address(0);\\r\\n\\r\\n        emit DisabledStrategy(_strategy);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function isStrategyEnabled(address _strategy) public view returns (bool) {\\r\\n        return\\r\\n            SENTINEL_STRATEGY != _strategy &&\\r\\n            strategies[_strategy] != address(0);\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function proposalState(uint32 _proposalId) public view returns (ProposalState) {\\r\\n        Proposal memory _proposal = proposals[_proposalId];\\r\\n\\r\\n        if (_proposal.strategy == address(0)) revert InvalidProposal();\\r\\n\\r\\n        IBaseStrategy _strategy = IBaseStrategy(_proposal.strategy);\\r\\n\\r\\n        uint256 votingEndBlock = _strategy.votingEndBlock(_proposalId);\\r\\n\\r\\n        if (block.number <= votingEndBlock) {\\r\\n            return ProposalState.ACTIVE;\\r\\n        } else if (!_strategy.isPassed(_proposalId)) {\\r\\n            return ProposalState.FAILED;\\r\\n        } else if (_proposal.executionCounter == _proposal.txHashes.length) {\\r\\n            // a Proposal with 0 transactions goes straight to EXECUTED\\r\\n            // this allows for the potential for on-chain voting for \\r\\n            // \\\"off-chain\\\" executed decisions\\r\\n            return ProposalState.EXECUTED;\\r\\n        } else if (block.number <= votingEndBlock + _proposal.timelockPeriod) {\\r\\n            return ProposalState.TIMELOCKED;\\r\\n        } else if (\\r\\n            block.number <=\\r\\n            votingEndBlock +\\r\\n                _proposal.timelockPeriod +\\r\\n                _proposal.executionPeriod\\r\\n        ) {\\r\\n            return ProposalState.EXECUTABLE;\\r\\n        } else {\\r\\n            return ProposalState.EXPIRED;\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function generateTxHashData(\\r\\n        address _to,\\r\\n        uint256 _value,\\r\\n        bytes memory _data,\\r\\n        Enum.Operation _operation,\\r\\n        uint256 _nonce\\r\\n    ) public view returns (bytes memory) {\\r\\n        uint256 chainId = block.chainid;\\r\\n        bytes32 domainSeparator = keccak256(\\r\\n            abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this)\\r\\n        );\\r\\n        bytes32 transactionHash = keccak256(\\r\\n            abi.encode(\\r\\n                TRANSACTION_TYPEHASH,\\r\\n                _to,\\r\\n                _value,\\r\\n                keccak256(_data),\\r\\n                _operation,\\r\\n                _nonce\\r\\n            )\\r\\n        );\\r\\n        return\\r\\n            abi.encodePacked(\\r\\n                bytes1(0x19),\\r\\n                bytes1(0x01),\\r\\n                domainSeparator,\\r\\n                transactionHash\\r\\n            );\\r\\n    }\\r\\n\\r\\n    /** @inheritdoc IAzorius*/\\r\\n    function getTxHash(\\r\\n        address _to,\\r\\n        uint256 _value,\\r\\n        bytes memory _data,\\r\\n        Enum.Operation _operation\\r\\n    ) public view returns (bytes32) {\\r\\n        return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * Executes the specified transaction in a Proposal, by index.\\r\\n     * Transactions in a Proposal must be called in order.\\r\\n     *\\r\\n     * @param _proposalId identifier of the proposal\\r\\n     * @param _target contract to be called by the avatar\\r\\n     * @param _value ETH value to pass with the call\\r\\n     * @param _data data to be executed from the call\\r\\n     * @param _operation Call or Delegatecall\\r\\n     */\\r\\n    function _executeProposalTx(\\r\\n        uint32 _proposalId,\\r\\n        address _target,\\r\\n        uint256 _value,\\r\\n        bytes memory _data,\\r\\n        Enum.Operation _operation\\r\\n    ) internal returns (bytes32 txHash) {\\r\\n        if (proposalState(_proposalId) != ProposalState.EXECUTABLE)\\r\\n            revert ProposalNotExecutable();\\r\\n        txHash = getTxHash(_target, _value, _data, _operation);\\r\\n        if (\\r\\n            proposals[_proposalId].txHashes[\\r\\n                proposals[_proposalId].executionCounter\\r\\n            ] != txHash\\r\\n        ) revert InvalidTxHash();\\r\\n\\r\\n        proposals[_proposalId].executionCounter++;\\r\\n        \\r\\n        if (!exec(_target, _value, _data, _operation)) revert TxFailed();\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * Enables the specified array of [BaseStrategy](./BaseStrategy.md) contract addresses.\\r\\n     *\\r\\n     * @param _strategies array of `BaseStrategy` contract addresses to enable\\r\\n     */\\r\\n    function _setUpStrategies(address[] memory _strategies) internal {\\r\\n        strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;\\r\\n        uint256 strategiesLength = _strategies.length;\\r\\n        for (uint256 i; i < strategiesLength; ) {\\r\\n            enableStrategy(_strategies[i]);\\r\\n            unchecked {\\r\\n                ++i;\\r\\n            }\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * Updates the `timelockPeriod` for future Proposals.\\r\\n     *\\r\\n     * @param _timelockPeriod new timelock period (in blocks)\\r\\n     */\\r\\n    function _updateTimelockPeriod(uint32 _timelockPeriod) internal {\\r\\n        timelockPeriod = _timelockPeriod;\\r\\n        emit TimelockPeriodUpdated(_timelockPeriod);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * Updates the `executionPeriod` for future Proposals.\\r\\n     *\\r\\n     * @param _executionPeriod new execution period (in blocks)\\r\\n     */\\r\\n    function _updateExecutionPeriod(uint32 _executionPeriod) internal {\\r\\n        executionPeriod = _executionPeriod;\\r\\n        emit ExecutionPeriodUpdated(_executionPeriod);\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x945192253e4333dfd31ff61563bc357af418c8fd5417fed2f63fc789677962e9\",\"license\":\"LGPL-3.0-only\"},\"contracts/azorius/interfaces/IAzorius.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\r\\npragma solidity =0.8.19;\\r\\n\\r\\nimport { Enum } from \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\r\\n\\r\\n/**\\r\\n * The base interface for the Azorius governance Safe module.\\r\\n * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac\\r\\n *\\r\\n * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies\\r\\n * ([BaseStrategy](../BaseStrategy.md)) for voting that are enabled on the DAO.\\r\\n *\\r\\n * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be\\r\\n * as customizable as possible.\\r\\n *\\r\\n * Proposals begin in the `ACTIVE` state and will ultimately end in either\\r\\n * the `EXECUTED`, `EXPIRED`, or `FAILED` state.\\r\\n *\\r\\n * `ACTIVE` - a new proposal begins in this state, and stays in this state\\r\\n *          for the duration of its voting period.\\r\\n *\\r\\n * `TIMELOCKED` - A proposal that passes enters the `TIMELOCKED` state, during which\\r\\n *          it cannot yet be executed.  This is to allow time for token holders\\r\\n *          to potentially exit their position, as well as parent DAOs time to\\r\\n *          initiate a freeze, if they choose to do so. A proposal stays timelocked\\r\\n *          for the duration of its `timelockPeriod`.\\r\\n *\\r\\n * `EXECUTABLE` - Following the `TIMELOCKED` state, a passed proposal becomes `EXECUTABLE`,\\r\\n *          and can then finally be executed on chain by anyone.\\r\\n *\\r\\n * `EXECUTED` - the final state for a passed proposal.  The proposal has been executed\\r\\n *          on the blockchain.\\r\\n *\\r\\n * `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has\\r\\n *          elapsed will be `EXPIRED`, and can no longer be executed.\\r\\n *\\r\\n * `FAILED` - a failed proposal (as defined by its [BaseStrategy](../BaseStrategy.md) \\r\\n *          `isPassed` function). For a basic strategy, this would mean it received more \\r\\n *          NO votes than YES or did not achieve quorum. \\r\\n */\\r\\ninterface IAzorius {\\r\\n\\r\\n    /** Represents a transaction to perform on the blockchain. */\\r\\n    struct Transaction {\\r\\n        address to; // destination address of the transaction\\r\\n        uint256 value; // amount of ETH to transfer with the transaction\\r\\n        bytes data; // encoded function call data of the transaction\\r\\n        Enum.Operation operation; // Operation type, Call or DelegateCall\\r\\n    }\\r\\n\\r\\n    /** Holds details pertaining to a single proposal. */\\r\\n    struct Proposal {\\r\\n        uint32 executionCounter; // count of transactions that have been executed within the proposal\\r\\n        uint32 timelockPeriod; // time (in blocks) this proposal will be timelocked for if it passes\\r\\n        uint32 executionPeriod; // time (in blocks) this proposal has to be executed after timelock ends before it is expired\\r\\n        address strategy; // BaseStrategy contract this proposal was created on\\r\\n        bytes32[] txHashes; // hashes of the transactions that are being proposed\\r\\n    }\\r\\n\\r\\n    /** The list of states in which a Proposal can be in at any given time. */\\r\\n    enum ProposalState {\\r\\n        ACTIVE,\\r\\n        TIMELOCKED,\\r\\n        EXECUTABLE,\\r\\n        EXECUTED,\\r\\n        EXPIRED,\\r\\n        FAILED\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.\\r\\n     *\\r\\n     * Multiple strategies can be enabled, and new Proposals will be able to be\\r\\n     * created using any of the currently enabled strategies.\\r\\n     *\\r\\n     * @param _strategy contract address of the BaseStrategy to be enabled\\r\\n     */\\r\\n    function enableStrategy(address _strategy) external;\\r\\n\\r\\n    /**\\r\\n     * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.\\r\\n     * This has no effect on existing Proposals, either `ACTIVE` or completed.\\r\\n     *\\r\\n     * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed\\r\\n     * @param _strategy address of the BaseStrategy to be removed\\r\\n     */\\r\\n    function disableStrategy(address _prevStrategy, address _strategy) external;\\r\\n\\r\\n    /**\\r\\n     * Updates the `timelockPeriod` for newly created Proposals.\\r\\n     * This has no effect on existing Proposals, either `ACTIVE` or completed.\\r\\n     *\\r\\n     * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals\\r\\n     */\\r\\n    function updateTimelockPeriod(uint32 _timelockPeriod) external;\\r\\n\\r\\n    /**\\r\\n     * Updates the execution period for future Proposals.\\r\\n     *\\r\\n     * @param _executionPeriod new execution period (in blocks)\\r\\n     */\\r\\n    function updateExecutionPeriod(uint32 _executionPeriod) external;\\r\\n\\r\\n    /**\\r\\n     * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).\\r\\n     * New Proposals begin immediately in the `ACTIVE` state.\\r\\n     *\\r\\n     * @param _strategy address of the BaseStrategy implementation which the Proposal will use\\r\\n     * @param _data arbitrary data passed to the BaseStrategy implementation\\r\\n     * @param _transactions array of transactions to propose\\r\\n     * @param _metadata additional data such as a title/description to submit with the proposal\\r\\n     */\\r\\n    function submitProposal(\\r\\n        address _strategy,\\r\\n        bytes memory _data,\\r\\n        Transaction[] calldata _transactions,\\r\\n        string calldata _metadata\\r\\n    ) external;\\r\\n\\r\\n    /**\\r\\n     * Executes all transactions within a Proposal.\\r\\n     * This will only be able to be called if the Proposal passed.\\r\\n     *\\r\\n     * @param _proposalId identifier of the Proposal\\r\\n     * @param _targets target contracts for each transaction\\r\\n     * @param _values ETH values to be sent with each transaction\\r\\n     * @param _data transaction data to be executed\\r\\n     * @param _operations Calls or Delegatecalls\\r\\n     */\\r\\n    function executeProposal(\\r\\n        uint32 _proposalId,\\r\\n        address[] memory _targets,\\r\\n        uint256[] memory _values,\\r\\n        bytes[] memory _data,\\r\\n        Enum.Operation[] memory _operations\\r\\n    ) external;\\r\\n\\r\\n    /**\\r\\n     * Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.\\r\\n     *\\r\\n     * @param _strategy contract address of the BaseStrategy to check\\r\\n     * @return bool True if the strategy is enabled, otherwise False\\r\\n     */\\r\\n    function isStrategyEnabled(address _strategy) external view returns (bool);\\r\\n\\r\\n    /**\\r\\n     * Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.\\r\\n     * Because the list of BaseStrategies is technically unbounded, this\\r\\n     * requires the address of the first strategy you would like, along\\r\\n     * with the total count of strategies to return, rather than\\r\\n     * returning the whole list at once.\\r\\n     *\\r\\n     * @param _startAddress contract address of the BaseStrategy to start with\\r\\n     * @param _count maximum number of BaseStrategies that should be returned\\r\\n     * @return _strategies array of BaseStrategies\\r\\n     * @return _next next BaseStrategy contract address in the linked list\\r\\n     */\\r\\n    function getStrategies(\\r\\n        address _startAddress,\\r\\n        uint256 _count\\r\\n    ) external view returns (address[] memory _strategies, address _next);\\r\\n\\r\\n    /**\\r\\n     * Gets the state of a Proposal.\\r\\n     *\\r\\n     * @param _proposalId identifier of the Proposal\\r\\n     * @return ProposalState uint256 ProposalState enum value representing the\\r\\n     *         current state of the proposal\\r\\n     */\\r\\n    function proposalState(uint32 _proposalId) external view returns (ProposalState);\\r\\n\\r\\n    /**\\r\\n     * Generates the data for the module transaction hash (required for signing).\\r\\n     *\\r\\n     * @param _to target address of the transaction\\r\\n     * @param _value ETH value to send with the transaction\\r\\n     * @param _data encoded function call data of the transaction\\r\\n     * @param _operation Enum.Operation to use for the transaction\\r\\n     * @param _nonce Safe nonce of the transaction\\r\\n     * @return bytes hashed transaction data\\r\\n     */\\r\\n    function generateTxHashData(\\r\\n        address _to,\\r\\n        uint256 _value,\\r\\n        bytes memory _data,\\r\\n        Enum.Operation _operation,\\r\\n        uint256 _nonce\\r\\n    ) external view returns (bytes memory);\\r\\n\\r\\n    /**\\r\\n     * Returns the `keccak256` hash of the specified transaction.\\r\\n     *\\r\\n     * @param _to target address of the transaction\\r\\n     * @param _value ETH value to send with the transaction\\r\\n     * @param _data encoded function call data of the transaction\\r\\n     * @param _operation Enum.Operation to use for the transaction\\r\\n     * @return bytes32 transaction hash\\r\\n     */\\r\\n    function getTxHash(\\r\\n        address _to,\\r\\n        uint256 _value,\\r\\n        bytes memory _data,\\r\\n        Enum.Operation _operation\\r\\n    ) external view returns (bytes32);\\r\\n\\r\\n    /**\\r\\n     * Returns the hash of a transaction in a Proposal.\\r\\n     *\\r\\n     * @param _proposalId identifier of the Proposal\\r\\n     * @param _txIndex index of the transaction within the Proposal\\r\\n     * @return bytes32 hash of the specified transaction\\r\\n     */\\r\\n    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32);\\r\\n\\r\\n    /**\\r\\n     * Returns the transaction hashes associated with a given `proposalId`.\\r\\n     *\\r\\n     * @param _proposalId identifier of the Proposal to get transaction hashes for\\r\\n     * @return bytes32[] array of transaction hashes\\r\\n     */\\r\\n    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory);\\r\\n\\r\\n    /**\\r\\n     * Returns details about the specified Proposal.\\r\\n     *\\r\\n     * @param _proposalId identifier of the Proposal\\r\\n     * @return _strategy address of the BaseStrategy contract the Proposal is on\\r\\n     * @return _txHashes hashes of the transactions the Proposal contains\\r\\n     * @return _timelockPeriod time (in blocks) the Proposal is timelocked for\\r\\n     * @return _executionPeriod time (in blocks) the Proposal must be executed within, after timelock ends\\r\\n     * @return _executionCounter counter of how many of the Proposals transactions have been executed\\r\\n     */\\r\\n    function getProposal(uint32 _proposalId) external view\\r\\n        returns (\\r\\n            address _strategy,\\r\\n            bytes32[] memory _txHashes,\\r\\n            uint32 _timelockPeriod,\\r\\n            uint32 _executionPeriod,\\r\\n            uint32 _executionCounter\\r\\n        );\\r\\n}\\r\\n\",\"keccak256\":\"0xf0810af80daabd722b4f42c67364262521eca0eef8cd891f3cbe0039c2d62a4c\",\"license\":\"MIT\"},\"contracts/azorius/interfaces/IBaseStrategy.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\r\\npragma solidity =0.8.19;\\r\\n\\r\\n/**\\r\\n * The specification for a voting strategy in Azorius.\\r\\n *\\r\\n * Each IBaseStrategy implementation need only implement the given functions here,\\r\\n * which allows for highly composable but simple or complex voting strategies.\\r\\n *\\r\\n * It should be noted that while many voting strategies make use of parameters such as\\r\\n * voting period or quorum, that is a detail of the individual strategy itself, and not\\r\\n * a requirement for the Azorius protocol.\\r\\n */\\r\\ninterface IBaseStrategy {\\r\\n\\r\\n    /**\\r\\n     * Sets the address of the [Azorius](../Azorius.md) contract this \\r\\n     * [BaseStrategy](../BaseStrategy.md) is being used on.\\r\\n     *\\r\\n     * @param _azoriusModule address of the Azorius Safe module\\r\\n     */\\r\\n    function setAzorius(address _azoriusModule) external;\\r\\n\\r\\n    /**\\r\\n     * Called by the [Azorius](../Azorius.md) module. This notifies this \\r\\n     * [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.\\r\\n     *\\r\\n     * @param _data arbitrary data to pass to this BaseStrategy\\r\\n     */\\r\\n    function initializeProposal(bytes memory _data) external;\\r\\n\\r\\n    /**\\r\\n     * Returns whether a Proposal has been passed.\\r\\n     *\\r\\n     * @param _proposalId proposalId to check\\r\\n     * @return bool true if the proposal has passed, otherwise false\\r\\n     */\\r\\n    function isPassed(uint32 _proposalId) external view returns (bool);\\r\\n\\r\\n    /**\\r\\n     * Returns whether the specified address can submit a Proposal with\\r\\n     * this [BaseStrategy](../BaseStrategy.md).\\r\\n     *\\r\\n     * This allows a BaseStrategy to place any limits it would like on\\r\\n     * who can create new Proposals, such as requiring a minimum token\\r\\n     * delegation.\\r\\n     *\\r\\n     * @param _address address to check\\r\\n     * @return bool true if the address can submit a Proposal, otherwise false\\r\\n     */\\r\\n    function isProposer(address _address) external view returns (bool);\\r\\n\\r\\n    /**\\r\\n     * Returns the block number voting ends on a given Proposal.\\r\\n     *\\r\\n     * @param _proposalId proposalId to check\\r\\n     * @return uint32 block number when voting ends on the Proposal\\r\\n     */\\r\\n    function votingEndBlock(uint32 _proposalId) external view returns (uint32);\\r\\n}\\r\\n\",\"keccak256\":\"0x1d656131d6737eca77d908276e807c259ba954cfe1562abe595d301c32155fc4\",\"license\":\"LGPL-3.0-only\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50612a64806100206000396000f3fe608060405234801561001057600080fd5b50600436106101da5760003560e01c806388633b7b11610104578063d11d0d58116100a2578063ea49ba9711610071578063ea49ba971461046d578063ead0eedf14610490578063f2fde38b146104a7578063fe2474be146104ba57600080fd5b8063d11d0d581461041d578063d4b8399214610434578063dcac459514610447578063e19a9dd91461045a57600080fd5b8063a4f9edbf116100de578063a4f9edbf146103c6578063b4c3c145146103d9578063c818c57f146103f9578063c91063891461040c57600080fd5b806388633b7b1461037b5780638da5cb5b146103a25780639e4d46d1146103b357600080fd5b80633742fcc91161017c578063715018a61161014b578063715018a61461032d578063776d1a011461033557806377c79fa2146103485780637ceab3b11461036857600080fd5b80633742fcc9146102c95780635aef7de6146102dc578063608244a6146103075780637079b4661461031a57600080fd5b8063114f00ab116101b8578063114f00ab1461021a5780631db61b541461024757806326bae4f21461027c5780632ecaf6751461029d57600080fd5b80630494294e146101df578063086cfca8146101f45780630901830814610207575b600080fd5b6101f26101ed366004611de7565b6104da565b005b6101f2610202366004611ebe565b61092c565b6101f2610215366004612077565b610986565b61022d610228366004612196565b610b5d565b60405161023e9594939291906121ee565b60405180910390f35b61026e7f47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a7946921881565b60405190815260200161023e565b61028f61028a366004612239565b610c18565b60405161023e929190612265565b6067546102b490600160c01b900463ffffffff1681565b60405163ffffffff909116815260200161023e565b6101f26102d7366004611ebe565b610d11565b6066546102ef906001600160a01b031681565b6040516001600160a01b03909116815260200161023e565b6101f26103153660046122c2565b610e25565b61026e6103283660046122fb565b610f24565b6101f2610f6d565b6101f2610343366004611ebe565b610f81565b61035b610356366004612196565b610fdb565b60405161023e9190612329565b6065546102ef906001600160a01b031681565b61026e7f72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad81565b6033546001600160a01b03166102ef565b6101f26103c1366004612196565b611047565b6101f26103d436600461233c565b61105b565b6103ec6103e7366004612196565b611238565b60405161023e9190612386565b61026e6104073660046123a0565b6114b7565b6065546001600160a01b03166102ef565b6067546102b490600160e01b900463ffffffff1681565b6067546102ef906001600160a01b031681565b6101f2610455366004612196565b6114d9565b6101f2610468366004611ebe565b6114ea565b61048061047b366004611ebe565b6115e6565b604051901515815260200161023e565b6067546102b490600160a01b900463ffffffff1681565b6101f26104b5366004611ebe565b61161e565b6104cd6104c8366004612409565b611694565b60405161023e91906124c0565b6104e3866115e6565b610500576040516346c26e4b60e01b815260040160405180910390fd5b6040516303a7614d60e51b81523360048201526001600160a01b038716906374ec29a090602401602060405180830381865afa158015610544573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061056891906124d3565b61058557604051634100ac0360e01b815260040160405180910390fd5b6000836001600160401b0381111561059f5761059f611cea565b6040519080825280602002602001820160405280156105c8578160200160208202803683370190505b5090508360005b818110156106f7576106d28787838181106105ec576105ec6124f5565b90506020028101906105fe919061250b565b61060c906020810190611ebe565b88888481811061061e5761061e6124f5565b9050602002810190610630919061250b565b60200135898985818110610646576106466124f5565b9050602002810190610658919061250b565b61066690604081019061252b565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508d92508c91508790508181106106af576106af6124f5565b90506020028101906106c1919061250b565b610407906080810190606001612571565b8382815181106106e4576106e46124f5565b60209081029190910101526001016105cf565b508760686000606760149054906101000a900463ffffffff1663ffffffff168152602001908152602001600020600001600c6101000a8154816001600160a01b0302191690836001600160a01b031602179055508160686000606760149054906101000a900463ffffffff1663ffffffff168152602001908152602001600020600101908051906020019061078d929190611c75565b506067805463ffffffff600160a01b80830482166000908152606860209081526040808320805467ffffffff000000001916600160c01b909704861664010000000002969096179095558554838104851683529185902080546bffffffff00000000000000001916600160e01b9093048516600160401b0292909217909155935492516001600160a01b038d169463a77a81d094610836949390049092169187918d910161258c565b6040516020818303038152906040526040518263ffffffff1660e01b815260040161086191906124c0565b600060405180830381600087803b15801561087b57600080fd5b505af115801561088f573d6000803e3d6000fd5b50506067546040517f8258c07d193e540ae88674ae10036488a140887e2bc5508728475592dff175d993506108de92508b91600160a01b900463ffffffff169033908b908b908b908b90612604565b60405180910390a160678054600160a01b900463ffffffff169060146109038361274f565b91906101000a81548163ffffffff021916908363ffffffff160217905550505050505050505050565b610934611790565b606680546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f52ae88b092de36f87fb43fe794eb1381023b9c1bce563a871154022c63dce34290600090a35050565b83516000036109a857604051637e706b9360e01b815260040160405180910390fd5b825184511415806109bb57508151845114155b806109c857508051845114155b156109e65760405163a9854bc960e01b815260040160405180910390fd5b63ffffffff80861660009081526068602052604090206001810154865191549092610a12929116612772565b1115610a3157604051637e706b9360e01b815260040160405180910390fd5b83516000816001600160401b03811115610a4d57610a4d611cea565b604051908082528060200260200182016040528015610a76578160200160208202803683370190505b50905060005b82811015610b1a57610af588888381518110610a9a57610a9a6124f5565b6020026020010151888481518110610ab457610ab46124f5565b6020026020010151888581518110610ace57610ace6124f5565b6020026020010151888681518110610ae857610ae86124f5565b60200260200101516117ea565b828281518110610b0757610b076124f5565b6020908102919091010152600101610a7c565b507ff5fc56659e0b6c903005a71d52094697092f176b254fa07acf65b99c702416e58782604051610b4c929190612785565b60405180910390a150505050505050565b63ffffffff81166000908152606860209081526040808320805460019091018054835181860281018601909452808452600160601b9092046001600160a01b0316946060949093849384939192830182828015610bd957602002820191906000526020600020905b815481526020019060010190808311610bc5575b50505063ffffffff988916600090815260686020526040902054979992986401000000008904811698600160401b810482169850169550919350505050565b60606000826001600160401b03811115610c3457610c34611cea565b604051908082528060200260200182016040528015610c5d578160200160208202803683370190505b506001600160a01b0380861660009081526069602052604081205492945091165b6001600160a01b03811615801590610ca057506001600160a01b038116600114155b8015610cab57508482105b15610d035780848381518110610cc357610cc36124f5565b6001600160a01b03928316602091820292909201810191909152918116600090815260699092526040909120541681610cfb816127a4565b925050610c7e565b908352919491935090915050565b610d19611790565b6001600160a01b0381161580610d3857506001600160a01b0381166001145b15610d5657604051632711b74d60e11b815260040160405180910390fd5b6001600160a01b038181166000908152606960205260409020541615610d8f576040516308779a2960e11b815260040160405180910390fd5b606960209081527fc073f36c05b6a60b24c30a48974b549770d8fa354751fb3170c9dfd8ca536add80546001600160a01b03848116600081815260408082208054949095166001600160a01b0319948516179094556001905283549091168117909255519081527f532492ef4d4edd78444556c1b5038901e11c232361675fe6d5e6bea2f0864e1991015b60405180910390a150565b610e2d611790565b6001600160a01b0381161580610e4c57506001600160a01b0381166001145b15610e6a57604051632711b74d60e11b815260040160405180910390fd5b6001600160a01b03828116600090815260696020526040902054811690821614610ea7576040516346c26e4b60e01b815260040160405180910390fd5b6001600160a01b038181166000818152606960209081526040808320805488871685528285208054919097166001600160a01b03199182161790965592849052825490941690915591519081527fc31c3a4f175b634ee48f8db1a8cc8c16f594ea7511e6552684b87a1481f63b6f91015b60405180910390a15050565b6000606860008463ffffffff1681526020019081526020016000206001018263ffffffff1681548110610f5957610f596124f5565b906000526020600020015490505b92915050565b610f75611790565b610f7f6000611902565b565b610f89611790565b606780546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f90cc2f570a6eb594b1580ea3e41247d2d73a55281889e86bd4ec2fc29c7e62d690600090a35050565b63ffffffff811660009081526068602090815260409182902060010180548351818402810184019094528084526060939283018282801561103b57602002820191906000526020600020905b815481526020019060010190808311611027575b50505050509050919050565b61104f611790565b61105881611954565b50565b600054610100900460ff161580801561107b5750600054600160ff909116105b806110955750303b158015611095575060005460ff166001145b6110fd5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff191660011790558015611120576000805461ff0019166101001790555b6000806000806000808780602001905181019061113d91906127c8565b9550955095509550955095506111516119a8565b606680546001600160a01b038088166001600160a01b031992831617909255606780549287169290911691909117905561118a836119d7565b6111938661161e565b61119c82611954565b6111a581611a51565b6040516001600160a01b038581168252808716919088169033907fa539013922d7c2d2bb4f8734a445f094f297b18ff6de5ac1faa3ba2c0ad0f5579060200160405180910390a45050505050508015611234576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb384740249890602001610f18565b5050565b63ffffffff8181166000908152606860209081526040808320815160a081018352815480871682526401000000008104871682860152600160401b810490961681840152600160601b9095046001600160a01b0316606086015260018101805483518186028101860190945280845294958695909492936080860193909291908301828280156112e757602002820191906000526020600020905b8154815260200190600101908083116112d3575b5050509190925250505060608101519091506001600160a01b031661131f57604051631dc0650160e31b815260040160405180910390fd5b60608101516040516355a9dbd960e01b815263ffffffff851660048201526000906001600160a01b038316906355a9dbd990602401602060405180830381865afa158015611371573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061139591906128bf565b63ffffffff1690508043116113af57506000949350505050565b60405163029d459960e51b815263ffffffff861660048201526001600160a01b038316906353a8b32090602401602060405180830381865afa1580156113f9573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061141d91906124d3565b61142c57506005949350505050565b608083015151835163ffffffff160361144a57506003949350505050565b602083015161145f9063ffffffff1682612772565b431161147057506001949350505050565b826040015163ffffffff16836020015163ffffffff16826114919190612772565b61149b9190612772565b43116114ac57506002949350505050565b506004949350505050565b60006114c7858585856000611694565b8051906020012090505b949350505050565b6114e1611790565b61105881611a51565b6114f2611790565b6001600160a01b03811615611598576040516301ffc9a760e01b815263736bd41d60e11b60048201526001600160a01b038216906301ffc9a790602401602060405180830381865afa15801561154c573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061157091906124d3565b611598576040516358b7533f60e11b81526001600160a01b03821660048201526024016110f4565b606580546001600160a01b0319166001600160a01b0383169081179091556040519081527f1151116914515bc0891ff9047a6cb32cf902546f83066499bcf8ba33d2353fa290602001610e1a565b600060016001600160a01b03831614801590610f675750506001600160a01b0390811660009081526069602052604090205416151590565b611626611790565b6001600160a01b03811661168b5760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b60648201526084016110f4565b61105881611902565b604080517f47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a7946921860208201524691810182905230606080830191909152919060009060800160408051601f19818403018152908290528051602091820120885189830120909350600092611730927f72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad928d928d928c918c91016128dc565b60408051808303601f19018152908290528051602091820120601960f81b91830191909152600160f81b60218301526022820184905260428201819052915060620160405160208183030381529060405293505050505b95945050505050565b6033546001600160a01b03163314610f7f5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064016110f4565b600060026117f787611238565b600581111561180857611808612370565b1461182657604051633c7e994560e11b815260040160405180910390fd5b611832858585856114b7565b63ffffffff8088166000908152606860205260409020805460019091018054939450849390929190911690811061186b5761186b6124f5565b906000526020600020015414611894576040516319cb4eb360e31b815260040160405180910390fd5b63ffffffff8087166000908152606860205260408120805490921691906118ba8361274f565b91906101000a81548163ffffffff021916908363ffffffff160217905550506118e585858585611aa4565b61178757604051632b96f51360e01b815260040160405180910390fd5b603380546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6067805463ffffffff60c01b1916600160c01b63ffffffff8416908102919091179091556040519081527fd77111479e78432e5a7ffc7e7e62e2e8396f86c2bf010dacc17c30ee9106eb4c90602001610e1a565b600054610100900460ff166119cf5760405162461bcd60e51b81526004016110f49061291e565b610f7f611c45565b6001600081815260696020527fc073f36c05b6a60b24c30a48974b549770d8fa354751fb3170c9dfd8ca536add80546001600160a01b0319169092179091558151905b81811015611a4c57611a44838281518110611a3757611a376124f5565b6020026020010151610d11565b600101611a1a565b505050565b606780546001600160e01b0316600160e01b63ffffffff8416908102919091179091556040519081527fdd32d105a69c09ad9be1f41189460750cc26fb733a7da8f5cb47499c6a37799990602001610e1a565b6065546000906001600160a01b031615611b46576065546040805180820182526002815261060f60f31b60208201529051633af85da960e11b81526001600160a01b03909216916375f0bb5291611b139189918991899189916000918291829182918291903390600401612969565b600060405180830381600087803b158015611b2d57600080fd5b505af1158015611b41573d6000803e3d6000fd5b505050505b60675460405163468721a760e01b81526001600160a01b039091169063468721a790611b7c9088908890889088906004016129f8565b6020604051808303816000875af1158015611b9b573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190611bbf91906124d3565b6065549091506001600160a01b0316156114d157606554604051631264e26d60e31b815261060f60f31b600482015282151560248201526001600160a01b0390911690639327136890604401600060405180830381600087803b158015611c2557600080fd5b505af1158015611c39573d6000803e3d6000fd5b50505050949350505050565b600054610100900460ff16611c6c5760405162461bcd60e51b81526004016110f49061291e565b610f7f33611902565b828054828255906000526020600020908101928215611cb0579160200282015b82811115611cb0578251825591602001919060010190611c95565b50611cbc929150611cc0565b5090565b5b80821115611cbc5760008155600101611cc1565b6001600160a01b038116811461105857600080fd5b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f191681016001600160401b0381118282101715611d2857611d28611cea565b604052919050565b600082601f830112611d4157600080fd5b81356001600160401b03811115611d5a57611d5a611cea565b611d6d601f8201601f1916602001611d00565b818152846020838601011115611d8257600080fd5b816020850160208301376000918101602001919091529392505050565b60008083601f840112611db157600080fd5b5081356001600160401b03811115611dc857600080fd5b602083019150836020828501011115611de057600080fd5b9250929050565b60008060008060008060808789031215611e0057600080fd5b8635611e0b81611cd5565b955060208701356001600160401b0380821115611e2757600080fd5b611e338a838b01611d30565b96506040890135915080821115611e4957600080fd5b818901915089601f830112611e5d57600080fd5b813581811115611e6c57600080fd5b8a60208260051b8501011115611e8157600080fd5b602083019650809550506060890135915080821115611e9f57600080fd5b50611eac89828a01611d9f565b979a9699509497509295939492505050565b600060208284031215611ed057600080fd5b8135611edb81611cd5565b9392505050565b63ffffffff8116811461105857600080fd5b60006001600160401b03821115611f0d57611f0d611cea565b5060051b60200190565b600082601f830112611f2857600080fd5b81356020611f3d611f3883611ef4565b611d00565b82815260059290921b84018101918181019086841115611f5c57600080fd5b8286015b84811015611f775780358352918301918301611f60565b509695505050505050565b600082601f830112611f9357600080fd5b81356020611fa3611f3883611ef4565b82815260059290921b84018101918181019086841115611fc257600080fd5b8286015b84811015611f775780356001600160401b03811115611fe55760008081fd5b611ff38986838b0101611d30565b845250918301918301611fc6565b80356002811061201057600080fd5b919050565b600082601f83011261202657600080fd5b81356020612036611f3883611ef4565b82815260059290921b8401810191818101908684111561205557600080fd5b8286015b84811015611f775761206a81612001565b8352918301918301612059565b600080600080600060a0868803121561208f57600080fd5b853561209a81611ee2565b94506020868101356001600160401b03808211156120b757600080fd5b818901915089601f8301126120cb57600080fd5b81356120d9611f3882611ef4565b81815260059190911b8301840190848101908c8311156120f857600080fd5b938501935b8285101561211f57843561211081611cd5565b825293850193908501906120fd565b98505050604089013592508083111561213757600080fd5b6121438a848b01611f17565b9550606089013592508083111561215957600080fd5b6121658a848b01611f82565b9450608089013592508083111561217b57600080fd5b505061218988828901612015565b9150509295509295909350565b6000602082840312156121a857600080fd5b8135611edb81611ee2565b600081518084526020808501945080840160005b838110156121e3578151875295820195908201906001016121c7565b509495945050505050565b6001600160a01b038616815260a060208201819052600090612212908301876121b3565b63ffffffff9586166040840152938516606083015250921660809092019190915292915050565b6000806040838503121561224c57600080fd5b823561225781611cd5565b946020939093013593505050565b604080825283519082018190526000906020906060840190828701845b828110156122a75781516001600160a01b031684529284019290840190600101612282565b5050506001600160a01b039490941692019190915250919050565b600080604083850312156122d557600080fd5b82356122e081611cd5565b915060208301356122f081611cd5565b809150509250929050565b6000806040838503121561230e57600080fd5b823561231981611ee2565b915060208301356122f081611ee2565b602081526000611edb60208301846121b3565b60006020828403121561234e57600080fd5b81356001600160401b0381111561236457600080fd5b6114d184828501611d30565b634e487b7160e01b600052602160045260246000fd5b602081016006831061239a5761239a612370565b91905290565b600080600080608085870312156123b657600080fd5b84356123c181611cd5565b93506020850135925060408501356001600160401b038111156123e357600080fd5b6123ef87828801611d30565b9250506123fe60608601612001565b905092959194509250565b600080600080600060a0868803121561242157600080fd5b853561242c81611cd5565b94506020860135935060408601356001600160401b0381111561244e57600080fd5b61245a88828901611d30565b93505061246960608701612001565b949793965091946080013592915050565b6000815180845260005b818110156124a057602081850181015186830182015201612484565b506000602082860101526020601f19601f83011685010191505092915050565b602081526000611edb602083018461247a565b6000602082840312156124e557600080fd5b81518015158114611edb57600080fd5b634e487b7160e01b600052603260045260246000fd5b60008235607e1983360301811261252157600080fd5b9190910192915050565b6000808335601e1984360301811261254257600080fd5b8301803591506001600160401b0382111561255c57600080fd5b602001915036819003821315611de057600080fd5b60006020828403121561258357600080fd5b611edb82612001565b63ffffffff841681526060602082015260006125ab60608301856121b3565b82810360408401526125bd818561247a565b9695505050505050565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b6002811061260057612600612370565b9052565b600060a0820160018060a01b03808b168452602063ffffffff8b16818601526040828b1681870152606060a081880152848a865260c08801905060c08b60051b89010195508b60005b8c8110156127115789880360bf190183528135368f9003607e1901811261267357600080fd5b8e016080813561268281611cd5565b89168a5281880135888b01528682013536839003601e190181126126a557600080fd5b820188810190356001600160401b038111156126c057600080fd5b8036038213156126cf57600080fd5b82898d01526126e1838d0182846125c7565b925050506126f0868301612001565b91506126fe868b01836125f0565b985050918501919085019060010161264d565b50505050505050828103608084015261272b8185876125c7565b9a9950505050505050505050565b634e487b7160e01b600052601160045260246000fd5b600063ffffffff80831681810361276857612768612739565b6001019392505050565b80820180821115610f6757610f67612739565b63ffffffff831681526040602082015260006114d160408301846121b3565b6000600182016127b6576127b6612739565b5060010190565b805161201081611ee2565b60008060008060008060c087890312156127e157600080fd5b86516127ec81611cd5565b809650506020808801516127ff81611cd5565b604089015190965061281081611cd5565b60608901519095506001600160401b0381111561282c57600080fd5b8801601f81018a1361283d57600080fd5b805161284b611f3882611ef4565b81815260059190911b8201830190838101908c83111561286a57600080fd5b928401925b8284101561289157835161288281611cd5565b8252928401929084019061286f565b80975050505050506128a5608088016127bd565b91506128b360a088016127bd565b90509295509295509295565b6000602082840312156128d157600080fd5b8151611edb81611ee2565b8681526001600160a01b0386166020820152604081018590526060810184905260c0810161290d60808301856125f0565b8260a0830152979650505050505050565b6020808252602b908201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960408201526a6e697469616c697a696e6760a81b606082015260800190565b6001600160a01b038c81168252602082018c9052610160604083018190526000916129968483018e61247a565b91506129a5606085018d6125f0565b8a60808501528960a08501528860c085015280881660e08501528087166101008501528382036101208501526129db828761247a565b925080851661014085015250509c9b505050505050505050505050565b60018060a01b0385168152836020820152608060408201526000612a1f608083018561247a565b905061178760608301846125f056fea26469706673582212202cb57650be345d096ec45f417e0e3692a57299a5a3dd2a3d958123243235a7e264736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101da5760003560e01c806388633b7b11610104578063d11d0d58116100a2578063ea49ba9711610071578063ea49ba971461046d578063ead0eedf14610490578063f2fde38b146104a7578063fe2474be146104ba57600080fd5b8063d11d0d581461041d578063d4b8399214610434578063dcac459514610447578063e19a9dd91461045a57600080fd5b8063a4f9edbf116100de578063a4f9edbf146103c6578063b4c3c145146103d9578063c818c57f146103f9578063c91063891461040c57600080fd5b806388633b7b1461037b5780638da5cb5b146103a25780639e4d46d1146103b357600080fd5b80633742fcc91161017c578063715018a61161014b578063715018a61461032d578063776d1a011461033557806377c79fa2146103485780637ceab3b11461036857600080fd5b80633742fcc9146102c95780635aef7de6146102dc578063608244a6146103075780637079b4661461031a57600080fd5b8063114f00ab116101b8578063114f00ab1461021a5780631db61b541461024757806326bae4f21461027c5780632ecaf6751461029d57600080fd5b80630494294e146101df578063086cfca8146101f45780630901830814610207575b600080fd5b6101f26101ed366004611de7565b6104da565b005b6101f2610202366004611ebe565b61092c565b6101f2610215366004612077565b610986565b61022d610228366004612196565b610b5d565b60405161023e9594939291906121ee565b60405180910390f35b61026e7f47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a7946921881565b60405190815260200161023e565b61028f61028a366004612239565b610c18565b60405161023e929190612265565b6067546102b490600160c01b900463ffffffff1681565b60405163ffffffff909116815260200161023e565b6101f26102d7366004611ebe565b610d11565b6066546102ef906001600160a01b031681565b6040516001600160a01b03909116815260200161023e565b6101f26103153660046122c2565b610e25565b61026e6103283660046122fb565b610f24565b6101f2610f6d565b6101f2610343366004611ebe565b610f81565b61035b610356366004612196565b610fdb565b60405161023e9190612329565b6065546102ef906001600160a01b031681565b61026e7f72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad81565b6033546001600160a01b03166102ef565b6101f26103c1366004612196565b611047565b6101f26103d436600461233c565b61105b565b6103ec6103e7366004612196565b611238565b60405161023e9190612386565b61026e6104073660046123a0565b6114b7565b6065546001600160a01b03166102ef565b6067546102b490600160e01b900463ffffffff1681565b6067546102ef906001600160a01b031681565b6101f2610455366004612196565b6114d9565b6101f2610468366004611ebe565b6114ea565b61048061047b366004611ebe565b6115e6565b604051901515815260200161023e565b6067546102b490600160a01b900463ffffffff1681565b6101f26104b5366004611ebe565b61161e565b6104cd6104c8366004612409565b611694565b60405161023e91906124c0565b6104e3866115e6565b610500576040516346c26e4b60e01b815260040160405180910390fd5b6040516303a7614d60e51b81523360048201526001600160a01b038716906374ec29a090602401602060405180830381865afa158015610544573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061056891906124d3565b61058557604051634100ac0360e01b815260040160405180910390fd5b6000836001600160401b0381111561059f5761059f611cea565b6040519080825280602002602001820160405280156105c8578160200160208202803683370190505b5090508360005b818110156106f7576106d28787838181106105ec576105ec6124f5565b90506020028101906105fe919061250b565b61060c906020810190611ebe565b88888481811061061e5761061e6124f5565b9050602002810190610630919061250b565b60200135898985818110610646576106466124f5565b9050602002810190610658919061250b565b61066690604081019061252b565b8080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152508d92508c91508790508181106106af576106af6124f5565b90506020028101906106c1919061250b565b610407906080810190606001612571565b8382815181106106e4576106e46124f5565b60209081029190910101526001016105cf565b508760686000606760149054906101000a900463ffffffff1663ffffffff168152602001908152602001600020600001600c6101000a8154816001600160a01b0302191690836001600160a01b031602179055508160686000606760149054906101000a900463ffffffff1663ffffffff168152602001908152602001600020600101908051906020019061078d929190611c75565b506067805463ffffffff600160a01b80830482166000908152606860209081526040808320805467ffffffff000000001916600160c01b909704861664010000000002969096179095558554838104851683529185902080546bffffffff00000000000000001916600160e01b9093048516600160401b0292909217909155935492516001600160a01b038d169463a77a81d094610836949390049092169187918d910161258c565b6040516020818303038152906040526040518263ffffffff1660e01b815260040161086191906124c0565b600060405180830381600087803b15801561087b57600080fd5b505af115801561088f573d6000803e3d6000fd5b50506067546040517f8258c07d193e540ae88674ae10036488a140887e2bc5508728475592dff175d993506108de92508b91600160a01b900463ffffffff169033908b908b908b908b90612604565b60405180910390a160678054600160a01b900463ffffffff169060146109038361274f565b91906101000a81548163ffffffff021916908363ffffffff160217905550505050505050505050565b610934611790565b606680546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f52ae88b092de36f87fb43fe794eb1381023b9c1bce563a871154022c63dce34290600090a35050565b83516000036109a857604051637e706b9360e01b815260040160405180910390fd5b825184511415806109bb57508151845114155b806109c857508051845114155b156109e65760405163a9854bc960e01b815260040160405180910390fd5b63ffffffff80861660009081526068602052604090206001810154865191549092610a12929116612772565b1115610a3157604051637e706b9360e01b815260040160405180910390fd5b83516000816001600160401b03811115610a4d57610a4d611cea565b604051908082528060200260200182016040528015610a76578160200160208202803683370190505b50905060005b82811015610b1a57610af588888381518110610a9a57610a9a6124f5565b6020026020010151888481518110610ab457610ab46124f5565b6020026020010151888581518110610ace57610ace6124f5565b6020026020010151888681518110610ae857610ae86124f5565b60200260200101516117ea565b828281518110610b0757610b076124f5565b6020908102919091010152600101610a7c565b507ff5fc56659e0b6c903005a71d52094697092f176b254fa07acf65b99c702416e58782604051610b4c929190612785565b60405180910390a150505050505050565b63ffffffff81166000908152606860209081526040808320805460019091018054835181860281018601909452808452600160601b9092046001600160a01b0316946060949093849384939192830182828015610bd957602002820191906000526020600020905b815481526020019060010190808311610bc5575b50505063ffffffff988916600090815260686020526040902054979992986401000000008904811698600160401b810482169850169550919350505050565b60606000826001600160401b03811115610c3457610c34611cea565b604051908082528060200260200182016040528015610c5d578160200160208202803683370190505b506001600160a01b0380861660009081526069602052604081205492945091165b6001600160a01b03811615801590610ca057506001600160a01b038116600114155b8015610cab57508482105b15610d035780848381518110610cc357610cc36124f5565b6001600160a01b03928316602091820292909201810191909152918116600090815260699092526040909120541681610cfb816127a4565b925050610c7e565b908352919491935090915050565b610d19611790565b6001600160a01b0381161580610d3857506001600160a01b0381166001145b15610d5657604051632711b74d60e11b815260040160405180910390fd5b6001600160a01b038181166000908152606960205260409020541615610d8f576040516308779a2960e11b815260040160405180910390fd5b606960209081527fc073f36c05b6a60b24c30a48974b549770d8fa354751fb3170c9dfd8ca536add80546001600160a01b03848116600081815260408082208054949095166001600160a01b0319948516179094556001905283549091168117909255519081527f532492ef4d4edd78444556c1b5038901e11c232361675fe6d5e6bea2f0864e1991015b60405180910390a150565b610e2d611790565b6001600160a01b0381161580610e4c57506001600160a01b0381166001145b15610e6a57604051632711b74d60e11b815260040160405180910390fd5b6001600160a01b03828116600090815260696020526040902054811690821614610ea7576040516346c26e4b60e01b815260040160405180910390fd5b6001600160a01b038181166000818152606960209081526040808320805488871685528285208054919097166001600160a01b03199182161790965592849052825490941690915591519081527fc31c3a4f175b634ee48f8db1a8cc8c16f594ea7511e6552684b87a1481f63b6f91015b60405180910390a15050565b6000606860008463ffffffff1681526020019081526020016000206001018263ffffffff1681548110610f5957610f596124f5565b906000526020600020015490505b92915050565b610f75611790565b610f7f6000611902565b565b610f89611790565b606780546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f90cc2f570a6eb594b1580ea3e41247d2d73a55281889e86bd4ec2fc29c7e62d690600090a35050565b63ffffffff811660009081526068602090815260409182902060010180548351818402810184019094528084526060939283018282801561103b57602002820191906000526020600020905b815481526020019060010190808311611027575b50505050509050919050565b61104f611790565b61105881611954565b50565b600054610100900460ff161580801561107b5750600054600160ff909116105b806110955750303b158015611095575060005460ff166001145b6110fd5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff191660011790558015611120576000805461ff0019166101001790555b6000806000806000808780602001905181019061113d91906127c8565b9550955095509550955095506111516119a8565b606680546001600160a01b038088166001600160a01b031992831617909255606780549287169290911691909117905561118a836119d7565b6111938661161e565b61119c82611954565b6111a581611a51565b6040516001600160a01b038581168252808716919088169033907fa539013922d7c2d2bb4f8734a445f094f297b18ff6de5ac1faa3ba2c0ad0f5579060200160405180910390a45050505050508015611234576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb384740249890602001610f18565b5050565b63ffffffff8181166000908152606860209081526040808320815160a081018352815480871682526401000000008104871682860152600160401b810490961681840152600160601b9095046001600160a01b0316606086015260018101805483518186028101860190945280845294958695909492936080860193909291908301828280156112e757602002820191906000526020600020905b8154815260200190600101908083116112d3575b5050509190925250505060608101519091506001600160a01b031661131f57604051631dc0650160e31b815260040160405180910390fd5b60608101516040516355a9dbd960e01b815263ffffffff851660048201526000906001600160a01b038316906355a9dbd990602401602060405180830381865afa158015611371573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061139591906128bf565b63ffffffff1690508043116113af57506000949350505050565b60405163029d459960e51b815263ffffffff861660048201526001600160a01b038316906353a8b32090602401602060405180830381865afa1580156113f9573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061141d91906124d3565b61142c57506005949350505050565b608083015151835163ffffffff160361144a57506003949350505050565b602083015161145f9063ffffffff1682612772565b431161147057506001949350505050565b826040015163ffffffff16836020015163ffffffff16826114919190612772565b61149b9190612772565b43116114ac57506002949350505050565b506004949350505050565b60006114c7858585856000611694565b8051906020012090505b949350505050565b6114e1611790565b61105881611a51565b6114f2611790565b6001600160a01b03811615611598576040516301ffc9a760e01b815263736bd41d60e11b60048201526001600160a01b038216906301ffc9a790602401602060405180830381865afa15801561154c573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061157091906124d3565b611598576040516358b7533f60e11b81526001600160a01b03821660048201526024016110f4565b606580546001600160a01b0319166001600160a01b0383169081179091556040519081527f1151116914515bc0891ff9047a6cb32cf902546f83066499bcf8ba33d2353fa290602001610e1a565b600060016001600160a01b03831614801590610f675750506001600160a01b0390811660009081526069602052604090205416151590565b611626611790565b6001600160a01b03811661168b5760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b60648201526084016110f4565b61105881611902565b604080517f47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a7946921860208201524691810182905230606080830191909152919060009060800160408051601f19818403018152908290528051602091820120885189830120909350600092611730927f72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad928d928d928c918c91016128dc565b60408051808303601f19018152908290528051602091820120601960f81b91830191909152600160f81b60218301526022820184905260428201819052915060620160405160208183030381529060405293505050505b95945050505050565b6033546001600160a01b03163314610f7f5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064016110f4565b600060026117f787611238565b600581111561180857611808612370565b1461182657604051633c7e994560e11b815260040160405180910390fd5b611832858585856114b7565b63ffffffff8088166000908152606860205260409020805460019091018054939450849390929190911690811061186b5761186b6124f5565b906000526020600020015414611894576040516319cb4eb360e31b815260040160405180910390fd5b63ffffffff8087166000908152606860205260408120805490921691906118ba8361274f565b91906101000a81548163ffffffff021916908363ffffffff160217905550506118e585858585611aa4565b61178757604051632b96f51360e01b815260040160405180910390fd5b603380546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6067805463ffffffff60c01b1916600160c01b63ffffffff8416908102919091179091556040519081527fd77111479e78432e5a7ffc7e7e62e2e8396f86c2bf010dacc17c30ee9106eb4c90602001610e1a565b600054610100900460ff166119cf5760405162461bcd60e51b81526004016110f49061291e565b610f7f611c45565b6001600081815260696020527fc073f36c05b6a60b24c30a48974b549770d8fa354751fb3170c9dfd8ca536add80546001600160a01b0319169092179091558151905b81811015611a4c57611a44838281518110611a3757611a376124f5565b6020026020010151610d11565b600101611a1a565b505050565b606780546001600160e01b0316600160e01b63ffffffff8416908102919091179091556040519081527fdd32d105a69c09ad9be1f41189460750cc26fb733a7da8f5cb47499c6a37799990602001610e1a565b6065546000906001600160a01b031615611b46576065546040805180820182526002815261060f60f31b60208201529051633af85da960e11b81526001600160a01b03909216916375f0bb5291611b139189918991899189916000918291829182918291903390600401612969565b600060405180830381600087803b158015611b2d57600080fd5b505af1158015611b41573d6000803e3d6000fd5b505050505b60675460405163468721a760e01b81526001600160a01b039091169063468721a790611b7c9088908890889088906004016129f8565b6020604051808303816000875af1158015611b9b573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190611bbf91906124d3565b6065549091506001600160a01b0316156114d157606554604051631264e26d60e31b815261060f60f31b600482015282151560248201526001600160a01b0390911690639327136890604401600060405180830381600087803b158015611c2557600080fd5b505af1158015611c39573d6000803e3d6000fd5b50505050949350505050565b600054610100900460ff16611c6c5760405162461bcd60e51b81526004016110f49061291e565b610f7f33611902565b828054828255906000526020600020908101928215611cb0579160200282015b82811115611cb0578251825591602001919060010190611c95565b50611cbc929150611cc0565b5090565b5b80821115611cbc5760008155600101611cc1565b6001600160a01b038116811461105857600080fd5b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f191681016001600160401b0381118282101715611d2857611d28611cea565b604052919050565b600082601f830112611d4157600080fd5b81356001600160401b03811115611d5a57611d5a611cea565b611d6d601f8201601f1916602001611d00565b818152846020838601011115611d8257600080fd5b816020850160208301376000918101602001919091529392505050565b60008083601f840112611db157600080fd5b5081356001600160401b03811115611dc857600080fd5b602083019150836020828501011115611de057600080fd5b9250929050565b60008060008060008060808789031215611e0057600080fd5b8635611e0b81611cd5565b955060208701356001600160401b0380821115611e2757600080fd5b611e338a838b01611d30565b96506040890135915080821115611e4957600080fd5b818901915089601f830112611e5d57600080fd5b813581811115611e6c57600080fd5b8a60208260051b8501011115611e8157600080fd5b602083019650809550506060890135915080821115611e9f57600080fd5b50611eac89828a01611d9f565b979a9699509497509295939492505050565b600060208284031215611ed057600080fd5b8135611edb81611cd5565b9392505050565b63ffffffff8116811461105857600080fd5b60006001600160401b03821115611f0d57611f0d611cea565b5060051b60200190565b600082601f830112611f2857600080fd5b81356020611f3d611f3883611ef4565b611d00565b82815260059290921b84018101918181019086841115611f5c57600080fd5b8286015b84811015611f775780358352918301918301611f60565b509695505050505050565b600082601f830112611f9357600080fd5b81356020611fa3611f3883611ef4565b82815260059290921b84018101918181019086841115611fc257600080fd5b8286015b84811015611f775780356001600160401b03811115611fe55760008081fd5b611ff38986838b0101611d30565b845250918301918301611fc6565b80356002811061201057600080fd5b919050565b600082601f83011261202657600080fd5b81356020612036611f3883611ef4565b82815260059290921b8401810191818101908684111561205557600080fd5b8286015b84811015611f775761206a81612001565b8352918301918301612059565b600080600080600060a0868803121561208f57600080fd5b853561209a81611ee2565b94506020868101356001600160401b03808211156120b757600080fd5b818901915089601f8301126120cb57600080fd5b81356120d9611f3882611ef4565b81815260059190911b8301840190848101908c8311156120f857600080fd5b938501935b8285101561211f57843561211081611cd5565b825293850193908501906120fd565b98505050604089013592508083111561213757600080fd5b6121438a848b01611f17565b9550606089013592508083111561215957600080fd5b6121658a848b01611f82565b9450608089013592508083111561217b57600080fd5b505061218988828901612015565b9150509295509295909350565b6000602082840312156121a857600080fd5b8135611edb81611ee2565b600081518084526020808501945080840160005b838110156121e3578151875295820195908201906001016121c7565b509495945050505050565b6001600160a01b038616815260a060208201819052600090612212908301876121b3565b63ffffffff9586166040840152938516606083015250921660809092019190915292915050565b6000806040838503121561224c57600080fd5b823561225781611cd5565b946020939093013593505050565b604080825283519082018190526000906020906060840190828701845b828110156122a75781516001600160a01b031684529284019290840190600101612282565b5050506001600160a01b039490941692019190915250919050565b600080604083850312156122d557600080fd5b82356122e081611cd5565b915060208301356122f081611cd5565b809150509250929050565b6000806040838503121561230e57600080fd5b823561231981611ee2565b915060208301356122f081611ee2565b602081526000611edb60208301846121b3565b60006020828403121561234e57600080fd5b81356001600160401b0381111561236457600080fd5b6114d184828501611d30565b634e487b7160e01b600052602160045260246000fd5b602081016006831061239a5761239a612370565b91905290565b600080600080608085870312156123b657600080fd5b84356123c181611cd5565b93506020850135925060408501356001600160401b038111156123e357600080fd5b6123ef87828801611d30565b9250506123fe60608601612001565b905092959194509250565b600080600080600060a0868803121561242157600080fd5b853561242c81611cd5565b94506020860135935060408601356001600160401b0381111561244e57600080fd5b61245a88828901611d30565b93505061246960608701612001565b949793965091946080013592915050565b6000815180845260005b818110156124a057602081850181015186830182015201612484565b506000602082860101526020601f19601f83011685010191505092915050565b602081526000611edb602083018461247a565b6000602082840312156124e557600080fd5b81518015158114611edb57600080fd5b634e487b7160e01b600052603260045260246000fd5b60008235607e1983360301811261252157600080fd5b9190910192915050565b6000808335601e1984360301811261254257600080fd5b8301803591506001600160401b0382111561255c57600080fd5b602001915036819003821315611de057600080fd5b60006020828403121561258357600080fd5b611edb82612001565b63ffffffff841681526060602082015260006125ab60608301856121b3565b82810360408401526125bd818561247a565b9695505050505050565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b6002811061260057612600612370565b9052565b600060a0820160018060a01b03808b168452602063ffffffff8b16818601526040828b1681870152606060a081880152848a865260c08801905060c08b60051b89010195508b60005b8c8110156127115789880360bf190183528135368f9003607e1901811261267357600080fd5b8e016080813561268281611cd5565b89168a5281880135888b01528682013536839003601e190181126126a557600080fd5b820188810190356001600160401b038111156126c057600080fd5b8036038213156126cf57600080fd5b82898d01526126e1838d0182846125c7565b925050506126f0868301612001565b91506126fe868b01836125f0565b985050918501919085019060010161264d565b50505050505050828103608084015261272b8185876125c7565b9a9950505050505050505050565b634e487b7160e01b600052601160045260246000fd5b600063ffffffff80831681810361276857612768612739565b6001019392505050565b80820180821115610f6757610f67612739565b63ffffffff831681526040602082015260006114d160408301846121b3565b6000600182016127b6576127b6612739565b5060010190565b805161201081611ee2565b60008060008060008060c087890312156127e157600080fd5b86516127ec81611cd5565b809650506020808801516127ff81611cd5565b604089015190965061281081611cd5565b60608901519095506001600160401b0381111561282c57600080fd5b8801601f81018a1361283d57600080fd5b805161284b611f3882611ef4565b81815260059190911b8201830190838101908c83111561286a57600080fd5b928401925b8284101561289157835161288281611cd5565b8252928401929084019061286f565b80975050505050506128a5608088016127bd565b91506128b360a088016127bd565b90509295509295509295565b6000602082840312156128d157600080fd5b8151611edb81611ee2565b8681526001600160a01b0386166020820152604081018590526060810184905260c0810161290d60808301856125f0565b8260a0830152979650505050505050565b6020808252602b908201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960408201526a6e697469616c697a696e6760a81b606082015260800190565b6001600160a01b038c81168252602082018c9052610160604083018190526000916129968483018e61247a565b91506129a5606085018d6125f0565b8a60808501528960a08501528860c085015280881660e08501528087166101008501528382036101208501526129db828761247a565b925080851661014085015250509c9b505050505050505050505050565b60018060a01b0385168152836020820152608060408201526000612a1f608083018561247a565b905061178760608301846125f056fea26469706673582212202cb57650be345d096ec45f417e0e3692a57299a5a3dd2a3d958123243235a7e264736f6c63430008130033",
+  "devdoc": {
+    "events": {
+      "AvatarSet(address,address)": {
+        "details": "Emitted each time the avatar is set."
+      },
+      "Initialized(uint8)": {
+        "details": "Triggered when the contract has been initialized or reinitialized."
+      },
+      "TargetSet(address,address)": {
+        "details": "Emitted each time the Target is set."
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "disableStrategy(address,address)": {
+        "params": {
+          "_prevStrategy": "BaseStrategy address that pointed in the linked list to the strategy to be removed",
+          "_strategy": "address of the BaseStrategy to be removed"
+        }
+      },
+      "enableStrategy(address)": {
+        "params": {
+          "_strategy": "contract address of the BaseStrategy to be enabled"
+        }
+      },
+      "executeProposal(uint32,address[],uint256[],bytes[],uint8[])": {
+        "params": {
+          "_data": "transaction data to be executed",
+          "_operations": "Calls or Delegatecalls",
+          "_proposalId": "identifier of the Proposal",
+          "_targets": "target contracts for each transaction",
+          "_values": "ETH values to be sent with each transaction"
+        }
+      },
+      "generateTxHashData(address,uint256,bytes,uint8,uint256)": {
+        "params": {
+          "_data": "encoded function call data of the transaction",
+          "_nonce": "Safe nonce of the transaction",
+          "_operation": "Enum.Operation to use for the transaction",
+          "_to": "target address of the transaction",
+          "_value": "ETH value to send with the transaction"
+        },
+        "returns": {
+          "_0": "bytes hashed transaction data"
+        }
+      },
+      "getProposal(uint32)": {
+        "params": {
+          "_proposalId": "identifier of the Proposal"
+        },
+        "returns": {
+          "_executionCounter": "counter of how many of the Proposals transactions have been executed",
+          "_executionPeriod": "time (in blocks) the Proposal must be executed within, after timelock ends",
+          "_strategy": "address of the BaseStrategy contract the Proposal is on",
+          "_timelockPeriod": "time (in blocks) the Proposal is timelocked for",
+          "_txHashes": "hashes of the transactions the Proposal contains"
+        }
+      },
+      "getProposalTxHash(uint32,uint32)": {
+        "params": {
+          "_proposalId": "identifier of the Proposal",
+          "_txIndex": "index of the transaction within the Proposal"
+        },
+        "returns": {
+          "_0": "bytes32 hash of the specified transaction"
+        }
+      },
+      "getProposalTxHashes(uint32)": {
+        "params": {
+          "_proposalId": "identifier of the Proposal to get transaction hashes for"
+        },
+        "returns": {
+          "_0": "bytes32[] array of transaction hashes"
+        }
+      },
+      "getStrategies(address,uint256)": {
+        "params": {
+          "_count": "maximum number of BaseStrategies that should be returned",
+          "_startAddress": "contract address of the BaseStrategy to start with"
+        },
+        "returns": {
+          "_next": "next BaseStrategy contract address in the linked list",
+          "_strategies": "array of BaseStrategies"
+        }
+      },
+      "getTxHash(address,uint256,bytes,uint8)": {
+        "params": {
+          "_data": "encoded function call data of the transaction",
+          "_operation": "Enum.Operation to use for the transaction",
+          "_to": "target address of the transaction",
+          "_value": "ETH value to send with the transaction"
+        },
+        "returns": {
+          "_0": "bytes32 transaction hash"
+        }
+      },
+      "isStrategyEnabled(address)": {
+        "params": {
+          "_strategy": "contract address of the BaseStrategy to check"
+        },
+        "returns": {
+          "_0": "bool True if the strategy is enabled, otherwise False"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "proposalState(uint32)": {
+        "params": {
+          "_proposalId": "identifier of the Proposal"
+        },
+        "returns": {
+          "_0": "ProposalState uint256 ProposalState enum value representing the         current state of the proposal"
+        }
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "setAvatar(address)": {
+        "details": "Sets the avatar to a new avatar (`newAvatar`)."
+      },
+      "setGuard(address)": {
+        "details": "Set a guard that checks transactions before execution.",
+        "params": {
+          "_guard": "The address of the guard to be used or the 0 address to disable the guard."
+        }
+      },
+      "setTarget(address)": {
+        "details": "Sets the target to a new target (`newTarget`)."
+      },
+      "setUp(bytes)": {
+        "params": {
+          "initializeParams": "encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod`"
+        }
+      },
+      "submitProposal(address,bytes,(address,uint256,bytes,uint8)[],string)": {
+        "params": {
+          "_data": "arbitrary data passed to the BaseStrategy implementation",
+          "_metadata": "additional data such as a title/description to submit with the proposal",
+          "_strategy": "address of the BaseStrategy implementation which the Proposal will use",
+          "_transactions": "array of transactions to propose"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      },
+      "updateExecutionPeriod(uint32)": {
+        "params": {
+          "_executionPeriod": "new execution period (in blocks)"
+        }
+      },
+      "updateTimelockPeriod(uint32)": {
+        "params": {
+          "_timelockPeriod": "timelockPeriod (in blocks) to be used for new Proposals"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "errors": {
+      "NotIERC165Compliant(address)": [
+        {
+          "notice": "`guard_` does not implement IERC165."
+        }
+      ]
+    },
+    "kind": "user",
+    "methods": {
+      "DOMAIN_SEPARATOR_TYPEHASH()": {
+        "notice": "``` keccak256(      \"EIP712Domain(uint256 chainId,address verifyingContract)\" ); ``` A unique hash intended to prevent signature collisions. See https://eips.ethereum.org/EIPS/eip-712."
+      },
+      "TRANSACTION_TYPEHASH()": {
+        "notice": "``` keccak256(      \"Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)\" ); ``` See https://eips.ethereum.org/EIPS/eip-712."
+      },
+      "disableStrategy(address,address)": {
+        "notice": "Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals. This has no effect on existing Proposals, either `ACTIVE` or completed."
+      },
+      "enableStrategy(address)": {
+        "notice": "Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals. Multiple strategies can be enabled, and new Proposals will be able to be created using any of the currently enabled strategies."
+      },
+      "executeProposal(uint32,address[],uint256[],bytes[],uint8[])": {
+        "notice": "Executes all transactions within a Proposal. This will only be able to be called if the Proposal passed."
+      },
+      "executionPeriod()": {
+        "notice": "Time (in blocks) between when timelock ends and the Proposal expires. "
+      },
+      "generateTxHashData(address,uint256,bytes,uint8,uint256)": {
+        "notice": "Generates the data for the module transaction hash (required for signing)."
+      },
+      "getProposal(uint32)": {
+        "notice": "Returns details about the specified Proposal."
+      },
+      "getProposalTxHash(uint32,uint32)": {
+        "notice": "Returns the hash of a transaction in a Proposal."
+      },
+      "getProposalTxHashes(uint32)": {
+        "notice": "Returns the transaction hashes associated with a given `proposalId`."
+      },
+      "getStrategies(address,uint256)": {
+        "notice": "Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses. Because the list of BaseStrategies is technically unbounded, this requires the address of the first strategy you would like, along with the total count of strategies to return, rather than returning the whole list at once."
+      },
+      "getTxHash(address,uint256,bytes,uint8)": {
+        "notice": "Returns the `keccak256` hash of the specified transaction."
+      },
+      "isStrategyEnabled(address)": {
+        "notice": "Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled."
+      },
+      "proposalState(uint32)": {
+        "notice": "Gets the state of a Proposal."
+      },
+      "setAvatar(address)": {
+        "notice": "Can only be called by the current owner."
+      },
+      "setTarget(address)": {
+        "notice": "Can only be called by the current owner."
+      },
+      "setUp(bytes)": {
+        "notice": "Initial setup of the Azorius instance."
+      },
+      "submitProposal(address,bytes,(address,uint256,bytes,uint8)[],string)": {
+        "notice": "Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md). New Proposals begin immediately in the `ACTIVE` state."
+      },
+      "timelockPeriod()": {
+        "notice": "Delay (in blocks) between when a Proposal is passed and when it can be executed. "
+      },
+      "totalProposalCount()": {
+        "notice": "Total number of submitted Proposals. "
+      },
+      "updateExecutionPeriod(uint32)": {
+        "notice": "Updates the execution period for future Proposals."
+      },
+      "updateTimelockPeriod(uint32)": {
+        "notice": "Updates the `timelockPeriod` for newly created Proposals. This has no effect on existing Proposals, either `ACTIVE` or completed."
+      }
+    },
+    "notice": "A Safe module which allows for composable governance. Azorius conforms to the [Zodiac pattern](https://github.com/gnosis/zodiac) for Safe modules. The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications of the transactions that comprise a Proposal, but notably not the state of voting. All voting details are delegated to [BaseStrategy](./BaseStrategy.md) implementations, of which an Azorius DAO can have any number.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 3006,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 3009,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 5465,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 2800,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 2920,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_array(t_uint256)49_storage"
+      },
+      {
+        "astId": 2607,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "guard",
+        "offset": 0,
+        "slot": "101",
+        "type": "t_address"
+      },
+      {
+        "astId": 2285,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "avatar",
+        "offset": 0,
+        "slot": "102",
+        "type": "t_address"
+      },
+      {
+        "astId": 2288,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "target",
+        "offset": 0,
+        "slot": "103",
+        "type": "t_address"
+      },
+      {
+        "astId": 11376,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "totalProposalCount",
+        "offset": 20,
+        "slot": "103",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 11379,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "timelockPeriod",
+        "offset": 24,
+        "slot": "103",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 11382,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "executionPeriod",
+        "offset": 28,
+        "slot": "103",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 11388,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "proposals",
+        "offset": 0,
+        "slot": "104",
+        "type": "t_mapping(t_uint256,t_struct(Proposal)13339_storage)"
+      },
+      {
+        "astId": 11393,
+        "contract": "contracts/azorius/Azorius.sol:Azorius",
+        "label": "strategies",
+        "offset": 0,
+        "slot": "105",
+        "type": "t_mapping(t_address,t_address)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_bytes32)dyn_storage": {
+        "base": "t_bytes32",
+        "encoding": "dynamic_array",
+        "label": "bytes32[]",
+        "numberOfBytes": "32"
+      },
+      "t_array(t_uint256)49_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[49]",
+        "numberOfBytes": "1568"
+      },
+      "t_array(t_uint256)50_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_address)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_mapping(t_uint256,t_struct(Proposal)13339_storage)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => struct IAzorius.Proposal)",
+        "numberOfBytes": "32",
+        "value": "t_struct(Proposal)13339_storage"
+      },
+      "t_struct(Proposal)13339_storage": {
+        "encoding": "inplace",
+        "label": "struct IAzorius.Proposal",
+        "members": [
+          {
+            "astId": 13329,
+            "contract": "contracts/azorius/Azorius.sol:Azorius",
+            "label": "executionCounter",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 13331,
+            "contract": "contracts/azorius/Azorius.sol:Azorius",
+            "label": "timelockPeriod",
+            "offset": 4,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 13333,
+            "contract": "contracts/azorius/Azorius.sol:Azorius",
+            "label": "executionPeriod",
+            "offset": 8,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 13335,
+            "contract": "contracts/azorius/Azorius.sol:Azorius",
+            "label": "strategy",
+            "offset": 12,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 13338,
+            "contract": "contracts/azorius/Azorius.sol:Azorius",
+            "label": "txHashes",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_bytes32)dyn_storage"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}
