@@ -6,14 +6,6 @@ A simple contract that allows for parent DAOs that have created a new ERC-20
 token voting subDAO to allocate a certain amount of those tokens as claimable 
 by the parent DAO's token holders.
 
-### deadlineBlock
-
-```solidity
-uint32 deadlineBlock
-```
-
-The deadline block to claim tokens by, or 0 for indefinite.
-
 ### funder
 
 ```solidity
@@ -21,6 +13,14 @@ address funder
 ```
 
 The address of the initial holder of the claimable `childERC20` tokens.
+
+### deadlineBlock
+
+```solidity
+uint256 deadlineBlock
+```
+
+The deadline block to claim tokens by, or 0 for indefinite.
 
 ### childERC20
 
