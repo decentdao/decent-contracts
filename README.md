@@ -73,3 +73,12 @@ to publish the compiled typechain files and solidity contracts to NPM
 git commit
 git push
 ```
+
+## Versioning
+Fractal follows a modified style of semantic versioning (https://semver.org/) specific to a smart contract use case.
+
+There are three types of releases: 
+
+- **MAJOR**: Rare, and correlates to a major overhaul to the core DAO governance contracts. These are changes incompatible with prior contract versions and would require an existing DAO's successful proposal to migrate to. A major version will have undergone a professional smart contract audit.
+- **MINOR**: Adds backwards-compatible functionality and additional utility or optimizations to the core governance smart contracts. New functionality will not impact the existing core governance contracts, will be optional for a DAO to utilize, and will have undergone either a contract audit or community bug bounty.
+- **PATCH**: Also rare, but adds bug and/or security fixes. No new functionality will be introduced and the code may or may not have a contract audit or bug bounty, depending on the context and severity of the issue. Also depending on the context of the issue, DAOs may be required to pass a proposal to migrate to this new version.
