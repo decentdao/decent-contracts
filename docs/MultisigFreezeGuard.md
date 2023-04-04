@@ -7,7 +7,7 @@ Implementation of [IMultisigFreezeGuard](./interfaces/IMultisigFreezeGuard.md).
 ### timelockPeriod
 
 ```solidity
-uint256 timelockPeriod
+uint32 timelockPeriod
 ```
 
 Timelock period (in blocks).
@@ -15,7 +15,7 @@ Timelock period (in blocks).
 ### executionPeriod
 
 ```solidity
-uint256 executionPeriod
+uint32 executionPeriod
 ```
 
 Execution period (in blocks).
@@ -40,10 +40,10 @@ Reference to the Safe that can be frozen.
 ### transactionTimelockedBlock
 
 ```solidity
-mapping(bytes32 => uint256) transactionTimelockedBlock
+mapping(bytes32 => uint32) transactionTimelockedBlock
 ```
 
-Mapping of transaction hash to the block during which it was timelocked.
+Mapping of signatures hash to the block during which it was timelocked.
 
 ### MultisigFreezeGuardSetup
 
@@ -54,19 +54,19 @@ event MultisigFreezeGuardSetup(address creator, address owner, address freezeVot
 ### TransactionTimelocked
 
 ```solidity
-event TransactionTimelocked(address timelocker, bytes32 transactionHash, bytes signatures)
+event TransactionTimelocked(address timelocker, bytes32 signaturesHash, bytes signatures)
 ```
 
 ### TimelockPeriodUpdated
 
 ```solidity
-event TimelockPeriodUpdated(uint256 timelockPeriod)
+event TimelockPeriodUpdated(uint32 timelockPeriod)
 ```
 
 ### ExecutionPeriodUpdated
 
 ```solidity
-event ExecutionPeriodUpdated(uint256 executionPeriod)
+event ExecutionPeriodUpdated(uint32 executionPeriod)
 ```
 
 ### NotTimelockable
@@ -145,7 +145,7 @@ The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransact
 ### updateTimelockPeriod
 
 ```solidity
-function updateTimelockPeriod(uint256 _timelockPeriod) external
+function updateTimelockPeriod(uint32 _timelockPeriod) external
 ```
 
 Sets the subDAO's timelock period.
@@ -154,12 +154,12 @@ Sets the subDAO's timelock period.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | new timelock period for the subDAO (in blocks) |
+| _timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
 
 ### updateExecutionPeriod
 
 ```solidity
-function updateExecutionPeriod(uint256 _executionPeriod) external
+function updateExecutionPeriod(uint32 _executionPeriod) external
 ```
 
 Updates the execution period.
@@ -173,12 +173,12 @@ This period begins immediately after the timelock period has ended.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _executionPeriod | uint256 | number of blocks a transaction has to be executed within |
+| _executionPeriod | uint32 | number of blocks a transaction has to be executed within |
 
 ### checkTransaction
 
 ```solidity
-function checkTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes, address) external view
+function checkTransaction(address, uint256, bytes, enum Enum.Operation, uint256, uint256, uint256, address, address payable, bytes signatures, address) external view
 ```
 
 Called by the Safe to check if the transaction is able to be executed and reverts 
@@ -196,7 +196,7 @@ function of the `BaseGuard` and `IGuard` interfaces that we do not make use of.
 ### getTransactionTimelockedBlock
 
 ```solidity
-function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint256)
+function getTransactionTimelockedBlock(bytes32 _signaturesHash) public view returns (uint32)
 ```
 
 Gets the block number that the given transaction was timelocked at.
@@ -205,53 +205,18 @@ Gets the block number that the given transaction was timelocked at.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _transactionHash | bytes32 | hash of the transaction data |
+| _signaturesHash | bytes32 | hash of the transaction signatures |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | uint256 block number in which the transaction began its timelock period |
-
-### getTransactionHash
-
-```solidity
-function getTransactionHash(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver) public pure returns (bytes32)
-```
-
-Returns the hash of all the transaction data.
-
-It is important to note that this implementation is different than that 
-in the Gnosis Safe contract. This implementation does not use the nonce, 
-as this is not part of the Guard contract `checkTransaction` interface.
-
-This implementation also omits the EIP-712 related values, since these hashes 
-are not being signed by users.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| to | address | destination address |
-| value | uint256 | ETH value |
-| data | bytes | payload |
-| operation | enum Enum.Operation | Operation type |
-| safeTxGas | uint256 | gas that should be used for the safe transaction |
-| baseGas | uint256 | gas costs for that are independent of the transaction execution      (e.g. base transaction fee, signature check, payment of the refund) |
-| gasPrice | uint256 | maxiumum gas price that should be used for this transaction |
-| gasToken | address | token address (or 0 if ETH) that is used for the payment |
-| refundReceiver | address | address of receiver of gas payment (or 0 if tx.origin) |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | bytes32 transaction hash bytes |
+| [0] | uint32 | uint32 block number in which the transaction began its timelock period |
 
 ### _updateTimelockPeriod
 
 ```solidity
-function _updateTimelockPeriod(uint256 _timelockPeriod) internal
+function _updateTimelockPeriod(uint32 _timelockPeriod) internal
 ```
 
 Internal implementation of `updateTimelockPeriod`
@@ -259,7 +224,7 @@ Internal implementation of `updateTimelockPeriod`
 ### _updateExecutionPeriod
 
 ```solidity
-function _updateExecutionPeriod(uint256 _executionPeriod) internal
+function _updateExecutionPeriod(uint32 _executionPeriod) internal
 ```
 
 Internal implementation of `updateExecutionPeriod`

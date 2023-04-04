@@ -51,7 +51,7 @@ The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransact
 ### updateTimelockPeriod
 
 ```solidity
-function updateTimelockPeriod(uint256 _timelockPeriod) external
+function updateTimelockPeriod(uint32 _timelockPeriod) external
 ```
 
 Sets the subDAO's timelock period.
@@ -60,12 +60,12 @@ Sets the subDAO's timelock period.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _timelockPeriod | uint256 | new timelock period for the subDAO (in blocks) |
+| _timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
 
 ### updateExecutionPeriod
 
 ```solidity
-function updateExecutionPeriod(uint256 _executionPeriod) external
+function updateExecutionPeriod(uint32 _executionPeriod) external
 ```
 
 Updates the execution period.
@@ -79,12 +79,12 @@ This period begins immediately after the timelock period has ended.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _executionPeriod | uint256 | number of blocks a transaction has to be executed within |
+| _executionPeriod | uint32 | number of blocks a transaction has to be executed within |
 
 ### getTransactionTimelockedBlock
 
 ```solidity
-function getTransactionTimelockedBlock(bytes32 _transactionHash) external view returns (uint256)
+function getTransactionTimelockedBlock(bytes32 _signaturesHash) external view returns (uint32)
 ```
 
 Gets the block number that the given transaction was timelocked at.
@@ -93,11 +93,11 @@ Gets the block number that the given transaction was timelocked at.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _transactionHash | bytes32 | hash of the transaction data |
+| _signaturesHash | bytes32 | hash of the transaction signatures |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | uint256 block number in which the transaction began its timelock period |
+| [0] | uint32 | uint32 block number in which the transaction began its timelock period |
 

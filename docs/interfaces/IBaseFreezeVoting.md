@@ -50,7 +50,7 @@ votes necessary to begin a freeze on the subDAO.
 ### updateFreezeProposalPeriod
 
 ```solidity
-function updateFreezeProposalPeriod(uint256 _freezeProposalPeriod) external
+function updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) external
 ```
 
 Updates the freeze proposal period for future freeze votes. This is the length of time
@@ -60,12 +60,12 @@ Updates the freeze proposal period for future freeze votes. This is the length o
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _freezeProposalPeriod | uint256 | number of blocks a freeze proposal has to succeed |
+| _freezeProposalPeriod | uint32 | number of blocks a freeze proposal has to succeed |
 
 ### updateFreezePeriod
 
 ```solidity
-function updateFreezePeriod(uint256 _freezePeriod) external
+function updateFreezePeriod(uint32 _freezePeriod) external
 ```
 
 Updates the freeze period. This is the length of time (in blocks) the subDAO is actually
@@ -78,7 +78,7 @@ from the parentDAO.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _freezePeriod | uint256 | number of blocks a freeze lasts, from time of freeze proposal creation |
+| _freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
 
 ### isFrozen
 
