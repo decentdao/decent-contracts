@@ -26,7 +26,7 @@ Execution period (in blocks).
 contract IBaseFreezeVoting freezeVoting
 ```
 
-Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
+Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md)
 implementation that determines whether the Safe is frozen.
 
 ### childGnosisSafe
@@ -54,7 +54,7 @@ event MultisigFreezeGuardSetup(address creator, address owner, address freezeVot
 ### TransactionTimelocked
 
 ```solidity
-event TransactionTimelocked(address timelocker, bytes32 signaturesHash, bytes signatures)
+event TransactionTimelocked(address timelocker, bytes32 transactionHash, bytes signatures)
 ```
 
 ### TimelockPeriodUpdated
@@ -69,10 +69,10 @@ event TimelockPeriodUpdated(uint32 timelockPeriod)
 event ExecutionPeriodUpdated(uint32 executionPeriod)
 ```
 
-### NotTimelockable
+### AlreadyTimelocked
 
 ```solidity
-error NotTimelockable()
+error AlreadyTimelocked()
 ```
 
 ### NotTimelocked
@@ -111,7 +111,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `uint256 _timelockPeriod`, `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe` |
+| initializeParams | bytes | encoded initialization parameters: `uint256 _timelockPeriod`, `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe` |
 
 ### timelockTransaction
 
@@ -181,7 +181,7 @@ This period begins immediately after the timelock period has ended.
 function checkTransaction(address, uint256, bytes, enum Enum.Operation, uint256, uint256, uint256, address, address payable, bytes signatures, address) external view
 ```
 
-Called by the Safe to check if the transaction is able to be executed and reverts 
+Called by the Safe to check if the transaction is able to be executed and reverts
 if the guard conditions are not met.
 
 ### checkAfterExecution

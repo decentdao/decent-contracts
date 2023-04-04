@@ -125,7 +125,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
 
 ### updateVotingPeriod
 
@@ -347,5 +347,5 @@ Internal function for casting a vote on a Proposal.
 | _proposalId | uint32 | id of the Proposal |
 | _voter | address | address casting the vote |
 | _voteType | uint8 | vote support, as defined in VoteType |
-| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
+| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
 

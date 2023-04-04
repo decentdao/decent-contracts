@@ -34,7 +34,7 @@ function initializeProposal(bytes _data) external
 ### isPassed
 
 ```solidity
-function isPassed(uint256) external pure returns (bool)
+function isPassed(uint32) external pure returns (bool)
 ```
 
 ### isProposer
@@ -46,6 +46,6 @@ function isProposer(address _proposer) external view returns (bool)
 ### votingEndBlock
 
 ```solidity
-function votingEndBlock(uint256) external pure returns (uint256)
+function votingEndBlock(uint32) external pure returns (uint32)
 ```
 

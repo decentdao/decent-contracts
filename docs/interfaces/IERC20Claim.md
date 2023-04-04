@@ -19,7 +19,7 @@ subDAO during its creation.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
+| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
 
 ### getClaimAmount
 
