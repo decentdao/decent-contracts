@@ -256,7 +256,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx.gasPrice,
         tx.gasToken,
         tx.refundReceiver,
-        signatureBytes
+        signatureBytes,
+        tx.nonce
       );
 
       const latestBlock = await ethers.provider.getBlock("latest");
@@ -355,7 +356,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
           tx.gasPrice,
           tx.gasToken,
           tx.refundReceiver,
-          signatureBytes
+          signatureBytes,
+          tx.nonce
         )
       ).to.be.revertedWith("GS020");
     });
@@ -390,7 +392,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx.gasPrice,
         tx.gasToken,
         tx.refundReceiver,
-        signatureBytes
+        signatureBytes,
+        tx.nonce
       );
 
       await expect(
@@ -445,7 +448,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -538,7 +542,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -620,7 +625,8 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
