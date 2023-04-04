@@ -78,8 +78,8 @@ interface IMultisigFreezeGuard {
     /**
      * Gets the block number that the given transaction was timelocked at.
      *
-     * @param _transactionHash hash of the transaction data
+     * @param _signaturesHash hash of the transaction signatures
      * @return uint32 block number in which the transaction began its timelock period
      */
-    function getTransactionTimelockedBlock(bytes32 _transactionHash) external view returns (uint32);
+    function getTransactionTimelockedBlock(bytes32 _signaturesHash) external view returns (uint32);
 }
