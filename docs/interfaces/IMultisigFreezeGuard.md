@@ -22,7 +22,7 @@ See https://docs.safe.global/learn/safe-core/safe-core-protocol/guards.
 ### timelockTransaction
 
 ```solidity
-function timelockTransaction(address _to, uint256 _value, bytes _data, enum Enum.Operation _operation, uint256 _safeTxGas, uint256 _baseGas, uint256 _gasPrice, address _gasToken, address payable _refundReceiver, bytes _signatures) external
+function timelockTransaction(address _to, uint256 _value, bytes _data, enum Enum.Operation _operation, uint256 _safeTxGas, uint256 _baseGas, uint256 _gasPrice, address _gasToken, address payable _refundReceiver, bytes _signatures, uint256 _nonce) external
 ```
 
 Allows the caller to begin the `timelock` of a transaction.
@@ -47,6 +47,7 @@ The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransact
 | _gasToken | address | token address (or 0 if ETH) that is used for the payment |
 | _refundReceiver | address payable | address of the receiver of gas payment (or 0 if tx.origin) |
 | _signatures | bytes | packed signature data |
+| _nonce | uint256 | nonce to use for the safe transaction |
 
 ### updateTimelockPeriod
 

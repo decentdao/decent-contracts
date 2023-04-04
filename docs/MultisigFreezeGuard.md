@@ -116,7 +116,7 @@ Initialize function, will be triggered when a new instance is deployed.
 ### timelockTransaction
 
 ```solidity
-function timelockTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes signatures) external
+function timelockTransaction(address to, uint256 value, bytes data, enum Enum.Operation operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes signatures, uint256 nonce) external
 ```
 
 Allows the caller to begin the `timelock` of a transaction.
@@ -141,6 +141,7 @@ The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransact
 | gasToken | address |  |
 | refundReceiver | address payable |  |
 | signatures | bytes |  |
+| nonce | uint256 |  |
 
 ### updateTimelockPeriod
 
