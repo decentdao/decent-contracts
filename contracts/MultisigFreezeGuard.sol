@@ -21,8 +21,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     uint32 public executionPeriod;
 
     /**
-     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
-     * implementation that determines whether the Safe is frozen. 
+     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md)
+     * implementation that determines whether the Safe is frozen.
      */
     IBaseFreezeVoting public freezeVoting;
 
@@ -40,13 +40,13 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     );
     event TransactionTimelocked(
         address indexed timelocker,
-        bytes32 indexed signaturesHash,
+        bytes32 indexed transactionHash,
         bytes indexed signatures
     );
     event TimelockPeriodUpdated(uint32 timelockPeriod);
     event ExecutionPeriodUpdated(uint32 executionPeriod);
 
-    error NotTimelockable();
+    error AlreadyTimelocked();
     error NotTimelocked();
     error Timelocked();
     error Expired();
@@ -96,19 +96,15 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         uint256 gasPrice,
         address gasToken,
         address payable refundReceiver,
-        bytes memory signatures
+        bytes memory signatures,
+        uint256 nonce
     ) external {
-
         bytes32 signaturesHash = keccak256(signatures);
 
-        if (
-            block.number <
-            transactionTimelockedBlock[signaturesHash] +
-                timelockPeriod +
-                executionPeriod
-        ) revert NotTimelockable();
+        if (transactionTimelockedBlock[signaturesHash] != 0)
+            revert AlreadyTimelocked();
 
-        bytes memory gnosisTransactionHash = childGnosisSafe
+        bytes memory transactionHashData = childGnosisSafe
             .encodeTransactionData(
                 to,
                 value,
@@ -119,19 +115,21 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
                 gasPrice,
                 gasToken,
                 refundReceiver,
-                childGnosisSafe.nonce()
+                nonce
             );
+
+        bytes32 transactionHash = keccak256(transactionHashData);
 
         // if signatures are not valid, this will revert
         childGnosisSafe.checkSignatures(
-            keccak256(gnosisTransactionHash),
-            gnosisTransactionHash,
+            transactionHash,
+            transactionHashData,
             signatures
         );
 
         transactionTimelockedBlock[signaturesHash] = uint32(block.number);
 
-        emit TransactionTimelocked(msg.sender, signaturesHash, signatures);
+        emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
@@ -145,7 +143,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /**
-     * Called by the Safe to check if the transaction is able to be executed and reverts 
+     * Called by the Safe to check if the transaction is able to be executed and reverts
      * if the guard conditions are not met.
      */
     function checkTransaction(
@@ -199,7 +197,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
-    
+
     /** Internal implementation of `updateExecutionPeriod` */
     function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;

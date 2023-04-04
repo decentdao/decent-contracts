@@ -42,6 +42,7 @@ interface IMultisigFreezeGuard {
      * @param _gasToken token address (or 0 if ETH) that is used for the payment
      * @param _refundReceiver address of the receiver of gas payment (or 0 if tx.origin)
      * @param _signatures packed signature data
+     * @param _nonce nonce to use for the safe transaction
      */
     function timelockTransaction(
         address _to,
@@ -53,7 +54,8 @@ interface IMultisigFreezeGuard {
         uint256 _gasPrice,
         address _gasToken,
         address payable _refundReceiver,
-        bytes memory _signatures
+        bytes memory _signatures,
+        uint256 _nonce
     ) external;
 
     /**
