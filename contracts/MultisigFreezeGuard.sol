@@ -21,15 +21,15 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     uint32 public executionPeriod;
 
     /**
-     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md) 
-     * implementation that determines whether the Safe is frozen. 
+     * Reference to the [IBaseFreezeVoting](./interfaces/IBaseFreezeVoting.md)
+     * implementation that determines whether the Safe is frozen.
      */
     IBaseFreezeVoting public freezeVoting;
 
     /** Reference to the Safe that can be frozen. */
     ISafe public childGnosisSafe;
 
-    /** Mapping of transaction hash to the block during which it was timelocked. */
+    /** Mapping of signatures hash to the block during which it was timelocked. */
     mapping(bytes32 => uint32) internal transactionTimelockedBlock;
 
     event MultisigFreezeGuardSetup(
@@ -46,7 +46,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     event TimelockPeriodUpdated(uint32 timelockPeriod);
     event ExecutionPeriodUpdated(uint32 executionPeriod);
 
-    error NotTimelockable();
+    error AlreadyTimelocked();
     error NotTimelocked();
     error Timelocked();
     error Expired();
@@ -96,28 +96,15 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         uint256 gasPrice,
         address gasToken,
         address payable refundReceiver,
-        bytes memory signatures
+        bytes memory signatures,
+        uint256 nonce
     ) external {
-        bytes32 transactionHash = getTransactionHash(
-            to,
-            value,
-            data,
-            operation,
-            safeTxGas,
-            baseGas,
-            gasPrice,
-            gasToken,
-            refundReceiver
-        );
+        bytes32 signaturesHash = keccak256(signatures);
 
-        if (
-            block.number <
-            transactionTimelockedBlock[transactionHash] +
-                timelockPeriod +
-                executionPeriod
-        ) revert NotTimelockable();
+        if (transactionTimelockedBlock[signaturesHash] != 0)
+            revert AlreadyTimelocked();
 
-        bytes memory gnosisTransactionHash = childGnosisSafe
+        bytes memory transactionHashData = childGnosisSafe
             .encodeTransactionData(
                 to,
                 value,
@@ -128,17 +115,19 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
                 gasPrice,
                 gasToken,
                 refundReceiver,
-                childGnosisSafe.nonce()
+                nonce
             );
+
+        bytes32 transactionHash = keccak256(transactionHashData);
 
         // if signatures are not valid, this will revert
         childGnosisSafe.checkSignatures(
-            keccak256(gnosisTransactionHash),
-            gnosisTransactionHash,
+            transactionHash,
+            transactionHashData,
             signatures
         );
 
-        transactionTimelockedBlock[transactionHash] = uint32(block.number);
+        transactionTimelockedBlock[signaturesHash] = uint32(block.number);
 
         emit TransactionTimelocked(msg.sender, transactionHash, signatures);
     }
@@ -154,45 +143,35 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /**
-     * Called by the Safe to check if the transaction is able to be executed and reverts 
+     * Called by the Safe to check if the transaction is able to be executed and reverts
      * if the guard conditions are not met.
      */
     function checkTransaction(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address payable refundReceiver,
+        address,
+        uint256,
         bytes memory,
+        Enum.Operation,
+        uint256,
+        uint256,
+        uint256,
+        address,
+        address payable,
+        bytes memory signatures,
         address
     ) external view override(BaseGuard, IGuard) {
-        bytes32 transactionHash = getTransactionHash(
-            to,
-            value,
-            data,
-            operation,
-            safeTxGas,
-            baseGas,
-            gasPrice,
-            gasToken,
-            refundReceiver
-        );
+        bytes32 signaturesHash = keccak256(signatures);
 
-        if (transactionTimelockedBlock[transactionHash] == 0)
+        if (transactionTimelockedBlock[signaturesHash] == 0)
             revert NotTimelocked();
 
         if (
             block.number <
-            transactionTimelockedBlock[transactionHash] + timelockPeriod
+            transactionTimelockedBlock[signaturesHash] + timelockPeriod
         ) revert Timelocked();
 
         if (
             block.number >
-            transactionTimelockedBlock[transactionHash] +
+            transactionTimelockedBlock[signaturesHash] +
                 timelockPeriod +
                 executionPeriod
         ) revert Expired();
@@ -209,57 +188,8 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     }
 
     /** @inheritdoc IMultisigFreezeGuard*/
-    function getTransactionTimelockedBlock(bytes32 _transactionHash) public view returns (uint32) {
-        return transactionTimelockedBlock[_transactionHash];
-    }
-
-    /**
-     * Returns the hash of all the transaction data.
-     *
-     * It is important to note that this implementation is different than that 
-     * in the Gnosis Safe contract. This implementation does not use the nonce, 
-     * as this is not part of the Guard contract `checkTransaction` interface.
-     *
-     * This implementation also omits the EIP-712 related values, since these hashes 
-     * are not being signed by users.
-     *
-     * @param to destination address
-     * @param value ETH value
-     * @param data payload
-     * @param operation Operation type
-     * @param safeTxGas gas that should be used for the safe transaction
-     * @param baseGas gas costs for that are independent of the transaction execution
-     *      (e.g. base transaction fee, signature check, payment of the refund)
-     * @param gasPrice maxiumum gas price that should be used for this transaction
-     * @param gasToken token address (or 0 if ETH) that is used for the payment
-     * @param refundReceiver address of receiver of gas payment (or 0 if tx.origin)
-     * @return bytes32 transaction hash bytes
-     */
-    function getTransactionHash(
-        address to,
-        uint256 value,
-        bytes memory data,
-        Enum.Operation operation,
-        uint256 safeTxGas,
-        uint256 baseGas,
-        uint256 gasPrice,
-        address gasToken,
-        address refundReceiver
-    ) public pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    to,
-                    value,
-                    keccak256(data),
-                    operation,
-                    safeTxGas,
-                    baseGas,
-                    gasPrice,
-                    gasToken,
-                    refundReceiver
-                )
-            );
+    function getTransactionTimelockedBlock(bytes32 _signaturesHash) public view returns (uint32) {
+        return transactionTimelockedBlock[_signaturesHash];
     }
 
     /** Internal implementation of `updateTimelockPeriod` */
@@ -267,7 +197,7 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
-    
+
     /** Internal implementation of `updateExecutionPeriod` */
     function _updateExecutionPeriod(uint32 _executionPeriod) internal {
         executionPeriod = _executionPeriod;

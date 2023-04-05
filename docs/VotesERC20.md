@@ -16,7 +16,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `string memory _name`, `string memory _symbol`, `address[] memory _allocationAddresses`,  `uint256[] memory _allocationAmounts` |
+| initializeParams | bytes | encoded initialization parameters: `string memory _name`, `string memory _symbol`, `address[] memory _allocationAddresses`,  `uint256[] memory _allocationAmounts` |
 
 ### captureSnapShot
 

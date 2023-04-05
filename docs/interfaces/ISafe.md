@@ -86,7 +86,7 @@ Checks whether the signature provided is valid for the provided data and hash. R
 | ---- | ---- | ----------- |
 | _dataHash | bytes32 | Hash of the data (could be either a message hash or transaction hash) |
 | _data | bytes | That should be signed (this is passed to an external validator contract) |
-| _signatures | bytes | Signature data that should be verified. Can be packed ECDSA signature       ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash. |
+| _signatures | bytes | Signature data that should be verified. Can be packed ECDSA signature       ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash. |
 
 ### encodeTransactionData
 

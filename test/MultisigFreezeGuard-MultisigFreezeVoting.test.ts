@@ -294,7 +294,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx.gasPrice,
         tx.gasToken,
         tx.refundReceiver,
-        signatureBytes
+        signatureBytes,
+        tx.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -311,6 +312,171 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx.gasToken,
         tx.refundReceiver,
         signatureBytes
+      );
+
+      expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
+    });
+
+    it("The same transaction must be timelocked separately if being executed more than once", async () => {
+      // Create transaction to set the guard address
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 1000]
+      );
+
+      const tx = buildSafeTransaction({
+        to: votesERC20.address,
+        data: tokenTransferData,
+        safeTxGas: 1000000,
+        nonce: await childGnosisSafe.nonce(),
+      });
+
+      const sigs = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx),
+      ];
+      const signatureBytes = buildSignatureBytes(sigs);
+
+      await freezeGuard.timelockTransaction(
+        tx.to,
+        tx.value,
+        tx.data,
+        tx.operation,
+        tx.safeTxGas,
+        tx.baseGas,
+        tx.gasPrice,
+        tx.gasToken,
+        tx.refundReceiver,
+        signatureBytes,
+        tx.nonce
+      );
+
+      // Move time forward to elapse timelock period
+      await time.advanceBlocks(60);
+
+      await childGnosisSafe.execTransaction(
+        tx.to,
+        tx.value,
+        tx.data,
+        tx.operation,
+        tx.safeTxGas,
+        tx.baseGas,
+        tx.gasPrice,
+        tx.gasToken,
+        tx.refundReceiver,
+        signatureBytes
+      );
+
+      expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
+
+      await expect(
+        childGnosisSafe.execTransaction(
+          tx.to,
+          tx.value,
+          tx.data,
+          tx.operation,
+          tx.safeTxGas,
+          tx.baseGas,
+          tx.gasPrice,
+          tx.gasToken,
+          tx.refundReceiver,
+          signatureBytes
+        )
+      ).to.be.revertedWith("GS026");
+    });
+
+    it("The same transaction can be executed twice if it is timelocked separately", async () => {
+      // Create transaction to set the guard address
+      const tokenTransferData = votesERC20.interface.encodeFunctionData(
+        "transfer",
+        [deployer.address, 500]
+      );
+
+      const tx1 = buildSafeTransaction({
+        to: votesERC20.address,
+        data: tokenTransferData,
+        safeTxGas: 1000000,
+        nonce: 1,
+      });
+
+      const sigs1 = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx1),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx1),
+      ];
+      const signatureBytes1 = buildSignatureBytes(sigs1);
+
+      const tx2 = buildSafeTransaction({
+        to: votesERC20.address,
+        data: tokenTransferData,
+        safeTxGas: 1000000,
+        nonce: 2,
+      });
+
+      const sigs2 = [
+        await safeSignTypedData(childMultisigOwner1, childGnosisSafe, tx2),
+        await safeSignTypedData(childMultisigOwner2, childGnosisSafe, tx2),
+      ];
+      const signatureBytes2 = buildSignatureBytes(sigs2);
+
+      await freezeGuard.timelockTransaction(
+        tx1.to,
+        tx1.value,
+        tx1.data,
+        tx1.operation,
+        tx1.safeTxGas,
+        tx1.baseGas,
+        tx1.gasPrice,
+        tx1.gasToken,
+        tx1.refundReceiver,
+        signatureBytes1,
+        tx1.nonce
+      );
+
+      await freezeGuard.timelockTransaction(
+        tx2.to,
+        tx2.value,
+        tx2.data,
+        tx2.operation,
+        tx2.safeTxGas,
+        tx2.baseGas,
+        tx2.gasPrice,
+        tx2.gasToken,
+        tx2.refundReceiver,
+        signatureBytes2,
+        tx2.nonce
+      );
+
+      // Move time forward to elapse timelock period
+      await time.advanceBlocks(60);
+
+      // Execute the first transaction
+      await childGnosisSafe.execTransaction(
+        tx1.to,
+        tx1.value,
+        tx1.data,
+        tx1.operation,
+        tx1.safeTxGas,
+        tx1.baseGas,
+        tx1.gasPrice,
+        tx1.gasToken,
+        tx1.refundReceiver,
+        signatureBytes1
+      );
+
+      // Execute the second transaction
+      await childGnosisSafe.execTransaction(
+        tx2.to,
+        tx2.value,
+        tx2.data,
+        tx2.operation,
+        tx2.safeTxGas,
+        tx2.baseGas,
+        tx2.gasPrice,
+        tx2.gasToken,
+        tx2.refundReceiver,
+        signatureBytes2
       );
 
       expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
@@ -384,7 +550,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.gasPrice,
           tx.gasToken,
           tx.refundReceiver,
-          signatureBytes
+          signatureBytes,
+          tx.nonce
         )
       ).to.be.revertedWith("GS020");
     });
@@ -419,7 +586,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx.gasPrice,
         tx.gasToken,
         tx.refundReceiver,
-        signatureBytes
+        signatureBytes,
+        tx.nonce
       );
 
       await expect(
@@ -486,7 +654,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Vetoer 1 casts 1 freeze vote
@@ -530,7 +699,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx2.gasPrice,
         tx2.gasToken,
         tx2.refundReceiver,
-        signatureBytes2
+        signatureBytes2,
+        tx2.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -600,7 +770,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Vetoer 1 casts 1 freeze vote
@@ -644,7 +815,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx2.gasPrice,
         tx2.gasToken,
         tx2.refundReceiver,
-        signatureBytes2
+        signatureBytes2,
+        tx2.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -710,7 +882,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -803,7 +976,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -887,7 +1061,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx1.gasPrice,
         tx1.gasToken,
         tx1.refundReceiver,
-        signatureBytes1
+        signatureBytes1,
+        tx1.nonce
       );
 
       // Move time forward to elapse timelock period
@@ -940,7 +1115,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         tx.gasPrice,
         tx.gasToken,
         tx.refundReceiver,
-        signatureBytes
+        signatureBytes,
+        tx.nonce
       );
 
       await expect(
@@ -954,9 +1130,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.gasPrice,
           tx.gasToken,
           tx.refundReceiver,
-          signatureBytes
+          signatureBytes,
+          tx.nonce
         )
-      ).to.be.revertedWith("NotTimelockable()");
+      ).to.be.revertedWith("AlreadyTimelocked()");
     });
 
     it("You must be a parent multisig owner to cast a freeze vote", async () => {

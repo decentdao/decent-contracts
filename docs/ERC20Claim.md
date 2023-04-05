@@ -6,6 +6,14 @@ A simple contract that allows for parent DAOs that have created a new ERC-20
 token voting subDAO to allocate a certain amount of those tokens as claimable 
 by the parent DAO's token holders.
 
+### deadlineBlock
+
+```solidity
+uint32 deadlineBlock
+```
+
+The deadline block to claim tokens by, or 0 for indefinite.
+
 ### funder
 
 ```solidity
@@ -13,14 +21,6 @@ address funder
 ```
 
 The address of the initial holder of the claimable `childERC20` tokens.
-
-### deadlineBlock
-
-```solidity
-uint256 deadlineBlock
-```
-
-The deadline block to claim tokens by, or 0 for indefinite.
 
 ### childERC20
 
@@ -116,7 +116,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
+| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
 
 ### claimTokens
 
@@ -131,7 +131,7 @@ subDAO during its creation.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
+| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
 
 ### reclaim
 
