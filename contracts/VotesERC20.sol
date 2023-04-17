@@ -25,7 +25,7 @@ contract VotesERC20 is
      * `string memory _symbol`, `address[] memory _allocationAddresses`, 
      * `uint256[] memory _allocationAmounts`
      */
-    function setUp(bytes memory initializeParams) public override initializer {
+    function setUp(bytes memory initializeParams) public virtual override initializer {
         (
             string memory _name,                    // token name
             string memory _symbol,                  // token symbol
