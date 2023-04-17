@@ -1,13 +1,14 @@
 # Solidity API
 
-## VotesERC20
+## VotesERC20Wrapper
 
-An implementation of the Open Zeppelin `IVotes` voting token standard.
+An extension of `VotesERC20` which supports wrapping / unwrapping an existing ERC20 token,
+to allow for importing an existing token into the Azorius governance framework.
 
 ### setUp
 
 ```solidity
-function setUp(bytes initializeParams) public virtual
+function setUp(bytes initializeParams) public
 ```
 
 Initialize function, will be triggered when a new instance is deployed.
@@ -16,15 +17,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `string memory _name`, `string memory _symbol`, `address[] memory _allocationAddresses`,  `uint256[] memory _allocationAmounts` |
-
-### captureSnapShot
-
-```solidity
-function captureSnapShot() external returns (uint256 snapId)
-```
-
-See `ERC20SnapshotUpgradeable._snapshot()`.
+| initializeParams | bytes | encoded initialization parameters: `address _underlyingTokenAddress` |
 
 ### _mint
 
@@ -54,6 +47,14 @@ Overridden without modification.
 
 ```solidity
 function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual
+```
+
+Overridden without modification.
+
+### decimals
+
+```solidity
+function decimals() public view virtual returns (uint8)
 ```
 
 Overridden without modification.

@@ -3,11 +3,13 @@ pragma solidity =0.8.19;
 
 import { ERC20VotesUpgradeable, ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import { ERC20WrapperUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20WrapperUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { VotesERC20 } from "./VotesERC20.sol";
 
 /**
- * TODO
+ * An extension of `VotesERC20` which supports wrapping / unwrapping an existing ERC20 token,
+ * to allow for importing an existing token into the Azorius governance framework.
  */
 contract VotesERC20Wrapper is VotesERC20, ERC20WrapperUpgradeable {
 
@@ -24,12 +26,10 @@ contract VotesERC20Wrapper is VotesERC20, ERC20WrapperUpgradeable {
 
         __ERC20Wrapper_init(token);
 
-        address[] memory emptyAddresses; // TODO can I not do this?
-        uint256[] memory emptyAllocations;
-
-        super.setUp(
-            abi.encode(string.concat("Wrapped ", token.name()), string.concat("W", token.symbol()), emptyAddresses, emptyAllocations)
-        );
+        string memory name = string.concat("Wrapped ", token.name());
+        __ERC20_init(name, string.concat("W", token.symbol()));
+        __ERC20Permit_init(name);
+        _registerInterface(type(IERC20Upgradeable).interfaceId);
     }
 
     // -- The functions below are overrides required by extended contracts. --
@@ -38,7 +38,7 @@ contract VotesERC20Wrapper is VotesERC20, ERC20WrapperUpgradeable {
     function _mint(
         address to,
         uint256 amount
-    ) internal virtual override(ERC20Upgradeable, VotesERC20) { // TODO which of these is called?
+    ) internal virtual override(ERC20Upgradeable, VotesERC20) {
         super._mint(to, amount);
     }
 
