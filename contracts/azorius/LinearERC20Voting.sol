@@ -110,7 +110,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     }
 
     /** @inheritdoc BaseStrategy*/
-    function initializeProposal(bytes memory _data) external virtual override onlyAzorius {
+    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
         uint32 proposalId = abi.decode(_data, (uint32));
         uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
 
@@ -151,7 +151,8 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
             uint256 yesVotes,
             uint256 abstainVotes,
             uint32 startBlock,
-            uint32 endBlock
+            uint32 endBlock,
+            uint256 votingSupply
         )
     {
         noVotes = proposalVotes[_proposalId].noVotes;
@@ -159,6 +160,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         abstainVotes = proposalVotes[_proposalId].abstainVotes;
         startBlock = proposalVotes[_proposalId].votingStartBlock;
         endBlock = proposalVotes[_proposalId].votingEndBlock;
+        votingSupply = _getProposalVotingSupply(_proposalId);
     }
 
     /**
@@ -174,14 +176,23 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
 
     /** @inheritdoc BaseStrategy*/
     function isPassed(uint32 _proposalId) public view override returns (bool) {
-        // because token supply is not necessarily static, it is required to calculate
-        // quorum based on the supply at the time of a Proposal's creation.
         return (
             block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
-            meetsQuorum(governanceToken.getPastTotalSupply(proposalVotes[_proposalId].votingStartBlock), 
-                proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].abstainVotes) && // yes + abstain votes meets the quorum
+            meetsQuorum(_getProposalVotingSupply(_proposalId), proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].abstainVotes) && // yes + abstain votes meets the quorum
             meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
         );
+    }
+
+    /**
+     * Returns a snapshot of total voting supply for a given Proposal.  Because token supplies can change,
+     * it is necessary to calculate quorum from the supply available at the time of the Proposal's creation,
+     * not when it is being voted on passes / fails.
+     *
+     * @param _proposalId id of the Proposal
+     * @return uint256 voting supply snapshot for the given _proposalId
+     */
+    function _getProposalVotingSupply(uint32 _proposalId) internal view virtual returns (uint256) {
+        return governanceToken.getPastTotalSupply(proposalVotes[_proposalId].votingStartBlock);
     }
 
     /**
