@@ -160,7 +160,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         abstainVotes = proposalVotes[_proposalId].abstainVotes;
         startBlock = proposalVotes[_proposalId].votingStartBlock;
         endBlock = proposalVotes[_proposalId].votingEndBlock;
-        votingSupply = _getProposalVotingSupply(_proposalId);
+        votingSupply = getProposalVotingSupply(_proposalId);
     }
 
     /**
@@ -178,7 +178,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
     function isPassed(uint32 _proposalId) public view override returns (bool) {
         return (
             block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
-            meetsQuorum(_getProposalVotingSupply(_proposalId), proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].abstainVotes) && // yes + abstain votes meets the quorum
+            meetsQuorum(getProposalVotingSupply(_proposalId), proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].abstainVotes) && // yes + abstain votes meets the quorum
             meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
         );
     }
@@ -191,7 +191,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
      * @param _proposalId id of the Proposal
      * @return uint256 voting supply snapshot for the given _proposalId
      */
-    function _getProposalVotingSupply(uint32 _proposalId) internal view virtual returns (uint256) {
+    function getProposalVotingSupply(uint32 _proposalId) public view virtual returns (uint256) {
         return governanceToken.getPastTotalSupply(proposalVotes[_proposalId].votingStartBlock);
     }
 

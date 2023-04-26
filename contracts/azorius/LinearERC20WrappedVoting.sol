@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import { LinearERC20Voting } from "./azorius/LinearERC20Voting.sol";
-import { VotesERC20Wrapper } from "./VotesERC20Wrapper.sol";
+import { LinearERC20Voting } from "./LinearERC20Voting.sol";
+import { VotesERC20Wrapper } from "../VotesERC20Wrapper.sol";
 
  /**
   * An extension of [LinearERC20Voting](./azorius/LinearERC20Voting.md) that properly supports
@@ -18,12 +18,18 @@ contract LinearERC20WrappedVoting is LinearERC20Voting {
 
     /** @inheritdoc LinearERC20Voting*/
     function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
-        super.initializeProposal(_data);
-        votingSupply[abi.decode(_data, (uint32))] = VotesERC20Wrapper(address(governanceToken)).totalSupply();
+        uint32 proposalId = abi.decode(_data, (uint32));
+        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
+
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
+        votingSupply[proposalId] = VotesERC20Wrapper(address(governanceToken)).underlying().totalSupply();
+
+        emit ProposalInitialized(proposalId, _votingEndBlock);
     }
 
     /** @inheritdoc LinearERC20Voting*/
-    function _getProposalVotingSupply(uint32 _proposalId) internal view override returns (uint256) {
+    function getProposalVotingSupply(uint32 _proposalId) public view override returns (uint256) {
         return votingSupply[_proposalId];
     }
 }
