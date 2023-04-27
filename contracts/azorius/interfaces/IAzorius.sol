@@ -106,7 +106,8 @@ interface IAzorius {
      * New Proposals begin immediately in the `ACTIVE` state.
      *
      * @param _strategy address of the BaseStrategy implementation which the Proposal will use
-     * @param _data arbitrary data passed to the BaseStrategy implementation
+     * @param _data arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies, 
+     * but is included in case future strategy contracts have a need for it
      * @param _transactions array of transactions to propose
      * @param _metadata additional data such as a title/description to submit with the proposal
      */
