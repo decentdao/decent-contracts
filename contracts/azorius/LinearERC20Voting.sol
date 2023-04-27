@@ -109,17 +109,6 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         _updateRequiredProposerWeight(_requiredProposerWeight);
     }
 
-    /** @inheritdoc BaseStrategy*/
-    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
-        uint32 proposalId = abi.decode(_data, (uint32));
-        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
-
-        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
-        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
-
-        emit ProposalInitialized(proposalId, _votingEndBlock);
-    }
-
     /**
      * Casts votes for a Proposal, equal to the caller's token delegation.
      *
@@ -163,6 +152,17 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
         votingSupply = getProposalVotingSupply(_proposalId);
     }
 
+    /** @inheritdoc BaseStrategy*/
+    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
+        uint32 proposalId = abi.decode(_data, (uint32));
+        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
+
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
+
+        emit ProposalInitialized(proposalId, _votingEndBlock);
+    }
+    
     /**
      * Returns whether an address has voted on the specified Proposal.
      *
