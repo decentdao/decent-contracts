@@ -52,6 +52,10 @@ contract MultisigFreezeGuard is FactoryFriendly, IGuard, IMultisigFreezeGuard, B
     error Expired();
     error DAOFrozen();
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *

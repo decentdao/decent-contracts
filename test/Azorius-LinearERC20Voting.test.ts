@@ -15,6 +15,8 @@ import {
   Azorius__factory,
   VotesERC20,
   VotesERC20__factory,
+  ModuleProxyFactory,
+  ModuleProxyFactory__factory
 } from "../typechain-types";
 
 import {
@@ -33,6 +35,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   let mockVotingStrategy: MockVotingStrategy;
   let votesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -47,6 +50,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   let createGnosisSetupCalldata: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+  const moduleProxyFactoryAddress = "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
@@ -81,7 +85,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       mockStrategy2,
     ] = await ethers.getSigners();
 
-    // Deploy Gnosis Safe Proxy factory
+    // Get Gnosis Safe Proxy factory
     gnosisSafeProxyFactory = await ethers.getContractAt(
       "GnosisSafeProxyFactory",
       gnosisFactoryAddress

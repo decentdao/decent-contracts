@@ -12,6 +12,10 @@ import { VotesERC20 } from "./VotesERC20.sol";
  * to allow for importing an existing token into the Azorius governance framework.
  */
 contract VotesERC20Wrapper is VotesERC20, ERC20WrapperUpgradeable {
+    
+    constructor() {
+      _disableInitializers();
+    }
 
     /**
      * Initialize function, will be triggered when a new instance is deployed.

@@ -31,6 +31,10 @@ contract FractalModule is IFractalModule, Module {
         _;
     }
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *

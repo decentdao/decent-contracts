@@ -95,6 +95,10 @@ contract Azorius is Module, IAzorius {
     error InvalidTxs();
     error InvalidArrayLengths();
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Initial setup of the Azorius instance.
      *
