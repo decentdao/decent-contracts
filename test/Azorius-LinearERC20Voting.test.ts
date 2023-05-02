@@ -16,7 +16,6 @@ import {
   VotesERC20,
   VotesERC20__factory,
   ModuleProxyFactory,
-  ModuleProxyFactory__factory
 } from "../typechain-types";
 
 import {
@@ -25,14 +24,18 @@ import {
   safeSignTypedData,
   ifaceSafe,
   predictGnosisSafeAddress,
+  calculateProxyAddress,
 } from "./helpers";
 
 describe("Safe with Azorius module and linearERC20Voting", () => {
   // Deployed contracts
   let gnosisSafe: GnosisSafe;
   let azorius: Azorius;
+  let azoriusMastercopy: Azorius;
   let linearERC20Voting: LinearERC20Voting;
+  let linearERC20VotingMastercopy: LinearERC20Voting;
   let mockVotingStrategy: MockVotingStrategy;
+  let votesERC20Mastercopy: VotesERC20;
   let votesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
   let moduleProxyFactory: ModuleProxyFactory;
@@ -50,7 +53,8 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   let createGnosisSetupCalldata: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
-  const moduleProxyFactoryAddress = "0x00000000000DC7F163742Eb4aBEf650037b1f588";
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
@@ -68,7 +72,6 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
             jsonRpcUrl: process.env.GOERLI_PROVIDER
               ? process.env.GOERLI_PROVIDER
               : "",
-            blockNumber: 7387621,
           },
         },
       ],
@@ -89,6 +92,12 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     gnosisSafeProxyFactory = await ethers.getContractAt(
       "GnosisSafeProxyFactory",
       gnosisFactoryAddress
+    );
+
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
     );
 
     createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
@@ -122,25 +131,45 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       predictedGnosisSafeAddress
     );
 
-    // Votes ERC-20
-    votesERC20 = await new VotesERC20__factory(deployer).deploy();
+    // Deploy Votes ERC-20 mastercopy contract
+    votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
 
-    const votesERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      [
-        "DCNT",
-        "DCNT",
-        [
-          tokenHolder1.address,
-          tokenHolder2.address,
-          tokenHolder3.address,
-          gnosisSafe.address,
-        ],
-        [100, 200, 300, 600],
-      ]
+    const votesERC20SetupCalldata =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          [
+            "DCNT",
+            "DCNT",
+            [
+              tokenHolder1.address,
+              tokenHolder2.address,
+              tokenHolder3.address,
+              gnosisSafe.address,
+            ],
+            [100, 200, 300, 600],
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      votesERC20SetupCalldata,
+      "10031021"
     );
 
-    await votesERC20.setUp(votesERC20SetupData);
+    const predictedVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      votesERC20SetupCalldata,
+      "10031021"
+    );
+
+    votesERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedVotesERC20Address
+    );
 
     // Token holders delegate votes
     // Token holder 1 delegates to token holder 2, so final vote counts should be:
@@ -152,47 +181,86 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     await votesERC20.connect(tokenHolder3).delegate(tokenHolder3.address);
 
     // Deploy Azorius module
-    azorius = await new Azorius__factory(deployer).deploy();
+    azoriusMastercopy = await new Azorius__factory(deployer).deploy();
 
-    const azoriusSetupData = abiCoder.encode(
-      ["address", "address", "address", "address[]", "uint32", "uint32"],
-      [
-        gnosisSafeOwner.address,
-        gnosisSafe.address,
-        gnosisSafe.address,
-        [],
-        60, // timelock period in blocks
-        60, // execution period in blocks
-      ]
+    const azoriusSetupCalldata =
+      // eslint-disable-next-line camelcase
+      Azorius__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["address", "address", "address", "address[]", "uint32", "uint32"],
+          [
+            gnosisSafeOwner.address,
+            gnosisSafe.address,
+            gnosisSafe.address,
+            [],
+            60, // timelock period in blocks
+            60, // execution period in blocks
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      azoriusMastercopy.address,
+      azoriusSetupCalldata,
+      "10031021"
     );
 
-    await azorius.setUp(azoriusSetupData);
-
-    // Deploy Linear ERC20 Voting Strategy
-    linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
-
-    const linearERC20VotingSetupData = abiCoder.encode(
-      [
-        "address",
-        "address",
-        "address",
-        "uint32",
-        "uint256",
-        "uint256",
-        "uint256",
-      ],
-      [
-        gnosisSafeOwner.address, // owner
-        votesERC20.address, // governance token
-        azorius.address, // Azorius module
-        60, // voting period in blocks
-        300, // proposer weight
-        500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-        500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
-      ]
+    const predictedAzoriusAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      azoriusMastercopy.address,
+      azoriusSetupCalldata,
+      "10031021"
     );
 
-    await linearERC20Voting.setUp(linearERC20VotingSetupData);
+    azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
+
+    // Deploy Linear ERC20 Voting Mastercopy
+    linearERC20VotingMastercopy = await new LinearERC20Voting__factory(
+      deployer
+    ).deploy();
+
+    const linearERC20VotingSetupCalldata =
+      // eslint-disable-next-line camelcase
+      LinearERC20Voting__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          [
+            "address",
+            "address",
+            "address",
+            "uint32",
+            "uint256",
+            "uint256",
+            "uint256",
+          ],
+          [
+            gnosisSafeOwner.address, // owner
+            votesERC20.address, // governance token
+            azorius.address, // Azorius module
+            60, // voting period in blocks
+            300, // proposer weight
+            500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+            500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      linearERC20VotingMastercopy.address,
+      linearERC20VotingSetupCalldata,
+      "10031021"
+    );
+
+    const predictedLinearERC20VotingAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      linearERC20VotingMastercopy.address,
+      linearERC20VotingSetupCalldata,
+      "10031021"
+    );
+
+    linearERC20Voting = await ethers.getContractAt(
+      "LinearERC20Voting",
+      predictedLinearERC20VotingAddress
+    );
 
     // Enable the Linear Voting strategy on Azorius
     await azorius
@@ -1281,30 +1349,41 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         deployer
       ).deploy();
 
-      const linearERC20VotingSetupData = abiCoder.encode(
-        [
-          "address",
-          "address",
-          "address",
-          "uint256",
-          "uint256",
-          "uint256",
-          "uint256",
-        ],
-        [
-          gnosisSafeOwner.address, // owner
-          ethers.constants.AddressZero, // governance token
-          azorius.address, // Azorius module
-          60, // voting period in blocks
-          0, // proposer weight
-          500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
-          500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
-        ]
-      );
+      const linearERC20VotingSetupCalldata =
+        // eslint-disable-next-line camelcase
+        LinearERC20Voting__factory.createInterface().encodeFunctionData(
+          "setUp",
+          [
+            abiCoder.encode(
+              [
+                "address",
+                "address",
+                "address",
+                "uint32",
+                "uint256",
+                "uint256",
+                "uint256",
+              ],
+              [
+                gnosisSafeOwner.address, // owner
+                ethers.constants.AddressZero, // governance token
+                azorius.address, // Azorius module
+                60, // voting period in blocks
+                0, // proposer weight
+                500000, // quorom numerator, denominator is 1,000,000, so quorum percentage is 50%
+                500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
+              ]
+            ),
+          ]
+        );
 
       await expect(
-        linearERC20Voting.setUp(linearERC20VotingSetupData)
-      ).to.be.revertedWith("InvalidTokenAddress()");
+        moduleProxyFactory.deployModule(
+          linearERC20VotingMastercopy.address,
+          linearERC20VotingSetupCalldata,
+          "10031021"
+        )
+      ).to.be.reverted;
     });
 
     it("An invalid vote type cannot be cast", async () => {
@@ -1351,19 +1430,47 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       // Deploy Azorius module
       azorius = await new Azorius__factory(deployer).deploy();
 
-      const azoriusSetupData = abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint256", "uint256"],
-        [
-          gnosisSafeOwner.address,
-          gnosisSafe.address,
-          gnosisSafe.address,
-          [tokenHolder1.address, tokenHolder2.address, tokenHolder3.address],
-          60, // timelock period in blocks
-          60, // execution period in blocks
-        ]
+      const azoriusSetupCalldata =
+        // eslint-disable-next-line camelcase
+        Azorius__factory.createInterface().encodeFunctionData("setUp", [
+          abiCoder.encode(
+            [
+              "address",
+              "address",
+              "address",
+              "address[]",
+              "uint256",
+              "uint256",
+            ],
+            [
+              gnosisSafeOwner.address,
+              gnosisSafe.address,
+              gnosisSafe.address,
+              [
+                tokenHolder1.address,
+                tokenHolder2.address,
+                tokenHolder3.address,
+              ],
+              60, // timelock period in blocks
+              60, // execution period in blocks
+            ]
+          ),
+        ]);
+
+      await moduleProxyFactory.deployModule(
+        azoriusMastercopy.address,
+        azoriusSetupCalldata,
+        "10031021"
       );
 
-      await azorius.setUp(azoriusSetupData);
+      const predictedAzoriusAddress = await calculateProxyAddress(
+        moduleProxyFactory,
+        azoriusMastercopy.address,
+        azoriusSetupCalldata,
+        "10031021"
+      );
+
+      azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
 
       expect(await azorius.isStrategyEnabled(tokenHolder1.address)).to.eq(true);
       expect(await azorius.isStrategyEnabled(tokenHolder2.address)).to.eq(true);
@@ -1374,18 +1481,40 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       const abiCoder = new ethers.utils.AbiCoder();
 
       // Deploy Mock Voting Strategy
-      mockVotingStrategy = await new MockVotingStrategy__factory(
-        deployer
-      ).deploy();
+      const mockVotingStrategyMastercopy =
+        await new MockVotingStrategy__factory(deployer).deploy();
 
-      const mockVotingStrategySetupData = abiCoder.encode(
-        ["address"],
-        [
-          tokenHolder1.address, // tokenHolder1 is the only valid proposer
-        ]
+      const mockVotingStrategySetupCalldata =
+        // eslint-disable-next-line camelcase
+        MockVotingStrategy__factory.createInterface().encodeFunctionData(
+          "setUp",
+          [
+            abiCoder.encode(
+              ["address"],
+              [
+                tokenHolder1.address, // tokenHolder1 is the only valid proposer
+              ]
+            ),
+          ]
+        );
+
+      await moduleProxyFactory.deployModule(
+        mockVotingStrategyMastercopy.address,
+        mockVotingStrategySetupCalldata,
+        "10031021"
       );
 
-      await mockVotingStrategy.setUp(mockVotingStrategySetupData);
+      const predictedMockVotingStrategyAddress = await calculateProxyAddress(
+        moduleProxyFactory,
+        mockVotingStrategyMastercopy.address,
+        mockVotingStrategySetupCalldata,
+        "10031021"
+      );
+
+      mockVotingStrategy = await ethers.getContractAt(
+        "MockVotingStrategy",
+        predictedMockVotingStrategyAddress
+      );
 
       // Enable the Mock Voting strategy on Azorius
       await azorius
