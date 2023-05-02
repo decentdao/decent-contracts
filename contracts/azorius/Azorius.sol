@@ -169,6 +169,8 @@ contract Azorius is Module, IAzorius {
         proposals[totalProposalCount].timelockPeriod = timelockPeriod;
         proposals[totalProposalCount].executionPeriod = executionPeriod;
 
+        // not all strategy contracts will necessarily use the txHashes and _data values
+        // they are encoded to support any strategy contracts that may need them
         IBaseStrategy(_strategy).initializeProposal(
             abi.encode(totalProposalCount, txHashes, _data)
         );

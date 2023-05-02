@@ -569,6 +569,8 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           ""
         );
 
+      await network.provider.send("evm_mine");
+
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
@@ -613,6 +615,8 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           ""
         );
 
+      await network.provider.send("evm_mine");
+
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
@@ -656,6 +660,8 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           [proposalTransaction],
           ""
         );
+
+      await network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
