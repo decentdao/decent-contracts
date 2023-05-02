@@ -8,6 +8,7 @@ import {
   FractalModule__factory,
   MultisigFreezeGuard,
   MultisigFreezeGuard__factory,
+  ModuleProxyFactory,
 } from "../typechain-types";
 import {
   ifaceSafe,
@@ -34,6 +35,7 @@ describe("Fractal Module Tests", () => {
   let freezeGuard: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // Predicted Contracts
   let predictedFractalModule: string;
@@ -51,6 +53,8 @@ describe("Fractal Module Tests", () => {
   let sigs: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
@@ -85,6 +89,11 @@ describe("Fractal Module Tests", () => {
       // eslint-disable-next-line camelcase
       abiFactory,
       deployer
+    );
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
     );
 
     /// ////////////////// GNOSIS //////////////////
@@ -291,12 +300,39 @@ describe("Fractal Module Tests", () => {
 
       // FUND SAFE
       const abiCoder = new ethers.utils.AbiCoder(); // encode data
-      const votesERC20SetupData = abiCoder.encode(
-        ["string", "string", "address[]", "uint256[]"],
-        ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
+
+      // Deploy token mastercopy
+      const votesERC20Mastercopy = await new VotesERC20__factory(
+        deployer
+      ).deploy();
+
+      const votesERC20SetupData =
+        // eslint-disable-next-line camelcase
+        VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+          abiCoder.encode(
+            ["string", "string", "address[]", "uint256[]"],
+            ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
+          ),
+        ]);
+
+      await moduleProxyFactory.deployModule(
+        votesERC20Mastercopy.address,
+        votesERC20SetupData,
+        "10031021"
       );
-      const votesERC20 = await new VotesERC20__factory(deployer).deploy();
-      await votesERC20.setUp(votesERC20SetupData);
+
+      const predictedVotesERC20Address = await calculateProxyAddress(
+        moduleProxyFactory,
+        votesERC20Mastercopy.address,
+        votesERC20SetupData,
+        "10031021"
+      );
+
+      const votesERC20 = await ethers.getContractAt(
+        "VotesERC20",
+        predictedVotesERC20Address
+      );
+
       expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(1000);
       expect(await votesERC20.balanceOf(owner1.address)).to.eq(0);
 

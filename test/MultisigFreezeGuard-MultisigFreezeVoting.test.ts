@@ -11,6 +11,7 @@ import {
   MultisigFreezeVoting__factory,
   MultisigFreezeGuard,
   MultisigFreezeGuard__factory,
+  ModuleProxyFactory,
 } from "../typechain-types";
 
 import {
@@ -21,6 +22,7 @@ import {
   abi,
   predictGnosisSafeAddress,
   abiSafe,
+  calculateProxyAddress,
 } from "./helpers";
 
 describe("Child Multisig DAO with Multisig Parent", () => {
@@ -30,9 +32,13 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   // Deployed contracts
   let childGnosisSafe: Contract;
   let parentGnosisSafe: Contract;
+  let freezeGuardMastercopy: MultisigFreezeGuard;
   let freezeGuard: MultisigFreezeGuard;
+  let freezeVotingMastercopy: MultisigFreezeVoting;
   let freezeVoting: MultisigFreezeVoting;
+  let votesERC20Mastercopy: VotesERC20;
   let votesERC20: VotesERC20;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -49,6 +55,8 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   let createChildGnosisSetupCalldata: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
   const saltNum = BigNumber.from(
@@ -65,7 +73,6 @@ describe("Child Multisig DAO with Multisig Parent", () => {
             jsonRpcUrl: process.env.GOERLI_PROVIDER
               ? process.env.GOERLI_PROVIDER
               : "",
-            blockNumber: 7387621,
           },
         },
       ],
@@ -84,6 +91,12 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
     // Get deployed Gnosis Safe
     gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer);
+
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
+    );
 
     createParentGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
       [
@@ -158,47 +171,119 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       abiSafe,
       deployer
     );
-
-    // Deploy token, allocate supply to two token vetoers and Gnosis Safe
-    votesERC20 = await new VotesERC20__factory(deployer).deploy();
+    // Deploy token mastercopy
+    votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
 
     const abiCoder = new ethers.utils.AbiCoder(); // encode data
-    const votesERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      ["DCNT", "DCNT", [childGnosisSafe.address], [1000]]
+    const votesERC20SetupData =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          ["DCNT", "DCNT", [childGnosisSafe.address], [1000]]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      votesERC20SetupData,
+      "10031021"
     );
 
-    await votesERC20.setUp(votesERC20SetupData);
-
-    // Deploy MultisigFreezeVoting contract
-    freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
-
-    // Deploy MultisigFreezeGuard contract with a 60 block timelock period and 60 block execution period
-    const freezeGuardSetupData = abiCoder.encode(
-      ["uint32", "uint32", "address", "address", "address"],
-      [
-        60, // Timelock period
-        60, // Execution period
-        freezeGuardOwner.address,
-        freezeVoting.address,
-        childGnosisSafe.address,
-      ]
+    const predictedVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      votesERC20SetupData,
+      "10031021"
     );
-    freezeGuard = await new MultisigFreezeGuard__factory(deployer).deploy();
-    await freezeGuard.setUp(freezeGuardSetupData);
+
+    votesERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedVotesERC20Address
+    );
+
+    // Deploy MultisigFreezeVoting mastercopy contract
+    freezeVotingMastercopy = await new MultisigFreezeVoting__factory(
+      deployer
+    ).deploy();
 
     // Initialize MultisigFreezeVoting contract
-    const freezeVotingSetupData = abiCoder.encode(
-      ["address", "uint256", "uint32", "uint32", "address"],
-      [
-        freezeGuardOwner.address,
-        2, // freeze votes threshold
-        10, // freeze proposal duration in blocks
-        200, // freeze duration in blocks
-        parentGnosisSafe.address,
-      ]
+    const freezeVotingSetupData =
+      // eslint-disable-next-line camelcase
+      MultisigFreezeVoting__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["address", "uint256", "uint32", "uint32", "address"],
+            [
+              freezeGuardOwner.address,
+              2, // freeze votes threshold
+              10, // freeze proposal duration in blocks
+              200, // freeze duration in blocks
+              parentGnosisSafe.address,
+            ]
+          ),
+        ]
+      );
+    await moduleProxyFactory.deployModule(
+      freezeVotingMastercopy.address,
+      freezeVotingSetupData,
+      "10031021"
     );
-    await freezeVoting.setUp(freezeVotingSetupData);
+
+    const predictedFreezeVotingAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      freezeVotingMastercopy.address,
+      freezeVotingSetupData,
+      "10031021"
+    );
+
+    freezeVoting = await ethers.getContractAt(
+      "ERC20FreezeVoting",
+      predictedFreezeVotingAddress
+    );
+
+    // Deploy FreezeGuard mastercopy contract
+    freezeGuardMastercopy = await new MultisigFreezeGuard__factory(
+      deployer
+    ).deploy();
+
+    // Deploy MultisigFreezeGuard contract with a 60 block timelock period and 60 block execution period
+    const freezeGuardSetupData =
+      // eslint-disable-next-line camelcase
+      MultisigFreezeGuard__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["uint32", "uint32", "address", "address", "address"],
+            [
+              60, // Timelock period
+              60, // Execution period
+              freezeGuardOwner.address,
+              freezeVoting.address,
+              childGnosisSafe.address,
+            ]
+          ),
+        ]
+      );
+
+    await moduleProxyFactory.deployModule(
+      freezeGuardMastercopy.address,
+      freezeGuardSetupData,
+      "10031021"
+    );
+
+    const predictedFreezeGuardAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      freezeGuardMastercopy.address,
+      freezeGuardSetupData,
+      "10031021"
+    );
+
+    freezeGuard = await ethers.getContractAt(
+      "MultisigFreezeGuard",
+      predictedFreezeGuardAddress
+    );
 
     // Create transaction to set the guard address
     const setGuardData = childGnosisSafe.interface.encodeFunctionData(

@@ -13,7 +13,7 @@ import { calculateProxyAddress } from "./helpers";
 
 const expect = chai.expect;
 
-describe.only("ERC-20 Token Claiming", function () {
+describe("ERC-20 Token Claiming", function () {
   let moduleProxyFactory: ModuleProxyFactory;
   let votesERC20Mastercopy: VotesERC20;
   let parentERC20: VotesERC20;
@@ -274,8 +274,8 @@ describe.only("ERC-20 Token Claiming", function () {
             "cDCNT",
             [userB.address, deployer.address],
             [
-              ethers.utils.parseUnits("100", 18),
-              ethers.utils.parseUnits("100", 18),
+              ethers.utils.parseUnits("200", 18),
+              ethers.utils.parseUnits("200", 18),
             ],
           ]
         ),
