@@ -265,4 +265,9 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
 
         emit Voted(_voter, _proposalId, _voteType, _weight);
     }
+
+    /** @inheritdoc BaseQuorumPercent*/
+    function quorumVotes(uint32 _proposalId) public view override returns (uint256) {
+        return quorumNumerator * getProposalVotingSupply(_proposalId) / QUORUM_DENOMINATOR;
+    }
 }
