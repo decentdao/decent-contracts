@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import { IERC20Claim } from "./interfaces/IERC20Claim.sol";
-import { VotesERC20, FactoryFriendly } from "./VotesERC20.sol";
-import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Claim} from "./interfaces/IERC20Claim.sol";
+import {VotesERC20, FactoryFriendly} from "./VotesERC20.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * A simple contract that allows for parent DAOs that have created a new ERC-20 
- * token voting subDAO to allocate a certain amount of those tokens as claimable 
+ * A simple contract that allows for parent DAOs that have created a new ERC-20
+ * token voting subDAO to allocate a certain amount of those tokens as claimable
  * by the parent DAO's token holders.
  */
 contract ERC20Claim is FactoryFriendly, IERC20Claim {
@@ -35,6 +35,14 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     /** Mapping of address to bool of whether the address has claimed already. */
     mapping(address => bool) public claimed;
 
+    event ERC20ClaimCreated(
+        address parentToken,
+        address childToken,
+        uint256 parentAllocation,
+        uint256 snapshotId,
+        uint256 deadline
+    );
+
     event ERC20Claimed(
         address indexed pToken,
         address indexed cToken,
@@ -47,14 +55,10 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
     error NotTheFunder();
     error NoDeadline();
     error DeadlinePending();
-    
-    event ERC20ClaimCreated(
-        address parentToken,
-        address childToken,
-        uint256 parentAllocation,
-        uint256 snapshotId,
-        uint256 deadline
-    );
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * Initialize function, will be triggered when a new instance is deployed.
@@ -71,7 +75,10 @@ contract ERC20Claim is FactoryFriendly, IERC20Claim {
             address _parentERC20,
             address _childERC20,
             uint256 _parentAllocation
-        ) = abi.decode(initializeParams, (uint32, address, address, address, uint256));
+        ) = abi.decode(
+                initializeParams,
+                (uint32, address, address, address, uint256)
+            );
 
         funder = _childTokenFunder;
         deadlineBlock = _deadlineBlock;

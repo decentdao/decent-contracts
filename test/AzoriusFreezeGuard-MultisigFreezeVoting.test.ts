@@ -17,6 +17,7 @@ import {
   MultisigFreezeVoting__factory,
   VotesERC20,
   VotesERC20__factory,
+  ModuleProxyFactory,
 } from "../typechain-types";
 
 import {
@@ -25,6 +26,7 @@ import {
   safeSignTypedData,
   ifaceSafe,
   predictGnosisSafeAddress,
+  calculateProxyAddress,
 } from "./helpers";
 
 describe("Azorius Child DAO with Multisig parent", () => {
@@ -32,11 +34,17 @@ describe("Azorius Child DAO with Multisig parent", () => {
   let parentGnosisSafe: Contract;
   let childGnosisSafe: GnosisSafe;
   let freezeGuard: AzoriusFreezeGuard;
+  let freezeGuardMastercopy: AzoriusFreezeGuard;
+  let azoriusMastercopy: Azorius;
   let azoriusModule: Azorius;
+  let linearERC20VotingMastercopy: LinearERC20Voting;
   let linearERC20Voting: LinearERC20Voting;
+  let freezeVotingMastercopy: MultisigFreezeVoting;
   let freezeVoting: MultisigFreezeVoting;
+  let votesERC20Mastercopy: VotesERC20;
   let childVotesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -54,6 +62,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
   let createParentGnosisSetupCalldata: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const parentThreshold = 2;
   const saltNum = BigNumber.from(
@@ -72,7 +82,6 @@ describe("Azorius Child DAO with Multisig parent", () => {
             jsonRpcUrl: process.env.GOERLI_PROVIDER
               ? process.env.GOERLI_PROVIDER
               : "",
-            blockNumber: 7387621,
           },
         },
       ],
@@ -95,6 +104,12 @@ describe("Azorius Child DAO with Multisig parent", () => {
     gnosisSafeProxyFactory = await ethers.getContractAt(
       "GnosisSafeProxyFactory",
       gnosisFactoryAddress
+    );
+
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
     );
 
     createParentGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
@@ -165,24 +180,46 @@ describe("Azorius Child DAO with Multisig parent", () => {
       predictedChildGnosisSafeAddress
     );
 
-    // Child Votes ERC-20
-    childVotesERC20 = await new VotesERC20__factory(deployer).deploy();
+    // Deploy Votes ERC-20 Mastercopy
+    votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
 
-    const childVotesERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      [
-        "CHILD",
-        "CHILD",
-        [
-          childTokenHolder1.address,
-          childTokenHolder2.address,
-          childGnosisSafe.address,
-        ],
-        [100, 100, 100],
-      ]
+    const childVotesERC20SetupData =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          [
+            "CHILD",
+            "CHILD",
+            [
+              childTokenHolder1.address,
+              childTokenHolder2.address,
+              childGnosisSafe.address,
+            ],
+            [100, 100, 100],
+          ]
+        ),
+      ]);
+
+    // await childVotesERC20.setUp(childVotesERC20SetupData);
+
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      childVotesERC20SetupData,
+      "10031021"
     );
 
-    await childVotesERC20.setUp(childVotesERC20SetupData);
+    const predictedChildVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      childVotesERC20SetupData,
+      "10031021"
+    );
+
+    childVotesERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedChildVotesERC20Address
+    );
 
     // Token holders delegate their votes to themselves
     await childVotesERC20
@@ -192,47 +229,89 @@ describe("Azorius Child DAO with Multisig parent", () => {
       .connect(childTokenHolder2)
       .delegate(childTokenHolder2.address);
 
-    // Deploy Azorius module
-    azoriusModule = await new Azorius__factory(deployer).deploy();
+    // Deploy Azorius module mastercopy
+    azoriusMastercopy = await new Azorius__factory(deployer).deploy();
 
-    await azoriusModule.setUp(
-      abiCoder.encode(
-        ["address", "address", "address", "address[]", "uint32", "uint32"],
-        [
-          azoriusModuleOwner.address,
-          childGnosisSafe.address,
-          childGnosisSafe.address,
-          [],
-          60, // Timelock period in blocks
-          60, // Execution period in blocks
-        ]
-      )
+    const azoriusSetupCalldata =
+      // eslint-disable-next-line camelcase
+      Azorius__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["address", "address", "address", "address[]", "uint32", "uint32"],
+          [
+            azoriusModuleOwner.address,
+            childGnosisSafe.address,
+            childGnosisSafe.address,
+            [],
+            60, // Timelock period in blocks
+            60, // Execution period in blocks
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      azoriusMastercopy.address,
+      azoriusSetupCalldata,
+      "10031021"
     );
 
-    // Deploy Linear ERC-20 Voting Strategy
-    linearERC20Voting = await new LinearERC20Voting__factory(deployer).deploy();
+    const predictedAzoriusAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      azoriusMastercopy.address,
+      azoriusSetupCalldata,
+      "10031021"
+    );
 
-    await linearERC20Voting.setUp(
-      abiCoder.encode(
-        [
-          "address",
-          "address",
-          "address",
-          "uint32",
-          "uint256",
-          "uint256",
-          "uint256",
-        ],
-        [
-          parentGnosisSafe.address, // owner
-          childVotesERC20.address, // governance token
-          azoriusModule.address, // Azorius module
-          60, // voting period in blocks
-          0, // proposer weight
-          500000, // quorom numerator, denominator is 1,000,000
-          500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
-        ]
-      )
+    azoriusModule = await ethers.getContractAt(
+      "Azorius",
+      predictedAzoriusAddress
+    );
+
+    // Deploy Linear ERC-20 Voting Strategy Mastercopy
+    linearERC20VotingMastercopy = await new LinearERC20Voting__factory(
+      deployer
+    ).deploy();
+
+    const linearERC20VotingSetupCalldata =
+      // eslint-disable-next-line camelcase
+      LinearERC20Voting__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          [
+            "address",
+            "address",
+            "address",
+            "uint32",
+            "uint256",
+            "uint256",
+            "uint256",
+          ],
+          [
+            parentGnosisSafe.address, // owner
+            childVotesERC20.address, // governance token
+            azoriusModule.address, // Azorius module
+            60, // voting period in blocks
+            0, // proposer weight
+            500000, // quorom numerator, denominator is 1,000,000
+            500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      linearERC20VotingMastercopy.address,
+      linearERC20VotingSetupCalldata,
+      "10031021"
+    );
+
+    const predictedLinearERC20VotingAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      linearERC20VotingMastercopy.address,
+      linearERC20VotingSetupCalldata,
+      "10031021"
+    );
+
+    linearERC20Voting = await ethers.getContractAt(
+      "LinearERC20Voting",
+      predictedLinearERC20VotingAddress
     );
 
     // Enable the Linear Token Voting strategy on Azorius
@@ -240,34 +319,80 @@ describe("Azorius Child DAO with Multisig parent", () => {
       .connect(azoriusModuleOwner)
       .enableStrategy(linearERC20Voting.address);
 
-    // Deploy MultisigFreezeVoting contract
-    freezeVoting = await new MultisigFreezeVoting__factory(deployer).deploy();
+    // Deploy MultisigFreezeVoting mastercopy contract
+    freezeVotingMastercopy = await new MultisigFreezeVoting__factory(
+      deployer
+    ).deploy();
 
-    // Setup MultisigFreezeVoting contract
-    await freezeVoting.setUp(
-      abiCoder.encode(
-        ["address", "uint256", "uint32", "uint32", "address"],
+    const freezeVotingSetupCalldata =
+      // eslint-disable-next-line camelcase
+      MultisigFreezeVoting__factory.createInterface().encodeFunctionData(
+        "setUp",
         [
-          freezeVotingOwner.address, // owner
-          2, // freeze votes threshold
-          10, // freeze proposal duration in blocks
-          200, // freeze duration in blocks
-          parentGnosisSafe.address,
+          abiCoder.encode(
+            ["address", "uint256", "uint32", "uint32", "address"],
+            [
+              freezeVotingOwner.address, // owner
+              2, // freeze votes threshold
+              10, // freeze proposal duration in blocks
+              200, // freeze duration in blocks
+              parentGnosisSafe.address,
+            ]
+          ),
         ]
-      )
+      );
+
+    await moduleProxyFactory.deployModule(
+      freezeVotingMastercopy.address,
+      freezeVotingSetupCalldata,
+      "10031021"
     );
 
-    // Deploy and setUp AzoriusFreezeGuard contract
-    freezeGuard = await new AzoriusFreezeGuard__factory(deployer).deploy();
+    const predictedFreezeVotingAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      freezeVotingMastercopy.address,
+      freezeVotingSetupCalldata,
+      "10031021"
+    );
 
-    await freezeGuard.setUp(
-      abiCoder.encode(
-        ["address", "address"],
-        [
-          freezeVotingOwner.address, // owner
-          freezeVoting.address, // freeze voting contract
-        ]
-      )
+    freezeVoting = await ethers.getContractAt(
+      "MultisigFreezeVoting",
+      predictedFreezeVotingAddress
+    );
+
+    // Deploy and setUp AzoriusFreezeGuard mastercopy contract
+    freezeGuardMastercopy = await new AzoriusFreezeGuard__factory(
+      deployer
+    ).deploy();
+
+    const freezeGuardSetupCalldata =
+      // eslint-disable-next-line camelcase
+      LinearERC20Voting__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["address", "address"],
+          [
+            freezeVotingOwner.address, // owner
+            freezeVoting.address, // freeze voting contract
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      freezeGuardMastercopy.address,
+      freezeGuardSetupCalldata,
+      "10031021"
+    );
+
+    const predictedFreezeGuardAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      freezeGuardMastercopy.address,
+      freezeGuardSetupCalldata,
+      "10031021"
+    );
+
+    freezeGuard = await ethers.getContractAt(
+      "AzoriusFreezeGuard",
+      predictedFreezeGuardAddress
     );
 
     // Create transaction on child Gnosis Safe to setup Azorius module

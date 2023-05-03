@@ -50,6 +50,10 @@ abstract contract BaseFreezeVoting is FactoryFriendly, IBaseFreezeVoting {
     event FreezePeriodUpdated(uint32 freezePeriod);
     event FreezeProposalPeriodUpdated(uint32 freezeProposalPeriod);
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Casts a positive vote to freeze the subDAO. This function is intended to be called
      * by the individual token holders themselves directly, and will allot their token

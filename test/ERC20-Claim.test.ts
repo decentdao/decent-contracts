@@ -4,78 +4,166 @@ import {
   VotesERC20__factory,
   ERC20Claim,
   ERC20Claim__factory,
+  ModuleProxyFactory,
 } from "../typechain-types";
 import chai from "chai";
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import time from "./time";
+import { calculateProxyAddress } from "./helpers";
 
 const expect = chai.expect;
 
 describe("ERC-20 Token Claiming", function () {
+  let moduleProxyFactory: ModuleProxyFactory;
+  let votesERC20Mastercopy: VotesERC20;
   let parentERC20: VotesERC20;
   let childERC20: VotesERC20;
+  let erc20ClaimMastercopy: ERC20Claim;
   let erc20Claim: ERC20Claim;
 
   let deployer: SignerWithAddress;
   let userA: SignerWithAddress;
   let userB: SignerWithAddress;
 
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
+
+  const abiCoder = new ethers.utils.AbiCoder();
+
   beforeEach(async function () {
+    // Fork Goerli to use contracts deployed on Goerli
+    await network.provider.request({
+      method: "hardhat_reset",
+      params: [
+        {
+          forking: {
+            jsonRpcUrl: process.env.GOERLI_PROVIDER
+              ? process.env.GOERLI_PROVIDER
+              : "",
+          },
+        },
+      ],
+    });
+
     [deployer, userA, userB] = await ethers.getSigners();
 
-    erc20Claim = await new ERC20Claim__factory(deployer).deploy();
-    parentERC20 = await new VotesERC20__factory(deployer).deploy();
-    childERC20 = await new VotesERC20__factory(deployer).deploy();
-
-    const abiCoder = new ethers.utils.AbiCoder(); // encode data
-
-    const parentERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      [
-        "ParentDecent",
-        "pDCNT",
-        [deployer.address, userA.address],
-        [
-          ethers.utils.parseUnits("100", 18),
-          ethers.utils.parseUnits("150", 18),
-        ],
-      ]
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
     );
 
-    await parentERC20.setUp(parentERC20SetupData);
+    erc20ClaimMastercopy = await new ERC20Claim__factory(deployer).deploy();
+    votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
 
-    const childERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      [
-        "ChildDecent",
-        "cDCNT",
-        [userB.address, deployer.address],
-        [
-          ethers.utils.parseUnits("100", 18),
-          ethers.utils.parseUnits("100", 18),
-        ],
-      ]
+    const parentERC20SetupData =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          [
+            "ParentDecent",
+            "pDCNT",
+            [deployer.address, userA.address],
+            [
+              ethers.utils.parseUnits("100", 18),
+              ethers.utils.parseUnits("150", 18),
+            ],
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      parentERC20SetupData,
+      "10031021"
     );
 
-    await childERC20.setUp(childERC20SetupData);
+    const predictedParentVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      parentERC20SetupData,
+      "10031021"
+    );
+
+    parentERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedParentVotesERC20Address
+    );
+
+    const childERC20SetupData =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          [
+            "ChildDecent",
+            "cDCNT",
+            [userB.address, deployer.address],
+            [
+              ethers.utils.parseUnits("100", 18),
+              ethers.utils.parseUnits("100", 18),
+            ],
+          ]
+        ),
+      ]);
+
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      childERC20SetupData,
+      "10031021"
+    );
+
+    const predictedChildVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      childERC20SetupData,
+      "10031021"
+    );
+
+    childERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedChildVotesERC20Address
+    );
 
     const latestBlock = await ethers.provider.getBlock("latest");
-    const erc20ClaimSetupData = abiCoder.encode(
-      ["uint32", "address", "address", "address", "uint256"],
-      [
-        latestBlock.number + 5,
-        deployer.address,
-        parentERC20.address,
-        childERC20.address,
-        ethers.utils.parseUnits("100", 18),
-      ]
+
+    const erc20ClaimSetupData =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder.encode(
+          ["uint32", "address", "address", "address", "uint256"],
+          [
+            latestBlock.number + 5,
+            deployer.address,
+            parentERC20.address,
+            childERC20.address,
+            ethers.utils.parseUnits("100", 18),
+          ]
+        ),
+      ]);
+
+    const predictedERC20ClaimAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      erc20ClaimMastercopy.address,
+      erc20ClaimSetupData,
+      "10031021"
     );
 
     await childERC20
       .connect(deployer)
-      .approve(erc20Claim.address, ethers.utils.parseUnits("100", 18));
+      .approve(predictedERC20ClaimAddress, ethers.utils.parseUnits("100", 18));
 
-    await erc20Claim.setUp(erc20ClaimSetupData);
+    await moduleProxyFactory.deployModule(
+      erc20ClaimMastercopy.address,
+      erc20ClaimSetupData,
+      "10031021"
+    );
+
+    erc20Claim = await ethers.getContractAt(
+      "ERC20Claim",
+      predictedERC20ClaimAddress
+    );
   });
 
   it("Init is correct", async () => {
@@ -174,43 +262,79 @@ describe("ERC-20 Token Claiming", function () {
   });
 
   it("If the deadlineBlock is setup as zero, then calling reclaim will revert", async () => {
-    childERC20 = await new VotesERC20__factory(deployer).deploy();
+    const abiCoder2 = new ethers.utils.AbiCoder();
 
-    erc20Claim = await new ERC20Claim__factory(deployer).deploy();
+    const childERC20SetupData2 =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder2.encode(
+          ["string", "string", "address[]", "uint256[]"],
+          [
+            "ChildDecent",
+            "cDCNT",
+            [userB.address, deployer.address],
+            [
+              ethers.utils.parseUnits("200", 18),
+              ethers.utils.parseUnits("200", 18),
+            ],
+          ]
+        ),
+      ]);
 
-    const abiCoder = new ethers.utils.AbiCoder(); // encode data
-
-    const childERC20SetupData = abiCoder.encode(
-      ["string", "string", "address[]", "uint256[]"],
-      [
-        "ChildDecent",
-        "cDCNT",
-        [userB.address, deployer.address],
-        [
-          ethers.utils.parseUnits("100", 18),
-          ethers.utils.parseUnits("100", 18),
-        ],
-      ]
+    await moduleProxyFactory.deployModule(
+      votesERC20Mastercopy.address,
+      childERC20SetupData2,
+      "10031021"
     );
 
-    await childERC20.setUp(childERC20SetupData);
+    const predictedChildVotesERC20Address = await calculateProxyAddress(
+      moduleProxyFactory,
+      votesERC20Mastercopy.address,
+      childERC20SetupData2,
+      "10031021"
+    );
 
-    const erc20ClaimSetupData = abiCoder.encode(
-      ["uint32", "address", "address", "address", "uint256"],
-      [
-        0,
-        deployer.address,
-        parentERC20.address,
-        childERC20.address,
-        ethers.utils.parseUnits("100", 18),
-      ]
+    childERC20 = await ethers.getContractAt(
+      "VotesERC20",
+      predictedChildVotesERC20Address
+    );
+
+    const erc20ClaimSetupData2 =
+      // eslint-disable-next-line camelcase
+      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+        abiCoder2.encode(
+          ["uint32", "address", "address", "address", "uint256"],
+          [
+            0,
+            deployer.address,
+            parentERC20.address,
+            childERC20.address,
+            ethers.utils.parseUnits("100", 18),
+          ]
+        ),
+      ]);
+
+    const predictedERC20ClaimAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      erc20ClaimMastercopy.address,
+      erc20ClaimSetupData2,
+      "10031021"
     );
 
     await childERC20
       .connect(deployer)
-      .approve(erc20Claim.address, ethers.utils.parseUnits("100", 18));
+      .approve(predictedERC20ClaimAddress, ethers.utils.parseUnits("100", 18));
 
-    await erc20Claim.setUp(erc20ClaimSetupData);
+    await moduleProxyFactory.deployModule(
+      erc20ClaimMastercopy.address,
+      erc20ClaimSetupData2,
+      "10031021"
+    );
+
+    erc20Claim = await ethers.getContractAt(
+      "ERC20Claim",
+      predictedERC20ClaimAddress
+    );
 
     await expect(erc20Claim.connect(deployer).reclaim()).to.be.revertedWith(
       "NoDeadline()"

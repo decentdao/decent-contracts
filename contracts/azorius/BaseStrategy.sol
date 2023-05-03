@@ -27,6 +27,10 @@ abstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStra
         _;
     }
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /** @inheritdoc IBaseStrategy*/
     function setAzorius(address _azoriusModule) external onlyOwner {
         azoriusModule = IAzorius(_azoriusModule);

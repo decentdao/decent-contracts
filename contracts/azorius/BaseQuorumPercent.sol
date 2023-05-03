@@ -51,4 +51,12 @@ abstract contract BaseQuorumPercent is OwnableUpgradeable {
     function meetsQuorum(uint256 _totalSupply, uint256 _yesVotes, uint256 _abstainVotes) public view returns (bool) {
         return _yesVotes + _abstainVotes >= (_totalSupply * quorumNumerator) / QUORUM_DENOMINATOR;
     }
+
+    /**
+     * Calculates the total number of votes required for a proposal to meet quorum.
+     * 
+     * @param _proposalId The ID of the proposal to get quorum votes for
+     * @return uint256 The quantity of votes required to meet quorum
+     */
+    function quorumVotes(uint32 _proposalId) public view virtual returns (uint256);
 }

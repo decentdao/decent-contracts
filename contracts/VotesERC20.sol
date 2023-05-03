@@ -18,6 +18,10 @@ contract VotesERC20 is
     FactoryFriendly
 {
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *

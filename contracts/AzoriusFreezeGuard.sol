@@ -29,6 +29,10 @@ contract AzoriusFreezeGuard is FactoryFriendly, IGuard, BaseGuard {
 
     error DAOFrozen();
 
+    constructor() {
+      _disableInitializers();
+    }
+
     /**
      * Initialize function, will be triggered when a new instance is deployed.
      *
