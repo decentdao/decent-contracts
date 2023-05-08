@@ -1,0 +1,133 @@
+{
+  "address": "0xB448f6FDCaD3A1Aff0C3e34C572E45520d2a0539",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "FailedInitialization",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "address_",
+          "type": "address"
+        }
+      ],
+      "name": "TakenAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "ZeroAddress",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "proxy",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "masterCopy",
+          "type": "address"
+        }
+      ],
+      "name": "ModuleProxyCreation",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "masterCopy",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "initializer",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "saltNonce",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployModule",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "proxy",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x4e59a0734b3e08934c49a6c150650912271f68b12ebb109e489289d73fe6a6f5",
+  "receipt": {
+    "to": null,
+    "from": "0x7930DdA80157Fcc47ba9c3836398c82d89C16416",
+    "contractAddress": "0xB448f6FDCaD3A1Aff0C3e34C572E45520d2a0539",
+    "transactionIndex": 20,
+    "gasUsed": "254602",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x2ccd434043c843308390fb1d386849c03d32ed2912ed952b51c7c0436793a260",
+    "transactionHash": "0x4e59a0734b3e08934c49a6c150650912271f68b12ebb109e489289d73fe6a6f5",
+    "logs": [],
+    "blockNumber": 3443791,
+    "cumulativeGasUsed": "3773195",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "6fa9da04db1336dc74d1e00ac5f31d54",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"FailedInitialization\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"address_\",\"type\":\"address\"}],\"name\":\"TakenAddress\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"ZeroAddress\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"proxy\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"masterCopy\",\"type\":\"address\"}],\"name\":\"ModuleProxyCreation\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"masterCopy\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"initializer\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"saltNonce\",\"type\":\"uint256\"}],\"name\":\"deployModule\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"proxy\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"errors\":{\"FailedInitialization()\":[{\"notice\":\"Initialization failed.\"}],\"TakenAddress(address)\":[{\"notice\":\"`address_` is already taken.\"}],\"ZeroAddress(address)\":[{\"notice\":\"`target` can not be zero.\"}]},\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol\":\"ModuleProxyFactory\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.8.0;\\n\\ncontract ModuleProxyFactory {\\n    event ModuleProxyCreation(\\n        address indexed proxy,\\n        address indexed masterCopy\\n    );\\n\\n    /// `target` can not be zero.\\n    error ZeroAddress(address target);\\n\\n    /// `address_` is already taken.\\n    error TakenAddress(address address_);\\n\\n    /// @notice Initialization failed.\\n    error FailedInitialization();\\n\\n    function createProxy(address target, bytes32 salt)\\n        internal\\n        returns (address result)\\n    {\\n        if (address(target) == address(0)) revert ZeroAddress(target);\\n        bytes memory deployment = abi.encodePacked(\\n            hex\\\"602d8060093d393df3363d3d373d3d3d363d73\\\",\\n            target,\\n            hex\\\"5af43d82803e903d91602b57fd5bf3\\\"\\n        );\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            result := create2(0, add(deployment, 0x20), mload(deployment), salt)\\n        }\\n        if (result == address(0)) revert TakenAddress(result);\\n    }\\n\\n    function deployModule(\\n        address masterCopy,\\n        bytes memory initializer,\\n        uint256 saltNonce\\n    ) public returns (address proxy) {\\n        proxy = createProxy(\\n            masterCopy,\\n            keccak256(abi.encodePacked(keccak256(initializer), saltNonce))\\n        );\\n        (bool success, ) = proxy.call(initializer);\\n        if (!success) revert FailedInitialization();\\n\\n        emit ModuleProxyCreation(proxy, masterCopy);\\n    }\\n}\\n\",\"keccak256\":\"0x70f6f1d88cf3382748e58f85ba87279f5bb8761863c293dd8c197a71ff558761\",\"license\":\"LGPL-3.0-only\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506103a4806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063f1ab873c14610030575b600080fd5b61004361003e366004610266565b61005f565b6040516001600160a01b03909116815260200160405180910390f35b60006100a384848051906020012084604051602001610088929190918252602082015260400190565b6040516020818303038152906040528051906020012061016b565b90506000816001600160a01b0316846040516100bf919061033f565b6000604051808303816000865af19150503d80600081146100fc576040519150601f19603f3d011682016040523d82523d6000602084013e610101565b606091505b505090508061012357604051637dabd39960e01b815260040160405180910390fd5b846001600160a01b0316826001600160a01b03167f2150ada912bf189ed721c44211199e270903fc88008c2a1e1e889ef30fe67c5f60405160405180910390a3509392505050565b60006001600160a01b0383166101a457604051633202e20d60e21b81526001600160a01b03841660048201526024015b60405180910390fd5b60405172602d8060093d393df3363d3d373d3d3d363d7360681b60208201526bffffffffffffffffffffffff19606085901b1660338201526e5af43d82803e903d91602b57fd5bf360881b60478201526000906056016040516020818303038152906040529050828151602083016000f591506001600160a01b0382166102495760405163371e9e8960e21b81526001600160a01b038316600482015260240161019b565b5092915050565b634e487b7160e01b600052604160045260246000fd5b60008060006060848603121561027b57600080fd5b83356001600160a01b038116811461029257600080fd5b9250602084013567ffffffffffffffff808211156102af57600080fd5b818601915086601f8301126102c357600080fd5b8135818111156102d5576102d5610250565b604051601f8201601f19908116603f011681019083821181831017156102fd576102fd610250565b8160405282815289602084870101111561031657600080fd5b826020860160208301376000602084830101528096505050505050604084013590509250925092565b6000825160005b818110156103605760208186018101518583015201610346565b50600092019182525091905056fea26469706673582212202318e271bb304c72c2e19dc693ef1bb2add88f8405bbba0b0bf5596d304fb29564736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063f1ab873c14610030575b600080fd5b61004361003e366004610266565b61005f565b6040516001600160a01b03909116815260200160405180910390f35b60006100a384848051906020012084604051602001610088929190918252602082015260400190565b6040516020818303038152906040528051906020012061016b565b90506000816001600160a01b0316846040516100bf919061033f565b6000604051808303816000865af19150503d80600081146100fc576040519150601f19603f3d011682016040523d82523d6000602084013e610101565b606091505b505090508061012357604051637dabd39960e01b815260040160405180910390fd5b846001600160a01b0316826001600160a01b03167f2150ada912bf189ed721c44211199e270903fc88008c2a1e1e889ef30fe67c5f60405160405180910390a3509392505050565b60006001600160a01b0383166101a457604051633202e20d60e21b81526001600160a01b03841660048201526024015b60405180910390fd5b60405172602d8060093d393df3363d3d373d3d3d363d7360681b60208201526bffffffffffffffffffffffff19606085901b1660338201526e5af43d82803e903d91602b57fd5bf360881b60478201526000906056016040516020818303038152906040529050828151602083016000f591506001600160a01b0382166102495760405163371e9e8960e21b81526001600160a01b038316600482015260240161019b565b5092915050565b634e487b7160e01b600052604160045260246000fd5b60008060006060848603121561027b57600080fd5b83356001600160a01b038116811461029257600080fd5b9250602084013567ffffffffffffffff808211156102af57600080fd5b818601915086601f8301126102c357600080fd5b8135818111156102d5576102d5610250565b604051601f8201601f19908116603f011681019083821181831017156102fd576102fd610250565b8160405282815289602084870101111561031657600080fd5b826020860160208301376000602084830101528096505050505050604084013590509250925092565b6000825160005b818110156103605760208186018101518583015201610346565b50600092019182525091905056fea26469706673582212202318e271bb304c72c2e19dc693ef1bb2add88f8405bbba0b0bf5596d304fb29564736f6c63430008130033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "errors": {
+      "FailedInitialization()": [
+        {
+          "notice": "Initialization failed."
+        }
+      ],
+      "TakenAddress(address)": [
+        {
+          "notice": "`address_` is already taken."
+        }
+      ],
+      "ZeroAddress(address)": [
+        {
+          "notice": "`target` can not be zero."
+        }
+      ]
+    },
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
