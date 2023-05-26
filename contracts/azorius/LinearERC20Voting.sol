@@ -202,7 +202,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
      * @param _proposalId id of the Proposal
      * @return uint256 the address' voting weight
      */
-    function getVotingWeight(address _voter, uint32 _proposalId) public view returns (uint256) {
+    function getVotingWeight(address _voter, uint32 _proposalId) public view virtual returns (uint256) {
         return
             governanceToken.getPastVotes(
                 _voter,
