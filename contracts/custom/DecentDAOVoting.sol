@@ -5,7 +5,7 @@ import { LinearERC20Voting } from "../azorius/LinearERC20Voting.sol";
 import { VotesERC20Wrapper } from "../VotesERC20Wrapper.sol";
 
 interface Escrow {
-    function getBalance(address _address, uint _block) external returns (uint);
+    function getBalance(address _address, uint _block) external view returns (uint);
 }
 
 contract DecentDAOVoting is LinearERC20Voting {
