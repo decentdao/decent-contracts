@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import { LinearERC20Voting } from "../azorius/LinearERC20Voting.sol";
 
 interface Escrow {
-    function getBalance(address _address, uint _block) external view returns (uint);
+    function getBalance(address _token, address _holder, uint _block) external view returns (uint);
 }
 
 contract DecentDAOVoting is LinearERC20Voting {
@@ -14,6 +14,6 @@ contract DecentDAOVoting is LinearERC20Voting {
     // TODO override setUp() function to initialize the escrow contract
 
     function getVotingWeight(address _voter, uint32 _proposalId) public view override returns (uint256) {
-        return super.getVotingWeight(_voter, _proposalId) + escrow.getBalance(_voter, proposalVotes[_proposalId].votingStartBlock);
+        return super.getVotingWeight(_voter, _proposalId) + escrow.getBalance(address(governanceToken), _voter, proposalVotes[_proposalId].votingStartBlock);
     }
 }
