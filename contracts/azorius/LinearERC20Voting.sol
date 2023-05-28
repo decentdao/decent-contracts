@@ -63,7 +63,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
      * `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`,
      * `uint256 _quorumNumerator`, `uint256 _basisNumerator`
      */
-    function setUp(bytes memory initializeParams) public override initializer {
+    function setUp(bytes memory initializeParams) public virtual override initializer {
         (
             address _owner,
             IVotes _governanceToken,
