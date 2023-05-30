@@ -26,6 +26,15 @@ interface TokenVester {
     function getBalance(address _token, address _holder, uint _block) external view returns (uint);
 }
 
+interface IVotesDecent is IVotes {
+    /**
+     * Returns the token balance that `account` had at a specific moment in the past.
+     * This is distinct from `getPastVotes` in that it is the account's *balance*, not the number of
+     * delegated token votes, which can be different.
+     */
+    function getPastBalance(address account, uint256 timepoint) external view returns (uint256);
+}
+
 /**
  * An extension of the [LinearERC20Voting]("../azorius/LinearERC20Voting.md") voting strategy, specific
  * to Decent's voting needs.
@@ -39,28 +48,64 @@ interface TokenVester {
  */
 contract DecentDAOVoting is LinearERC20Voting {
 
+    /**
+     * The token vesting contract, which holds an account's "unvested" tokens, which will be added to
+     * their voting weight, despite not being in their possession.
+     */
     TokenVester public vester;
+
+    /**
+     * Determines whether to count token delegation for a newly created proposal, or to simply
+     * use the voter's token balance for voting weight instead.
+     */
+    bool public allowDelegation;
+
+    /**
+     * A mapping of `proposalId` to the value of `allowDelegation` when the proposal was created.
+     * This snapshots whether the proposal should allow delegation, or use a voting account's balance
+     * instead for voting weight.
+     */
+    mapping(uint256 => bool) internal proposalToAllowDelegation;
 
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
-            IVotes _governanceToken,
+            IVotesDecent _governanceToken,
             address _azoriusModule,
             uint32 _votingPeriod,
             uint256 _requiredProposerWeight,
             uint256 _quorumNumerator,
             uint256 _basisNumerator,
-            address _vester
+            address _vester,
+            bool _allowDelegation
         ) = abi.decode(
             initializeParams,
-            (address, IVotes, address, uint32, uint256, uint256, uint256, address)
+            (address, IVotesDecent, address, uint32, uint256, uint256, uint256, address, bool)
         );
         super.setUp(abi.encode(_owner, _governanceToken, _azoriusModule, _votingPeriod, _requiredProposerWeight, _quorumNumerator, _basisNumerator));
 
         vester = TokenVester(_vester);
+        allowDelegation = _allowDelegation;
+    }
+
+    /** @inheritdoc LinearERC20Voting*/
+    function initializeProposal(bytes memory _data) public override onlyAzorius {
+        super.initializeProposal(_data);
+        uint32 proposalId = abi.decode(_data, (uint32));
+        proposalToAllowDelegation[proposalId] = allowDelegation;
     }
        
     function getVotingWeight(address _voter, uint32 _proposalId) public view override returns (uint256) {
-        return super.getVotingWeight(_voter, _proposalId) + vester.getBalance(address(governanceToken), _voter, proposalVotes[_proposalId].votingStartBlock);
+        address governanceAddress = address(governanceToken);
+        uint256 voteStartBlock = proposalVotes[_proposalId].votingStartBlock;
+        uint256 personalWeight = proposalToAllowDelegation[_proposalId] ? 
+            super.getVotingWeight(_voter, _proposalId) : 
+            IVotesDecent(governanceAddress).getPastBalance(_voter, voteStartBlock);
+        uint256 vestingWeight = vester.getBalance(governanceAddress, _voter, voteStartBlock);
+        return personalWeight + vestingWeight;
+    }
+
+    function toggleAllowDelegation() external onlyOwner {
+        allowDelegation = !allowDelegation;
     }
 }
