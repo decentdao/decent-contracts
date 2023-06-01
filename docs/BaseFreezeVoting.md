@@ -97,6 +97,12 @@ event FreezePeriodUpdated(uint32 freezePeriod)
 event FreezeProposalPeriodUpdated(uint32 freezeProposalPeriod)
 ```
 
+### constructor
+
+```solidity
+constructor() internal
+```
+
 ### castFreezeVote
 
 ```solidity

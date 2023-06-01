@@ -4,6 +4,12 @@
 
 An implementation of the Open Zeppelin `IVotes` voting token standard.
 
+### constructor
+
+```solidity
+constructor() public
+```
+
 ### setUp
 
 ```solidity

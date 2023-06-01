@@ -57,5 +57,5 @@ as a subDAO.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _subDAOAddress | address | address of the subDAO to declare       as a child of the caller |
+| _subDAOAddress | address | address of the subDAO to declare       as a child of the caller |
 
