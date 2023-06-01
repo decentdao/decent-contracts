@@ -193,6 +193,12 @@ error InvalidTxs()
 error InvalidArrayLengths()
 ```
 
+### constructor
+
+```solidity
+constructor() public
+```
+
 ### setUp
 
 ```solidity
@@ -205,7 +211,7 @@ Initial setup of the Azorius instance.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
 
 ### updateTimelockPeriod
 
@@ -250,7 +256,7 @@ New Proposals begin immediately in the `ACTIVE` state.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _strategy | address | address of the BaseStrategy implementation which the Proposal will use |
-| _data | bytes | arbitrary data passed to the BaseStrategy implementation |
+| _data | bytes | arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies,  but is included in case future strategy contracts have a need for it |
 | _transactions | struct IAzorius.Transaction[] | array of transactions to propose |
 | _metadata | string | additional data such as a title/description to submit with the proposal |
 
@@ -435,7 +441,7 @@ Gets the state of a Proposal.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the         current state of the proposal |
+| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the         current state of the proposal |
 
 ### generateTxHashData
 

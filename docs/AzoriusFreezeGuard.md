@@ -28,6 +28,12 @@ event AzoriusFreezeGuardSetUp(address creator, address owner, address freezeVoti
 error DAOFrozen()
 ```
 
+### constructor
+
+```solidity
+constructor() public
+```
+
 ### setUp
 
 ```solidity
@@ -40,7 +46,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _freezeVoting` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _freezeVoting` |
 
 ### checkTransaction
 

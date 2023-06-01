@@ -51,7 +51,7 @@ Update natspec doc files after modifying contracts
 npx hardhat docgen
 ```
 
-## Deploy Contract to `<network>`
+## Deploy Contracts to `<network>`
 ```shell
 npx hardhat deploy --network <network>
 ```

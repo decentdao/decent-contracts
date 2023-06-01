@@ -37,6 +37,12 @@ modifier onlyAzorius()
 Ensures that only the [Azorius](./Azorius.md) contract that pertains to this 
 [BaseStrategy](./BaseStrategy.md) can call functions on it.
 
+### constructor
+
+```solidity
+constructor() internal
+```
+
 ### setAzorius
 
 ```solidity

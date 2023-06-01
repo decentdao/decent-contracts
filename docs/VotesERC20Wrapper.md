@@ -5,6 +5,12 @@
 An extension of `VotesERC20` which supports wrapping / unwrapping an existing ERC20 token,
 to allow for importing an existing token into the Azorius governance framework.
 
+### constructor
+
+```solidity
+constructor() public
+```
+
 ### setUp
 
 ```solidity

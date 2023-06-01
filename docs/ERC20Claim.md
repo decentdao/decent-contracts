@@ -2,8 +2,8 @@
 
 ## ERC20Claim
 
-A simple contract that allows for parent DAOs that have created a new ERC-20 
-token voting subDAO to allocate a certain amount of those tokens as claimable 
+A simple contract that allows for parent DAOs that have created a new ERC-20
+token voting subDAO to allocate a certain amount of those tokens as claimable
 by the parent DAO's token holders.
 
 ### deadlineBlock
@@ -62,6 +62,12 @@ mapping(address => bool) claimed
 
 Mapping of address to bool of whether the address has claimed already.
 
+### ERC20ClaimCreated
+
+```solidity
+event ERC20ClaimCreated(address parentToken, address childToken, uint256 parentAllocation, uint256 snapshotId, uint256 deadline)
+```
+
 ### ERC20Claimed
 
 ```solidity
@@ -98,10 +104,10 @@ error NoDeadline()
 error DeadlinePending()
 ```
 
-### ERC20ClaimCreated
+### constructor
 
 ```solidity
-event ERC20ClaimCreated(address parentToken, address childToken, uint256 parentAllocation, uint256 snapshotId, uint256 deadline)
+constructor() public
 ```
 
 ### setUp
@@ -116,7 +122,7 @@ Initialize function, will be triggered when a new instance is deployed.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
+| initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
 
 ### claimTokens
 
@@ -131,7 +137,7 @@ subDAO during its creation.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
+| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
 
 ### reclaim
 
