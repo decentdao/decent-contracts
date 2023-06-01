@@ -56,6 +56,13 @@ npx hardhat docgen
 npx hardhat deploy --network <network>
 ```
 
+Deployed contracts can be verified on Etherscan via the following command:
+```shell
+npx hardhat verify --network {network name} {contract address}
+```
+
+Currently, this is done manually for each contract deployed, found in `deployments/<network>/XXX.json`
+
 ## Local Hardhat deployment
 To deploy the Fractal contracts to a local node:
 ```shell
@@ -66,7 +73,6 @@ npx hardhat node
 The core contracts in this repository are published in an NPM package for easy use within other repositories.
 
 To install the npm package in your project, run:
-
 ```shell
 npm i @fractal-framework/fractal-contracts
 ```
@@ -75,31 +81,25 @@ To include uncompiled contracts within typechain-types follow [these steps](http
 
 ## Publishing new versions to NPM
 First, increment the version in `package.json`, then:
-
 ```shell
 npm install
 ```
+
 to get those version updates into package-lock.json
 ```shell
 npm run publish:prepare 
 ```
+
 to fully clean the project, compile contracts, create typechain directory, and compile the typechain directory
 ```shell
 npm publish 
 ```
+
 to publish the compiled typechain files and solidity contracts to NPM
 ```shell
 git commit
 git push
 ```
-
-Deployed contracts can be verified on Etherscan via the following command:
-
-```shell
-npx hardhat verify --network {network name} {contract address}
-```
-
-Currently, this is done manually for each contract deployed, found in `deployments/<network>/XXX.json`
 
 ## Versioning
 Fractal follows a modified style of semantic versioning (https://semver.org/) specific to a smart contract use case.
