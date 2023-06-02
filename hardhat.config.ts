@@ -8,7 +8,8 @@ import "@typechain/hardhat";
 import "hardhat-tracer";
 import "solidity-coverage";
 import "hardhat-dependency-compiler";
-import { gnosisPm } from "./typechain-types/factories";
+import "hardhat-gas-reporter";
+import "solidity-docgen";
 
 dotenv.config();
 
@@ -22,12 +23,21 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+const hardhatNetworkConfig = process.env.GOERLI_PROVIDER
+  ? {
+      forking: {
+        url: process.env.GOERLI_PROVIDER,
+        blockNumber: 7387621,
+      },
+    }
+  : {};
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.13",
+    version: "0.8.19",
     settings: {
       optimizer: {
         enabled: true,
@@ -35,10 +45,16 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  gasReporter: {
+    enabled: true,
+    outputFile: "gas-report.txt",
+    noColors: true,
+  },
   dependencyCompiler: {
     paths: [
       "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
       "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
+      "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol",
     ],
   },
   namedAccounts: {
@@ -46,43 +62,45 @@ const config: HardhatUserConfig = {
       default: 0,
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
       goerli: `privatekey://${process.env.GOERLI_DEPLOYER_PRIVATE_KEY}`,
-      rinkeby: `privatekey://${process.env.RINKEBY_DEPLOYER_PRIVATE_KEY}`,
-      sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
+      polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
     },
   },
   networks: {
     mainnet: {
       chainId: 1,
-      url: process.env.MAINNET_PROVIDER,
-      accounts: [process.env.MAINNET_DEPLOYER_PRIVATE_KEY || ""],
+      url: process.env.MAINNET_PROVIDER || "",
+      accounts: process.env.MAINNET_DEPLOYER_PRIVATE_KEY
+        ? [process.env.MAINNET_DEPLOYER_PRIVATE_KEY]
+        : [],
     },
     goerli: {
       chainId: 5,
-      url: process.env.GOERLI_PROVIDER,
-      accounts: [process.env.GOERLI_DEPLOYER_PRIVATE_KEY || ""],
+      url: process.env.GOERLI_PROVIDER || "",
+      accounts: process.env.GOERLI_DEPLOYER_PRIVATE_KEY
+        ? [process.env.GOERLI_DEPLOYER_PRIVATE_KEY]
+        : [],
     },
-    rinkeby: {
-      chainId: 4,
-      url: process.env.RINKEBY_PROVIDER,
-      accounts: [process.env.RINKEBY_DEPLOYER_PRIVATE_KEY || ""],
+    polygon: {
+      chainId: 137,
+      url: process.env.POLYGON_PROVIDER || "",
+      accounts: process.env.POLYGON_DEPLOYER_PRIVATE_KEY
+        ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
+        : [],
     },
-    sepolia: {
-      chainId: 11155111,
-      url: process.env.SEPOLIA_PROVIDER,
-      accounts: [process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY || ""],
-    },
-    hardhat: {
-      forking: {
-        url: process.env.GOERLI_PROVIDER ? process.env.GOERLI_PROVIDER : "",
-        blockNumber: 7387621,
-      },
-    },
+    hardhat: hardhatNetworkConfig,
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY || "",
+      goerli: process.env.ETHERSCAN_API_KEY || "",
+      polygon: process.env.POLYGONSCAN_API_KEY || "",
+    },
   },
   paths: {
     deploy: "deploy/core",
+  },
+  docgen: {
+    pages: "files",
   },
 };
 

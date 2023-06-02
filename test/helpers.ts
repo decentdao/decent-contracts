@@ -168,7 +168,7 @@ export const ifaceFactory = new Interface([
   "event ModuleProxyCreation(address indexed proxy,address indexed masterCopy)",
 ]);
 
-export const usuliface = new Interface([
+export const azoriusiface = new Interface([
   "function setUp(bytes memory initParams) public",
 ]);
 
@@ -212,7 +212,7 @@ export const abiFactory = [
   "function deployModule(address masterCopy,bytes memory initializer,uint256 saltNonce) public returns (address proxy)",
 ];
 
-export const abiUsul = [
+export const abiAzorius = [
   "function owner() public view returns (address)",
   "function avatar() public view returns (address)",
   "function target() public view returns (address)",
@@ -515,3 +515,11 @@ export const buildMultiSendSafeTx = (
     overrides
   );
 };
+
+export function getRandomBytes() {
+  const bytes8Array = new Uint8Array(32);
+  const bytes32 =
+    "0x" +
+    bytes8Array.reduce((o, v) => o + ("00" + v.toString(16)).slice(-2), "");
+  return bytes32;
+}

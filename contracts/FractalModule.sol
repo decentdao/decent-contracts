@@ -1,30 +1,53 @@
-//SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+//SPDX-License-Identifier: MIT
+pragma solidity =0.8.19;
 
-import "@gnosis.pm/zodiac/contracts/core/Module.sol";
-import "./interfaces/IFractalModule.sol";
+import { Module, Enum } from "@gnosis.pm/zodiac/contracts/core/Module.sol";
+import { IFractalModule } from "./interfaces/IFractalModule.sol";
 
+ /**
+  * Implementation of [IFractalModule](./interfaces/IFractalModule.md).
+  *
+  * A Safe module contract that allows for a "parent-child" DAO relationship.
+  *
+  * Adding the module allows for a designated set of addresses to execute
+  * transactions on the Safe, which in our implementation is the set of parent
+  * DAOs.
+  */
 contract FractalModule is IFractalModule, Module {
-    mapping(address => bool) public controllers; // A DAO may authorize users to act on the behalf of the parent DAO.
 
-    /// @dev Throws if called by any account other than the owner.
+    /** Mapping of whether an address is a controller (typically a parentDAO). */
+    mapping(address => bool) public controllers;
+
+    event ControllersAdded(address[] controllers);
+    event ControllersRemoved(address[] controllers);
+
+    error Unauthorized();
+    error TxFailed();
+
+    /** Allows only authorized controllers to execute transactions on the Safe. */
     modifier onlyAuthorized() {
-        require(
-            owner() == msg.sender || controllers[msg.sender],
-            "Not Authorized"
-        );
+        if (owner() != msg.sender && !controllers[msg.sender])
+            revert Unauthorized();
         _;
     }
 
-    /// @dev Initialize function
-    /// @param initializeParams Parameters of initialization encoded
+    constructor() {
+      _disableInitializers();
+    }
+
+    /**
+     * Initialize function, will be triggered when a new instance is deployed.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _avatar`, `address _target`, `address[] memory _controllers`
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         __Ownable_init();
         (
-            address _owner, // Controlling DAO
+            address _owner,                 // controlling DAO
             address _avatar,
-            address _target, 
-            address[] memory _controllers // Authorized controllers
+            address _target,
+            address[] memory _controllers   // authorized controllers
         ) = abi.decode(
                 initializeParams,
                 (address, address, address, address[])
@@ -36,40 +59,8 @@ contract FractalModule is IFractalModule, Module {
         transferOwnership(_owner);
     }
 
-    /// @notice Allows an authorized user to exec a Gnosis Safe tx via the module
-    /// @param execTxData Data payload of module transaction.
-    function execTx(bytes memory execTxData) public onlyAuthorized {
-        (
-            address _target,
-            uint256 _value,
-            bytes memory _data,
-            Enum.Operation _operation
-        ) = abi.decode(execTxData, (address, uint256, bytes, Enum.Operation));
-        require(
-            exec(_target, _value, _data, _operation),
-            "Module transaction failed"
-        );
-    }
-
-    /// @notice Allows the module owner to add users which may exectxs
-    /// @param _controllers Addresses added to the contoller list
-    function addControllers(address[] memory _controllers) public onlyOwner {
-        uint256 controllersLength = _controllers.length;
-        for (uint256 i; i < controllersLength; ) {
-            controllers[_controllers[i]] = true;
-            unchecked {
-                ++i;
-            }
-        }
-        emit ControllersAdded(_controllers);
-    }
-
-    /// @notice Allows the module owner to remove users which may exectxs
-    /// @param _controllers Addresses removed to the contoller list
-    function removeControllers(address[] memory _controllers)
-        external
-        onlyOwner
-    {
+    /** @inheritdoc IFractalModule*/
+    function removeControllers(address[] memory _controllers) external onlyOwner {
         uint256 controllersLength = _controllers.length;
         for (uint256 i; i < controllersLength; ) {
             controllers[_controllers[i]] = false;
@@ -80,16 +71,26 @@ contract FractalModule is IFractalModule, Module {
         emit ControllersRemoved(_controllers);
     }
 
-    /// @notice Returns whether a given interface ID is supported
-    /// @param interfaceId An interface ID bytes4 as defined by ERC-165
-    /// @return bool Indicates whether the interface is supported
-    function supportsInterface(bytes4 interfaceId)
-        external
-        pure
-        returns (bool)
-    {
-        return
-            interfaceId == type(IFractalModule).interfaceId || // 0xe6d7a83a
-            interfaceId == type(IERC165).interfaceId; // 0x01ffc9a7
+    /** @inheritdoc IFractalModule*/
+    function execTx(bytes memory execTxData) public onlyAuthorized {
+        (
+            address _target,
+            uint256 _value,
+            bytes memory _data,
+            Enum.Operation _operation
+        ) = abi.decode(execTxData, (address, uint256, bytes, Enum.Operation));
+        if(!exec(_target, _value, _data, _operation)) revert TxFailed();
+    }
+
+    /** @inheritdoc IFractalModule*/
+    function addControllers(address[] memory _controllers) public onlyOwner {
+        uint256 controllersLength = _controllers.length;
+        for (uint256 i; i < controllersLength; ) {
+            controllers[_controllers[i]] = true;
+            unchecked {
+                ++i;
+            }
+        }
+        emit ControllersAdded(_controllers);
     }
 }

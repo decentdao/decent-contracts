@@ -3,14 +3,13 @@ import { expect } from "chai";
 import { BigNumber, Contract } from "ethers";
 import { ethers, network } from "hardhat";
 import {
-  VotesToken__factory,
-  IFractalModule__factory,
+  VotesERC20__factory,
   FractalModule,
   FractalModule__factory,
-  VetoGuard,
-  VetoGuard__factory,
+  MultisigFreezeGuard,
+  MultisigFreezeGuard__factory,
+  ModuleProxyFactory,
 } from "../typechain-types";
-import getInterfaceSelector from "./getInterfaceSelector";
 import {
   ifaceSafe,
   abi,
@@ -33,10 +32,10 @@ describe("Fractal Module Tests", () => {
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
   let multiSend: Contract;
-  let vetoGuard: VetoGuard;
-  let vetoImpl: VetoGuard;
+  let freezeGuard: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
+  let moduleProxyFactory: ModuleProxyFactory;
 
   // Predicted Contracts
   let predictedFractalModule: string;
@@ -49,14 +48,14 @@ describe("Fractal Module Tests", () => {
 
   const abiCoder = new ethers.utils.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
-  let vetoGuardFactoryInit: string;
+  let freezeGuardSetup: string;
   let setModuleCalldata: string;
   let sigs: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+  const moduleProxyFactoryAddress =
+    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
-  const threshold = 2;
-  let predictedVetoGuard: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -91,6 +90,11 @@ describe("Fractal Module Tests", () => {
       abiFactory,
       deployer
     );
+    // Get module proxy factory
+    moduleProxyFactory = await ethers.getContractAt(
+      "ModuleProxyFactory",
+      moduleProxyFactoryAddress
+    );
 
     /// ////////////////// GNOSIS //////////////////
     // SETUP GnosisSafe
@@ -121,24 +125,18 @@ describe("Fractal Module Tests", () => {
 
     /// /////////////  GUARD ///////////////////
     // DEPLOY GUARD
-    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
-    vetoGuardFactoryInit =
+    freezeGuard = await new MultisigFreezeGuard__factory(deployer).deploy();
+    freezeGuardSetup =
       // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
-        abiCoder.encode(
-          ["uint256", "address", "address", "address"],
-          [10, owner1.address, owner1.address, gnosisSafe.address]
-        ),
-      ]);
-
-    predictedVetoGuard = await calculateProxyAddress(
-      moduleFactory,
-      vetoImpl.address,
-      vetoGuardFactoryInit,
-      "10031021"
-    );
-
-    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
+      MultisigFreezeGuard__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["uint256", "uint256", "address", "address", "address"],
+            [10, 10, owner1.address, owner1.address, gnosisSafe.address]
+          ),
+        ]
+      );
 
     /// /////////////// MODULE ////////////////
     // DEPLOY Fractal Module
@@ -201,14 +199,6 @@ describe("Fractal Module Tests", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisFactory, "ProxyCreation")
         .withArgs(gnosisSafe.address, gnosisSingletonAddress);
-
-      // Supports Fractal Module
-      expect(
-        await fractalModule.supportsInterface(
-          // eslint-disable-next-line camelcase
-          getInterfaceSelector(IFractalModule__factory.createInterface())
-        )
-      ).to.eq(true);
     });
 
     it("Owner may add/remove controllers", async () => {
@@ -252,7 +242,7 @@ describe("Fractal Module Tests", () => {
       expect(await fractalModule.controllers(owner3.address)).eq(false);
     });
 
-    it("Authorized users may exec txs => GS", async () => {
+    it("Authorized users may exec TXs", async () => {
       const internalTxs: MetaTransaction[] = [
         buildContractCall(
           gnosisSafe,
@@ -281,7 +271,7 @@ describe("Fractal Module Tests", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [freezeGuard.address, freezeGuardSetup, "10031021"],
           0,
           false
         ),
@@ -310,19 +300,46 @@ describe("Fractal Module Tests", () => {
 
       // FUND SAFE
       const abiCoder = new ethers.utils.AbiCoder(); // encode data
-      const votesTokenSetupData = abiCoder.encode(
-        ["string", "string", "address[]", "uint256[]"],
-        ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
+
+      // Deploy token mastercopy
+      const votesERC20Mastercopy = await new VotesERC20__factory(
+        deployer
+      ).deploy();
+
+      const votesERC20SetupData =
+        // eslint-disable-next-line camelcase
+        VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+          abiCoder.encode(
+            ["string", "string", "address[]", "uint256[]"],
+            ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
+          ),
+        ]);
+
+      await moduleProxyFactory.deployModule(
+        votesERC20Mastercopy.address,
+        votesERC20SetupData,
+        "10031021"
       );
-      const votesToken = await new VotesToken__factory(deployer).deploy();
-      await votesToken.setUp(votesTokenSetupData);
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(1000);
-      expect(await votesToken.balanceOf(owner1.address)).to.eq(0);
+
+      const predictedVotesERC20Address = await calculateProxyAddress(
+        moduleProxyFactory,
+        votesERC20Mastercopy.address,
+        votesERC20SetupData,
+        "10031021"
+      );
+
+      const votesERC20 = await ethers.getContractAt(
+        "VotesERC20",
+        predictedVotesERC20Address
+      );
+
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(owner1.address)).to.eq(0);
 
       // CLAWBACK FUNDS
       const clawBackCalldata =
         // eslint-disable-next-line camelcase
-        VotesToken__factory.createInterface().encodeFunctionData("transfer", [
+        VotesERC20__factory.createInterface().encodeFunctionData("transfer", [
           owner1.address,
           500,
         ]);
@@ -330,12 +347,12 @@ describe("Fractal Module Tests", () => {
         // eslint-disable-next-line camelcase
         abiCoder.encode(
           ["address", "uint256", "bytes", "uint8"],
-          [votesToken.address, 0, clawBackCalldata, 0]
+          [votesERC20.address, 0, clawBackCalldata, 0]
         );
 
       // REVERT => NOT AUTHORIZED
       await expect(fractalModule.execTx(txData)).to.be.revertedWith(
-        "Not Authorized"
+        "Unauthorized()"
       );
 
       // OWNER MAY EXECUTE
@@ -353,10 +370,10 @@ describe("Fractal Module Tests", () => {
       // REVERT => Execution Failure
       await expect(
         fractalModule.connect(owner1).execTx(txData)
-      ).to.be.revertedWith("Module transaction failed");
+      ).to.be.revertedWith("TxFailed()");
 
-      expect(await votesToken.balanceOf(gnosisSafe.address)).to.eq(0);
-      expect(await votesToken.balanceOf(owner1.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(owner1.address)).to.eq(1000);
     });
   });
 });

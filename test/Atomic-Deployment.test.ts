@@ -5,8 +5,8 @@ import { ethers, network } from "hardhat";
 import {
   FractalModule,
   FractalModule__factory,
-  VetoGuard,
-  VetoGuard__factory,
+  MultisigFreezeGuard,
+  MultisigFreezeGuard__factory,
 } from "../typechain-types";
 import {
   ifaceSafe,
@@ -20,11 +20,11 @@ import {
   multisendABI,
   encodeMultiSend,
   ifaceMultiSend,
-  usuliface,
-  abiUsul,
+  azoriusiface,
+  abiAzorius,
 } from "./helpers";
 
-describe("Gnosis Safe", () => {
+describe("Atomic Gnosis Safe Deployment", () => {
   // Factories
   let gnosisFactory: Contract;
 
@@ -32,8 +32,8 @@ describe("Gnosis Safe", () => {
   let gnosisSafe: Contract;
   let moduleFactory: Contract;
   let multiSend: Contract;
-  let vetoGuard: VetoGuard;
-  let vetoImpl: VetoGuard;
+  let freezeGuard: MultisigFreezeGuard;
+  let freezeGuardImplementation: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
 
@@ -48,14 +48,14 @@ describe("Gnosis Safe", () => {
 
   const abiCoder = new ethers.utils.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
-  let vetoGuardFactoryInit: string;
+  let freezeGuardFactoryInit: string;
   let setModuleCalldata: string;
   let sigs: string;
 
   const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
-  let predictedVetoGuard: string;
+  let predictedFreezeGuard: string;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -120,24 +120,32 @@ describe("Gnosis Safe", () => {
 
     /// /////////////  GUARD ///////////////////
     // DEPLOY GUARD
-    vetoImpl = await new VetoGuard__factory(deployer).deploy(); // Veto Impl
-    vetoGuardFactoryInit =
+    freezeGuardImplementation = await new MultisigFreezeGuard__factory(
+      deployer
+    ).deploy();
+    freezeGuardFactoryInit =
       // eslint-disable-next-line camelcase
-      FractalModule__factory.createInterface().encodeFunctionData("setUp", [
-        abiCoder.encode(
-          ["uint256", "address", "address", "address"],
-          [10, owner1.address, owner1.address, gnosisSafe.address]
-        ),
-      ]);
+      MultisigFreezeGuard__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          abiCoder.encode(
+            ["uint256", "uint256", "address", "address", "address"],
+            [10, 20, owner1.address, owner1.address, gnosisSafe.address]
+          ),
+        ]
+      );
 
-    predictedVetoGuard = await calculateProxyAddress(
+    predictedFreezeGuard = await calculateProxyAddress(
       moduleFactory,
-      vetoImpl.address,
-      vetoGuardFactoryInit,
+      freezeGuardImplementation.address,
+      freezeGuardFactoryInit,
       "10031021"
     );
 
-    vetoGuard = await ethers.getContractAt("VetoGuard", predictedVetoGuard);
+    freezeGuard = await ethers.getContractAt(
+      "MultisigFreezeGuard",
+      predictedFreezeGuard
+    );
 
     /// /////////////// MODULE ////////////////
     // DEPLOY Fractal Module
@@ -206,7 +214,7 @@ describe("Gnosis Safe", () => {
       expect(await fractalModule.owner()).eq(owner1.address);
     });
 
-    it("Setup VetoGuard w/ ModuleProxyCreationEvent", async () => {
+    it("Setup FreezeGuard w/ ModuleProxyCreationEvent", async () => {
       const txs: MetaTransaction[] = [
         buildContractCall(
           gnosisFactory,
@@ -218,7 +226,11 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -226,15 +238,15 @@ describe("Gnosis Safe", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
-        .withArgs(predictedVetoGuard, vetoImpl.address);
-      expect(await vetoGuard.executionDelayBlocks()).eq(10);
-      expect(await vetoGuard.vetoVoting()).eq(owner1.address);
-      expect(await vetoGuard.gnosisSafe()).eq(gnosisSafe.address);
+        .withArgs(predictedFreezeGuard, freezeGuardImplementation.address);
+      expect(await freezeGuard.timelockPeriod()).eq(10);
+      expect(await freezeGuard.freezeVoting()).eq(owner1.address);
+      expect(await freezeGuard.childGnosisSafe()).eq(gnosisSafe.address);
     });
 
-    it("Setup Usul Module w/ ModuleProxyCreationEvent", async () => {
+    it("Setup Azorius Module w/ ModuleProxyCreationEvent", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = [];
-      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
         ["address", "address", "address", "address[]"],
         [
           gnosisSafe.address,
@@ -243,20 +255,20 @@ describe("Gnosis Safe", () => {
           VOTING_STRATEGIES_TO_DEPLOY,
         ]
       );
-      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
-        encodedInitUsulData,
+      const encodedSetupAzoriusData = azoriusiface.encodeFunctionData("setUp", [
+        encodedInitAzoriusData,
       ]);
-      const predictedUsulModule = await calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleFactory,
         "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-        encodedSetupUsulData,
+        encodedSetupAzoriusData,
         "10031021"
       );
 
-      const usulContract = new ethers.Contract(
-        predictedUsulModule,
+      const azoriusContract = new ethers.Contract(
+        predictedAzoriusModule,
         // eslint-disable-next-line camelcase
-        abiUsul,
+        abiAzorius,
         deployer
       );
 
@@ -273,7 +285,7 @@ describe("Gnosis Safe", () => {
           "deployModule",
           [
             "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-            encodedSetupUsulData,
+            encodedSetupAzoriusData,
             "10031021",
           ],
           0,
@@ -284,13 +296,13 @@ describe("Gnosis Safe", () => {
       await expect(multiSend.multiSend(safeTx))
         .to.emit(moduleFactory, "ModuleProxyCreation")
         .withArgs(
-          predictedUsulModule,
+          predictedAzoriusModule,
           "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1"
         );
 
-      expect(await usulContract.avatar()).eq(gnosisSafe.address);
-      expect(await usulContract.target()).eq(gnosisSafe.address);
-      expect(await usulContract.owner()).eq(gnosisSafe.address);
+      expect(await azoriusContract.avatar()).eq(gnosisSafe.address);
+      expect(await azoriusContract.target()).eq(gnosisSafe.address);
+      expect(await azoriusContract.owner()).eq(gnosisSafe.address);
     });
 
     it("Setup Module w/ enabledModule event", async () => {
@@ -322,7 +334,11 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -355,9 +371,9 @@ describe("Gnosis Safe", () => {
       );
     });
 
-    it("Setup UsulModule w/ enabledModule event", async () => {
+    it("Setup AzoriusModule w/ enabledModule event", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = []; // @todo pass expected addresses for voting strategies
-      const encodedInitUsulData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
         ["address", "address", "address", "address[]"],
         [
           gnosisSafe.address,
@@ -366,20 +382,20 @@ describe("Gnosis Safe", () => {
           VOTING_STRATEGIES_TO_DEPLOY,
         ]
       );
-      const encodedSetupUsulData = usuliface.encodeFunctionData("setUp", [
-        encodedInitUsulData,
+      const encodedSetupAzoriusData = azoriusiface.encodeFunctionData("setUp", [
+        encodedInitAzoriusData,
       ]);
-      const predictedUsulModule = await calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleFactory,
         "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-        encodedSetupUsulData,
+        encodedSetupAzoriusData,
         "10031021"
       );
 
-      const usulContract = new ethers.Contract(
-        predictedUsulModule,
+      const azoriusContract = new ethers.Contract(
+        predictedAzoriusModule,
         // eslint-disable-next-line camelcase
-        abiUsul,
+        abiAzorius,
         deployer
       );
       const internalTxs: MetaTransaction[] = [
@@ -393,7 +409,7 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           gnosisSafe,
           "enableModule",
-          [usulContract.address],
+          [azoriusContract.address],
           0,
           false
         ),
@@ -417,7 +433,11 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -426,7 +446,7 @@ describe("Gnosis Safe", () => {
           "deployModule",
           [
             "0xCdea1582a57Ca4A678070Fa645aaf3a40c2164C1",
-            encodedSetupUsulData,
+            encodedSetupAzoriusData,
             "10031021",
           ],
           0,
@@ -455,8 +475,8 @@ describe("Gnosis Safe", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(usulContract.address);
-      expect(await gnosisSafe.isModuleEnabled(usulContract.address)).to.eq(
+        .withArgs(azoriusContract.address);
+      expect(await gnosisSafe.isModuleEnabled(azoriusContract.address)).to.eq(
         true
       );
     });
@@ -466,7 +486,7 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           gnosisSafe,
           "setGuard",
-          [vetoGuard.address],
+          [freezeGuard.address],
           0,
           false
         ),
@@ -490,7 +510,11 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -517,7 +541,7 @@ describe("Gnosis Safe", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisSafe, "ChangedGuard")
-        .withArgs(vetoGuard.address);
+        .withArgs(freezeGuard.address);
     });
 
     it("Setup Gnosis Safe w/ removedOwner event", async () => {
@@ -549,7 +573,11 @@ describe("Gnosis Safe", () => {
         buildContractCall(
           moduleFactory,
           "deployModule",
-          [vetoImpl.address, vetoGuardFactoryInit, "10031021"],
+          [
+            freezeGuardImplementation.address,
+            freezeGuardFactoryInit,
+            "10031021",
+          ],
           0,
           false
         ),

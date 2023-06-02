@@ -1,10 +1,21 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "0.1.0",
+  "version": "0.3.0",
+  "files": [
+    "dist",
+    "deployments",
+    "contracts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/decent-dao/fractal-contracts.git"
+  },
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "publish:prepare": "npm run clean && npx rimraf dist && npm run compile && npx tsc",
+    "publish-packages": "npm run publish:prepare && npm publish --no-git-checks"
   },
   "devDependencies": {
     "@gnosis.pm/safe-contracts": "^1.3.0",
@@ -37,6 +48,7 @@
     "hardhat-dependency-compiler": "^1.1.3",
     "hardhat-deploy": "^0.10.6",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
+    "hardhat-gas-reporter": "^1.0.9",
     "hardhat-tracer": "^1.0.0-alpha.6",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
@@ -45,5 +57,20 @@
     "ts-node": "^10.4.0",
     "typechain": "^8.0.0",
     "typescript": "^4.5.4"
+  },
+  "description": "A Gnosis Module framework",
+  "homepage": "https://github.com/decent-dao/fractal-contracts/blob/develop/README.md",
+  "author": "fractal-contributors",
+  "license": "MIT",
+  "main": "dist/typechain-types/index.js",
+  "types": "dist/typechain-types/index.d.ts",
+  "bugs": {
+    "url": "https://github.com/decent-dao/fractal-contracts/issues"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "solidity-docgen": "^0.6.0-beta.35"
   }
 }
