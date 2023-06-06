@@ -80,3 +80,23 @@ votes.
 | ---- | ---- | ----------- |
 | [0] | bool | bool whether the total number of yes votes + abstain meets the quorum |
 
+### quorumVotes
+
+```solidity
+function quorumVotes(uint32 _proposalId) public view virtual returns (uint256)
+```
+
+Calculates the total number of votes required for a proposal to meet quorum.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint32 | The ID of the proposal to get quorum votes for |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | uint256 The quantity of votes required to meet quorum |
+

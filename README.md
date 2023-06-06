@@ -7,7 +7,7 @@ Azorius conforms to the [Zodiac](https://github.com/gnosis/zodiac) pattern for S
 
 The Azorius contract acts as a central manager of DAO Proposals, maintaining the specifications of the transactions that comprise a Proposal.
 
-All voting details are delegated to BaseStrategy implementations, of which an Azorius DAO can have any number.
+All voting details are delegated to `BaseStrategy` implementations, of which an Azorius DAO can have any number.
 
 Azorius was forked from and heavily based on the [Usul](https://github.com/SekerDAO/Usul) module, by [SekerDAO](https://github.com/SekerDAO).
 
@@ -15,13 +15,12 @@ Azorius was forked from and heavily based on the [Usul](https://github.com/Seker
 [NatSpec](https://docs.soliditylang.org/en/v0.8.17/natspec-format.html) documentation for Azorius Protocol contracts [are available here](./docs).
 
 ## Local Setup & Testing
-
 Clone the repository:
 ```shell
-git clone ...
+git clone https://github.com/decent-dao/fractal-contracts.git
 ```
 
-Lookup the recommended Node version to use in the .nvmrc file and install and use the correct version:
+Look up the recommended Node version to use in the `.nvmrc` file and install and use the correct version:
 ```shell
 nvm install 
 nvm use
@@ -32,7 +31,7 @@ Install necessary dependencies:
 npm install
 ```
 
-Add `.env` values replacing the private key and provider values for desired networks
+Copy the example `.env` and replace the values for the desired networks
 ```shell
 cp .env.example .env
 ```
@@ -47,46 +46,55 @@ Run the tests
 npm run test
 ```
 
-Update natspec doc files
+Update natspec doc files after modifying contracts
 ```shell
 npx hardhat docgen
 ```
 
-## Deploy Contract to <network>
+## Deploy Contracts to `<network>`
 ```shell
 npx hardhat deploy --network <network>
 ```
 
-## Local Hardhat deployment
+Deployed contracts can be verified on Etherscan via the following command:
+```shell
+npx hardhat verify --network {network name} {contract address}
+```
 
-To deploy the Fractal contracts open a terminal and run:
+Currently, this is done manually for each contract deployed, found in `deployments/<network>/XXX.json`
+
+## Local Hardhat deployment
+To deploy the Fractal contracts to a local node:
 ```shell
 npx hardhat node
 ```
+
 ## NPM Package
 The core contracts in this repository are published in an NPM package for easy use within other repositories.
 
-To install the npm package, run:
-
+To install the npm package in your project, run:
 ```shell
 npm i @fractal-framework/fractal-contracts
 ```
 
-Including un-compiled contracts within typechain-types. Follow (these steps) hardhat plug-in [https://www.npmjs.com/package/hardhat-dependency-compiler]
+To include uncompiled contracts within typechain-types follow [these steps](https://www.npmjs.com/package/hardhat-dependency-compiler).
 
-## Publishing new versions of these core contracts to NPM
-Update the version in package.json
+## Publishing new versions to NPM
+First, increment the version in `package.json`, then:
 ```shell
 npm install
 ```
+
 to get those version updates into package-lock.json
 ```shell
 npm run publish:prepare 
 ```
+
 to fully clean the project, compile contracts, create typechain directory, and compile the typechain directory
 ```shell
 npm publish 
 ```
+
 to publish the compiled typechain files and solidity contracts to NPM
 ```shell
 git commit

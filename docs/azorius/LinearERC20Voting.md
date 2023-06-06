@@ -125,7 +125,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
 
 ### updateVotingPeriod
 
@@ -155,21 +155,6 @@ Updates the voting weight required to submit new Proposals.
 | ---- | ---- | ----------- |
 | _requiredProposerWeight | uint256 | required token voting weight |
 
-### initializeProposal
-
-```solidity
-function initializeProposal(bytes _data) external virtual
-```
-
-Called by the [Azorius](../Azorius.md) module. This notifies this 
-[BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _data | bytes | arbitrary data to pass to this BaseStrategy |
-
 ### vote
 
 ```solidity
@@ -188,7 +173,7 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 ### getProposalVotes
 
 ```solidity
-function getProposalVotes(uint32 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint32 startBlock, uint32 endBlock)
+function getProposalVotes(uint32 _proposalId) external view returns (uint256 noVotes, uint256 yesVotes, uint256 abstainVotes, uint32 startBlock, uint32 endBlock, uint256 votingSupply)
 ```
 
 Returns the current state of the specified Proposal.
@@ -208,6 +193,22 @@ Returns the current state of the specified Proposal.
 | abstainVotes | uint256 | current count of "ABSTAIN" votes |
 | startBlock | uint32 | block number voting starts |
 | endBlock | uint32 | block number voting ends |
+| votingSupply | uint256 |  |
+
+### initializeProposal
+
+```solidity
+function initializeProposal(bytes _data) public virtual
+```
+
+Called by the [Azorius](../Azorius.md) module. This notifies this 
+[BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _data | bytes | arbitrary data to pass to this BaseStrategy |
 
 ### hasVoted
 
@@ -249,6 +250,28 @@ Returns whether a Proposal has been passed.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | bool | bool true if the proposal has passed, otherwise false |
+
+### getProposalVotingSupply
+
+```solidity
+function getProposalVotingSupply(uint32 _proposalId) public view virtual returns (uint256)
+```
+
+Returns a snapshot of total voting supply for a given Proposal.  Because token supplies can change,
+it is necessary to calculate quorum from the supply available at the time of the Proposal's creation,
+not when it is being voted on passes / fails.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint32 | id of the Proposal |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | uint256 voting supply snapshot for the given _proposalId |
 
 ### getVotingWeight
 
@@ -347,5 +370,25 @@ Internal function for casting a vote on a Proposal.
 | _proposalId | uint32 | id of the Proposal |
 | _voter | address | address casting the vote |
 | _voteType | uint8 | vote support, as defined in VoteType |
-| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
+| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
+
+### quorumVotes
+
+```solidity
+function quorumVotes(uint32 _proposalId) public view returns (uint256)
+```
+
+Calculates the total number of votes required for a proposal to meet quorum.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _proposalId | uint32 | The ID of the proposal to get quorum votes for |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | uint256 The quantity of votes required to meet quorum |
 
