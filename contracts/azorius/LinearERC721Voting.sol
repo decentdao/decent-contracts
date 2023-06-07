@@ -20,12 +20,14 @@ import { BaseStrategy } from "./BaseStrategy.sol";
 contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
 
     struct GovernanceNFT {
-        IERC721 token;
+        bool exists;
         uint256 weight;
         bool isProposer;
     }
 
-    GovernanceNFT[] public governanceTokens;
+    address[] public tokenAddresses;
+
+    mapping(address => GovernanceNFT) public governanceTokens;
 
     enum VoteType {
         NO, 
@@ -59,6 +61,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
     event GovernanceTokenAdded(address token);
     event GovernanceTokenRemoved(address token);
 
+    error InvalidParams();
     error InvalidProposal();
     error VotingEnded();
     error AlreadyVoted();
@@ -66,24 +69,30 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
     error InvalidTokenAddress();
     error NoVotingWeight();
     error TokenAlreadySet();
-    error LastGovernanceToken();
+    error TokenNotSet();
 
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
-            GovernanceNFT[] memory _governanceTokens, // TODO split this up into parameters and use addGovernanceToken instead?
+            address[] memory _tokens,
+            uint256[] memory _weights,
+            bool[] memory _isProposers,
             address _azoriusModule,
             uint32 _votingPeriod,
             uint256 _quorumThreshold,
             uint256 _basisNumerator
         ) = abi.decode(
             initializeParams,
-            (address, GovernanceNFT[], address, uint32, uint256, uint256)
+            (address, address[], uint256[], bool[], address, uint32, uint256, uint256)
         );
 
-        // TODO see above
-        for (uint i = 0; i < _governanceTokens.length; i++) {
-            governanceTokens.push(_governanceTokens[i]);
+        if (_tokens.length != _weights.length || _tokens.length != _isProposers.length) {
+            revert InvalidParams();
+        }
+
+        for (uint i = 0; i < _tokens.length;) {
+            addGovernanceToken(_tokens[i], _weights[i], _isProposers[i]);
+            unchecked { ++i; }
         }
 
         __Ownable_init();
@@ -118,18 +127,17 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
         abstainVotes = proposalVotes[_proposalId].abstainVotes;
         startBlock = proposalVotes[_proposalId].votingStartBlock;
         endBlock = proposalVotes[_proposalId].votingEndBlock;
-        // TODO why didn't we return has voted data in ERC20 strategy?
     }
 
     // voting requires providing the NFT addresses and ids, as IERC721 does not have a method
     // for determining which NFT ids a particular address holds 
     function vote(uint32 _proposalId, uint8 _support, bytes memory _nftData) external {
         ( 
-            address[] memory tokenAddresses,
-            uint256[] memory tokenIds  
+            address[] memory _tokenAddresses,
+            uint256[] memory _tokenIds  
         ) = abi.decode(_nftData, (address[], uint256[]));
 
-        uint256 weight = getWeight(_proposalId, tokenAddresses, tokenIds, msg.sender);
+        uint256 weight = getWeight(_proposalId, _tokenAddresses, _tokenIds, msg.sender);
 
         if (weight == 0) revert NoVotingWeight();
 
@@ -161,15 +169,8 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
                 continue;
             }
             
-            for (uint j = 0; j < governanceTokens.length; j++) {
-                GovernanceNFT memory governance = governanceTokens[j];
-                IERC721 token = governance.token;
-                if (address(token) == tokenAddress) {
-                    weight = weight + governance.weight;
-                    break;
-                }
-            }
-
+            GovernanceNFT memory governance = governanceTokens[tokenAddress];
+            weight = weight + governance.weight;
             proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] = true;
         }
 
@@ -190,38 +191,44 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
     function addGovernanceToken(address _nftAddress, uint256 _weight, bool _isProposer) public onlyOwner {
         IERC721 token = IERC721(_nftAddress);
         if (!token.supportsInterface(0x80ac58cd))
-            revert InvalidTokenAddress(); 
+            revert InvalidTokenAddress();
         
-        for (uint i = 0; i < governanceTokens.length; i++) {
-            if (address(governanceTokens[i].token) == _nftAddress) {
-                revert TokenAlreadySet();
-            }
-        }
+        if (governanceTokens[_nftAddress].exists)
+            revert TokenAlreadySet();
+
+        if (_weight == 0 && _isProposer == false)
+            revert InvalidParams();
+
+        tokenAddresses.push(_nftAddress);
 
         GovernanceNFT memory governance = GovernanceNFT({
-            token: token,
+            exists: true,
             weight: _weight,
             isProposer: _isProposer
         });
 
-        governanceTokens.push(governance);
+        governanceTokens[_nftAddress] = governance;
+
         emit GovernanceTokenAdded(_nftAddress);
     }
 
     function removeGovernanceToken(address _nftAddress) external onlyOwner {
-        if (governanceTokens.length == 0) revert LastGovernanceToken();
+        if (!governanceTokens[_nftAddress].exists) revert TokenNotSet();
 
-        for (uint256 i = 0; i < governanceTokens.length; i++) {
-            if (address(governanceTokens[i].token) == _nftAddress) {
-                
-                uint256 last = governanceTokens.length - 1;
-                governanceTokens[i] = governanceTokens[last]; // move the last token into the position to remove
-                delete governanceTokens[last];                // delete the last token
+        delete governanceTokens[_nftAddress];
 
-                emit GovernanceTokenRemoved(_nftAddress);
+        uint256 length = tokenAddresses.length;
+        for (uint256 i = 0; i < length;) {
+            if (_nftAddress == tokenAddresses[i]) {
+                uint256 last = length - 1;
+                tokenAddresses[i] = tokenAddresses[last]; // move the last token into the position to remove
+                delete tokenAddresses[last];              // delete the last token
                 break;
             }
+            unchecked { ++i; }
         }
+        
+        emit GovernanceTokenRemoved(_nftAddress);
     }
 
     /**
@@ -242,11 +249,12 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
 
     /** @inheritdoc BaseStrategy*/
     function isProposer(address _address) public view override returns (bool) {
-        for (uint i = 0; i < governanceTokens.length; i++) {
-            GovernanceNFT memory governance = governanceTokens[i];
-            if (governance.isProposer && governance.token.balanceOf(_address) > 0) {
+        for (uint i = 0; i < tokenAddresses.length;) {
+            address tokenAddress = tokenAddresses[i];
+            if (governanceTokens[tokenAddress].isProposer && IERC721(tokenAddress).balanceOf(_address) > 0) {
                 return true;
             }
+            unchecked { ++i; }
         }
         return false;
     }
