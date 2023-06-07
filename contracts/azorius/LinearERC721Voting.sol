@@ -136,18 +136,110 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
             address[] memory _tokenAddresses,
             uint256[] memory _tokenIds  
         ) = abi.decode(_nftData, (address[], uint256[]));
+        if (_tokenAddresses.length != _tokenIds.length) revert InvalidParams();
 
-        uint256 weight = getWeight(_proposalId, _tokenAddresses, _tokenIds, msg.sender);
+        _vote(_proposalId, msg.sender, _support, _tokenAddresses, _tokenIds);
+    }
 
-        if (weight == 0) revert NoVotingWeight();
+    function getTokenWeight(address _tokenAddress) external view returns (uint256) {
+        return governanceTokens[_tokenAddress].weight;
+    }
 
-        _vote(_proposalId, msg.sender, _support, weight);
+    function getTokenIsProposer(address _tokenAddress) external view returns (bool) {
+        return governanceTokens[_tokenAddress].isProposer;
+    }
+
+    /**
+     * Returns whether an NFT has already voted.
+     */
+    function hasVoted(uint32 _proposalId, address _tokenAddress, uint256 _tokenId) external view returns (bool) {
+        return proposalVotes[_proposalId].hasVoted[_tokenAddress][_tokenId];
+    }
+
+    function removeGovernanceToken(address _nftAddress) external onlyOwner {
+        if (!governanceTokens[_nftAddress].exists) revert TokenNotSet();
+
+        delete governanceTokens[_nftAddress];
+
+        uint256 length = tokenAddresses.length;
+        for (uint256 i = 0; i < length;) {
+            if (_nftAddress == tokenAddresses[i]) {
+                uint256 last = length - 1;
+                tokenAddresses[i] = tokenAddresses[last]; // move the last token into the position to remove
+                delete tokenAddresses[last];              // delete the last token
+                break;
+            }
+            unchecked { ++i; }
+        }
+        
+        emit GovernanceTokenRemoved(_nftAddress);
+    }
+
+    function addGovernanceToken(address _nftAddress, uint256 _weight, bool _isProposer) public onlyOwner {
+        IERC721 token = IERC721(_nftAddress);
+        if (!token.supportsInterface(0x80ac58cd))
+            revert InvalidTokenAddress();
+        
+        if (governanceTokens[_nftAddress].exists)
+            revert TokenAlreadySet();
+
+        if (_weight == 0 && _isProposer == false)
+            revert InvalidParams();
+
+        tokenAddresses.push(_nftAddress);
+
+        GovernanceNFT memory governance = GovernanceNFT({
+            exists: true,
+            weight: _weight,
+            isProposer: _isProposer
+        });
+
+        governanceTokens[_nftAddress] = governance;
+
+        emit GovernanceTokenAdded(_nftAddress);
+    }
+
+    /** @inheritdoc BaseStrategy*/
+    function initializeProposal(bytes memory _data) public override onlyAzorius {
+        uint32 proposalId = abi.decode(_data, (uint32));
+        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
+
+        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
+        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
+
+        emit ProposalInitialized(proposalId, _votingEndBlock);
+    }
+
+    /** @inheritdoc BaseStrategy*/
+    function isPassed(uint32 _proposalId) public view override returns (bool) {
+        return (
+            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
+            quorumThreshold <= proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].abstainVotes && // yes + abstain votes meets the quorum
+            meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
+        );
+    }
+
+    /** @inheritdoc BaseStrategy*/
+    function isProposer(address _address) public view override returns (bool) {
+        for (uint i = 0; i < tokenAddresses.length;) {
+            address tokenAddress = tokenAddresses[i];
+            if (governanceTokens[tokenAddress].isProposer && IERC721(tokenAddress).balanceOf(_address) > 0) {
+                return true;
+            }
+            unchecked { ++i; }
+        }
+        return false;
+    }
+
+    /** @inheritdoc BaseStrategy*/
+    function votingEndBlock(uint32 _proposalId) public view override returns (uint32) {
+      return proposalVotes[_proposalId].votingEndBlock;
     }
 
     // verifies the voter holds the NFTs and returns the total weight associated with their tokens
     // the frontend will need to determine whether an address can vote on a proposal, as it is possible
     // to vote twice if you get more weight later on
-    function getWeight(
+    function _getTotalWeight(
         uint256 _proposalId,
         address[] memory _tokenAddresses,
         uint256[] memory _tokenIds,
@@ -177,93 +269,6 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
         return weight;
     }
 
-    /** @inheritdoc BaseStrategy*/
-    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
-        uint32 proposalId = abi.decode(_data, (uint32));
-        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
-
-        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;
-        proposalVotes[proposalId].votingStartBlock = uint32(block.number);
-
-        emit ProposalInitialized(proposalId, _votingEndBlock);
-    }
-
-    function addGovernanceToken(address _nftAddress, uint256 _weight, bool _isProposer) public onlyOwner {
-        IERC721 token = IERC721(_nftAddress);
-        if (!token.supportsInterface(0x80ac58cd))
-            revert InvalidTokenAddress();
-        
-        if (governanceTokens[_nftAddress].exists)
-            revert TokenAlreadySet();
-
-        if (_weight == 0 && _isProposer == false)
-            revert InvalidParams();
-
-        tokenAddresses.push(_nftAddress);
-
-        GovernanceNFT memory governance = GovernanceNFT({
-            exists: true,
-            weight: _weight,
-            isProposer: _isProposer
-        });
-
-        governanceTokens[_nftAddress] = governance;
-
-        emit GovernanceTokenAdded(_nftAddress);
-    }
-
-    function removeGovernanceToken(address _nftAddress) external onlyOwner {
-        if (!governanceTokens[_nftAddress].exists) revert TokenNotSet();
-
-        delete governanceTokens[_nftAddress];
-
-        uint256 length = tokenAddresses.length;
-        for (uint256 i = 0; i < length;) {
-            if (_nftAddress == tokenAddresses[i]) {
-                uint256 last = length - 1;
-                tokenAddresses[i] = tokenAddresses[last]; // move the last token into the position to remove
-                delete tokenAddresses[last];              // delete the last token
-                break;
-            }
-            unchecked { ++i; }
-        }
-        
-        emit GovernanceTokenRemoved(_nftAddress);
-    }
-
-    /**
-     * Returns whether an NFT has already voted.
-     */
-    function hasVoted(uint32 _proposalId, address _tokenAddress, uint256 _tokenId) public view returns (bool) {
-        return proposalVotes[_proposalId].hasVoted[_tokenAddress][_tokenId];
-    }
-
-    /** @inheritdoc BaseStrategy*/
-    function isPassed(uint32 _proposalId) public view override returns (bool) {
-        return (
-            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended
-            quorumThreshold <= proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].abstainVotes && // yes + abstain votes meets the quorum
-            meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis
-        );
-    }
-
-    /** @inheritdoc BaseStrategy*/
-    function isProposer(address _address) public view override returns (bool) {
-        for (uint i = 0; i < tokenAddresses.length;) {
-            address tokenAddress = tokenAddresses[i];
-            if (governanceTokens[tokenAddress].isProposer && IERC721(tokenAddress).balanceOf(_address) > 0) {
-                return true;
-            }
-            unchecked { ++i; }
-        }
-        return false;
-    }
-
-    /** @inheritdoc BaseStrategy*/
-    function votingEndBlock(uint32 _proposalId) public view override returns (uint32) {
-      return proposalVotes[_proposalId].votingEndBlock;
-    }
-
     /** Internal implementation of `updateVotingPeriod`. */
     function _updateVotingPeriod(uint32 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
@@ -276,7 +281,17 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
         emit QuorumThresholdUpdated(quorumThreshold);
     }
 
-    function _vote(uint32 _proposalId, address _voter, uint8 _voteType, uint256 weight) internal {
+    function _vote(
+        uint32 _proposalId,
+        address _voter,
+        uint8 _voteType,
+        address[] memory _tokenAddresses,
+        uint256[] memory _tokenIds
+    ) internal {
+
+        uint256 weight = _getTotalWeight(_proposalId, _tokenAddresses, _tokenIds, _voter);
+        if (weight == 0) revert NoVotingWeight();
+
         ProposalVotes storage proposal = proposalVotes[_proposalId];
 
         if (proposal.votingEndBlock == 0)
