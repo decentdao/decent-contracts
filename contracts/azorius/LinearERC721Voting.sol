@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
+import { IERC721VotingStrategy } from "./interfaces/IERC721VotingStrategy.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { BaseVotingBasisPercent } from "./BaseVotingBasisPercent.sol";
 import { IAzorius } from "./interfaces/IAzorius.sol";
@@ -17,7 +18,7 @@ import { BaseStrategy } from "./BaseStrategy.sol";
  * within the IERC721 interface.  This is similar to a multisig "total signers" required, rather than
  * a percentage of the tokens.
  */
-contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
+contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721VotingStrategy {
 
     enum VoteType {
         NO, 
@@ -143,7 +144,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent {
         _vote(_proposalId, msg.sender, _support, _tokenAddresses, _tokenIds);
     }
 
-    function getTokenWeight(address _tokenAddress) external view returns (uint256) {
+    function getTokenWeight(address _tokenAddress) external view override returns (uint256) {
         return tokenWeights[_tokenAddress];
     }
 
