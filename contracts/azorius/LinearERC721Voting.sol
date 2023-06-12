@@ -226,38 +226,6 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
       return proposalVotes[_proposalId].votingEndBlock;
     }
 
-    // verifies the voter holds the NFTs and returns the total weight associated with their tokens
-    // the frontend will need to determine whether an address can vote on a proposal, as it is possible
-    // to vote twice if you get more weight later on
-    function _getTotalWeight(
-        uint256 _proposalId,
-        address[] memory _tokenAddresses,
-        uint256[] memory _tokenIds,
-        address _voter
-    ) internal returns (uint256) {
-
-        uint256 weight = 0;
-
-        for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-
-            address tokenAddress = _tokenAddresses[i];
-            uint256 tokenId = _tokenIds[i];
-
-            // ensure the token hasn't voted already, and the voter actually holds the token
-            if (
-                proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] == true || 
-                _voter != IERC721(tokenAddress).ownerOf(tokenId)
-            ) {
-                continue;
-            }
-            
-            weight += tokenWeights[tokenAddress];
-            proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] = true;
-        }
-
-        return weight;
-    }
-
     /** Internal implementation of `updateVotingPeriod`. */
     function _updateVotingPeriod(uint32 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
@@ -284,7 +252,30 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         uint256[] memory _tokenIds
     ) internal {
 
-        uint256 weight = _getTotalWeight(_proposalId, _tokenAddresses, _tokenIds, _voter);
+        uint256 weight;
+
+        // verifies the voter holds the NFTs and returns the total weight associated with their tokens
+        // the frontend will need to determine whether an address can vote on a proposal, as it is possible
+        // to vote twice if you get more weight later on
+        for (uint256 i = 0; i < _tokenAddresses.length;) {
+
+            address tokenAddress = _tokenAddresses[i];
+            uint256 tokenId = _tokenIds[i];
+
+            // ensure the token hasn't voted already, and the voter actually holds the token
+            if (
+                proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] == true || 
+                _voter != IERC721(tokenAddress).ownerOf(tokenId)
+            ) {
+                unchecked { ++i; }
+                continue;
+            }
+            
+            weight += tokenWeights[tokenAddress];
+            proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] = true;
+            unchecked { ++i; }
+        }
+
         if (weight == 0) revert NoVotingWeight();
 
         ProposalVotes storage proposal = proposalVotes[_proposalId];

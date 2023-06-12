@@ -59,19 +59,17 @@ contract ERC721FreezeVoting is BaseFreezeVoting {
     function castFreezeVote(address[] memory _tokenAddresses, uint256[] memory _tokenIds) external {
         if (_tokenAddresses.length != _tokenIds.length) revert UnequalArrays();
 
-        uint256 userVotes = _getVotesAndUpdateHasVoted(_tokenAddresses, _tokenIds, msg.sender);
+        if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
+            // create a new freeze proposal
+            freezeProposalCreatedBlock = uint32(block.number);
+            freezeProposalVoteCount = 0;
+            emit FreezeProposalCreated(msg.sender);
+        }
 
+        uint256 userVotes = _getVotesAndUpdateHasVoted(_tokenAddresses, _tokenIds, msg.sender);
         if (userVotes == 0) revert NoVotes();
 
-        if (block.number > freezeProposalCreatedBlock + freezeProposalPeriod) {
-            // create a new freeze proposal and set total votes to msg.sender's vote count
-            freezeProposalCreatedBlock = uint32(block.number);
-            freezeProposalVoteCount = userVotes;
-            emit FreezeProposalCreated(msg.sender);
-        } else {
-            // there is an existing freeze proposal, count user's votes toward it
-            freezeProposalVoteCount += userVotes;
-        }        
+        freezeProposalVoteCount += userVotes;     
 
         emit FreezeVoteCast(msg.sender, userVotes);
     }
