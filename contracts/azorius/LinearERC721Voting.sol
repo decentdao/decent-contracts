@@ -62,7 +62,6 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     error InvalidParams();
     error InvalidProposal();
     error VotingEnded();
-    error AlreadyVoted();
     error InvalidVote();
     error InvalidTokenAddress();
     error NoVotingWeight();
@@ -132,15 +131,13 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         endBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
-    // voting requires providing the NFT addresses and ids, as IERC721 does not have a method
-    // for determining which NFT ids a particular address holds 
-    function vote(uint32 _proposalId, uint8 _support, bytes memory _tokenData) external {
-        ( 
-            address[] memory _tokenAddresses,
-            uint256[] memory _tokenIds  
-        ) = abi.decode(_tokenData, (address[], uint256[]));
+    function vote(
+        uint32 _proposalId, 
+        uint8 _support, 
+        address[] memory _tokenAddresses,
+        uint256[] memory _tokenIds 
+    ) external {
         if (_tokenAddresses.length != _tokenIds.length) revert InvalidParams();
-
         _vote(_proposalId, msg.sender, _support, _tokenAddresses, _tokenIds);
     }
 

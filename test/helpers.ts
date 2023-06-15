@@ -11,6 +11,7 @@ import {
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { AddressZero } from "@ethersproject/constants";
 import { Interface } from "ethers/lib/utils";
+import { IAzorius, MockContract__factory } from "../typechain-types";
 
 export const predictGnosisSafeAddress = async (
   factory: string,
@@ -522,4 +523,20 @@ export function getRandomBytes() {
     "0x" +
     bytes8Array.reduce((o, v) => o + ("00" + v.toString(16)).slice(-2), "");
   return bytes32;
+}
+
+/**
+ * A throwaway transaction to put into tests.  This will execute properly
+ * on Goerli, as the MockContract has been deployed there.
+ */
+export function mockTransaction(): IAzorius.TransactionStruct {
+  return {
+    to: "0x6EAdD7E8eF9C4fE4309BF9f3e452B4D8F220DA94",
+    value: BigNumber.from(0),
+    // eslint-disable-next-line camelcase
+    data: MockContract__factory.createInterface().encodeFunctionData(
+      "doSomething"
+    ),
+    operation: 0,
+  };
 }
