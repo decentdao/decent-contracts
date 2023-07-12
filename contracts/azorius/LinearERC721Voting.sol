@@ -89,7 +89,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         }
 
         for (uint i = 0; i < _tokens.length;) {
-            addGovernanceToken(_tokens[i], _weights[i]);
+            _addGovernanceToken(_tokens[i], _weights[i]);
             unchecked { ++i; }
         }
 
@@ -102,6 +102,10 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         _updateVotingPeriod(_votingPeriod);
 
         emit StrategySetUp(_azoriusModule, _owner);
+    }
+
+    function addGovernanceToken(address _tokenAddress, uint256 _weight) external onlyOwner {
+        _addGovernanceToken(_tokenAddress, _weight);
     }
 
     function updateVotingPeriod(uint32 _votingPeriod) external onlyOwner {
@@ -174,7 +178,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         emit GovernanceTokenRemoved(_tokenAddress);
     }
 
-    function addGovernanceToken(address _tokenAddress, uint256 _weight) public onlyOwner {
+    function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal {
         if (!IERC721(_tokenAddress).supportsInterface(0x80ac58cd))
             revert InvalidTokenAddress();
         
