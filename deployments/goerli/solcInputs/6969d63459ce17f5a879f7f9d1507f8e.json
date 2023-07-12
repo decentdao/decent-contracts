@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/FractalRegistry.sol": {
+      "content": "//SPDX-License-Identifier: MIT\npragma solidity =0.8.19;\n\nimport { IFractalRegistry } from \"./interfaces/IFractalRegistry.sol\";\n\n/**\n * Implementation of [IFractalRegistry](./interfaces/IFractalRegistry.md).\n */\ncontract FractalRegistry is IFractalRegistry {\n\n    event FractalNameUpdated(address indexed daoAddress, string daoName);\n    event FractalSubDAODeclared(address indexed parentDAOAddress, address indexed subDAOAddress);\n\n    /** @inheritdoc IFractalRegistry*/\n    function updateDAOName(string memory _name) external {\n        emit FractalNameUpdated(msg.sender, _name);\n    }\n\n    /** @inheritdoc IFractalRegistry*/\n    function declareSubDAO(address _subDAOAddress) external {\n        emit FractalSubDAODeclared(msg.sender, _subDAOAddress);\n    }\n}\n"
+    },
+    "contracts/interfaces/IFractalRegistry.sol": {
+      "content": "//SPDX-License-Identifier: MIT\npragma solidity =0.8.19;\n\n/**\n * A utility contract which logs events pertaining to Fractal DAO metadata.\n */\ninterface IFractalRegistry {\n\n    /**\n     * Updates a DAO's registered \"name\". This is a simple string\n     * with no restrictions or validation for uniqueness.\n     *\n     * @param _name new DAO name\n     */\n    function updateDAOName(string memory _name) external;\n\n    /**\n     * Declares an address as a subDAO of the caller's address.\n     *\n     * This declaration has no binding logic, and serves only\n     * to allow us to find the list of \"potential\" subDAOs of any \n     * given Safe address.\n     *\n     * Given the list of declaring events, we can then check each\n     * Safe still has a [FractalModule](../FractalModule.md) attached.\n     *\n     * If no FractalModule is attached, we'll exclude it from the\n     * DAO hierarchy.\n     *\n     * In the case of a Safe attaching a FractalModule without calling \n     * to declare it, we would unfortunately not know to display it \n     * as a subDAO.\n     *\n     * @param _subDAOAddress address of the subDAO to declare \n     *      as a child of the caller\n     */\n    function declareSubDAO(address _subDAOAddress) external;\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "storageLayout",
+          "devdoc",
+          "userdoc",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
