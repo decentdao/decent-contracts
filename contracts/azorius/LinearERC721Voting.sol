@@ -36,20 +36,20 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         mapping(address => mapping(uint256 => bool)) hasVoted;
     }
 
+    // proposal id to proposal votes data
+    mapping(uint256 => ProposalVotes) public proposalVotes;
+
     address[] public tokenAddresses;
     
     mapping(address => uint256) public tokenWeights;
     
-    // proposal id to proposal votes data
-    mapping(uint256 => ProposalVotes) public proposalVotes;
-
     uint32 public votingPeriod;
 
     // "quorum threshold" is used instead of quorum percent because
     // IERC721 (and thus not all ERC721 tokens) has no totalSupply
     uint256 public quorumThreshold;
 
-    uint256 public proposerThreshold;  
+    uint256 public proposerThreshold; 
 
     event VotingPeriodUpdated(uint32 votingPeriod);
     event QuorumThresholdUpdated(uint256 quorumThreshold);
@@ -62,12 +62,13 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     error InvalidParams();
     error InvalidProposal();
     error VotingEnded();
-    error AlreadyVoted();
     error InvalidVote();
     error InvalidTokenAddress();
     error NoVotingWeight();
     error TokenAlreadySet();
     error TokenNotSet();
+    error IdAlreadyVoted(uint256 tokenId);
+    error IdNotOwned(uint256 tokenId);
 
     function setUp(bytes memory initializeParams) public override initializer {
         (
@@ -136,15 +137,13 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         endBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
-    // voting requires providing the NFT addresses and ids, as IERC721 does not have a method
-    // for determining which NFT ids a particular address holds 
-    function vote(uint32 _proposalId, uint8 _support, bytes memory _tokenData) external {
-        ( 
-            address[] memory _tokenAddresses,
-            uint256[] memory _tokenIds  
-        ) = abi.decode(_tokenData, (address[], uint256[]));
+    function vote(
+        uint32 _proposalId, 
+        uint8 _support, 
+        address[] memory _tokenAddresses,
+        uint256[] memory _tokenIds 
+    ) external {
         if (_tokenAddresses.length != _tokenIds.length) revert InvalidParams();
-
         _vote(_proposalId, msg.sender, _support, _tokenAddresses, _tokenIds);
     }
 
@@ -195,7 +194,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     }
 
     /** @inheritdoc BaseStrategy*/
-    function initializeProposal(bytes memory _data) public override onlyAzorius {
+    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {
         uint32 proposalId = abi.decode(_data, (uint32));
         uint32 _votingEndBlock = uint32(block.number) + votingPeriod;
 
@@ -266,13 +265,12 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
             address tokenAddress = _tokenAddresses[i];
             uint256 tokenId = _tokenIds[i];
 
-            // ensure the token hasn't voted already, and the voter actually holds the token
-            if (
-                proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] == true || 
-                _voter != IERC721(tokenAddress).ownerOf(tokenId)
-            ) {
-                unchecked { ++i; }
-                continue;
+            if (_voter != IERC721(tokenAddress).ownerOf(tokenId)) {
+                revert IdNotOwned(tokenId);
+            }
+
+            if (proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] == true) {
+                revert IdAlreadyVoted(tokenId);
             }
             
             weight += tokenWeights[tokenAddress];
