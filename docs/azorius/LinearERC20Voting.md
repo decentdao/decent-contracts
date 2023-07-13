@@ -125,7 +125,7 @@ Sets up the contract with its initial parameters.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint32 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
 
 ### updateVotingPeriod
 

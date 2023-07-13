@@ -8,47 +8,65 @@ import { IAzorius } from "./interfaces/IAzorius.sol";
 import { BaseStrategy } from "./BaseStrategy.sol";
 
 /**
- * Allows multiple ERC721 tokens to be registered on the strategy as governance tokens, 
+ * An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens, 
  * each with their own voting weight.
  *
- * Since there is no way to snapshot ERC721 holdings, each ERC721 id can vote once, reguardless
- * of where it was when a proposal was created.
+ * This is slightly different from ERC-20 voting, since there is no way to snapshot ERC721 holdings.
+ * Each ERC721 id can vote once, reguardless of what address held it when a proposal was created.
  *
- * Also, this uses "quorumThreshold" rather than quorumPercent, because total supply is not knowable
- * within the IERC721 interface.  This is similar to a multisig "total signers" required, rather than
- * a percentage of the tokens.
+ * Also, this uses "quorumThreshold" rather than LinearERC20Voting's quorumPercent, because the 
+ * total supply of NFTs is not knowable within the IERC721 interface.  This is similar to a multisig 
+ * "total signers" required, rather than a percentage of the tokens.
  */
 contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721VotingStrategy {
 
+    /**
+     * The voting options for a Proposal.
+     */
     enum VoteType {
-        NO, 
-        YES,
-        ABSTAIN
+        NO,     // disapproves of executing the Proposal
+        YES,    // approves of executing the Proposal
+        ABSTAIN // neither YES nor NO, i.e. voting "present"
     }
 
+    /**
+     * Defines the current state of votes on a particular Proposal.
+     */
     struct ProposalVotes {
-        uint32 votingStartBlock;
-        uint32 votingEndBlock;
-        uint256 noVotes;
-        uint256 yesVotes;
-        uint256 abstainVotes;
-        // ERC721 address to NFT id to bool
+        uint32 votingStartBlock; // block that voting starts at
+        uint32 votingEndBlock; // block that voting ends
+        uint256 noVotes; // current number of NO votes for the Proposal
+        uint256 yesVotes; // current number of YES votes for the Proposal
+        uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal
+        /**
+         * ERC-721 contract address to individual NFT id to bool 
+         * of whether it has voted on this proposal.
+         */
         mapping(address => mapping(uint256 => bool)) hasVoted;
     }
 
-    // proposal id to proposal votes data
+    /** `proposalId` to `ProposalVotes`, the voting state of a Proposal. */
     mapping(uint256 => ProposalVotes) public proposalVotes;
 
+    /** The list of ERC-721 tokens that can vote. */
     address[] public tokenAddresses;
     
+    /** ERC-721 address to its voting weight per NFT id.  */
     mapping(address => uint256) public tokenWeights;
     
+    /** Number of blocks a new Proposal can be voted on. */
     uint32 public votingPeriod;
 
-    // "quorum threshold" is used instead of quorum percent because
-    // IERC721 (and thus not all ERC721 tokens) has no totalSupply
+    /** 
+     * The total number of votes required to achieve quorum.
+     * "Quorum threshold" is used instead of a quorum percent because IERC721 has no 
+     * totalSupply function, so the contract cannot determine this.
+     */
     uint256 public quorumThreshold;
 
+    /** 
+     * The minimum number of voting power required to create a new proposal.
+     */
     uint256 public proposerThreshold; 
 
     event VotingPeriodUpdated(uint32 votingPeriod);
@@ -70,6 +88,14 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     error IdAlreadyVoted(uint256 tokenId);
     error IdNotOwned(uint256 tokenId);
 
+    /**
+     * Sets up the contract with its initial parameters.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`, 
+     * `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`, 
+     * `uint256 _basisNumerator`
+     */
     function setUp(bytes memory initializeParams) public override initializer {
         (
             address _owner,
@@ -105,22 +131,53 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         emit StrategySetUp(_azoriusModule, _owner);
     }
 
+    /**
+     * Adds a new ERC-721 token as a governance token, along with its associated weight.
+     *
+     * @param _tokenAddress the address of the ERC-721 token
+     * @param _weight the number of votes each NFT id is worth
+     */
     function addGovernanceToken(address _tokenAddress, uint256 _weight) external onlyOwner {
         _addGovernanceToken(_tokenAddress, _weight);
     }
 
+    /**
+     * Updates the voting time period for new Proposals.
+     *
+     * @param _votingPeriod voting time period (in blocks)
+     */
     function updateVotingPeriod(uint32 _votingPeriod) external onlyOwner {
         _updateVotingPeriod(_votingPeriod);
     }
 
+    /** 
+     * Updates the quorum required for future Proposals.
+     *
+     * @param _quorumThreshold total voting weight required to achieve quorum
+     */
     function updateQuorumThreshold(uint256 _quorumThreshold) external onlyOwner {
         _updateQuorumThreshold(_quorumThreshold);
     }
 
+    /**
+     * Updates the voting weight required to submit new Proposals.
+     *
+     * @param _proposerThreshold required voting weight
+     */
     function updateProposerThreshold(uint256 _proposerThreshold) external onlyOwner {
         _updateProposerThreshold(_proposerThreshold);
     }
 
+    /**
+     * Returns the current state of the specified Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @return noVotes current count of "NO" votes
+     * @return yesVotes current count of "YES" votes
+     * @return abstainVotes current count of "ABSTAIN" votes
+     * @return startBlock block number voting starts
+     * @return endBlock block number voting ends
+     */
     function getProposalVotes(uint32 _proposalId) external view
         returns (
             uint256 noVotes,
@@ -137,27 +194,45 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         endBlock = proposalVotes[_proposalId].votingEndBlock;
     }
 
+    /**
+     * Submits a vote on an existing Proposal.
+     *
+     * @param _proposalId id of the Proposal to vote on
+     * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)
+     * @param _tokenAddresses list of ERC-721 addresses that correspond to ids in _tokenIds
+     * @param _tokenIds list of unique token ids that correspond to their ERC-721 address in _tokenAddresses
+     */
     function vote(
         uint32 _proposalId, 
-        uint8 _support, 
+        uint8 _voteType, 
         address[] memory _tokenAddresses,
         uint256[] memory _tokenIds 
     ) external {
         if (_tokenAddresses.length != _tokenIds.length) revert InvalidParams();
-        _vote(_proposalId, msg.sender, _support, _tokenAddresses, _tokenIds);
+        _vote(_proposalId, msg.sender, _voteType, _tokenAddresses, _tokenIds);
     }
 
+    /** @inheritdoc IERC721VotingStrategy*/
     function getTokenWeight(address _tokenAddress) external view override returns (uint256) {
         return tokenWeights[_tokenAddress];
     }
 
     /**
-     * Returns whether an NFT has already voted.
+     * Returns whether an NFT id has already voted.
+     *
+     * @param _proposalId the id of the Proposal
+     * @param _tokenAddress the ERC-721 contract address
+     * @param _tokenId the unique id of the NFT
      */
     function hasVoted(uint32 _proposalId, address _tokenAddress, uint256 _tokenId) external view returns (bool) {
         return proposalVotes[_proposalId].hasVoted[_tokenAddress][_tokenId];
     }
 
+    /** 
+     * Removes the given ERC-721 token address from the list of governance tokens.
+     *
+     * @param _tokenAddress the ERC-721 token to remove
+     */
     function removeGovernanceToken(address _tokenAddress) external onlyOwner {
         if (tokenWeights[_tokenAddress] == 0) revert TokenNotSet();
 
@@ -175,22 +250,6 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         }
         
         emit GovernanceTokenRemoved(_tokenAddress);
-    }
-
-    function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal {
-        if (!IERC721(_tokenAddress).supportsInterface(0x80ac58cd))
-            revert InvalidTokenAddress();
-        
-        if (_weight == 0)
-            revert NoVotingWeight();
-
-        if (tokenWeights[_tokenAddress] > 0)
-            revert TokenAlreadySet();
-
-        tokenAddresses.push(_tokenAddress);
-        tokenWeights[_tokenAddress] = _weight;
-
-        emit GovernanceTokenAdded(_tokenAddress, _weight);
     }
 
     /** @inheritdoc BaseStrategy*/
@@ -229,6 +288,23 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
       return proposalVotes[_proposalId].votingEndBlock;
     }
 
+    /** Internal implementation of `addGovernanceToken` */
+    function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal {
+        if (!IERC721(_tokenAddress).supportsInterface(0x80ac58cd))
+            revert InvalidTokenAddress();
+        
+        if (_weight == 0)
+            revert NoVotingWeight();
+
+        if (tokenWeights[_tokenAddress] > 0)
+            revert TokenAlreadySet();
+
+        tokenAddresses.push(_tokenAddress);
+        tokenWeights[_tokenAddress] = _weight;
+
+        emit GovernanceTokenAdded(_tokenAddress, _weight);
+    }
+
     /** Internal implementation of `updateVotingPeriod`. */
     function _updateVotingPeriod(uint32 _votingPeriod) internal {
         votingPeriod = _votingPeriod;
@@ -247,6 +323,15 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
         emit ProposerThresholdUpdated(_proposerThreshold);
     }
 
+    /**
+     * Internal function for casting a vote on a Proposal.
+     *
+     * @param _proposalId id of the Proposal
+     * @param _voter address casting the vote
+     * @param _voteType vote support, as defined in VoteType
+     * @param _tokenAddresses list of ERC-721 addresses that correspond to ids in _tokenIds
+     * @param _tokenIds list of unique token ids that correspond to their ERC-721 address in _tokenAddresses
+     */
     function _vote(
         uint32 _proposalId,
         address _voter,
