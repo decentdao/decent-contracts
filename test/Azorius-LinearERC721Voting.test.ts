@@ -14,6 +14,7 @@ import {
   ModuleProxyFactory,
   MockERC721,
   MockERC721__factory,
+  MockContract__factory,
 } from "../typechain-types";
 
 import {
@@ -24,6 +25,8 @@ import {
   predictGnosisSafeAddress,
   calculateProxyAddress,
   mockTransaction,
+  mockRevertTransaction,
+  TransactionData,
 } from "./helpers";
 
 describe("Safe with Azorius module and linearERC721Voting", () => {
@@ -53,8 +56,8 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
   let holder2Ids: number[];
   let holder3Ids: number[];
 
-  let tokenTransferData: string;
-  let proposalTransaction: any;
+  let mintNFTData: string;
+  let proposalTransaction: TransactionData;
 
   // Gnosis
   let createGnosisSetupCalldata: string;
@@ -161,14 +164,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     holder2Ids = [0];
     holder3Ids = [1, 1];
 
-    tokenTransferData = mockNFT1.interface.encodeFunctionData("mint", [
+    mintNFTData = mockNFT1.interface.encodeFunctionData("mint", [
       deployer.address,
     ]);
 
     proposalTransaction = {
       to: mockNFT1.address,
       value: BigNumber.from(0),
-      data: tokenTransferData,
+      data: mintNFTData,
       operation: 0,
     };
 
@@ -304,967 +307,950 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     ).to.emit(gnosisSafe, "ExecutionSuccess");
   });
 
-  // describe("Safe with Azorius module and linearERC721Voting", () => {
-  //   it("Gets correctly initialized", async () => {
-  //     expect(await linearERC721Voting.owner()).to.eq(gnosisSafeOwner.address);
-  //     expect(await linearERC721Voting.tokenAddresses).to.eq(
-  //       "[" + mockNFT1.address + ", " + mockNFT2.address + "]"
-  //     );
-  //     expect(await linearERC721Voting.azoriusModule()).to.eq(azorius.address);
-  //     expect(await linearERC721Voting.votingPeriod()).to.eq(60);
-  //     expect(await linearERC721Voting.quorumThreshold()).to.eq(2);
-  //     expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
-  //   });
-
-  //   it("A strategy cannot be enabled more than once", async () => {
-  //     await expect(
-  //       azorius
-  //         .connect(gnosisSafeOwner)
-  //         .enableStrategy(linearERC721Voting.address)
-  //     ).to.be.revertedWith("StrategyEnabled()");
-  //   });
-
-  //   it("The owner can change the Azorius Module on the Strategy", async () => {
-  //     await linearERC721Voting
-  //       .connect(gnosisSafeOwner)
-  //       .setAzorius(deployer.address);
-
-  //     expect(await linearERC721Voting.azoriusModule()).to.eq(deployer.address);
-  //   });
-
-  //   it("A non-owner cannot change the Azorius Module on the Strategy", async () => {
-  //     await expect(
-  //       linearERC721Voting.connect(tokenHolder1).setAzorius(deployer.address)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("The owner can update the voting period", async () => {
-  //     expect(await linearERC721Voting.votingPeriod()).to.eq(60);
-  //     await linearERC721Voting.connect(gnosisSafeOwner).updateVotingPeriod(120);
-
-  //     expect(await linearERC721Voting.votingPeriod()).to.eq(120);
-  //   });
-
-  //   it("A non-owner cannot update the strategy voting period", async () => {
-  //     await expect(
-  //       linearERC721Voting.connect(tokenHolder1).updateVotingPeriod(120)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("The owner can update the timelock period", async () => {
-  //     expect(await azorius.timelockPeriod()).to.eq(60);
-  //     await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(120);
-
-  //     expect(await azorius.timelockPeriod()).to.eq(120);
-  //   });
-
-  //   it("A non-owner cannot update the strategy timelock period", async () => {
-  //     await expect(
-  //       azorius.connect(tokenHolder1).updateTimelockPeriod(120)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Getting proposal state on an invalid proposal ID reverts", async () => {
-  //     await expect(azorius.proposalState(0)).to.be.revertedWith(
-  //       "InvalidProposal()"
-  //     );
-
-  //     await expect(azorius.proposalState(0)).to.be.revertedWith(
-  //       "InvalidProposal()"
-  //     );
-  //   });
-
-  //   it("A proposal cannot be submitted if the specified strategy has not been enabled", async () => {
-  //     // Use an incorrect address for the strategy
-  //     await expect(
-  //       azorius
-  //         .connect(tokenHolder2)
-  //         .submitProposal(mockNFT1.address, "0x", [mockTransaction()], "")
-  //     ).to.be.revertedWith("StrategyDisabled()");
-  //   });
-
-  //   it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
-  //     // Submit call from address that isn't Azorius module
-  //     await expect(
-  //       linearERC721Voting.initializeProposal([])
-  //     ).to.be.revertedWith("OnlyAzorius()");
-  //   });
-
-  //   it("Votes cannot be cast on a proposal that hasn't been submitted yet", async () => {
-  //     // User attempts to vote on proposal that has not yet been submitted
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 1, holder1Tokens, holder1Ids)
-  //     ).to.be.revertedWith("InvalidProposal()");
-  //   });
-
-  //   it("Votes cannot be cast after the voting period has ended", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Increase blocks so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Users vote in support of proposal
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 1, holder1Tokens, holder1Ids)
-  //     ).to.be.revertedWith("VotingEnded()");
-  //   });
-
-  //   it("A voter cannot vote more than once on a proposal", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder1Tokens, holder1Ids);
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 1, holder1Tokens, holder1Ids)
-  //     ).to.be.revertedWith("AlreadyVoted()");
-  //   });
-
-  //   it("Correctly counts proposal Yes votes", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     await network.provider.send("evm_mine");
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(0);
-
-  //     // Token holder 1 votes with voting weight of 1
-  //     await linearERC721Voting
-  //       .connect(tokenHolder1)
-  //       .vote(0, 1, holder1Tokens, holder1Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(1);
-
-  //     // Token holder 2 votes with voting weight of 2
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(3);
-
-  //     // Token holder 3 votes with voting weight of 3
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(6);
-  //   });
-
-  //   it("Correctly counts proposal No votes", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     await network.provider.send("evm_mine");
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(0);
-
-  //     // Token holder 1 votes with voting weight of 1
-  //     await linearERC721Voting
-  //       .connect(tokenHolder1)
-  //       .vote(0, 0, holder1Tokens, holder1Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(1);
-
-  //     // Token holder 2 votes with voting weight of 2
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 0, holder2Tokens, holder2Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(3);
-
-  //     // Token holder 3 votes with voting weight of 3
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 0, holder3Tokens, holder3Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(6);
-  //   });
-
-  //   it("Correctly counts proposal Abstain votes", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     await network.provider.send("evm_mine");
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
-  //       0
-  //     );
-
-  //     // Token holder 1 votes with voting weight of 1
-  //     await linearERC721Voting
-  //       .connect(tokenHolder1)
-  //       .vote(0, 2, holder1Tokens, holder1Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
-  //       1
-  //     );
-
-  //     // Token holder 2 votes with voting weight of 2
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 2, holder2Tokens, holder2Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
-  //       3
-  //     );
-
-  //     // Token holder 3 votes with voting weight of 3
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 2, holder3Tokens, holder3Ids);
-
-  //     expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
-  //       6
-  //     );
-  //   });
-
-  //   it("A proposal is passed with enough Yes votes and quorum", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.true;
-
-  //     // Proposal is timelocked
-  //     await expect(await azorius.proposalState(0)).to.eq(1);
-  //   });
-
-  //   it("A proposal is not passed if there are more No votes than Yes votes", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // Users vote against
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 0, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 0, holder3Tokens, holder3Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // Proposal is in the failed state
-  //     expect(await azorius.proposalState(0)).to.eq(5);
-
-  //     await expect(
-  //       azorius.executeProposal(
-  //         0,
-  //         [mockNFT1.address],
-  //         [0],
-  //         [tokenTransferData],
-  //         [0]
-  //       )
-  //     ).to.be.revertedWith("ProposalNotExecutable()");
-  //   });
-
-  //   it("A proposal is not passed if quorum is not reached", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // User votes "Yes"
-  //     await linearERC721Voting
-  //       .connect(tokenHolder1)
-  //       .vote(0, 1, holder1Tokens, holder1Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     await expect(
-  //       azorius.executeProposal(
-  //         0,
-  //         [mockNFT1.address],
-  //         [0],
-  //         [tokenTransferData],
-  //         [0]
-  //       )
-  //     ).to.be.revertedWith("ProposalNotExecutable()");
-
-  //     // Proposal in the failed state
-  //     expect(await azorius.proposalState(0)).to.eq(5);
-  //   });
-
-  //   it("A proposal is not passed if voting period is not over", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // Users vote "Yes"
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     await expect(
-  //       azorius.executeProposal(
-  //         0,
-  //         [mockNFT1.address],
-  //         [0],
-  //         [tokenTransferData],
-  //         [0]
-  //       )
-  //     ).to.be.revertedWith("ProposalNotExecutable()");
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-  //   });
-
-  //   it("Submitting a proposal emits the event with the associated proposal metadata", async () => {
-  //     const proposalMetadata = "This is my amazing proposal!";
-
-  //     const tx = await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         proposalMetadata
-  //       );
-  //     const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-  //     const data = receipt.logs[1].data;
-  //     const topics = receipt.logs[1].topics;
-  //     const event = azorius.interface.decodeEventLog(
-  //       "ProposalCreated",
-  //       data,
-  //       topics
-  //     );
-
-  //     // Check that the event emits the correct values
-  //     expect(event.transactions[0].to).to.be.equal(proposalTransaction.to);
-  //     expect(event.transactions[0].value).to.be.equal(
-  //       proposalTransaction.value
-  //     );
-  //     expect(event.transactions[0].data).to.be.equal(proposalTransaction.data);
-  //     expect(event.transactions[0].operation).to.be.equal(
-  //       proposalTransaction.operation
-  //     );
-
-  //     expect(event.metadata).to.be.equal(proposalMetadata);
-  //   });
-
-  //   it("A proposal can be created and executed", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     const txHash = await azorius.getTxHash(
-  //       mockNFT1.address,
-  //       BigNumber.from(0),
-  //       tokenTransferData,
-  //       0
-  //     );
-
-  //     const proposalTxHashes = await azorius.getProposalTxHashes(0);
-
-  //     const proposalTxHash = await azorius.getProposalTxHash(0, 0);
-
-  //     expect([txHash]).to.deep.eq(proposalTxHashes);
-
-  //     expect(txHash).to.deep.eq(proposalTxHash);
-
-  //     expect(await azorius.getProposal(0)).to.deep.eq([
-  //       linearERC721Voting.address,
-  //       [txHash],
-  //       60,
-  //       60,
-  //       0,
-  //     ]);
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // NFT ids haven't voted yet
-  //     expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-  //       false
-  //     );
-  //     expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-  //       false
-  //     );
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder1Tokens, holder1Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-
-  //     // NFT ids have voted
-  //     expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-  //       true
-  //     );
-  //     expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-  //       true
-  //     );
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is timelocked
-  //     expect(await azorius.proposalState(0)).to.eq(1);
-
-  //     // Increase time so that timelock period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is executable
-  //     expect(await azorius.proposalState(0)).to.eq(2);
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(0);
-
-  //     // Execute the transaction
-  //     await azorius.executeProposal(
-  //       0,
-  //       [mockNFT1.address],
-  //       [0],
-  //       [tokenTransferData],
-  //       [0]
-  //     );
-
-  //     expect(await azorius.getProposal(0)).to.deep.eq([
-  //       linearERC721Voting.address,
-  //       [txHash],
-  //       60,
-  //       60,
-  //       1,
-  //     ]);
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(1);
-
-  //     // Proposal is in the executed state
-  //     expect(await azorius.proposalState(0)).to.eq(3);
-  //   });
-
-  //   it("Multiple transactions can be executed from a single proposal", async () => {
-  //     // Create transaction to mint tokens to the deployer
-  //     const tokenTransferData1 = tokenTransferData;
-  //     const tokenTransferData2 = tokenTransferData;
-  //     const tokenTransferData3 = tokenTransferData;
-
-  //     const proposalTransaction1 = {
-  //       to: mockNFT1.address,
-  //       value: BigNumber.from(0),
-  //       data: tokenTransferData1,
-  //       operation: 0,
-  //     };
-
-  //     const proposalTransaction2 = {
-  //       to: mockNFT1.address,
-  //       value: BigNumber.from(0),
-  //       data: tokenTransferData2,
-  //       operation: 0,
-  //     };
-
-  //     const proposalTransaction3 = {
-  //       to: mockNFT1.address,
-  //       value: BigNumber.from(0),
-  //       data: tokenTransferData3,
-  //       operation: 0,
-  //     };
-
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction1, proposalTransaction2, proposalTransaction3],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is timelocked
-  //     expect(await azorius.proposalState(0)).to.eq(1);
-
-  //     // Increase time so that timelock period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is executable
-  //     expect(await azorius.proposalState(0)).to.eq(2);
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(0);
-
-  //     // Execute the transaction
-  //     await azorius.executeProposal(
-  //       0,
-  //       [mockNFT1.address, mockNFT1.address, mockNFT1.address],
-  //       [0, 0, 0],
-  //       [tokenTransferData1, tokenTransferData2, tokenTransferData3],
-  //       [0, 0, 0]
-  //     );
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(3);
-
-  //     // Proposal is executed
-  //     expect(await azorius.proposalState(0)).to.eq(3);
-  //   });
-
-  //   it("Executing a proposal reverts if the transaction cannot be executed", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is timelocked
-  //     expect(await azorius.proposalState(0)).to.eq(1);
-
-  //     // Increase time so that timelock period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is executable
-  //     expect(await azorius.proposalState(0)).to.eq(2);
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(0);
-
-  //     // Execute the transaction
-  //     await expect(
-  //       azorius.executeProposal(
-  //         0,
-  //         [mockNFT1.address],
-  //         [0],
-  //         [tokenTransferData],
-  //         [0]
-  //       )
-  //     ).to.be.revertedWith("TxFailed()");
-
-  //     // Proposal is executable
-  //     expect(await azorius.proposalState(0)).to.eq(2);
-
-  //     expect(await mockNFT1.balanceOf(deployer.address)).to.eq(1);
-  //   });
-
-  //   it("If a proposal is not executed during the execution period, it becomes expired", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [proposalTransaction],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is timelocked
-  //     expect(await azorius.proposalState(0)).to.eq(1);
-
-  //     // Increase time so that timelock period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is executable
-  //     expect(await azorius.proposalState(0)).to.eq(2);
-
-  //     // Increase time so that execution period has ended
-  //     await time.advanceBlocks(60);
-
-  //     // Proposal is expired
-  //     expect(await azorius.proposalState(0)).to.eq(4);
-
-  //     // Execute the transaction
-  //     await expect(
-  //       azorius.executeProposal(
-  //         0,
-  //         [mockNFT1.address],
-  //         [0],
-  //         [tokenTransferData],
-  //         [0]
-  //       )
-  //     ).to.be.revertedWith("ProposalNotExecutable()");
-  //   });
-
-  //   it("A proposal with no transactions that passes goes immediately to executed", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(linearERC721Voting.address, "0x", [], "");
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.false;
-
-  //     // Users vote in support of proposal
-  //     await linearERC721Voting
-  //       .connect(tokenHolder2)
-  //       .vote(0, 1, holder2Tokens, holder2Ids);
-  //     await linearERC721Voting
-  //       .connect(tokenHolder3)
-  //       .vote(0, 1, holder3Tokens, holder3Ids);
-
-  //     // Increase time so that voting period has ended
-  //     await time.advanceBlocks(60);
-
-  //     await expect(await linearERC721Voting.isPassed(0)).to.be.true;
-
-  //     // Proposal is executed
-  //     await expect(await azorius.proposalState(0)).to.eq(3);
-  //   });
-
-  //   it("Only the owner can update the timelock period on Azorius", async () => {
-  //     expect(await azorius.timelockPeriod()).to.eq(60);
-
-  //     await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(70);
-
-  //     expect(await azorius.timelockPeriod()).to.eq(70);
-
-  //     await expect(
-  //       azorius.connect(tokenHolder1).updateTimelockPeriod(80)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Only the owner can update the execution period on Azorius", async () => {
-  //     expect(await azorius.executionPeriod()).to.eq(60);
-
-  //     await azorius.connect(gnosisSafeOwner).updateExecutionPeriod(100);
-
-  //     expect(await azorius.executionPeriod()).to.eq(100);
-
-  //     await expect(
-  //       azorius.connect(tokenHolder1).updateExecutionPeriod(110)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Only the owner can update the quorum threshold on the ERC721LinearVoting", async () => {
-  //     expect(await linearERC721Voting.quorumThreshold()).to.eq(1);
-
-  //     await linearERC721Voting
-  //       .connect(gnosisSafeOwner)
-  //       .updateQuorumThreshold(4);
-
-  //     expect(await linearERC721Voting.quorumThreshold()).to.eq(4);
-
-  //     await expect(
-  //       linearERC721Voting.connect(tokenHolder1).updateQuorumThreshold(5)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Only the owner can update the basis numerator on the ERC721LinearVoting", async () => {
-  //     expect(await linearERC721Voting.basisNumerator()).to.eq(500000);
-
-  //     await linearERC721Voting
-  //       .connect(gnosisSafeOwner)
-  //       .updateBasisNumerator(600000);
-
-  //     expect(await linearERC721Voting.basisNumerator()).to.eq(600000);
-
-  //     await expect(
-  //       linearERC721Voting.connect(tokenHolder1).updateBasisNumerator(700000)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Basis numerator cannot be updated to a value larger than the denominator", async () => {
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(gnosisSafeOwner)
-  //         .updateBasisNumerator(1000001)
-  //     ).to.be.revertedWith("InvalidBasisNumerator()");
-  //   });
-
-  //   it("Only the owner can update the proposer weight on the ERC20LinearVoting", async () => {
-  //     expect(await linearERC721Voting.proposerThreshold()).to.eq(1);
-
-  //     await linearERC721Voting
-  //       .connect(gnosisSafeOwner)
-  //       .updateProposerThreshold(2);
-
-  //     expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
-
-  //     await expect(
-  //       linearERC721Voting.connect(tokenHolder1).updateProposerThreshold(3)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-
-  //   it("Linear ERC721 voting contract cannot be setup with an invalid governance token address", async () => {
-  //     // Deploy Linear ERC721 Voting Strategy
-  //     linearERC721Voting = await new LinearERC721Voting__factory(
-  //       deployer
-  //     ).deploy();
-
-  //     const linearERC721VotingSetupCalldata =
-  //       // eslint-disable-next-line camelcase
-  //       LinearERC721Voting__factory.createInterface().encodeFunctionData(
-  //         "setUp",
-  //         [
-  //           abiCoder.encode(
-  //             [
-  //               "address",
-  //               "address[]",
-  //               "uint256[]",
-  //               "address",
-  //               "uint32",
-  //               "uint256",
-  //               "uint256",
-  //               "uint256",
-  //             ],
-  //             [
-  //               gnosisSafeOwner.address, // owner
-  //               [ethers.constants.AddressZero], // NFT addresses
-  //               [1], // NFT weights
-  //               azorius.address, // Azorius module
-  //               60, // voting period in blocks
-  //               1, // quorom threshold
-  //               1, // proposer threshold
-  //               500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
-  //             ]
-  //           ),
-  //         ]
-  //       );
-
-  //     await expect(
-  //       moduleProxyFactory.deployModule(
-  //         linearERC721VotingMastercopy.address,
-  //         linearERC721VotingSetupCalldata,
-  //         "10031021"
-  //       )
-  //     ).to.be.reverted;
-  //   });
-
-  //   it("An invalid vote type cannot be cast", async () => {
-  //     await azorius
-  //       .connect(tokenHolder2)
-  //       .submitProposal(
-  //         linearERC721Voting.address,
-  //         "0x",
-  //         [mockTransaction()],
-  //         ""
-  //       );
-
-  //     // Proposal is active
-  //     expect(await azorius.proposalState(0)).to.eq(0);
-
-  //     // Users cast invalid vote types
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 3, holder2Tokens, holder2Ids)
-  //     ).to.be.revertedWith("InvalidVote()");
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 4, holder2Tokens, holder2Ids)
-  //     ).to.be.revertedWith("InvalidVote()");
-  //     await expect(
-  //       linearERC721Voting
-  //         .connect(tokenHolder2)
-  //         .vote(0, 5, holder2Tokens, holder2Ids)
-  //     ).to.be.revertedWith("InvalidVote()");
-  //   });
-
-  //   it("A non-proposer can't submit a proposal", async () => {
-  //     expect(await linearERC721Voting.isProposer(tokenHolder2.address)).to.eq(
-  //       true
-  //     );
-  //     expect(await linearERC721Voting.isProposer(deployer.address)).to.eq(
-  //       false
-  //     );
-
-  //     await expect(
-  //       azorius
-  //         .connect(deployer)
-  //         .submitProposal(
-  //           linearERC721Voting.address,
-  //           "0x",
-  //           [mockTransaction()],
-  //           ""
-  //         )
-  //     ).to.be.revertedWith("InvalidProposer()");
-
-  //     await linearERC721Voting
-  //       .connect(gnosisSafeOwner)
-  //       .updateProposerThreshold(301);
-
-  //     expect(await linearERC721Voting.isProposer(tokenHolder2.address)).to.eq(
-  //       false
-  //     );
-  //     expect(await linearERC721Voting.isProposer(deployer.address)).to.eq(
-  //       false
-  //     );
-
-  //     await expect(
-  //       azorius
-  //         .connect(deployer)
-  //         .submitProposal(
-  //           linearERC721Voting.address,
-  //           "0x",
-  //           [mockTransaction()],
-  //           ""
-  //         )
-  //     ).to.be.revertedWith("InvalidProposer()");
-
-  //     await expect(
-  //       azorius
-  //         .connect(tokenHolder2)
-  //         .submitProposal(
-  //           linearERC721Voting.address,
-  //           "0x",
-  //           [mockTransaction()],
-  //           ""
-  //         )
-  //     ).to.be.revertedWith("InvalidProposer()");
-  //   });
-
-  //   it("An proposal that hasn't been submitted yet is not passed", async () => {
-  //     expect(await linearERC721Voting.isPassed(0)).to.eq(false);
-  //   });
-  // });
+  describe("Safe with Azorius module and linearERC721Voting", () => {
+    it("Gets correctly initialized", async () => {
+      expect(await linearERC721Voting.owner()).to.eq(gnosisSafeOwner.address);
+      expect(await linearERC721Voting.tokenAddresses(0)).to.eq(
+        mockNFT1.address
+      );
+      expect(await linearERC721Voting.tokenAddresses(1)).to.eq(
+        mockNFT2.address
+      );
+      expect(await linearERC721Voting.azoriusModule()).to.eq(azorius.address);
+      expect(await linearERC721Voting.votingPeriod()).to.eq(60);
+      expect(await linearERC721Voting.quorumThreshold()).to.eq(2);
+      expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
+    });
+
+    it("A strategy cannot be enabled more than once", async () => {
+      await expect(
+        azorius
+          .connect(gnosisSafeOwner)
+          .enableStrategy(linearERC721Voting.address)
+      ).to.be.revertedWith("StrategyEnabled()");
+    });
+
+    it("The owner can change the Azorius Module on the Strategy", async () => {
+      await linearERC721Voting
+        .connect(gnosisSafeOwner)
+        .setAzorius(deployer.address);
+
+      expect(await linearERC721Voting.azoriusModule()).to.eq(deployer.address);
+    });
+
+    it("A non-owner cannot change the Azorius Module on the Strategy", async () => {
+      await expect(
+        linearERC721Voting.connect(tokenHolder1).setAzorius(deployer.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("The owner can update the voting period", async () => {
+      expect(await linearERC721Voting.votingPeriod()).to.eq(60);
+      await linearERC721Voting.connect(gnosisSafeOwner).updateVotingPeriod(120);
+
+      expect(await linearERC721Voting.votingPeriod()).to.eq(120);
+    });
+
+    it("A non-owner cannot update the strategy voting period", async () => {
+      await expect(
+        linearERC721Voting.connect(tokenHolder1).updateVotingPeriod(120)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("The owner can update the timelock period", async () => {
+      expect(await azorius.timelockPeriod()).to.eq(60);
+      await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(120);
+
+      expect(await azorius.timelockPeriod()).to.eq(120);
+    });
+
+    it("A non-owner cannot update the strategy timelock period", async () => {
+      await expect(
+        azorius.connect(tokenHolder1).updateTimelockPeriod(120)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Getting proposal state on an invalid proposal ID reverts", async () => {
+      await expect(azorius.proposalState(0)).to.be.revertedWith(
+        "InvalidProposal()"
+      );
+
+      await expect(azorius.proposalState(0)).to.be.revertedWith(
+        "InvalidProposal()"
+      );
+    });
+
+    it("A proposal cannot be submitted if the specified strategy has not been enabled", async () => {
+      // Use an incorrect address for the strategy
+      await expect(
+        azorius
+          .connect(tokenHolder2)
+          .submitProposal(mockNFT1.address, "0x", [mockTransaction()], "")
+      ).to.be.revertedWith("StrategyDisabled()");
+    });
+
+    it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
+      // Submit call from address that isn't Azorius module
+      await expect(
+        linearERC721Voting.initializeProposal([])
+      ).to.be.revertedWith("OnlyAzorius()");
+    });
+
+    it("Votes cannot be cast on a proposal that hasn't been submitted yet", async () => {
+      // User attempts to vote on proposal that has not yet been submitted
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder1)
+          .vote(0, 1, holder1Tokens, holder1Ids)
+      ).to.be.revertedWith("InvalidProposal()");
+    });
+
+    it("Votes cannot be cast after the voting period has ended", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Increase blocks so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Users vote in support of proposal
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder1)
+          .vote(0, 1, holder1Tokens, holder1Ids)
+      ).to.be.revertedWith("VotingEnded()");
+    });
+
+    it("A voter cannot vote more than once on a proposal with the same id", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // User votes in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+
+      // User votes again
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(0, 1, holder2Tokens, holder2Ids)
+      ).to.be.revertedWith("IdAlreadyVoted(0)");
+    });
+
+    it("Correctly counts proposal Yes votes", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      await network.provider.send("evm_mine");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(0);
+
+      // Token holder 1 votes with voting weight of 1
+      await linearERC721Voting
+        .connect(tokenHolder1)
+        .vote(0, 1, holder1Tokens, holder1Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(1);
+
+      // Token holder 2 votes with voting weight of 2
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(3);
+
+      // Token holder 3 votes with voting weight of 3
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(6);
+    });
+
+    it("Correctly counts proposal No votes", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      await network.provider.send("evm_mine");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(0);
+
+      // Token holder 1 votes with voting weight of 1
+      await linearERC721Voting
+        .connect(tokenHolder1)
+        .vote(0, 0, holder1Tokens, holder1Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(1);
+
+      // Token holder 2 votes with voting weight of 2
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 0, holder2Tokens, holder2Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(3);
+
+      // Token holder 3 votes with voting weight of 3
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 0, holder3Tokens, holder3Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).noVotes).to.eq(6);
+    });
+
+    it("Correctly counts proposal Abstain votes", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      await network.provider.send("evm_mine");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        0
+      );
+
+      // Token holder 1 votes with voting weight of 1
+      await linearERC721Voting
+        .connect(tokenHolder1)
+        .vote(0, 2, holder1Tokens, holder1Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        1
+      );
+
+      // Token holder 2 votes with voting weight of 2
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 2, holder2Tokens, holder2Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        3
+      );
+
+      // Token holder 3 votes with voting weight of 3
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 2, holder3Tokens, holder3Ids);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).abstainVotes).to.eq(
+        6
+      );
+    });
+
+    it("A proposal is passed with enough Yes votes and quorum", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.true;
+
+      // Proposal is timelocked
+      await expect(await azorius.proposalState(0)).to.eq(1);
+    });
+
+    it("A proposal is not passed if there are more No votes than Yes votes", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // Users vote against
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 0, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 0, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // Proposal is in the failed state
+      expect(await azorius.proposalState(0)).to.eq(5);
+
+      await expect(
+        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
+      ).to.be.revertedWith("ProposalNotExecutable()");
+    });
+
+    it("A proposal is not passed if quorum is not reached", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // User votes "Yes"
+      await linearERC721Voting
+        .connect(tokenHolder1)
+        .vote(0, 1, holder1Tokens, holder1Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      await expect(
+        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
+      ).to.be.revertedWith("ProposalNotExecutable()");
+
+      // Proposal in the failed state
+      expect(await azorius.proposalState(0)).to.eq(5);
+    });
+
+    it("A proposal is not passed if voting period is not over", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // Users vote "Yes"
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      await expect(
+        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
+      ).to.be.revertedWith("ProposalNotExecutable()");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+    });
+
+    it("Submitting a proposal emits the event with the associated proposal metadata", async () => {
+      const proposalMetadata = "This is my amazing proposal!";
+
+      const tx = await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          proposalMetadata
+        );
+      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const data = receipt.logs[1].data;
+      const topics = receipt.logs[1].topics;
+      const event = azorius.interface.decodeEventLog(
+        "ProposalCreated",
+        data,
+        topics
+      );
+
+      // Check that the event emits the correct values
+      expect(event.transactions[0].to).to.be.equal(proposalTransaction.to);
+      expect(event.transactions[0].value).to.be.equal(
+        proposalTransaction.value
+      );
+      expect(event.transactions[0].data).to.be.equal(proposalTransaction.data);
+      expect(event.transactions[0].operation).to.be.equal(
+        proposalTransaction.operation
+      );
+
+      expect(event.metadata).to.be.equal(proposalMetadata);
+    });
+
+    it("A proposal can be created and executed", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      const txHash = await azorius.getTxHash(
+        mockNFT1.address,
+        BigNumber.from(0),
+        mintNFTData,
+        0
+      );
+
+      const proposalTxHashes = await azorius.getProposalTxHashes(0);
+
+      const proposalTxHash = await azorius.getProposalTxHash(0, 0);
+
+      expect([txHash]).to.deep.eq(proposalTxHashes);
+
+      expect(txHash).to.deep.eq(proposalTxHash);
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC721Voting.address,
+        [txHash],
+        60,
+        60,
+        0,
+      ]);
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // NFT ids haven't voted yet
+      expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
+        false
+      );
+      expect(await linearERC721Voting.hasVoted(0, mockNFT2.address, 0)).to.eq(
+        false
+      );
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder1)
+        .vote(0, 1, holder1Tokens, holder1Ids);
+
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+
+      // NFT ids have voted
+      expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
+        true
+      );
+      expect(await linearERC721Voting.hasVoted(0, mockNFT2.address, 0)).to.eq(
+        true
+      );
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      expect(await mockNFT1.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await azorius.executeProposal(
+        0,
+        [mockNFT1.address],
+        [0],
+        [mintNFTData],
+        [0]
+      );
+
+      expect(await azorius.getProposal(0)).to.deep.eq([
+        linearERC721Voting.address,
+        [txHash],
+        60,
+        60,
+        1,
+      ]);
+
+      expect(await mockNFT1.balanceOf(deployer.address)).to.eq(1);
+
+      // Proposal is in the executed state
+      expect(await azorius.proposalState(0)).to.eq(3);
+    });
+
+    it("Multiple transactions can be executed from a single proposal", async () => {
+      // Create transaction to mint tokens to the deployer
+      const tokenTransferData1 = mintNFTData;
+      const tokenTransferData2 = mintNFTData;
+      const tokenTransferData3 = mintNFTData;
+
+      const proposalTransaction1 = {
+        to: mockNFT1.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData1,
+        operation: 0,
+      };
+
+      const proposalTransaction2 = {
+        to: mockNFT1.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData2,
+        operation: 0,
+      };
+
+      const proposalTransaction3 = {
+        to: mockNFT1.address,
+        value: BigNumber.from(0),
+        data: tokenTransferData3,
+        operation: 0,
+      };
+
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction1, proposalTransaction2, proposalTransaction3],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      expect(await mockNFT1.balanceOf(deployer.address)).to.eq(0);
+
+      // Execute the transaction
+      await azorius.executeProposal(
+        0,
+        [mockNFT1.address, mockNFT1.address, mockNFT1.address],
+        [0, 0, 0],
+        [tokenTransferData1, tokenTransferData2, tokenTransferData3],
+        [0, 0, 0]
+      );
+
+      expect(await mockNFT1.balanceOf(deployer.address)).to.eq(3);
+
+      // Proposal is executed
+      expect(await azorius.proposalState(0)).to.eq(3);
+    });
+
+    it("Executing a proposal reverts if the transaction cannot be executed", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockRevertTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(
+          0,
+          ["0x6eadd7e8ef9c4fe4309bf9f3e452b4d8f220da94"],
+          [0],
+          [
+            // eslint-disable-next-line camelcase
+            MockContract__factory.createInterface().encodeFunctionData(
+              "revertSomething"
+            ),
+          ],
+          [0]
+        )
+      ).to.be.revertedWith("TxFailed()");
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+    });
+
+    it("If a proposal is not executed during the execution period, it becomes expired", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [proposalTransaction],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is timelocked
+      expect(await azorius.proposalState(0)).to.eq(1);
+
+      // Increase time so that timelock period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is executable
+      expect(await azorius.proposalState(0)).to.eq(2);
+
+      // Increase time so that execution period has ended
+      await time.advanceBlocks(60);
+
+      // Proposal is expired
+      expect(await azorius.proposalState(0)).to.eq(4);
+
+      // Execute the transaction
+      await expect(
+        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
+      ).to.be.revertedWith("ProposalNotExecutable()");
+    });
+
+    it("A proposal with no transactions that passes goes immediately to executed", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(linearERC721Voting.address, "0x", [], "");
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+
+      // Users vote in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(0, 1, holder2Tokens, holder2Ids);
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, holder3Tokens, holder3Ids);
+
+      // Increase time so that voting period has ended
+      await time.advanceBlocks(60);
+
+      await expect(await linearERC721Voting.isPassed(0)).to.be.true;
+
+      // Proposal is executed
+      await expect(await azorius.proposalState(0)).to.eq(3);
+    });
+
+    it("Only the owner can update the timelock period on Azorius", async () => {
+      expect(await azorius.timelockPeriod()).to.eq(60);
+
+      await azorius.connect(gnosisSafeOwner).updateTimelockPeriod(70);
+
+      expect(await azorius.timelockPeriod()).to.eq(70);
+
+      await expect(
+        azorius.connect(tokenHolder1).updateTimelockPeriod(80)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the owner can update the execution period on Azorius", async () => {
+      expect(await azorius.executionPeriod()).to.eq(60);
+
+      await azorius.connect(gnosisSafeOwner).updateExecutionPeriod(100);
+
+      expect(await azorius.executionPeriod()).to.eq(100);
+
+      await expect(
+        azorius.connect(tokenHolder1).updateExecutionPeriod(110)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the owner can update the quorum threshold on the ERC721LinearVoting", async () => {
+      expect(await linearERC721Voting.quorumThreshold()).to.eq(2);
+
+      await linearERC721Voting
+        .connect(gnosisSafeOwner)
+        .updateQuorumThreshold(4);
+
+      expect(await linearERC721Voting.quorumThreshold()).to.eq(4);
+
+      await expect(
+        linearERC721Voting.connect(tokenHolder1).updateQuorumThreshold(5)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Only the owner can update the basis numerator on the ERC721LinearVoting", async () => {
+      expect(await linearERC721Voting.basisNumerator()).to.eq(500000);
+
+      await linearERC721Voting
+        .connect(gnosisSafeOwner)
+        .updateBasisNumerator(600000);
+
+      expect(await linearERC721Voting.basisNumerator()).to.eq(600000);
+
+      await expect(
+        linearERC721Voting.connect(tokenHolder1).updateBasisNumerator(700000)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Basis numerator cannot be updated to a value larger than the denominator", async () => {
+      await expect(
+        linearERC721Voting
+          .connect(gnosisSafeOwner)
+          .updateBasisNumerator(1000001)
+      ).to.be.revertedWith("InvalidBasisNumerator()");
+    });
+
+    it("Only the owner can update the proposer weight on the ERC20LinearVoting", async () => {
+      expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
+
+      await linearERC721Voting
+        .connect(gnosisSafeOwner)
+        .updateProposerThreshold(2);
+
+      expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
+
+      await expect(
+        linearERC721Voting.connect(tokenHolder1).updateProposerThreshold(3)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Linear ERC721 voting contract cannot be setup with an invalid governance token address", async () => {
+      // Deploy Linear ERC721 Voting Strategy
+      linearERC721Voting = await new LinearERC721Voting__factory(
+        deployer
+      ).deploy();
+
+      const linearERC721VotingSetupCalldata =
+        // eslint-disable-next-line camelcase
+        LinearERC721Voting__factory.createInterface().encodeFunctionData(
+          "setUp",
+          [
+            abiCoder.encode(
+              [
+                "address",
+                "address[]",
+                "uint256[]",
+                "address",
+                "uint32",
+                "uint256",
+                "uint256",
+                "uint256",
+              ],
+              [
+                gnosisSafeOwner.address, // owner
+                [ethers.constants.AddressZero], // NFT addresses
+                [1], // NFT weights
+                azorius.address, // Azorius module
+                60, // voting period in blocks
+                1, // quorom threshold
+                1, // proposer threshold
+                500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
+              ]
+            ),
+          ]
+        );
+
+      await expect(
+        moduleProxyFactory.deployModule(
+          linearERC721VotingMastercopy.address,
+          linearERC721VotingSetupCalldata,
+          "10031021"
+        )
+      ).to.be.reverted;
+    });
+
+    it("An invalid vote type cannot be cast", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // Users cast invalid vote types
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(0, 3, holder2Tokens, holder2Ids)
+      ).to.be.revertedWith("InvalidVote()");
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(0, 4, holder2Tokens, holder2Ids)
+      ).to.be.revertedWith("InvalidVote()");
+      await expect(
+        linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(0, 5, holder2Tokens, holder2Ids)
+      ).to.be.revertedWith("InvalidVote()");
+    });
+
+    it("A non-proposer can't submit a proposal", async () => {
+      expect(await linearERC721Voting.isProposer(tokenHolder2.address)).to.eq(
+        true
+      );
+      expect(await linearERC721Voting.isProposer(deployer.address)).to.eq(
+        false
+      );
+
+      await expect(
+        azorius
+          .connect(deployer)
+          .submitProposal(
+            linearERC721Voting.address,
+            "0x",
+            [mockTransaction()],
+            ""
+          )
+      ).to.be.revertedWith("InvalidProposer()");
+
+      await linearERC721Voting
+        .connect(gnosisSafeOwner)
+        .updateProposerThreshold(301);
+
+      expect(await linearERC721Voting.isProposer(tokenHolder2.address)).to.eq(
+        false
+      );
+      expect(await linearERC721Voting.isProposer(deployer.address)).to.eq(
+        false
+      );
+
+      await expect(
+        azorius
+          .connect(deployer)
+          .submitProposal(
+            linearERC721Voting.address,
+            "0x",
+            [mockTransaction()],
+            ""
+          )
+      ).to.be.revertedWith("InvalidProposer()");
+
+      await expect(
+        azorius
+          .connect(tokenHolder2)
+          .submitProposal(
+            linearERC721Voting.address,
+            "0x",
+            [mockTransaction()],
+            ""
+          )
+      ).to.be.revertedWith("InvalidProposer()");
+    });
+
+    it("An proposal that hasn't been submitted yet is not passed", async () => {
+      expect(await linearERC721Voting.isPassed(0)).to.eq(false);
+    });
+  });
 });

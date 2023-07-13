@@ -525,6 +525,13 @@ export function getRandomBytes() {
   return bytes32;
 }
 
+export type TransactionData = {
+  to: string;
+  value: BigNumber;
+  data: string;
+  operation: number;
+};
+
 /**
  * A throwaway transaction to put into tests.  This will execute properly
  * on Goerli, as the MockContract has been deployed there.
@@ -536,6 +543,22 @@ export function mockTransaction(): IAzorius.TransactionStruct {
     // eslint-disable-next-line camelcase
     data: MockContract__factory.createInterface().encodeFunctionData(
       "doSomething"
+    ),
+    operation: 0,
+  };
+}
+
+/**
+ * A throwaway transaction to put into tests.  This will not execute,
+ * and will instead revert. This contract has been deployed to Goerli.
+ */
+export function mockRevertTransaction(): IAzorius.TransactionStruct {
+  return {
+    to: "0x6EAdD7E8eF9C4fE4309BF9f3e452B4D8F220DA94",
+    value: BigNumber.from(0),
+    // eslint-disable-next-line camelcase
+    data: MockContract__factory.createInterface().encodeFunctionData(
+      "revertSomething"
     ),
     operation: 0,
   };
