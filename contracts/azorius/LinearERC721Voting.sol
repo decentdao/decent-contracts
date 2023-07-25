@@ -167,6 +167,12 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     function updateProposerThreshold(uint256 _proposerThreshold) external onlyOwner {
         _updateProposerThreshold(_proposerThreshold);
     }
+    /**
+     * Returns whole list of governance tokens addresses
+     */
+    function getAllTokenAddresses() external view returns (address[] memory) {
+        return tokenAddresses;
+    }
 
     /**
      * Returns the current state of the specified Proposal.
