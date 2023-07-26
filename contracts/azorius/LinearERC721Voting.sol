@@ -73,7 +73,7 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
     event QuorumThresholdUpdated(uint256 quorumThreshold);
     event ProposerThresholdUpdated(uint256 proposerThreshold);
     event ProposalInitialized(uint32 proposalId, uint32 votingEndBlock);
-    event Voted(address voter, uint32 proposalId, uint8 voteType, uint256 weight);
+    event Voted(address voter, uint32 proposalId, uint8 voteType, address[] tokenAddresses, uint256[] tokenIds);
     event GovernanceTokenAdded(address token, uint256 weight);
     event GovernanceTokenRemoved(address token);
 
@@ -389,6 +389,6 @@ contract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721Voti
             revert InvalidVote();
         }
 
-        emit Voted(_voter, _proposalId, _voteType, weight);
+        emit Voted(_voter, _proposalId, _voteType, _tokenAddresses, _tokenIds);
     }
 }

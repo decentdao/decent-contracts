@@ -1,6 +1,6 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "files": [
     "dist",
     "deployments",
