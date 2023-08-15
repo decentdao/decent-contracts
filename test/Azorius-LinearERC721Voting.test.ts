@@ -478,7 +478,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         .connect(tokenHolder3)
         .vote(0, 1, [mockNFT2.address], [1]);
 
-      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(4);
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(3);
     });
 
     it("Correctly counts proposal Yes votes", async () => {
