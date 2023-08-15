@@ -247,7 +247,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     await moduleProxyFactory.deployModule(
       linearERC721VotingMastercopy.address,
       linearERC721VotingSetupCalldata,
-      "10031021" // TODO what's this number???
+      "10031021"
     );
 
     const predictedlinearERC721VotingAddress = calculateProxyAddress(
@@ -453,6 +453,32 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           .connect(tokenHolder2)
           .vote(0, 1, holder2Tokens, holder2Ids)
       ).to.be.revertedWith("IdAlreadyVoted(0)");
+    });
+
+    it("A voter can vote more than once with different ids", async () => {
+      await azorius
+        .connect(tokenHolder2)
+        .submitProposal(
+          linearERC721Voting.address,
+          "0x",
+          [mockTransaction()],
+          ""
+        );
+
+      // Proposal is active
+      expect(await azorius.proposalState(0)).to.eq(0);
+
+      // User votes in support of proposal
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, [mockNFT1.address], [1]);
+
+      // User votes again
+      await linearERC721Voting
+        .connect(tokenHolder3)
+        .vote(0, 1, [mockNFT2.address], [1]);
+
+      expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(4);
     });
 
     it("Correctly counts proposal Yes votes", async () => {
@@ -1106,7 +1132,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       ).to.be.revertedWith("InvalidBasisNumerator()");
     });
 
-    it("Only the owner can update the proposer weight on the ERC20LinearVoting", async () => {
+    it("Only the owner can update the proposer weight on the ERC721LinearVoting", async () => {
       expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
 
       await linearERC721Voting

@@ -231,7 +231,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
     await moduleProxyFactory.deployModule(
       linearERC721VotingMastercopy.address,
       linearERC721VotingSetupCalldata,
-      "10031021" // TODO what's this number???
+      "10031021"
     );
 
     const predictedlinearERC721VotingAddress = calculateProxyAddress(
