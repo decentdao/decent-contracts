@@ -22,6 +22,8 @@ import {
   multisendABI,
   encodeMultiSend,
   ifaceMultiSend,
+  SAFE_FACTORY_ADDRESS,
+  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
 
 describe("Fractal Module Tests", () => {
@@ -52,10 +54,8 @@ describe("Fractal Module Tests", () => {
   let setModuleCalldata: string;
   let sigs: string;
 
-  const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const moduleProxyFactoryAddress =
     "0x00000000000DC7F163742Eb4aBEf650037b1f588";
-  const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -83,7 +83,7 @@ describe("Fractal Module Tests", () => {
       multisendABI,
       deployer
     );
-    gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer); // Gnosis Factory
+    gnosisFactory = new ethers.Contract(SAFE_FACTORY_ADDRESS, abi, deployer); // Gnosis Factory
     moduleFactory = new ethers.Contract(
       "0x00000000000DC7F163742Eb4aBEf650037b1f588",
       // eslint-disable-next-line camelcase
@@ -112,7 +112,7 @@ describe("Fractal Module Tests", () => {
       gnosisFactory.address,
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSingletonAddress,
+      SAFE_SINGLETON_ADDRESS,
       gnosisFactory
     );
 
@@ -183,7 +183,7 @@ describe("Fractal Module Tests", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -198,7 +198,7 @@ describe("Fractal Module Tests", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSend.multiSend(safeTx))
         .to.emit(gnosisFactory, "ProxyCreation")
-        .withArgs(gnosisSafe.address, gnosisSingletonAddress);
+        .withArgs(gnosisSafe.address, SAFE_SINGLETON_ADDRESS);
     });
 
     it("Owner may add/remove controllers", async () => {
@@ -206,7 +206,7 @@ describe("Fractal Module Tests", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -257,7 +257,7 @@ describe("Fractal Module Tests", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),

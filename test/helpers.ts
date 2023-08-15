@@ -13,6 +13,11 @@ import { AddressZero } from "@ethersproject/constants";
 import { Interface } from "ethers/lib/utils";
 import { IAzorius, MockContract__factory } from "../typechain-types";
 
+export const SAFE_FACTORY_ADDRESS =
+  "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
+export const SAFE_SINGLETON_ADDRESS =
+  "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
+
 export const predictGnosisSafeAddress = async (
   factory: string,
   calldata: string,

@@ -27,6 +27,8 @@ import {
   ifaceSafe,
   predictGnosisSafeAddress,
   calculateProxyAddress,
+  SAFE_FACTORY_ADDRESS,
+  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
 
 describe("Azorius Child DAO with Azorius Parent", () => {
@@ -58,10 +60,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
   // Gnosis
   let createGnosisSetupCalldata: string;
 
-  const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
   const moduleProxyFactoryAddress =
     "0x00000000000DC7F163742Eb4aBEf650037b1f588";
-  const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
@@ -97,7 +97,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // Deploy Gnosis Safe Proxy factory
     gnosisSafeProxyFactory = await ethers.getContractAt(
       "GnosisSafeProxyFactory",
-      gnosisFactoryAddress
+      SAFE_FACTORY_ADDRESS
     );
 
     createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
@@ -115,13 +115,13 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       gnosisSafeProxyFactory.address,
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSingletonAddress,
+      SAFE_SINGLETON_ADDRESS,
       gnosisSafeProxyFactory
     );
 
     // Deploy Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      gnosisSingletonAddress,
+      SAFE_SINGLETON_ADDRESS,
       createGnosisSetupCalldata,
       saltNum
     );

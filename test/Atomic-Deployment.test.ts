@@ -22,6 +22,8 @@ import {
   ifaceMultiSend,
   azoriusiface,
   abiAzorius,
+  SAFE_FACTORY_ADDRESS,
+  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
 
 describe("Atomic Gnosis Safe Deployment", () => {
@@ -52,8 +54,6 @@ describe("Atomic Gnosis Safe Deployment", () => {
   let setModuleCalldata: string;
   let sigs: string;
 
-  const gnosisFactoryAddress = "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2";
-  const gnosisSingletonAddress = "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552";
   const threshold = 2;
   let predictedFreezeGuard: string;
   const saltNum = BigNumber.from(
@@ -83,7 +83,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       multisendABI,
       deployer
     );
-    gnosisFactory = new ethers.Contract(gnosisFactoryAddress, abi, deployer); // Gnosis Factory
+    gnosisFactory = new ethers.Contract(SAFE_FACTORY_ADDRESS, abi, deployer); // Gnosis Factory
     moduleFactory = new ethers.Contract(
       "0x00000000000DC7F163742Eb4aBEf650037b1f588",
       // eslint-disable-next-line camelcase
@@ -107,7 +107,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       gnosisFactory.address,
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSingletonAddress,
+      SAFE_SINGLETON_ADDRESS,
       gnosisFactory
     );
 
@@ -192,7 +192,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -219,7 +219,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -276,7 +276,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -320,7 +320,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -419,7 +419,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -496,7 +496,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
@@ -559,7 +559,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
         buildContractCall(
           gnosisFactory,
           "createProxyWithNonce",
-          [gnosisSingletonAddress, createGnosisSetupCalldata, saltNum],
+          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
