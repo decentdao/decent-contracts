@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity =0.8.19;
 
-import { BaseStrategy, IBaseStrategy } from "../BaseStrategy.sol";
+import { BaseStrategy, IBaseStrategy } from "../azorius/BaseStrategy.sol";
 
 /**
  * A mock [BaseStrategy](../BaseStrategy.md) used only for testing purposes.

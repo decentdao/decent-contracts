@@ -60,7 +60,7 @@ contract LinearERC20Voting is BaseStrategy, BaseQuorumPercent, BaseVotingBasisPe
      * Sets up the contract with its initial parameters.
      *
      * @param initializeParams encoded initialization parameters: `address _owner`,
-     * `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint256 _votingPeriod`,
+     * `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint32 _votingPeriod`,
      * `uint256 _quorumNumerator`, `uint256 _basisNumerator`
      */
     function setUp(bytes memory initializeParams) public override initializer {
