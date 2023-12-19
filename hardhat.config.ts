@@ -62,6 +62,7 @@ const config: HardhatUserConfig = {
       default: 0,
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
       goerli: `privatekey://${process.env.GOERLI_DEPLOYER_PRIVATE_KEY}`,
+      sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
     },
   },
@@ -80,6 +81,13 @@ const config: HardhatUserConfig = {
         ? [process.env.GOERLI_DEPLOYER_PRIVATE_KEY]
         : [],
     },
+    sepolia: {
+      chainId: 11155111,
+      url: process.env.SEPOLIA_PROVIDER || "",
+      accounts: process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY
+        ? [process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
     polygon: {
       chainId: 137,
       url: process.env.POLYGON_PROVIDER || "",
@@ -93,6 +101,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY || "",
       goerli: process.env.ETHERSCAN_API_KEY || "",
+      sepolia: process.env.ETHERSCAN_API_KEY || "",
       polygon: process.env.POLYGONSCAN_API_KEY || "",
     },
   },

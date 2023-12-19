@@ -1,0 +1,1292 @@
+{
+  "address": "0xE3B744725631326162777721Ed37cF32A0928714",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "IdAlreadyVoted",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "IdNotOwned",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidBasisNumerator",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidParams",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidProposal",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidTokenAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidVote",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NoVotingWeight",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OnlyAzorius",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TokenAlreadySet",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TokenNotSet",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "VotingEnded",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "azoriusModule",
+          "type": "address"
+        }
+      ],
+      "name": "AzoriusSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "basisNumerator",
+          "type": "uint256"
+        }
+      ],
+      "name": "BasisNumeratorUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "weight",
+          "type": "uint256"
+        }
+      ],
+      "name": "GovernanceTokenAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "GovernanceTokenRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "proposalId",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "votingEndBlock",
+          "type": "uint32"
+        }
+      ],
+      "name": "ProposalInitialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposerThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "ProposerThresholdUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "quorumThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "QuorumThresholdUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "azoriusModule",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "StrategySetUp",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "voter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "proposalId",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "voteType",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "address[]",
+          "name": "tokenAddresses",
+          "type": "address[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256[]",
+          "name": "tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "Voted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "votingPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "VotingPeriodUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "BASIS_DENOMINATOR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_weight",
+          "type": "uint256"
+        }
+      ],
+      "name": "addGovernanceToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "azoriusModule",
+      "outputs": [
+        {
+          "internalType": "contract IAzorius",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "basisNumerator",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllTokenAddresses",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "getProposalVotes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "noVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "yesVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "abstainVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "startBlock",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "endBlock",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getTokenWeight",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "hasVoted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "name": "initializeProposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "isPassed",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "isProposer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_yesVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_noVotes",
+          "type": "uint256"
+        }
+      ],
+      "name": "meetsBasis",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposalVotes",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "votingStartBlock",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "votingEndBlock",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "yesVotes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "abstainVotes",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "proposerThreshold",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "quorumThreshold",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "removeGovernanceToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_azoriusModule",
+          "type": "address"
+        }
+      ],
+      "name": "setAzorius",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "initializeParams",
+          "type": "bytes"
+        }
+      ],
+      "name": "setUp",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "tokenAddresses",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "tokenWeights",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_basisNumerator",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateBasisNumerator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_proposerThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateProposerThreshold",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_quorumThreshold",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateQuorumThreshold",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_votingPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "updateVotingPeriod",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_voteType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "address[]",
+          "name": "_tokenAddresses",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_tokenIds",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_proposalId",
+          "type": "uint32"
+        }
+      ],
+      "name": "votingEndBlock",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "votingPeriod",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x0ff5bad268bd87b935fbf858766b4a1e0f62e23972df39254da107e149b4566b",
+  "receipt": {
+    "to": null,
+    "from": "0x637366C372a9096b262bd2fe6c40D7BCc6239976",
+    "contractAddress": "0xE3B744725631326162777721Ed37cF32A0928714",
+    "transactionIndex": 60,
+    "gasUsed": "1620560",
+    "logsBloom": "0x00000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000080000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xb0fdb169fb3c2354b222701d683ce26c5cba5086f00b278d4cb2692bbf646ebb",
+    "transactionHash": "0x0ff5bad268bd87b935fbf858766b4a1e0f62e23972df39254da107e149b4566b",
+    "logs": [
+      {
+        "transactionIndex": 60,
+        "blockNumber": 4916646,
+        "transactionHash": "0x0ff5bad268bd87b935fbf858766b4a1e0f62e23972df39254da107e149b4566b",
+        "address": "0xE3B744725631326162777721Ed37cF32A0928714",
+        "topics": [
+          "0x7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498"
+        ],
+        "data": "0x00000000000000000000000000000000000000000000000000000000000000ff",
+        "logIndex": 104,
+        "blockHash": "0xb0fdb169fb3c2354b222701d683ce26c5cba5086f00b278d4cb2692bbf646ebb"
+      }
+    ],
+    "blockNumber": 4916646,
+    "cumulativeGasUsed": "8291900",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "f38f4478c70bad79f1e003d8a946fa0f",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"IdAlreadyVoted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"IdNotOwned\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidBasisNumerator\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidParams\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidProposal\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidTokenAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidVote\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoVotingWeight\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OnlyAzorius\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenAlreadySet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenNotSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"VotingEnded\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"azoriusModule\",\"type\":\"address\"}],\"name\":\"AzoriusSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"basisNumerator\",\"type\":\"uint256\"}],\"name\":\"BasisNumeratorUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weight\",\"type\":\"uint256\"}],\"name\":\"GovernanceTokenAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"GovernanceTokenRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"proposalId\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"votingEndBlock\",\"type\":\"uint32\"}],\"name\":\"ProposalInitialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"proposerThreshold\",\"type\":\"uint256\"}],\"name\":\"ProposerThresholdUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"quorumThreshold\",\"type\":\"uint256\"}],\"name\":\"QuorumThresholdUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"azoriusModule\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"StrategySetUp\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"proposalId\",\"type\":\"uint32\"},{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"voteType\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"tokenAddresses\",\"type\":\"address[]\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"Voted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"votingPeriod\",\"type\":\"uint32\"}],\"name\":\"VotingPeriodUpdated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"BASIS_DENOMINATOR\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_weight\",\"type\":\"uint256\"}],\"name\":\"addGovernanceToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"azoriusModule\",\"outputs\":[{\"internalType\":\"contract IAzorius\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"basisNumerator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAllTokenAddresses\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"getProposalVotes\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"noVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"yesVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"abstainVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"startBlock\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"endBlock\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"getTokenWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"hasVoted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"initializeProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"isPassed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"isProposer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_yesVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_noVotes\",\"type\":\"uint256\"}],\"name\":\"meetsBasis\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"proposalVotes\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"votingStartBlock\",\"type\":\"uint32\"},{\"internalType\":\"uint32\",\"name\":\"votingEndBlock\",\"type\":\"uint32\"},{\"internalType\":\"uint256\",\"name\":\"noVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"yesVotes\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"abstainVotes\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proposerThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"quorumThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"removeGovernanceToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_azoriusModule\",\"type\":\"address\"}],\"name\":\"setAzorius\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"initializeParams\",\"type\":\"bytes\"}],\"name\":\"setUp\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"tokenAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"tokenWeights\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_basisNumerator\",\"type\":\"uint256\"}],\"name\":\"updateBasisNumerator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_proposerThreshold\",\"type\":\"uint256\"}],\"name\":\"updateProposerThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_quorumThreshold\",\"type\":\"uint256\"}],\"name\":\"updateQuorumThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_votingPeriod\",\"type\":\"uint32\"}],\"name\":\"updateVotingPeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"},{\"internalType\":\"uint8\",\"name\":\"_voteType\",\"type\":\"uint8\"},{\"internalType\":\"address[]\",\"name\":\"_tokenAddresses\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_tokenIds\",\"type\":\"uint256[]\"}],\"name\":\"vote\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_proposalId\",\"type\":\"uint32\"}],\"name\":\"votingEndBlock\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"votingPeriod\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"Initialized(uint8)\":{\"details\":\"Triggered when the contract has been initialized or reinitialized.\"}},\"kind\":\"dev\",\"methods\":{\"addGovernanceToken(address,uint256)\":{\"params\":{\"_tokenAddress\":\"the address of the ERC-721 token\",\"_weight\":\"the number of votes each NFT id is worth\"}},\"getProposalVotes(uint32)\":{\"params\":{\"_proposalId\":\"id of the Proposal\"},\"returns\":{\"abstainVotes\":\"current count of \\\"ABSTAIN\\\" votes\",\"endBlock\":\"block number voting ends\",\"noVotes\":\"current count of \\\"NO\\\" votes\",\"startBlock\":\"block number voting starts\",\"yesVotes\":\"current count of \\\"YES\\\" votes\"}},\"getTokenWeight(address)\":{\"params\":{\"_tokenAddress\":\"the ERC-721 token address\"}},\"hasVoted(uint32,address,uint256)\":{\"params\":{\"_proposalId\":\"the id of the Proposal\",\"_tokenAddress\":\"the ERC-721 contract address\",\"_tokenId\":\"the unique id of the NFT\"}},\"initializeProposal(bytes)\":{\"params\":{\"_data\":\"arbitrary data to pass to this BaseStrategy\"}},\"isPassed(uint32)\":{\"params\":{\"_proposalId\":\"proposalId to check\"},\"returns\":{\"_0\":\"bool true if the proposal has passed, otherwise false\"}},\"isProposer(address)\":{\"params\":{\"_address\":\"address to check\"},\"returns\":{\"_0\":\"bool true if the address can submit a Proposal, otherwise false\"}},\"meetsBasis(uint256,uint256)\":{\"params\":{\"_noVotes\":\"number of votes against\",\"_yesVotes\":\"number of votes in favor\"},\"returns\":{\"_0\":\"bool whether the yes votes meets the set basis\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"removeGovernanceToken(address)\":{\"params\":{\"_tokenAddress\":\"the ERC-721 token to remove\"}},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"setAzorius(address)\":{\"params\":{\"_azoriusModule\":\"address of the Azorius Safe module\"}},\"setUp(bytes)\":{\"params\":{\"initializeParams\":\"encoded initialization parameters: `address _owner`, `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`,  `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`,  `uint256 _basisNumerator`\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"},\"updateBasisNumerator(uint256)\":{\"params\":{\"_basisNumerator\":\"numerator to use\"}},\"updateProposerThreshold(uint256)\":{\"params\":{\"_proposerThreshold\":\"required voting weight\"}},\"updateQuorumThreshold(uint256)\":{\"params\":{\"_quorumThreshold\":\"total voting weight required to achieve quorum\"}},\"updateVotingPeriod(uint32)\":{\"params\":{\"_votingPeriod\":\"voting time period (in blocks)\"}},\"vote(uint32,uint8,address[],uint256[])\":{\"params\":{\"_proposalId\":\"id of the Proposal to vote on\",\"_tokenAddresses\":\"list of ERC-721 addresses that correspond to ids in _tokenIds\",\"_tokenIds\":\"list of unique token ids that correspond to their ERC-721 address in _tokenAddresses\",\"_voteType\":\"Proposal support as defined in VoteType (NO, YES, ABSTAIN)\"}},\"votingEndBlock(uint32)\":{\"params\":{\"_proposalId\":\"proposalId to check\"},\"returns\":{\"_0\":\"uint32 block number when voting ends on the Proposal\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"BASIS_DENOMINATOR()\":{\"notice\":\"The denominator to use when calculating basis (1,000,000). \"},\"addGovernanceToken(address,uint256)\":{\"notice\":\"Adds a new ERC-721 token as a governance token, along with its associated weight.\"},\"basisNumerator()\":{\"notice\":\"The numerator to use when calculating basis (adjustable). \"},\"getAllTokenAddresses()\":{\"notice\":\"Returns whole list of governance tokens addresses\"},\"getProposalVotes(uint32)\":{\"notice\":\"Returns the current state of the specified Proposal.\"},\"getTokenWeight(address)\":{\"notice\":\"Returns the current token weight for the given ERC-721 token address.\"},\"hasVoted(uint32,address,uint256)\":{\"notice\":\"Returns whether an NFT id has already voted.\"},\"initializeProposal(bytes)\":{\"notice\":\"Called by the [Azorius](../Azorius.md) module. This notifies this  [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.\"},\"isPassed(uint32)\":{\"notice\":\"Returns whether a Proposal has been passed.\"},\"isProposer(address)\":{\"notice\":\"Returns whether the specified address can submit a Proposal with this [BaseStrategy](../BaseStrategy.md). This allows a BaseStrategy to place any limits it would like on who can create new Proposals, such as requiring a minimum token delegation.\"},\"meetsBasis(uint256,uint256)\":{\"notice\":\"Calculates whether a vote meets its basis.\"},\"proposalVotes(uint256)\":{\"notice\":\"`proposalId` to `ProposalVotes`, the voting state of a Proposal. \"},\"proposerThreshold()\":{\"notice\":\"The minimum number of voting power required to create a new proposal.\"},\"quorumThreshold()\":{\"notice\":\"The total number of votes required to achieve quorum. \\\"Quorum threshold\\\" is used instead of a quorum percent because IERC721 has no  totalSupply function, so the contract cannot determine this.\"},\"removeGovernanceToken(address)\":{\"notice\":\"Removes the given ERC-721 token address from the list of governance tokens.\"},\"setAzorius(address)\":{\"notice\":\"Sets the address of the [Azorius](../Azorius.md) contract this  [BaseStrategy](../BaseStrategy.md) is being used on.\"},\"setUp(bytes)\":{\"notice\":\"Sets up the contract with its initial parameters.\"},\"tokenAddresses(uint256)\":{\"notice\":\"The list of ERC-721 tokens that can vote. \"},\"tokenWeights(address)\":{\"notice\":\"ERC-721 address to its voting weight per NFT id.  \"},\"updateBasisNumerator(uint256)\":{\"notice\":\"Updates the `basisNumerator` for future Proposals.\"},\"updateProposerThreshold(uint256)\":{\"notice\":\"Updates the voting weight required to submit new Proposals.\"},\"updateQuorumThreshold(uint256)\":{\"notice\":\"Updates the quorum required for future Proposals.\"},\"updateVotingPeriod(uint32)\":{\"notice\":\"Updates the voting time period for new Proposals.\"},\"vote(uint32,uint8,address[],uint256[])\":{\"notice\":\"Submits a vote on an existing Proposal.\"},\"votingEndBlock(uint32)\":{\"notice\":\"Returns the block number voting ends on a given Proposal.\"},\"votingPeriod()\":{\"notice\":\"Number of blocks a new Proposal can be voted on. \"}},\"notice\":\"An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens,  each with their own voting weight. This is slightly different from ERC-20 voting, since there is no way to snapshot ERC721 holdings. Each ERC721 id can vote once, reguardless of what address held it when a proposal was created. Also, this uses \\\"quorumThreshold\\\" rather than LinearERC20Voting's quorumPercent, because the  total supply of NFTs is not knowable within the IERC721 interface.  This is similar to a multisig  \\\"total signers\\\" required, rather than a percentage of the tokens.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/azorius/LinearERC721Voting.sol\":\"LinearERC721Voting\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.7.0 <0.9.0;\\n\\n/// @title Enum - Collection of enums\\n/// @author Richard Meissner - <richard@gnosis.pm>\\ncontract Enum {\\n    enum Operation {Call, DelegateCall}\\n}\\n\",\"keccak256\":\"0x473e45b1a5cc47be494b0e123c9127f0c11c1e0992a321ae5a644c0bfdb2c14f\",\"license\":\"LGPL-3.0-only\"},\"@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\n\\n/// @title Zodiac FactoryFriendly - A contract that allows other contracts to be initializable and pass bytes as arguments to define contract state\\npragma solidity >=0.7.0 <0.9.0;\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\n\\nabstract contract FactoryFriendly is OwnableUpgradeable {\\n    function setUp(bytes memory initializeParams) public virtual;\\n}\\n\",\"keccak256\":\"0x96e61585b7340a901a54eb4c157ce28b630bff3d9d4597dfaac692128ea458c4\",\"license\":\"LGPL-3.0-only\"},\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../utils/ContextUpgradeable.sol\\\";\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * By default, the owner account will be the one that deploys the contract. This\\n * can later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {\\n    address private _owner;\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    function __Ownable_init() internal onlyInitializing {\\n        __Ownable_init_unchained();\\n    }\\n\\n    function __Ownable_init_unchained() internal onlyInitializing {\\n        _transferOwnership(_msgSender());\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        require(owner() == _msgSender(), \\\"Ownable: caller is not the owner\\\");\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        require(newOwner != address(0), \\\"Ownable: new owner is the zero address\\\");\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[49] private __gap;\\n}\\n\",\"keccak256\":\"0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)\\n\\npragma solidity ^0.8.0;\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract ContextUpgradeable is Initializable {\\n    function __Context_init() internal onlyInitializing {\\n    }\\n\\n    function __Context_init_unchained() internal onlyInitializing {\\n    }\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[50] private __gap;\\n}\\n\",\"keccak256\":\"0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC721/IERC721.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (token/ERC721/IERC721.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../../utils/introspection/IERC165.sol\\\";\\n\\n/**\\n * @dev Required interface of an ERC721 compliant contract.\\n */\\ninterface IERC721 is IERC165 {\\n    /**\\n     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);\\n\\n    /**\\n     * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.\\n     */\\n    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);\\n\\n    /**\\n     * @dev Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.\\n     */\\n    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);\\n\\n    /**\\n     * @dev Returns the number of tokens in ``owner``'s account.\\n     */\\n    function balanceOf(address owner) external view returns (uint256 balance);\\n\\n    /**\\n     * @dev Returns the owner of the `tokenId` token.\\n     *\\n     * Requirements:\\n     *\\n     * - `tokenId` must exist.\\n     */\\n    function ownerOf(uint256 tokenId) external view returns (address owner);\\n\\n    /**\\n     * @dev Safely transfers `tokenId` token from `from` to `to`.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must exist and be owned by `from`.\\n     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.\\n     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function safeTransferFrom(\\n        address from,\\n        address to,\\n        uint256 tokenId,\\n        bytes calldata data\\n    ) external;\\n\\n    /**\\n     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients\\n     * are aware of the ERC721 protocol to prevent tokens from being forever locked.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must exist and be owned by `from`.\\n     * - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}.\\n     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function safeTransferFrom(\\n        address from,\\n        address to,\\n        uint256 tokenId\\n    ) external;\\n\\n    /**\\n     * @dev Transfers `tokenId` token from `from` to `to`.\\n     *\\n     * WARNING: Usage of this method is discouraged, use {safeTransferFrom} whenever possible.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must be owned by `from`.\\n     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 tokenId\\n    ) external;\\n\\n    /**\\n     * @dev Gives permission to `to` to transfer `tokenId` token to another account.\\n     * The approval is cleared when the token is transferred.\\n     *\\n     * Only a single account can be approved at a time, so approving the zero address clears previous approvals.\\n     *\\n     * Requirements:\\n     *\\n     * - The caller must own the token or be an approved operator.\\n     * - `tokenId` must exist.\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address to, uint256 tokenId) external;\\n\\n    /**\\n     * @dev Approve or remove `operator` as an operator for the caller.\\n     * Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller.\\n     *\\n     * Requirements:\\n     *\\n     * - The `operator` cannot be the caller.\\n     *\\n     * Emits an {ApprovalForAll} event.\\n     */\\n    function setApprovalForAll(address operator, bool _approved) external;\\n\\n    /**\\n     * @dev Returns the account approved for `tokenId` token.\\n     *\\n     * Requirements:\\n     *\\n     * - `tokenId` must exist.\\n     */\\n    function getApproved(uint256 tokenId) external view returns (address operator);\\n\\n    /**\\n     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.\\n     *\\n     * See {setApprovalForAll}\\n     */\\n    function isApprovedForAll(address owner, address operator) external view returns (bool);\\n}\\n\",\"keccak256\":\"0xed6a749c5373af398105ce6ee3ac4763aa450ea7285d268c85d9eeca809cdb1f\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[EIP].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\"},\"contracts/azorius/BaseStrategy.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity =0.8.19;\\n\\nimport { IAzorius } from \\\"./interfaces/IAzorius.sol\\\";\\nimport { IBaseStrategy } from \\\"./interfaces/IBaseStrategy.sol\\\";\\nimport { FactoryFriendly } from \\\"@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol\\\";\\nimport { OwnableUpgradeable } from \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\n\\n/**\\n * The base abstract contract for all voting strategies in Azorius.\\n */\\nabstract contract BaseStrategy is OwnableUpgradeable, FactoryFriendly, IBaseStrategy {\\n\\n    event AzoriusSet(address indexed azoriusModule);\\n    event StrategySetUp(address indexed azoriusModule, address indexed owner);\\n\\n    error OnlyAzorius();\\n\\n    IAzorius public azoriusModule;\\n\\n    /**\\n     * Ensures that only the [Azorius](./Azorius.md) contract that pertains to this \\n     * [BaseStrategy](./BaseStrategy.md) can call functions on it.\\n     */\\n    modifier onlyAzorius() {\\n        if (msg.sender != address(azoriusModule)) revert OnlyAzorius();\\n        _;\\n    }\\n\\n    constructor() {\\n      _disableInitializers();\\n    }\\n\\n    /** @inheritdoc IBaseStrategy*/\\n    function setAzorius(address _azoriusModule) external onlyOwner {\\n        azoriusModule = IAzorius(_azoriusModule);\\n        emit AzoriusSet(_azoriusModule);\\n    }\\n\\n    /** @inheritdoc IBaseStrategy*/\\n    function initializeProposal(bytes memory _data) external virtual;\\n\\n    /** @inheritdoc IBaseStrategy*/\\n    function isPassed(uint32 _proposalId) external view virtual returns (bool);\\n\\n    /** @inheritdoc IBaseStrategy*/\\n    function isProposer(address _address) external view virtual returns (bool);\\n\\n    /** @inheritdoc IBaseStrategy*/\\n    function votingEndBlock(uint32 _proposalId) external view virtual returns (uint32);\\n\\n    /**\\n     * Sets the address of the [Azorius](Azorius.md) module contract.\\n     *\\n     * @param _azoriusModule address of the Azorius module\\n     */\\n    function _setAzorius(address _azoriusModule) internal {\\n        azoriusModule = IAzorius(_azoriusModule);\\n        emit AzoriusSet(_azoriusModule);\\n    }\\n}\\n\",\"keccak256\":\"0xd04aeec28b5a7c7bad44f2c9dfe7641240e319b8d76d05f940453a258411c567\",\"license\":\"LGPL-3.0-only\"},\"contracts/azorius/BaseVotingBasisPercent.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity =0.8.19;\\n\\nimport { OwnableUpgradeable } from \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\n\\n/**\\n * An Azorius extension contract that enables percent based voting basis calculations.\\n *\\n * Intended to be implemented by BaseStrategy implementations, this allows for voting strategies\\n * to dictate any basis strategy for passing a Proposal between >50% (simple majority) to 100%.\\n *\\n * See https://en.wikipedia.org/wiki/Voting#Voting_basis.\\n * See https://en.wikipedia.org/wiki/Supermajority.\\n */\\nabstract contract BaseVotingBasisPercent is OwnableUpgradeable {\\n    \\n    /** The numerator to use when calculating basis (adjustable). */\\n    uint256 public basisNumerator;\\n\\n    /** The denominator to use when calculating basis (1,000,000). */\\n    uint256 public constant BASIS_DENOMINATOR = 1_000_000;\\n\\n    error InvalidBasisNumerator();\\n\\n    event BasisNumeratorUpdated(uint256 basisNumerator);\\n\\n    /**\\n     * Updates the `basisNumerator` for future Proposals.\\n     *\\n     * @param _basisNumerator numerator to use\\n     */\\n    function updateBasisNumerator(uint256 _basisNumerator) public virtual onlyOwner {\\n        _updateBasisNumerator(_basisNumerator);\\n    }\\n\\n    /** Internal implementation of `updateBasisNumerator`. */\\n    function _updateBasisNumerator(uint256 _basisNumerator) internal virtual {\\n        if (_basisNumerator > BASIS_DENOMINATOR || _basisNumerator < BASIS_DENOMINATOR / 2)\\n            revert InvalidBasisNumerator();\\n\\n        basisNumerator = _basisNumerator;\\n\\n        emit BasisNumeratorUpdated(_basisNumerator);\\n    }\\n\\n    /**\\n     * Calculates whether a vote meets its basis.\\n     *\\n     * @param _yesVotes number of votes in favor\\n     * @param _noVotes number of votes against\\n     * @return bool whether the yes votes meets the set basis\\n     */\\n    function meetsBasis(uint256 _yesVotes, uint256 _noVotes) public view returns (bool) {\\n        return _yesVotes > (_yesVotes + _noVotes) * basisNumerator / BASIS_DENOMINATOR;\\n    }\\n}\\n\",\"keccak256\":\"0x568d4c7f3e5de10272ec675cd745a53b414ca2e3388bfeff19d8addf9e324c7e\",\"license\":\"LGPL-3.0-only\"},\"contracts/azorius/LinearERC721Voting.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity =0.8.19;\\n\\nimport { IERC721VotingStrategy } from \\\"./interfaces/IERC721VotingStrategy.sol\\\";\\nimport { IERC721 } from \\\"@openzeppelin/contracts/token/ERC721/IERC721.sol\\\";\\nimport { BaseVotingBasisPercent } from \\\"./BaseVotingBasisPercent.sol\\\";\\nimport { IAzorius } from \\\"./interfaces/IAzorius.sol\\\";\\nimport { BaseStrategy } from \\\"./BaseStrategy.sol\\\";\\n\\n/**\\n * An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens, \\n * each with their own voting weight.\\n *\\n * This is slightly different from ERC-20 voting, since there is no way to snapshot ERC721 holdings.\\n * Each ERC721 id can vote once, reguardless of what address held it when a proposal was created.\\n *\\n * Also, this uses \\\"quorumThreshold\\\" rather than LinearERC20Voting's quorumPercent, because the \\n * total supply of NFTs is not knowable within the IERC721 interface.  This is similar to a multisig \\n * \\\"total signers\\\" required, rather than a percentage of the tokens.\\n */\\ncontract LinearERC721Voting is BaseStrategy, BaseVotingBasisPercent, IERC721VotingStrategy {\\n\\n    /**\\n     * The voting options for a Proposal.\\n     */\\n    enum VoteType {\\n        NO,     // disapproves of executing the Proposal\\n        YES,    // approves of executing the Proposal\\n        ABSTAIN // neither YES nor NO, i.e. voting \\\"present\\\"\\n    }\\n\\n    /**\\n     * Defines the current state of votes on a particular Proposal.\\n     */\\n    struct ProposalVotes {\\n        uint32 votingStartBlock; // block that voting starts at\\n        uint32 votingEndBlock; // block that voting ends\\n        uint256 noVotes; // current number of NO votes for the Proposal\\n        uint256 yesVotes; // current number of YES votes for the Proposal\\n        uint256 abstainVotes; // current number of ABSTAIN votes for the Proposal\\n        /**\\n         * ERC-721 contract address to individual NFT id to bool \\n         * of whether it has voted on this proposal.\\n         */\\n        mapping(address => mapping(uint256 => bool)) hasVoted;\\n    }\\n\\n    /** `proposalId` to `ProposalVotes`, the voting state of a Proposal. */\\n    mapping(uint256 => ProposalVotes) public proposalVotes;\\n\\n    /** The list of ERC-721 tokens that can vote. */\\n    address[] public tokenAddresses;\\n    \\n    /** ERC-721 address to its voting weight per NFT id.  */\\n    mapping(address => uint256) public tokenWeights;\\n    \\n    /** Number of blocks a new Proposal can be voted on. */\\n    uint32 public votingPeriod;\\n\\n    /** \\n     * The total number of votes required to achieve quorum.\\n     * \\\"Quorum threshold\\\" is used instead of a quorum percent because IERC721 has no \\n     * totalSupply function, so the contract cannot determine this.\\n     */\\n    uint256 public quorumThreshold;\\n\\n    /** \\n     * The minimum number of voting power required to create a new proposal.\\n     */\\n    uint256 public proposerThreshold; \\n\\n    event VotingPeriodUpdated(uint32 votingPeriod);\\n    event QuorumThresholdUpdated(uint256 quorumThreshold);\\n    event ProposerThresholdUpdated(uint256 proposerThreshold);\\n    event ProposalInitialized(uint32 proposalId, uint32 votingEndBlock);\\n    event Voted(address voter, uint32 proposalId, uint8 voteType, address[] tokenAddresses, uint256[] tokenIds);\\n    event GovernanceTokenAdded(address token, uint256 weight);\\n    event GovernanceTokenRemoved(address token);\\n\\n    error InvalidParams();\\n    error InvalidProposal();\\n    error VotingEnded();\\n    error InvalidVote();\\n    error InvalidTokenAddress();\\n    error NoVotingWeight();\\n    error TokenAlreadySet();\\n    error TokenNotSet();\\n    error IdAlreadyVoted(uint256 tokenId);\\n    error IdNotOwned(uint256 tokenId);\\n\\n    /**\\n     * Sets up the contract with its initial parameters.\\n     *\\n     * @param initializeParams encoded initialization parameters: `address _owner`,\\n     * `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`, \\n     * `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`, \\n     * `uint256 _basisNumerator`\\n     */\\n    function setUp(bytes memory initializeParams) public override initializer {\\n        (\\n            address _owner,\\n            address[] memory _tokens,\\n            uint256[] memory _weights,\\n            address _azoriusModule,\\n            uint32 _votingPeriod,\\n            uint256 _quorumThreshold,\\n            uint256 _proposerThreshold,\\n            uint256 _basisNumerator\\n        ) = abi.decode(\\n            initializeParams,\\n            (address, address[], uint256[], address, uint32, uint256, uint256, uint256)\\n        );\\n\\n        if (_tokens.length != _weights.length) {\\n            revert InvalidParams();\\n        }\\n\\n        for (uint i = 0; i < _tokens.length;) {\\n            _addGovernanceToken(_tokens[i], _weights[i]);\\n            unchecked { ++i; }\\n        }\\n\\n        __Ownable_init();\\n        transferOwnership(_owner);\\n        _setAzorius(_azoriusModule);\\n        _updateQuorumThreshold(_quorumThreshold);\\n        _updateProposerThreshold(_proposerThreshold);\\n        _updateBasisNumerator(_basisNumerator);\\n        _updateVotingPeriod(_votingPeriod);\\n\\n        emit StrategySetUp(_azoriusModule, _owner);\\n    }\\n\\n    /**\\n     * Adds a new ERC-721 token as a governance token, along with its associated weight.\\n     *\\n     * @param _tokenAddress the address of the ERC-721 token\\n     * @param _weight the number of votes each NFT id is worth\\n     */\\n    function addGovernanceToken(address _tokenAddress, uint256 _weight) external onlyOwner {\\n        _addGovernanceToken(_tokenAddress, _weight);\\n    }\\n\\n    /**\\n     * Updates the voting time period for new Proposals.\\n     *\\n     * @param _votingPeriod voting time period (in blocks)\\n     */\\n    function updateVotingPeriod(uint32 _votingPeriod) external onlyOwner {\\n        _updateVotingPeriod(_votingPeriod);\\n    }\\n\\n    /** \\n     * Updates the quorum required for future Proposals.\\n     *\\n     * @param _quorumThreshold total voting weight required to achieve quorum\\n     */\\n    function updateQuorumThreshold(uint256 _quorumThreshold) external onlyOwner {\\n        _updateQuorumThreshold(_quorumThreshold);\\n    }\\n\\n    /**\\n     * Updates the voting weight required to submit new Proposals.\\n     *\\n     * @param _proposerThreshold required voting weight\\n     */\\n    function updateProposerThreshold(uint256 _proposerThreshold) external onlyOwner {\\n        _updateProposerThreshold(_proposerThreshold);\\n    }\\n    /**\\n     * Returns whole list of governance tokens addresses\\n     */\\n    function getAllTokenAddresses() external view returns (address[] memory) {\\n        return tokenAddresses;\\n    }\\n\\n    /**\\n     * Returns the current state of the specified Proposal.\\n     *\\n     * @param _proposalId id of the Proposal\\n     * @return noVotes current count of \\\"NO\\\" votes\\n     * @return yesVotes current count of \\\"YES\\\" votes\\n     * @return abstainVotes current count of \\\"ABSTAIN\\\" votes\\n     * @return startBlock block number voting starts\\n     * @return endBlock block number voting ends\\n     */\\n    function getProposalVotes(uint32 _proposalId) external view\\n        returns (\\n            uint256 noVotes,\\n            uint256 yesVotes,\\n            uint256 abstainVotes,\\n            uint32 startBlock,\\n            uint32 endBlock\\n        )\\n    {\\n        noVotes = proposalVotes[_proposalId].noVotes;\\n        yesVotes = proposalVotes[_proposalId].yesVotes;\\n        abstainVotes = proposalVotes[_proposalId].abstainVotes;\\n        startBlock = proposalVotes[_proposalId].votingStartBlock;\\n        endBlock = proposalVotes[_proposalId].votingEndBlock;\\n    }\\n\\n    /**\\n     * Submits a vote on an existing Proposal.\\n     *\\n     * @param _proposalId id of the Proposal to vote on\\n     * @param _voteType Proposal support as defined in VoteType (NO, YES, ABSTAIN)\\n     * @param _tokenAddresses list of ERC-721 addresses that correspond to ids in _tokenIds\\n     * @param _tokenIds list of unique token ids that correspond to their ERC-721 address in _tokenAddresses\\n     */\\n    function vote(\\n        uint32 _proposalId, \\n        uint8 _voteType, \\n        address[] memory _tokenAddresses,\\n        uint256[] memory _tokenIds \\n    ) external {\\n        if (_tokenAddresses.length != _tokenIds.length) revert InvalidParams();\\n        _vote(_proposalId, msg.sender, _voteType, _tokenAddresses, _tokenIds);\\n    }\\n\\n    /** @inheritdoc IERC721VotingStrategy*/\\n    function getTokenWeight(address _tokenAddress) external view override returns (uint256) {\\n        return tokenWeights[_tokenAddress];\\n    }\\n\\n    /**\\n     * Returns whether an NFT id has already voted.\\n     *\\n     * @param _proposalId the id of the Proposal\\n     * @param _tokenAddress the ERC-721 contract address\\n     * @param _tokenId the unique id of the NFT\\n     */\\n    function hasVoted(uint32 _proposalId, address _tokenAddress, uint256 _tokenId) external view returns (bool) {\\n        return proposalVotes[_proposalId].hasVoted[_tokenAddress][_tokenId];\\n    }\\n\\n    /** \\n     * Removes the given ERC-721 token address from the list of governance tokens.\\n     *\\n     * @param _tokenAddress the ERC-721 token to remove\\n     */\\n    function removeGovernanceToken(address _tokenAddress) external onlyOwner {\\n        if (tokenWeights[_tokenAddress] == 0) revert TokenNotSet();\\n\\n        tokenWeights[_tokenAddress] = 0;\\n\\n        uint256 length = tokenAddresses.length;\\n        for (uint256 i = 0; i < length;) {\\n            if (_tokenAddress == tokenAddresses[i]) {\\n                uint256 last = length - 1;\\n                tokenAddresses[i] = tokenAddresses[last]; // move the last token into the position to remove\\n                delete tokenAddresses[last];              // delete the last token\\n                break;\\n            }\\n            unchecked { ++i; }\\n        }\\n        \\n        emit GovernanceTokenRemoved(_tokenAddress);\\n    }\\n\\n    /** @inheritdoc BaseStrategy*/\\n    function initializeProposal(bytes memory _data) public virtual override onlyAzorius {\\n        uint32 proposalId = abi.decode(_data, (uint32));\\n        uint32 _votingEndBlock = uint32(block.number) + votingPeriod;\\n\\n        proposalVotes[proposalId].votingEndBlock = _votingEndBlock;\\n        proposalVotes[proposalId].votingStartBlock = uint32(block.number);\\n\\n        emit ProposalInitialized(proposalId, _votingEndBlock);\\n    }\\n\\n    /** @inheritdoc BaseStrategy*/\\n    function isPassed(uint32 _proposalId) public view override returns (bool) {\\n        return (\\n            block.number > proposalVotes[_proposalId].votingEndBlock && // voting period has ended\\n            quorumThreshold <= proposalVotes[_proposalId].yesVotes + proposalVotes[_proposalId].abstainVotes && // yes + abstain votes meets the quorum\\n            meetsBasis(proposalVotes[_proposalId].yesVotes, proposalVotes[_proposalId].noVotes) // yes votes meets the basis\\n        );\\n    }\\n\\n    /** @inheritdoc BaseStrategy*/\\n    function isProposer(address _address) public view override returns (bool) {\\n        uint256 totalWeight = 0;\\n        for (uint i = 0; i < tokenAddresses.length;) {\\n            address tokenAddress = tokenAddresses[i];\\n            totalWeight += IERC721(tokenAddress).balanceOf(_address) * tokenWeights[tokenAddress];\\n            unchecked { ++i; }\\n        }\\n        return totalWeight >= proposerThreshold;\\n    }\\n\\n    /** @inheritdoc BaseStrategy*/\\n    function votingEndBlock(uint32 _proposalId) public view override returns (uint32) {\\n      return proposalVotes[_proposalId].votingEndBlock;\\n    }\\n\\n    /** Internal implementation of `addGovernanceToken` */\\n    function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal {\\n        if (!IERC721(_tokenAddress).supportsInterface(0x80ac58cd))\\n            revert InvalidTokenAddress();\\n        \\n        if (_weight == 0)\\n            revert NoVotingWeight();\\n\\n        if (tokenWeights[_tokenAddress] > 0)\\n            revert TokenAlreadySet();\\n\\n        tokenAddresses.push(_tokenAddress);\\n        tokenWeights[_tokenAddress] = _weight;\\n\\n        emit GovernanceTokenAdded(_tokenAddress, _weight);\\n    }\\n\\n    /** Internal implementation of `updateVotingPeriod`. */\\n    function _updateVotingPeriod(uint32 _votingPeriod) internal {\\n        votingPeriod = _votingPeriod;\\n        emit VotingPeriodUpdated(_votingPeriod);\\n    }\\n\\n    /** Internal implementation of `updateQuorumThreshold`. */\\n    function _updateQuorumThreshold(uint256 _quorumThreshold) internal {\\n        quorumThreshold = _quorumThreshold;\\n        emit QuorumThresholdUpdated(quorumThreshold);\\n    }\\n\\n    /** Internal implementation of `updateProposerThreshold`. */\\n    function _updateProposerThreshold(uint256 _proposerThreshold) internal {\\n        proposerThreshold = _proposerThreshold;\\n        emit ProposerThresholdUpdated(_proposerThreshold);\\n    }\\n\\n    /**\\n     * Internal function for casting a vote on a Proposal.\\n     *\\n     * @param _proposalId id of the Proposal\\n     * @param _voter address casting the vote\\n     * @param _voteType vote support, as defined in VoteType\\n     * @param _tokenAddresses list of ERC-721 addresses that correspond to ids in _tokenIds\\n     * @param _tokenIds list of unique token ids that correspond to their ERC-721 address in _tokenAddresses\\n     */\\n    function _vote(\\n        uint32 _proposalId,\\n        address _voter,\\n        uint8 _voteType,\\n        address[] memory _tokenAddresses,\\n        uint256[] memory _tokenIds\\n    ) internal {\\n\\n        uint256 weight;\\n\\n        // verifies the voter holds the NFTs and returns the total weight associated with their tokens\\n        // the frontend will need to determine whether an address can vote on a proposal, as it is possible\\n        // to vote twice if you get more weight later on\\n        for (uint256 i = 0; i < _tokenAddresses.length;) {\\n\\n            address tokenAddress = _tokenAddresses[i];\\n            uint256 tokenId = _tokenIds[i];\\n\\n            if (_voter != IERC721(tokenAddress).ownerOf(tokenId)) {\\n                revert IdNotOwned(tokenId);\\n            }\\n\\n            if (proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] == true) {\\n                revert IdAlreadyVoted(tokenId);\\n            }\\n            \\n            weight += tokenWeights[tokenAddress];\\n            proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] = true;\\n            unchecked { ++i; }\\n        }\\n\\n        if (weight == 0) revert NoVotingWeight();\\n\\n        ProposalVotes storage proposal = proposalVotes[_proposalId];\\n\\n        if (proposal.votingEndBlock == 0)\\n            revert InvalidProposal();\\n\\n        if (block.number > proposal.votingEndBlock)\\n            revert VotingEnded();\\n\\n        if (_voteType == uint8(VoteType.NO)) {\\n            proposal.noVotes += weight;\\n        } else if (_voteType == uint8(VoteType.YES)) {\\n            proposal.yesVotes += weight;\\n        } else if (_voteType == uint8(VoteType.ABSTAIN)) {\\n            proposal.abstainVotes += weight;\\n        } else {\\n            revert InvalidVote();\\n        }\\n\\n        emit Voted(_voter, _proposalId, _voteType, _tokenAddresses, _tokenIds);\\n    }\\n}\\n\",\"keccak256\":\"0x509df2404dce6b2caf72402fd7e602480258432c075e463ae55e7613537fc589\",\"license\":\"LGPL-3.0-only\"},\"contracts/azorius/interfaces/IAzorius.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity =0.8.19;\\n\\nimport { Enum } from \\\"@gnosis.pm/safe-contracts/contracts/common/Enum.sol\\\";\\n\\n/**\\n * The base interface for the Azorius governance Safe module.\\n * Azorius conforms to the Zodiac pattern for Safe modules: https://github.com/gnosis/zodiac\\n *\\n * Azorius manages the state of Proposals submitted to a DAO, along with the associated strategies\\n * ([BaseStrategy](../BaseStrategy.md)) for voting that are enabled on the DAO.\\n *\\n * Any given DAO can support multiple voting BaseStrategies, and these strategies are intended to be\\n * as customizable as possible.\\n *\\n * Proposals begin in the `ACTIVE` state and will ultimately end in either\\n * the `EXECUTED`, `EXPIRED`, or `FAILED` state.\\n *\\n * `ACTIVE` - a new proposal begins in this state, and stays in this state\\n *          for the duration of its voting period.\\n *\\n * `TIMELOCKED` - A proposal that passes enters the `TIMELOCKED` state, during which\\n *          it cannot yet be executed.  This is to allow time for token holders\\n *          to potentially exit their position, as well as parent DAOs time to\\n *          initiate a freeze, if they choose to do so. A proposal stays timelocked\\n *          for the duration of its `timelockPeriod`.\\n *\\n * `EXECUTABLE` - Following the `TIMELOCKED` state, a passed proposal becomes `EXECUTABLE`,\\n *          and can then finally be executed on chain by anyone.\\n *\\n * `EXECUTED` - the final state for a passed proposal.  The proposal has been executed\\n *          on the blockchain.\\n *\\n * `EXPIRED` - a passed proposal which is not executed before its `executionPeriod` has\\n *          elapsed will be `EXPIRED`, and can no longer be executed.\\n *\\n * `FAILED` - a failed proposal (as defined by its [BaseStrategy](../BaseStrategy.md) \\n *          `isPassed` function). For a basic strategy, this would mean it received more \\n *          NO votes than YES or did not achieve quorum. \\n */\\ninterface IAzorius {\\n\\n    /** Represents a transaction to perform on the blockchain. */\\n    struct Transaction {\\n        address to; // destination address of the transaction\\n        uint256 value; // amount of ETH to transfer with the transaction\\n        bytes data; // encoded function call data of the transaction\\n        Enum.Operation operation; // Operation type, Call or DelegateCall\\n    }\\n\\n    /** Holds details pertaining to a single proposal. */\\n    struct Proposal {\\n        uint32 executionCounter; // count of transactions that have been executed within the proposal\\n        uint32 timelockPeriod; // time (in blocks) this proposal will be timelocked for if it passes\\n        uint32 executionPeriod; // time (in blocks) this proposal has to be executed after timelock ends before it is expired\\n        address strategy; // BaseStrategy contract this proposal was created on\\n        bytes32[] txHashes; // hashes of the transactions that are being proposed\\n    }\\n\\n    /** The list of states in which a Proposal can be in at any given time. */\\n    enum ProposalState {\\n        ACTIVE,\\n        TIMELOCKED,\\n        EXECUTABLE,\\n        EXECUTED,\\n        EXPIRED,\\n        FAILED\\n    }\\n\\n    /**\\n     * Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.\\n     *\\n     * Multiple strategies can be enabled, and new Proposals will be able to be\\n     * created using any of the currently enabled strategies.\\n     *\\n     * @param _strategy contract address of the BaseStrategy to be enabled\\n     */\\n    function enableStrategy(address _strategy) external;\\n\\n    /**\\n     * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.\\n     * This has no effect on existing Proposals, either `ACTIVE` or completed.\\n     *\\n     * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed\\n     * @param _strategy address of the BaseStrategy to be removed\\n     */\\n    function disableStrategy(address _prevStrategy, address _strategy) external;\\n\\n    /**\\n     * Updates the `timelockPeriod` for newly created Proposals.\\n     * This has no effect on existing Proposals, either `ACTIVE` or completed.\\n     *\\n     * @param _timelockPeriod timelockPeriod (in blocks) to be used for new Proposals\\n     */\\n    function updateTimelockPeriod(uint32 _timelockPeriod) external;\\n\\n    /**\\n     * Updates the execution period for future Proposals.\\n     *\\n     * @param _executionPeriod new execution period (in blocks)\\n     */\\n    function updateExecutionPeriod(uint32 _executionPeriod) external;\\n\\n    /**\\n     * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).\\n     * New Proposals begin immediately in the `ACTIVE` state.\\n     *\\n     * @param _strategy address of the BaseStrategy implementation which the Proposal will use\\n     * @param _data arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies, \\n     * but is included in case future strategy contracts have a need for it\\n     * @param _transactions array of transactions to propose\\n     * @param _metadata additional data such as a title/description to submit with the proposal\\n     */\\n    function submitProposal(\\n        address _strategy,\\n        bytes memory _data,\\n        Transaction[] calldata _transactions,\\n        string calldata _metadata\\n    ) external;\\n\\n    /**\\n     * Executes all transactions within a Proposal.\\n     * This will only be able to be called if the Proposal passed.\\n     *\\n     * @param _proposalId identifier of the Proposal\\n     * @param _targets target contracts for each transaction\\n     * @param _values ETH values to be sent with each transaction\\n     * @param _data transaction data to be executed\\n     * @param _operations Calls or Delegatecalls\\n     */\\n    function executeProposal(\\n        uint32 _proposalId,\\n        address[] memory _targets,\\n        uint256[] memory _values,\\n        bytes[] memory _data,\\n        Enum.Operation[] memory _operations\\n    ) external;\\n\\n    /**\\n     * Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.\\n     *\\n     * @param _strategy contract address of the BaseStrategy to check\\n     * @return bool True if the strategy is enabled, otherwise False\\n     */\\n    function isStrategyEnabled(address _strategy) external view returns (bool);\\n\\n    /**\\n     * Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.\\n     * Because the list of BaseStrategies is technically unbounded, this\\n     * requires the address of the first strategy you would like, along\\n     * with the total count of strategies to return, rather than\\n     * returning the whole list at once.\\n     *\\n     * @param _startAddress contract address of the BaseStrategy to start with\\n     * @param _count maximum number of BaseStrategies that should be returned\\n     * @return _strategies array of BaseStrategies\\n     * @return _next next BaseStrategy contract address in the linked list\\n     */\\n    function getStrategies(\\n        address _startAddress,\\n        uint256 _count\\n    ) external view returns (address[] memory _strategies, address _next);\\n\\n    /**\\n     * Gets the state of a Proposal.\\n     *\\n     * @param _proposalId identifier of the Proposal\\n     * @return ProposalState uint256 ProposalState enum value representing the\\n     *         current state of the proposal\\n     */\\n    function proposalState(uint32 _proposalId) external view returns (ProposalState);\\n\\n    /**\\n     * Generates the data for the module transaction hash (required for signing).\\n     *\\n     * @param _to target address of the transaction\\n     * @param _value ETH value to send with the transaction\\n     * @param _data encoded function call data of the transaction\\n     * @param _operation Enum.Operation to use for the transaction\\n     * @param _nonce Safe nonce of the transaction\\n     * @return bytes hashed transaction data\\n     */\\n    function generateTxHashData(\\n        address _to,\\n        uint256 _value,\\n        bytes memory _data,\\n        Enum.Operation _operation,\\n        uint256 _nonce\\n    ) external view returns (bytes memory);\\n\\n    /**\\n     * Returns the `keccak256` hash of the specified transaction.\\n     *\\n     * @param _to target address of the transaction\\n     * @param _value ETH value to send with the transaction\\n     * @param _data encoded function call data of the transaction\\n     * @param _operation Enum.Operation to use for the transaction\\n     * @return bytes32 transaction hash\\n     */\\n    function getTxHash(\\n        address _to,\\n        uint256 _value,\\n        bytes memory _data,\\n        Enum.Operation _operation\\n    ) external view returns (bytes32);\\n\\n    /**\\n     * Returns the hash of a transaction in a Proposal.\\n     *\\n     * @param _proposalId identifier of the Proposal\\n     * @param _txIndex index of the transaction within the Proposal\\n     * @return bytes32 hash of the specified transaction\\n     */\\n    function getProposalTxHash(uint32 _proposalId, uint32 _txIndex) external view returns (bytes32);\\n\\n    /**\\n     * Returns the transaction hashes associated with a given `proposalId`.\\n     *\\n     * @param _proposalId identifier of the Proposal to get transaction hashes for\\n     * @return bytes32[] array of transaction hashes\\n     */\\n    function getProposalTxHashes(uint32 _proposalId) external view returns (bytes32[] memory);\\n\\n    /**\\n     * Returns details about the specified Proposal.\\n     *\\n     * @param _proposalId identifier of the Proposal\\n     * @return _strategy address of the BaseStrategy contract the Proposal is on\\n     * @return _txHashes hashes of the transactions the Proposal contains\\n     * @return _timelockPeriod time (in blocks) the Proposal is timelocked for\\n     * @return _executionPeriod time (in blocks) the Proposal must be executed within, after timelock ends\\n     * @return _executionCounter counter of how many of the Proposals transactions have been executed\\n     */\\n    function getProposal(uint32 _proposalId) external view\\n        returns (\\n            address _strategy,\\n            bytes32[] memory _txHashes,\\n            uint32 _timelockPeriod,\\n            uint32 _executionPeriod,\\n            uint32 _executionCounter\\n        );\\n}\\n\",\"keccak256\":\"0x1a656aacd0b0f11dec2b92d70153dc3a1b7019e9f76dd43f7c91a21fb8cfef3d\",\"license\":\"MIT\"},\"contracts/azorius/interfaces/IBaseStrategy.sol\":{\"content\":\"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity =0.8.19;\\n\\n/**\\n * The specification for a voting strategy in Azorius.\\n *\\n * Each IBaseStrategy implementation need only implement the given functions here,\\n * which allows for highly composable but simple or complex voting strategies.\\n *\\n * It should be noted that while many voting strategies make use of parameters such as\\n * voting period or quorum, that is a detail of the individual strategy itself, and not\\n * a requirement for the Azorius protocol.\\n */\\ninterface IBaseStrategy {\\n\\n    /**\\n     * Sets the address of the [Azorius](../Azorius.md) contract this \\n     * [BaseStrategy](../BaseStrategy.md) is being used on.\\n     *\\n     * @param _azoriusModule address of the Azorius Safe module\\n     */\\n    function setAzorius(address _azoriusModule) external;\\n\\n    /**\\n     * Called by the [Azorius](../Azorius.md) module. This notifies this \\n     * [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.\\n     *\\n     * @param _data arbitrary data to pass to this BaseStrategy\\n     */\\n    function initializeProposal(bytes memory _data) external;\\n\\n    /**\\n     * Returns whether a Proposal has been passed.\\n     *\\n     * @param _proposalId proposalId to check\\n     * @return bool true if the proposal has passed, otherwise false\\n     */\\n    function isPassed(uint32 _proposalId) external view returns (bool);\\n\\n    /**\\n     * Returns whether the specified address can submit a Proposal with\\n     * this [BaseStrategy](../BaseStrategy.md).\\n     *\\n     * This allows a BaseStrategy to place any limits it would like on\\n     * who can create new Proposals, such as requiring a minimum token\\n     * delegation.\\n     *\\n     * @param _address address to check\\n     * @return bool true if the address can submit a Proposal, otherwise false\\n     */\\n    function isProposer(address _address) external view returns (bool);\\n\\n    /**\\n     * Returns the block number voting ends on a given Proposal.\\n     *\\n     * @param _proposalId proposalId to check\\n     * @return uint32 block number when voting ends on the Proposal\\n     */\\n    function votingEndBlock(uint32 _proposalId) external view returns (uint32);\\n}\\n\",\"keccak256\":\"0x5ad8cdea65caa49f4116c67ebcbc12094676ac64d70c35643a4cc517c8b220fe\",\"license\":\"LGPL-3.0-only\"},\"contracts/azorius/interfaces/IERC721VotingStrategy.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity =0.8.19;\\n\\n/**\\n * Interface of functions required for ERC-721 freeze voting associated with an ERC-721\\n * voting strategy.\\n */\\ninterface IERC721VotingStrategy {\\n\\n    /**\\n     * Returns the current token weight for the given ERC-721 token address.\\n     *\\n     * @param _tokenAddress the ERC-721 token address\\n     */\\n    function getTokenWeight(address _tokenAddress) external view returns (uint256);\\n}\\n\",\"keccak256\":\"0xa51db3de9ceb151077007952031ac96263b8138c8ae74758f98a4d5bd71fa86c\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5061001961001e565b6100de565b600054610100900460ff161561008a5760405162461bcd60e51b815260206004820152602760248201527f496e697469616c697a61626c653a20636f6e747261637420697320696e697469604482015266616c697a696e6760c81b606482015260840160405180910390fd5b60005460ff90811610156100dc576000805460ff191660ff9081179091556040519081527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15b565b611bdc806100ed6000396000f3fe608060405234801561001057600080fd5b50600436106101da5760003560e01c80638081be9111610104578063bf7e2c7f116100a2578063deb61c1511610071578063deb61c15146104c6578063e5df8b841461053f578063e8575a7f14610552578063f2fde38b1461056557600080fd5b8063bf7e2c7f14610454578063c0dce37f1461045d578063c909c3b114610470578063d877ee1d146104bd57600080fd5b8063a4f9edbf116100de578063a4f9edbf146103fb578063a77a81d01461040e578063ab2f3ad414610421578063b1d1196f1461044157600080fd5b80638081be91146103cd5780638da5cb5b146103d7578063918f84bf146103e857600080fd5b806353a8b3201161017c5780636d4ae6801161014b5780636d4ae68014610394578063715018a6146103a957806374ec29a0146103b15780637b7a91dd146103c457600080fd5b806353a8b320146102a1578063544ffc9c146102c457806355a9dbd91461033957806366b629551461036957600080fd5b8063250aa683116101b8578063250aa6831461023157806333f48a5e1461026857806337938ab31461027b5780634e2addad1461028e57600080fd5b806302a251a3146101df5780631dc4894714610209578063210a5e871461021e575b600080fd5b606a546101ef9063ffffffff1681565b60405163ffffffff90911681526020015b60405180910390f35b61021c61021736600461146e565b610578565b005b61021c61022c36600461146e565b61058c565b61025a61023f36600461149c565b6001600160a01b031660009081526069602052604090205490565b604051908152602001610200565b61021c6102763660046114d2565b61059d565b61021c61028936600461149c565b6105ae565b61021c61029c3660046115c5565b610600565b6102b46102af3660046114d2565b610635565b6040519015158152602001610200565b6103096102d236600461146e565b606760205260009081526040902080546001820154600283015460039093015463ffffffff80841694600160201b90940416929085565b6040805163ffffffff9687168152959094166020860152928401919091526060830152608082015260a001610200565b6101ef6103473660046114d2565b63ffffffff908116600090815260676020526040902054600160201b90041690565b60655461037c906001600160a01b031681565b6040516001600160a01b039091168152602001610200565b61039c6106c7565b60405161020091906116f8565b61021c610729565b6102b46103bf36600461149c565b61073d565b61025a606b5481565b61025a620f424081565b6033546001600160a01b031661037c565b6102b46103f636600461170b565b610818565b61021c61040936600461172d565b61084a565b61021c61041c36600461172d565b610a83565b61025a61042f36600461149c565b60696020526000908152604090205481565b61021c61044f3660046117c2565b610b62565b61025a60665481565b61021c61046b36600461149c565b610b74565b6102b461047e3660046117ee565b63ffffffff831660009081526067602090815260408083206001600160a01b0386168452600401825280832084845290915290205460ff169392505050565b61025a606c5481565b61050e6104d43660046114d2565b63ffffffff908116600090815260676020526040902060018101546002820154600383015492549194909382811692600160201b90041690565b6040805195865260208601949094529284019190915263ffffffff908116606084015216608082015260a001610200565b61037c61054d36600461146e565b610cfe565b61021c61056036600461146e565b610d28565b61021c61057336600461149c565b610d39565b610580610daf565b61058981610e09565b50565b610594610daf565b61058981610e45565b6105a5610daf565b61058981610e7a565b6105b6610daf565b606580546001600160a01b0319166001600160a01b0383169081179091556040517fac8d831a6ed53a98387842e08d9e0893c1d478f4a3710b254e22bd58c06b269090600090a250565b805182511461062257604051635435b28960e11b815260040160405180910390fd5b61062f8433858585610ec2565b50505050565b63ffffffff8082166000908152606760205260408120549091600160201b9091041643118015610690575063ffffffff82166000908152606760205260409020600381015460029091015461068a9190611845565b606b5411155b80156106c1575063ffffffff8216600090815260676020526040902060028101546001909101546106c19190610818565b92915050565b6060606880548060200260200160405190810160405280929190818152602001828054801561071f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311610701575b5050505050905090565b610731610daf565b61073b60006111d9565b565b600080805b60685481101561080c5760006068828154811061076157610761611858565b6000918252602080832091909101546001600160a01b0390811680845260699092526040928390205492516370a0823160e01b8152908816600482015290925082906370a0823190602401602060405180830381865afa1580156107c9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107ed919061186e565b6107f79190611887565b6108019084611845565b925050600101610742565b50606c54111592915050565b6000620f4240606654838561082d9190611845565b6108379190611887565b610841919061189e565b90921192915050565b600054610100900460ff161580801561086a5750600054600160ff909116105b806108845750303b158015610884575060005460ff166001145b6108ec5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff19166001179055801561090f576000805461ff0019166101001790555b6000806000806000806000808980602001905181019061092f9190611936565b97509750975097509750975097509750855187511461096157604051635435b28960e11b815260040160405180910390fd5b60005b87518110156109b1576109a988828151811061098257610982611858565b602002602001015188838151811061099c5761099c611858565b602002602001015161122b565b600101610964565b506109ba61139f565b6109c388610d39565b6109cc856105b6565b6109d583610e45565b6109de82610e09565b6109e7816113ce565b6109f084610e7a565b876001600160a01b0316856001600160a01b03167fca32f512f02914f6bc16a49e786443029061b9adc5a987fd2f6efa56c0116a1660405160405180910390a350505050505050508015610a7f576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498906020015b60405180910390a15b5050565b6065546001600160a01b03163314610aae576040516358c30ce160e01b815260040160405180910390fd5b600081806020019051810190610ac49190611a4e565b606a54909150600090610add9063ffffffff1643611a6b565b63ffffffff838116600081815260676020908152604091829020805467ffffffffffffffff1916600160201b87871690810263ffffffff1916919091174390961695909517905581519283528201929092529192507f80d0ad93bba25e53bf67fa9f2d13df59f04795ec2f91b9b3c1f607666daf9d64910160405180910390a1505050565b610b6a610daf565b610a7f828261122b565b610b7c610daf565b6001600160a01b0381166000908152606960205260408120549003610bb457604051634b62f01360e01b815260040160405180910390fd5b6001600160a01b0381166000908152606960205260408120819055606854905b81811015610cc45760688181548110610bef57610bef611858565b6000918252602090912001546001600160a01b0390811690841603610cbc576000610c1b600184611a8f565b905060688181548110610c3057610c30611858565b600091825260209091200154606880546001600160a01b039092169184908110610c5c57610c5c611858565b9060005260206000200160006101000a8154816001600160a01b0302191690836001600160a01b0316021790555060688181548110610c9d57610c9d611858565b600091825260209091200180546001600160a01b031916905550610cc4565b600101610bd4565b506040516001600160a01b03831681527f14236c39816f331325d02993fa15113b739aff01c21ab8f38cc5253205299fb190602001610a76565b60688181548110610d0e57600080fd5b6000918252602090912001546001600160a01b0316905081565b610d30610daf565b610589816113ce565b610d41610daf565b6001600160a01b038116610da65760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b60648201526084016108e3565b610589816111d9565b6033546001600160a01b0316331461073b5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064016108e3565b606c8190556040518181527f48f79e03d92b3595f74bc3c64746cf148e464673dd036633d34f8afb029482c9906020015b60405180910390a150565b606b8190556040518181527fbc589fccf641d342b7853c2c6faca39631d4d19efbe77e71e5611e31678c220e90602001610e3a565b606a805463ffffffff191663ffffffff83169081179091556040519081527f70770ce479f70673c3ed8fff63cfb758a6ffdddc30cab7c63d54c8d825e3948890602001610e3a565b6000805b835181101561107e576000848281518110610ee357610ee3611858565b602002602001015190506000848381518110610f0157610f01611858565b60200260200101519050816001600160a01b0316636352211e826040518263ffffffff1660e01b8152600401610f3991815260200190565b602060405180830381865afa158015610f56573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610f7a9190611aa2565b6001600160a01b0316886001600160a01b031614610fae57604051639b936ae960e01b8152600481018290526024016108e3565b63ffffffff891660009081526067602090815260408083206001600160a01b0386168452600401825280832084845290915290205460ff16151560010361100b57604051639602f71160e01b8152600481018290526024016108e3565b6001600160a01b03821660009081526069602052604090205461102e9085611845565b63ffffffff8a1660009081526067602090815260408083206001600160a01b0390961683526004909501815284822093825292909252919020805460ff1916600190811790915590925001610ec6565b50806000036110a05760405163923d21f560e01b815260040160405180910390fd5b63ffffffff808716600090815260676020526040812080549092600160201b9091041690036110e257604051631dc0650160e31b815260040160405180910390fd5b8054600160201b900463ffffffff1643111561111157604051637a19ed0560e01b815260040160405180910390fd5b60ff8516611138578181600101600082825461112d9190611845565b909155506111919050565b60001960ff861601611158578181600201600082825461112d9190611845565b60011960ff861601611178578181600301600082825461112d9190611845565b604051636aee863360e11b815260040160405180910390fd5b7f08b8dec2438455807ba4dae88b27939d599858b97389310c0af8f42acd58d62086888787876040516111c8959493929190611abf565b60405180910390a150505050505050565b603380546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6040516301ffc9a760e01b81526380ac58cd60e01b60048201526001600160a01b038316906301ffc9a790602401602060405180830381865afa158015611276573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061129a9190611b39565b6112b757604051630f58058360e11b815260040160405180910390fd5b806000036112d85760405163923d21f560e01b815260040160405180910390fd5b6001600160a01b0382166000908152606960205260409020541561130f576040516371168e4f60e11b815260040160405180910390fd5b60688054600181019091557fa2153420d844928b4421650203c77babc8b33d7f2e7b450e2966db0c220977530180546001600160a01b0319166001600160a01b038416908117909155600081815260696020908152604091829020849055815192835282018390527fbf2b7f9fc6e849fdef9ff7366d8b63b608bc69ca778200c53d77372d953dc6b69101610a76565b600054610100900460ff166113c65760405162461bcd60e51b81526004016108e390611b5b565b61073b61143e565b620f42408111806113eb57506113e86002620f424061189e565b81105b15611409576040516302396b6b60e61b815260040160405180910390fd5b60668190556040518181527f406c076eac4d3dde1c5d55793e80239daa8c60ee971390ce3d9f90ca4206295390602001610e3a565b600054610100900460ff166114655760405162461bcd60e51b81526004016108e390611b5b565b61073b336111d9565b60006020828403121561148057600080fd5b5035919050565b6001600160a01b038116811461058957600080fd5b6000602082840312156114ae57600080fd5b81356114b981611487565b9392505050565b63ffffffff8116811461058957600080fd5b6000602082840312156114e457600080fd5b81356114b9816114c0565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff8111828210171561152e5761152e6114ef565b604052919050565b600067ffffffffffffffff821115611550576115506114ef565b5060051b60200190565b600082601f83011261156b57600080fd5b8135602061158061157b83611536565b611505565b82815260059290921b8401810191818101908684111561159f57600080fd5b8286015b848110156115ba57803583529183019183016115a3565b509695505050505050565b600080600080608085870312156115db57600080fd5b84356115e6816114c0565b935060208581013560ff811681146115fd57600080fd5b9350604086013567ffffffffffffffff8082111561161a57600080fd5b818801915088601f83011261162e57600080fd5b813561163c61157b82611536565b81815260059190911b8301840190848101908b83111561165b57600080fd5b938501935b8285101561168257843561167381611487565b82529385019390850190611660565b96505050606088013592508083111561169a57600080fd5b50506116a88782880161155a565b91505092959194509250565b600081518084526020808501945080840160005b838110156116ed5781516001600160a01b0316875295820195908201906001016116c8565b509495945050505050565b6020815260006114b960208301846116b4565b6000806040838503121561171e57600080fd5b50508035926020909101359150565b6000602080838503121561174057600080fd5b823567ffffffffffffffff8082111561175857600080fd5b818501915085601f83011261176c57600080fd5b81358181111561177e5761177e6114ef565b611790601f8201601f19168501611505565b915080825286848285010111156117a657600080fd5b8084840185840137600090820190930192909252509392505050565b600080604083850312156117d557600080fd5b82356117e081611487565b946020939093013593505050565b60008060006060848603121561180357600080fd5b833561180e816114c0565b9250602084013561181e81611487565b929592945050506040919091013590565b634e487b7160e01b600052601160045260246000fd5b808201808211156106c1576106c161182f565b634e487b7160e01b600052603260045260246000fd5b60006020828403121561188057600080fd5b5051919050565b80820281158282048414176106c1576106c161182f565b6000826118bb57634e487b7160e01b600052601260045260246000fd5b500490565b80516118cb81611487565b919050565b600082601f8301126118e157600080fd5b815160206118f161157b83611536565b82815260059290921b8401810191818101908684111561191057600080fd5b8286015b848110156115ba5780518352918301918301611914565b80516118cb816114c0565b600080600080600080600080610100898b03121561195357600080fd5b885161195e81611487565b809850506020808a015167ffffffffffffffff8082111561197e57600080fd5b818c0191508c601f83011261199257600080fd5b81516119a061157b82611536565b81815260059190911b8301840190848101908f8311156119bf57600080fd5b938501935b828510156119e65784516119d781611487565b825293850193908501906119c4565b60408f0151909c5094505050808311156119ff57600080fd5b5050611a0d8b828c016118d0565b965050611a1c60608a016118c0565b9450611a2a60808a0161192b565b935060a0890151925060c0890151915060e089015190509295985092959890939650565b600060208284031215611a6057600080fd5b81516114b9816114c0565b63ffffffff818116838216019080821115611a8857611a8861182f565b5092915050565b818103818111156106c1576106c161182f565b600060208284031215611ab457600080fd5b81516114b981611487565b60018060a01b03861681526000602063ffffffff87168184015260ff8616604084015260a06060840152611af660a08401866116b4565b838103608085015284518082528286019183019060005b81811015611b2957835183529284019291840191600101611b0d565b50909a9950505050505050505050565b600060208284031215611b4b57600080fd5b815180151581146114b957600080fd5b6020808252602b908201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960408201526a6e697469616c697a696e6760a81b60608201526080019056fea264697066735822122067d755a500acb25ffbd82a6c0ec4acd55b7a5eda33bdb9a8972e692935c263a864736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101da5760003560e01c80638081be9111610104578063bf7e2c7f116100a2578063deb61c1511610071578063deb61c15146104c6578063e5df8b841461053f578063e8575a7f14610552578063f2fde38b1461056557600080fd5b8063bf7e2c7f14610454578063c0dce37f1461045d578063c909c3b114610470578063d877ee1d146104bd57600080fd5b8063a4f9edbf116100de578063a4f9edbf146103fb578063a77a81d01461040e578063ab2f3ad414610421578063b1d1196f1461044157600080fd5b80638081be91146103cd5780638da5cb5b146103d7578063918f84bf146103e857600080fd5b806353a8b3201161017c5780636d4ae6801161014b5780636d4ae68014610394578063715018a6146103a957806374ec29a0146103b15780637b7a91dd146103c457600080fd5b806353a8b320146102a1578063544ffc9c146102c457806355a9dbd91461033957806366b629551461036957600080fd5b8063250aa683116101b8578063250aa6831461023157806333f48a5e1461026857806337938ab31461027b5780634e2addad1461028e57600080fd5b806302a251a3146101df5780631dc4894714610209578063210a5e871461021e575b600080fd5b606a546101ef9063ffffffff1681565b60405163ffffffff90911681526020015b60405180910390f35b61021c61021736600461146e565b610578565b005b61021c61022c36600461146e565b61058c565b61025a61023f36600461149c565b6001600160a01b031660009081526069602052604090205490565b604051908152602001610200565b61021c6102763660046114d2565b61059d565b61021c61028936600461149c565b6105ae565b61021c61029c3660046115c5565b610600565b6102b46102af3660046114d2565b610635565b6040519015158152602001610200565b6103096102d236600461146e565b606760205260009081526040902080546001820154600283015460039093015463ffffffff80841694600160201b90940416929085565b6040805163ffffffff9687168152959094166020860152928401919091526060830152608082015260a001610200565b6101ef6103473660046114d2565b63ffffffff908116600090815260676020526040902054600160201b90041690565b60655461037c906001600160a01b031681565b6040516001600160a01b039091168152602001610200565b61039c6106c7565b60405161020091906116f8565b61021c610729565b6102b46103bf36600461149c565b61073d565b61025a606b5481565b61025a620f424081565b6033546001600160a01b031661037c565b6102b46103f636600461170b565b610818565b61021c61040936600461172d565b61084a565b61021c61041c36600461172d565b610a83565b61025a61042f36600461149c565b60696020526000908152604090205481565b61021c61044f3660046117c2565b610b62565b61025a60665481565b61021c61046b36600461149c565b610b74565b6102b461047e3660046117ee565b63ffffffff831660009081526067602090815260408083206001600160a01b0386168452600401825280832084845290915290205460ff169392505050565b61025a606c5481565b61050e6104d43660046114d2565b63ffffffff908116600090815260676020526040902060018101546002820154600383015492549194909382811692600160201b90041690565b6040805195865260208601949094529284019190915263ffffffff908116606084015216608082015260a001610200565b61037c61054d36600461146e565b610cfe565b61021c61056036600461146e565b610d28565b61021c61057336600461149c565b610d39565b610580610daf565b61058981610e09565b50565b610594610daf565b61058981610e45565b6105a5610daf565b61058981610e7a565b6105b6610daf565b606580546001600160a01b0319166001600160a01b0383169081179091556040517fac8d831a6ed53a98387842e08d9e0893c1d478f4a3710b254e22bd58c06b269090600090a250565b805182511461062257604051635435b28960e11b815260040160405180910390fd5b61062f8433858585610ec2565b50505050565b63ffffffff8082166000908152606760205260408120549091600160201b9091041643118015610690575063ffffffff82166000908152606760205260409020600381015460029091015461068a9190611845565b606b5411155b80156106c1575063ffffffff8216600090815260676020526040902060028101546001909101546106c19190610818565b92915050565b6060606880548060200260200160405190810160405280929190818152602001828054801561071f57602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311610701575b5050505050905090565b610731610daf565b61073b60006111d9565b565b600080805b60685481101561080c5760006068828154811061076157610761611858565b6000918252602080832091909101546001600160a01b0390811680845260699092526040928390205492516370a0823160e01b8152908816600482015290925082906370a0823190602401602060405180830381865afa1580156107c9573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107ed919061186e565b6107f79190611887565b6108019084611845565b925050600101610742565b50606c54111592915050565b6000620f4240606654838561082d9190611845565b6108379190611887565b610841919061189e565b90921192915050565b600054610100900460ff161580801561086a5750600054600160ff909116105b806108845750303b158015610884575060005460ff166001145b6108ec5760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b60648201526084015b60405180910390fd5b6000805460ff19166001179055801561090f576000805461ff0019166101001790555b6000806000806000806000808980602001905181019061092f9190611936565b97509750975097509750975097509750855187511461096157604051635435b28960e11b815260040160405180910390fd5b60005b87518110156109b1576109a988828151811061098257610982611858565b602002602001015188838151811061099c5761099c611858565b602002602001015161122b565b600101610964565b506109ba61139f565b6109c388610d39565b6109cc856105b6565b6109d583610e45565b6109de82610e09565b6109e7816113ce565b6109f084610e7a565b876001600160a01b0316856001600160a01b03167fca32f512f02914f6bc16a49e786443029061b9adc5a987fd2f6efa56c0116a1660405160405180910390a350505050505050508015610a7f576000805461ff0019169055604051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498906020015b60405180910390a15b5050565b6065546001600160a01b03163314610aae576040516358c30ce160e01b815260040160405180910390fd5b600081806020019051810190610ac49190611a4e565b606a54909150600090610add9063ffffffff1643611a6b565b63ffffffff838116600081815260676020908152604091829020805467ffffffffffffffff1916600160201b87871690810263ffffffff1916919091174390961695909517905581519283528201929092529192507f80d0ad93bba25e53bf67fa9f2d13df59f04795ec2f91b9b3c1f607666daf9d64910160405180910390a1505050565b610b6a610daf565b610a7f828261122b565b610b7c610daf565b6001600160a01b0381166000908152606960205260408120549003610bb457604051634b62f01360e01b815260040160405180910390fd5b6001600160a01b0381166000908152606960205260408120819055606854905b81811015610cc45760688181548110610bef57610bef611858565b6000918252602090912001546001600160a01b0390811690841603610cbc576000610c1b600184611a8f565b905060688181548110610c3057610c30611858565b600091825260209091200154606880546001600160a01b039092169184908110610c5c57610c5c611858565b9060005260206000200160006101000a8154816001600160a01b0302191690836001600160a01b0316021790555060688181548110610c9d57610c9d611858565b600091825260209091200180546001600160a01b031916905550610cc4565b600101610bd4565b506040516001600160a01b03831681527f14236c39816f331325d02993fa15113b739aff01c21ab8f38cc5253205299fb190602001610a76565b60688181548110610d0e57600080fd5b6000918252602090912001546001600160a01b0316905081565b610d30610daf565b610589816113ce565b610d41610daf565b6001600160a01b038116610da65760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b60648201526084016108e3565b610589816111d9565b6033546001600160a01b0316331461073b5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064016108e3565b606c8190556040518181527f48f79e03d92b3595f74bc3c64746cf148e464673dd036633d34f8afb029482c9906020015b60405180910390a150565b606b8190556040518181527fbc589fccf641d342b7853c2c6faca39631d4d19efbe77e71e5611e31678c220e90602001610e3a565b606a805463ffffffff191663ffffffff83169081179091556040519081527f70770ce479f70673c3ed8fff63cfb758a6ffdddc30cab7c63d54c8d825e3948890602001610e3a565b6000805b835181101561107e576000848281518110610ee357610ee3611858565b602002602001015190506000848381518110610f0157610f01611858565b60200260200101519050816001600160a01b0316636352211e826040518263ffffffff1660e01b8152600401610f3991815260200190565b602060405180830381865afa158015610f56573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190610f7a9190611aa2565b6001600160a01b0316886001600160a01b031614610fae57604051639b936ae960e01b8152600481018290526024016108e3565b63ffffffff891660009081526067602090815260408083206001600160a01b0386168452600401825280832084845290915290205460ff16151560010361100b57604051639602f71160e01b8152600481018290526024016108e3565b6001600160a01b03821660009081526069602052604090205461102e9085611845565b63ffffffff8a1660009081526067602090815260408083206001600160a01b0390961683526004909501815284822093825292909252919020805460ff1916600190811790915590925001610ec6565b50806000036110a05760405163923d21f560e01b815260040160405180910390fd5b63ffffffff808716600090815260676020526040812080549092600160201b9091041690036110e257604051631dc0650160e31b815260040160405180910390fd5b8054600160201b900463ffffffff1643111561111157604051637a19ed0560e01b815260040160405180910390fd5b60ff8516611138578181600101600082825461112d9190611845565b909155506111919050565b60001960ff861601611158578181600201600082825461112d9190611845565b60011960ff861601611178578181600301600082825461112d9190611845565b604051636aee863360e11b815260040160405180910390fd5b7f08b8dec2438455807ba4dae88b27939d599858b97389310c0af8f42acd58d62086888787876040516111c8959493929190611abf565b60405180910390a150505050505050565b603380546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6040516301ffc9a760e01b81526380ac58cd60e01b60048201526001600160a01b038316906301ffc9a790602401602060405180830381865afa158015611276573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061129a9190611b39565b6112b757604051630f58058360e11b815260040160405180910390fd5b806000036112d85760405163923d21f560e01b815260040160405180910390fd5b6001600160a01b0382166000908152606960205260409020541561130f576040516371168e4f60e11b815260040160405180910390fd5b60688054600181019091557fa2153420d844928b4421650203c77babc8b33d7f2e7b450e2966db0c220977530180546001600160a01b0319166001600160a01b038416908117909155600081815260696020908152604091829020849055815192835282018390527fbf2b7f9fc6e849fdef9ff7366d8b63b608bc69ca778200c53d77372d953dc6b69101610a76565b600054610100900460ff166113c65760405162461bcd60e51b81526004016108e390611b5b565b61073b61143e565b620f42408111806113eb57506113e86002620f424061189e565b81105b15611409576040516302396b6b60e61b815260040160405180910390fd5b60668190556040518181527f406c076eac4d3dde1c5d55793e80239daa8c60ee971390ce3d9f90ca4206295390602001610e3a565b600054610100900460ff166114655760405162461bcd60e51b81526004016108e390611b5b565b61073b336111d9565b60006020828403121561148057600080fd5b5035919050565b6001600160a01b038116811461058957600080fd5b6000602082840312156114ae57600080fd5b81356114b981611487565b9392505050565b63ffffffff8116811461058957600080fd5b6000602082840312156114e457600080fd5b81356114b9816114c0565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff8111828210171561152e5761152e6114ef565b604052919050565b600067ffffffffffffffff821115611550576115506114ef565b5060051b60200190565b600082601f83011261156b57600080fd5b8135602061158061157b83611536565b611505565b82815260059290921b8401810191818101908684111561159f57600080fd5b8286015b848110156115ba57803583529183019183016115a3565b509695505050505050565b600080600080608085870312156115db57600080fd5b84356115e6816114c0565b935060208581013560ff811681146115fd57600080fd5b9350604086013567ffffffffffffffff8082111561161a57600080fd5b818801915088601f83011261162e57600080fd5b813561163c61157b82611536565b81815260059190911b8301840190848101908b83111561165b57600080fd5b938501935b8285101561168257843561167381611487565b82529385019390850190611660565b96505050606088013592508083111561169a57600080fd5b50506116a88782880161155a565b91505092959194509250565b600081518084526020808501945080840160005b838110156116ed5781516001600160a01b0316875295820195908201906001016116c8565b509495945050505050565b6020815260006114b960208301846116b4565b6000806040838503121561171e57600080fd5b50508035926020909101359150565b6000602080838503121561174057600080fd5b823567ffffffffffffffff8082111561175857600080fd5b818501915085601f83011261176c57600080fd5b81358181111561177e5761177e6114ef565b611790601f8201601f19168501611505565b915080825286848285010111156117a657600080fd5b8084840185840137600090820190930192909252509392505050565b600080604083850312156117d557600080fd5b82356117e081611487565b946020939093013593505050565b60008060006060848603121561180357600080fd5b833561180e816114c0565b9250602084013561181e81611487565b929592945050506040919091013590565b634e487b7160e01b600052601160045260246000fd5b808201808211156106c1576106c161182f565b634e487b7160e01b600052603260045260246000fd5b60006020828403121561188057600080fd5b5051919050565b80820281158282048414176106c1576106c161182f565b6000826118bb57634e487b7160e01b600052601260045260246000fd5b500490565b80516118cb81611487565b919050565b600082601f8301126118e157600080fd5b815160206118f161157b83611536565b82815260059290921b8401810191818101908684111561191057600080fd5b8286015b848110156115ba5780518352918301918301611914565b80516118cb816114c0565b600080600080600080600080610100898b03121561195357600080fd5b885161195e81611487565b809850506020808a015167ffffffffffffffff8082111561197e57600080fd5b818c0191508c601f83011261199257600080fd5b81516119a061157b82611536565b81815260059190911b8301840190848101908f8311156119bf57600080fd5b938501935b828510156119e65784516119d781611487565b825293850193908501906119c4565b60408f0151909c5094505050808311156119ff57600080fd5b5050611a0d8b828c016118d0565b965050611a1c60608a016118c0565b9450611a2a60808a0161192b565b935060a0890151925060c0890151915060e089015190509295985092959890939650565b600060208284031215611a6057600080fd5b81516114b9816114c0565b63ffffffff818116838216019080821115611a8857611a8861182f565b5092915050565b818103818111156106c1576106c161182f565b600060208284031215611ab457600080fd5b81516114b981611487565b60018060a01b03861681526000602063ffffffff87168184015260ff8616604084015260a06060840152611af660a08401866116b4565b838103608085015284518082528286019183019060005b81811015611b2957835183529284019291840191600101611b0d565b50909a9950505050505050505050565b600060208284031215611b4b57600080fd5b815180151581146114b957600080fd5b6020808252602b908201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960408201526a6e697469616c697a696e6760a81b60608201526080019056fea264697066735822122067d755a500acb25ffbd82a6c0ec4acd55b7a5eda33bdb9a8972e692935c263a864736f6c63430008130033",
+  "devdoc": {
+    "events": {
+      "Initialized(uint8)": {
+        "details": "Triggered when the contract has been initialized or reinitialized."
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "addGovernanceToken(address,uint256)": {
+        "params": {
+          "_tokenAddress": "the address of the ERC-721 token",
+          "_weight": "the number of votes each NFT id is worth"
+        }
+      },
+      "getProposalVotes(uint32)": {
+        "params": {
+          "_proposalId": "id of the Proposal"
+        },
+        "returns": {
+          "abstainVotes": "current count of \"ABSTAIN\" votes",
+          "endBlock": "block number voting ends",
+          "noVotes": "current count of \"NO\" votes",
+          "startBlock": "block number voting starts",
+          "yesVotes": "current count of \"YES\" votes"
+        }
+      },
+      "getTokenWeight(address)": {
+        "params": {
+          "_tokenAddress": "the ERC-721 token address"
+        }
+      },
+      "hasVoted(uint32,address,uint256)": {
+        "params": {
+          "_proposalId": "the id of the Proposal",
+          "_tokenAddress": "the ERC-721 contract address",
+          "_tokenId": "the unique id of the NFT"
+        }
+      },
+      "initializeProposal(bytes)": {
+        "params": {
+          "_data": "arbitrary data to pass to this BaseStrategy"
+        }
+      },
+      "isPassed(uint32)": {
+        "params": {
+          "_proposalId": "proposalId to check"
+        },
+        "returns": {
+          "_0": "bool true if the proposal has passed, otherwise false"
+        }
+      },
+      "isProposer(address)": {
+        "params": {
+          "_address": "address to check"
+        },
+        "returns": {
+          "_0": "bool true if the address can submit a Proposal, otherwise false"
+        }
+      },
+      "meetsBasis(uint256,uint256)": {
+        "params": {
+          "_noVotes": "number of votes against",
+          "_yesVotes": "number of votes in favor"
+        },
+        "returns": {
+          "_0": "bool whether the yes votes meets the set basis"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "removeGovernanceToken(address)": {
+        "params": {
+          "_tokenAddress": "the ERC-721 token to remove"
+        }
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "setAzorius(address)": {
+        "params": {
+          "_azoriusModule": "address of the Azorius Safe module"
+        }
+      },
+      "setUp(bytes)": {
+        "params": {
+          "initializeParams": "encoded initialization parameters: `address _owner`, `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`,  `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`,  `uint256 _basisNumerator`"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      },
+      "updateBasisNumerator(uint256)": {
+        "params": {
+          "_basisNumerator": "numerator to use"
+        }
+      },
+      "updateProposerThreshold(uint256)": {
+        "params": {
+          "_proposerThreshold": "required voting weight"
+        }
+      },
+      "updateQuorumThreshold(uint256)": {
+        "params": {
+          "_quorumThreshold": "total voting weight required to achieve quorum"
+        }
+      },
+      "updateVotingPeriod(uint32)": {
+        "params": {
+          "_votingPeriod": "voting time period (in blocks)"
+        }
+      },
+      "vote(uint32,uint8,address[],uint256[])": {
+        "params": {
+          "_proposalId": "id of the Proposal to vote on",
+          "_tokenAddresses": "list of ERC-721 addresses that correspond to ids in _tokenIds",
+          "_tokenIds": "list of unique token ids that correspond to their ERC-721 address in _tokenAddresses",
+          "_voteType": "Proposal support as defined in VoteType (NO, YES, ABSTAIN)"
+        }
+      },
+      "votingEndBlock(uint32)": {
+        "params": {
+          "_proposalId": "proposalId to check"
+        },
+        "returns": {
+          "_0": "uint32 block number when voting ends on the Proposal"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "BASIS_DENOMINATOR()": {
+        "notice": "The denominator to use when calculating basis (1,000,000). "
+      },
+      "addGovernanceToken(address,uint256)": {
+        "notice": "Adds a new ERC-721 token as a governance token, along with its associated weight."
+      },
+      "basisNumerator()": {
+        "notice": "The numerator to use when calculating basis (adjustable). "
+      },
+      "getAllTokenAddresses()": {
+        "notice": "Returns whole list of governance tokens addresses"
+      },
+      "getProposalVotes(uint32)": {
+        "notice": "Returns the current state of the specified Proposal."
+      },
+      "getTokenWeight(address)": {
+        "notice": "Returns the current token weight for the given ERC-721 token address."
+      },
+      "hasVoted(uint32,address,uint256)": {
+        "notice": "Returns whether an NFT id has already voted."
+      },
+      "initializeProposal(bytes)": {
+        "notice": "Called by the [Azorius](../Azorius.md) module. This notifies this  [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created."
+      },
+      "isPassed(uint32)": {
+        "notice": "Returns whether a Proposal has been passed."
+      },
+      "isProposer(address)": {
+        "notice": "Returns whether the specified address can submit a Proposal with this [BaseStrategy](../BaseStrategy.md). This allows a BaseStrategy to place any limits it would like on who can create new Proposals, such as requiring a minimum token delegation."
+      },
+      "meetsBasis(uint256,uint256)": {
+        "notice": "Calculates whether a vote meets its basis."
+      },
+      "proposalVotes(uint256)": {
+        "notice": "`proposalId` to `ProposalVotes`, the voting state of a Proposal. "
+      },
+      "proposerThreshold()": {
+        "notice": "The minimum number of voting power required to create a new proposal."
+      },
+      "quorumThreshold()": {
+        "notice": "The total number of votes required to achieve quorum. \"Quorum threshold\" is used instead of a quorum percent because IERC721 has no  totalSupply function, so the contract cannot determine this."
+      },
+      "removeGovernanceToken(address)": {
+        "notice": "Removes the given ERC-721 token address from the list of governance tokens."
+      },
+      "setAzorius(address)": {
+        "notice": "Sets the address of the [Azorius](../Azorius.md) contract this  [BaseStrategy](../BaseStrategy.md) is being used on."
+      },
+      "setUp(bytes)": {
+        "notice": "Sets up the contract with its initial parameters."
+      },
+      "tokenAddresses(uint256)": {
+        "notice": "The list of ERC-721 tokens that can vote. "
+      },
+      "tokenWeights(address)": {
+        "notice": "ERC-721 address to its voting weight per NFT id.  "
+      },
+      "updateBasisNumerator(uint256)": {
+        "notice": "Updates the `basisNumerator` for future Proposals."
+      },
+      "updateProposerThreshold(uint256)": {
+        "notice": "Updates the voting weight required to submit new Proposals."
+      },
+      "updateQuorumThreshold(uint256)": {
+        "notice": "Updates the quorum required for future Proposals."
+      },
+      "updateVotingPeriod(uint32)": {
+        "notice": "Updates the voting time period for new Proposals."
+      },
+      "vote(uint32,uint8,address[],uint256[])": {
+        "notice": "Submits a vote on an existing Proposal."
+      },
+      "votingEndBlock(uint32)": {
+        "notice": "Returns the block number voting ends on a given Proposal."
+      },
+      "votingPeriod()": {
+        "notice": "Number of blocks a new Proposal can be voted on. "
+      }
+    },
+    "notice": "An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens,  each with their own voting weight. This is slightly different from ERC-20 voting, since there is no way to snapshot ERC721 holdings. Each ERC721 id can vote once, reguardless of what address held it when a proposal was created. Also, this uses \"quorumThreshold\" rather than LinearERC20Voting's quorumPercent, because the  total supply of NFTs is not knowable within the IERC721 interface.  This is similar to a multisig  \"total signers\" required, rather than a percentage of the tokens.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 3006,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 3009,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 5908,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 2800,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 2920,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_array(t_uint256)49_storage"
+      },
+      {
+        "astId": 15331,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "azoriusModule",
+        "offset": 0,
+        "slot": "101",
+        "type": "t_contract(IAzorius)17377"
+      },
+      {
+        "astId": 15431,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "basisNumerator",
+        "offset": 0,
+        "slot": "102",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 16284,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "proposalVotes",
+        "offset": 0,
+        "slot": "103",
+        "type": "t_mapping(t_uint256,t_struct(ProposalVotes)16278_storage)"
+      },
+      {
+        "astId": 16288,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "tokenAddresses",
+        "offset": 0,
+        "slot": "104",
+        "type": "t_array(t_address)dyn_storage"
+      },
+      {
+        "astId": 16293,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "tokenWeights",
+        "offset": 0,
+        "slot": "105",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 16296,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "votingPeriod",
+        "offset": 0,
+        "slot": "106",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 16299,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "quorumThreshold",
+        "offset": 0,
+        "slot": "107",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 16302,
+        "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+        "label": "proposerThreshold",
+        "offset": 0,
+        "slot": "108",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_address)dyn_storage": {
+        "base": "t_address",
+        "encoding": "dynamic_array",
+        "label": "address[]",
+        "numberOfBytes": "32"
+      },
+      "t_array(t_uint256)49_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[49]",
+        "numberOfBytes": "1568"
+      },
+      "t_array(t_uint256)50_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_contract(IAzorius)17377": {
+        "encoding": "inplace",
+        "label": "contract IAzorius",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_mapping(t_uint256,t_bool))": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => mapping(uint256 => bool))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_uint256,t_bool)"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_mapping(t_uint256,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_uint256,t_struct(ProposalVotes)16278_storage)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => struct LinearERC721Voting.ProposalVotes)",
+        "numberOfBytes": "32",
+        "value": "t_struct(ProposalVotes)16278_storage"
+      },
+      "t_struct(ProposalVotes)16278_storage": {
+        "encoding": "inplace",
+        "label": "struct LinearERC721Voting.ProposalVotes",
+        "members": [
+          {
+            "astId": 16262,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "votingStartBlock",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 16264,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "votingEndBlock",
+            "offset": 4,
+            "slot": "0",
+            "type": "t_uint32"
+          },
+          {
+            "astId": 16266,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "noVotes",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16268,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "yesVotes",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16270,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "abstainVotes",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16277,
+            "contract": "contracts/azorius/LinearERC721Voting.sol:LinearERC721Voting",
+            "label": "hasVoted",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_bool))"
+          }
+        ],
+        "numberOfBytes": "160"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}
