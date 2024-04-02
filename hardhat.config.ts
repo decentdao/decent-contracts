@@ -95,6 +95,13 @@ const config: HardhatUserConfig = {
         ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
         : [],
     },
+    baseSepolia: {
+      chainId: 84532,
+      url: process.env.BAES_SEPOLIA_PROVIDER || "",
+      accounts: process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY
+        ? [process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
     hardhat: hardhatNetworkConfig,
   },
   etherscan: {
@@ -103,6 +110,7 @@ const config: HardhatUserConfig = {
       goerli: process.env.ETHERSCAN_API_KEY || "",
       sepolia: process.env.ETHERSCAN_API_KEY || "",
       polygon: process.env.POLYGONSCAN_API_KEY || "",
+      baseSepolia: process.env.BASESCAN_API_KEY || "",
     },
   },
   paths: {
