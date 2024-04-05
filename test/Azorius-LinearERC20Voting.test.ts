@@ -16,18 +16,22 @@ import {
   VotesERC20,
   VotesERC20__factory,
   ModuleProxyFactory,
+  GnosisSafeL2__factory,
 } from "../typechain-types";
 
 import {
   buildSignatureBytes,
   buildSafeTransaction,
   safeSignTypedData,
-  ifaceSafe,
   predictGnosisSafeAddress,
   calculateProxyAddress,
-  SAFE_FACTORY_ADDRESS,
-  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
+
+import {
+  getGnosisSafeL2Singleton,
+  getGnosisSafeProxyFactory,
+  getModuleProxyFactory,
+} from "./GlobalSafeDeployments.test";
 
 describe("Safe with Azorius module and linearERC20Voting", () => {
   // Deployed contracts
@@ -54,28 +58,16 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
   // Gnosis
   let createGnosisSetupCalldata: string;
 
-  const moduleProxyFactoryAddress =
-    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
   beforeEach(async () => {
-    const abiCoder = new ethers.utils.AbiCoder();
+    gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
+    moduleProxyFactory = getModuleProxyFactory();
+    const gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    // Fork Goerli to use contracts deployed on Goerli
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: process.env.GOERLI_PROVIDER
-              ? process.env.GOERLI_PROVIDER
-              : "",
-          },
-        },
-      ],
-    });
+    const abiCoder = new ethers.utils.AbiCoder();
 
     // Get the signer accounts
     [
@@ -91,37 +83,38 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
     // Get Gnosis Safe Proxy factory
     gnosisSafeProxyFactory = await ethers.getContractAt(
       "GnosisSafeProxyFactory",
-      SAFE_FACTORY_ADDRESS
+      gnosisSafeProxyFactory.address
     );
 
     // Get module proxy factory
     moduleProxyFactory = await ethers.getContractAt(
       "ModuleProxyFactory",
-      moduleProxyFactoryAddress
+      moduleProxyFactory.address
     );
 
-    createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [gnosisSafeOwner.address],
-      1,
-      ethers.constants.AddressZero,
-      ethers.constants.HashZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.AddressZero,
-    ]);
+    createGnosisSetupCalldata =
+      // eslint-disable-next-line camelcase
+      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+        [gnosisSafeOwner.address],
+        1,
+        ethers.constants.AddressZero,
+        ethers.constants.HashZero,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        0,
+        ethers.constants.AddressZero,
+      ]);
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
-      gnosisSafeProxyFactory.address,
       createGnosisSetupCalldata,
       saltNum,
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       gnosisSafeProxyFactory
     );
 
     // Deploy Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       createGnosisSetupCalldata,
       saltNum
     );
@@ -159,7 +152,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    const predictedVotesERC20Address = await calculateProxyAddress(
+    const predictedVotesERC20Address = calculateProxyAddress(
       moduleProxyFactory,
       votesERC20Mastercopy.address,
       votesERC20SetupCalldata,
@@ -205,7 +198,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    const predictedAzoriusAddress = await calculateProxyAddress(
+    const predictedAzoriusAddress = calculateProxyAddress(
       moduleProxyFactory,
       azoriusMastercopy.address,
       azoriusSetupCalldata,
@@ -250,7 +243,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    const predictedLinearERC20VotingAddress = await calculateProxyAddress(
+    const predictedLinearERC20VotingAddress = calculateProxyAddress(
       moduleProxyFactory,
       linearERC20VotingMastercopy.address,
       linearERC20VotingSetupCalldata,
@@ -277,7 +270,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       to: gnosisSafe.address,
       data: enableAzoriusModuleData,
       safeTxGas: 1000000,
-      nonce: (await gnosisSafe.nonce()).toNumber(),
+      nonce: await gnosisSafe.nonce(),
     });
 
     const sigs = [
@@ -1469,7 +1462,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         "10031021"
       );
 
-      const predictedAzoriusAddress = await calculateProxyAddress(
+      const predictedAzoriusAddress = calculateProxyAddress(
         moduleProxyFactory,
         azoriusMastercopy.address,
         azoriusSetupCalldata,
@@ -1510,7 +1503,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         "10031021"
       );
 
-      const predictedMockVotingStrategyAddress = await calculateProxyAddress(
+      const predictedMockVotingStrategyAddress = calculateProxyAddress(
         moduleProxyFactory,
         mockVotingStrategyMastercopy.address,
         mockVotingStrategySetupCalldata,

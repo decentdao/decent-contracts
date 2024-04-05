@@ -23,15 +23,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-const hardhatNetworkConfig = process.env.GOERLI_PROVIDER
-  ? {
-      forking: {
-        url: process.env.GOERLI_PROVIDER,
-        blockNumber: 7387621,
-      },
-    }
-  : {};
-
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -52,16 +43,16 @@ const config: HardhatUserConfig = {
   },
   dependencyCompiler: {
     paths: [
-      "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
-      "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
+      "@gnosis.pm/safe-contracts/contracts/libraries/MultiSendCallOnly.sol",
       "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol",
+      "@gnosis.pm/safe-contracts/contracts/GnosisSafeL2.sol",
+      "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
     ],
   },
   namedAccounts: {
     deployer: {
       default: 0,
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
-      goerli: `privatekey://${process.env.GOERLI_DEPLOYER_PRIVATE_KEY}`,
       sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
     },
@@ -72,13 +63,6 @@ const config: HardhatUserConfig = {
       url: process.env.MAINNET_PROVIDER || "",
       accounts: process.env.MAINNET_DEPLOYER_PRIVATE_KEY
         ? [process.env.MAINNET_DEPLOYER_PRIVATE_KEY]
-        : [],
-    },
-    goerli: {
-      chainId: 5,
-      url: process.env.GOERLI_PROVIDER || "",
-      accounts: process.env.GOERLI_DEPLOYER_PRIVATE_KEY
-        ? [process.env.GOERLI_DEPLOYER_PRIVATE_KEY]
         : [],
     },
     sepolia: {
@@ -95,12 +79,10 @@ const config: HardhatUserConfig = {
         ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
         : [],
     },
-    hardhat: hardhatNetworkConfig,
   },
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY || "",
-      goerli: process.env.ETHERSCAN_API_KEY || "",
       sepolia: process.env.ETHERSCAN_API_KEY || "",
       polygon: process.env.POLYGONSCAN_API_KEY || "",
     },

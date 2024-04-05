@@ -11,3 +11,4 @@ dist/
 cache
 artifacts
 deployments/localhost
+gas-report.txt

@@ -7,9 +7,10 @@ import {
   ModuleProxyFactory,
 } from "../typechain-types";
 import chai from "chai";
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import time from "./time";
 import { calculateProxyAddress } from "./helpers";
+import { getModuleProxyFactory } from "./GlobalSafeDeployments.test";
 
 const expect = chai.expect;
 
@@ -25,33 +26,12 @@ describe("ERC-20 Token Claiming", function () {
   let userA: SignerWithAddress;
   let userB: SignerWithAddress;
 
-  const moduleProxyFactoryAddress =
-    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
-
   const abiCoder = new ethers.utils.AbiCoder();
 
   beforeEach(async function () {
-    // Fork Goerli to use contracts deployed on Goerli
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: process.env.GOERLI_PROVIDER
-              ? process.env.GOERLI_PROVIDER
-              : "",
-          },
-        },
-      ],
-    });
-
     [deployer, userA, userB] = await ethers.getSigners();
 
-    // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
-      "ModuleProxyFactory",
-      moduleProxyFactoryAddress
-    );
+    moduleProxyFactory = getModuleProxyFactory();
 
     erc20ClaimMastercopy = await new ERC20Claim__factory(deployer).deploy();
     votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
@@ -79,7 +59,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    const predictedParentVotesERC20Address = await calculateProxyAddress(
+    const predictedParentVotesERC20Address = calculateProxyAddress(
       moduleProxyFactory,
       votesERC20Mastercopy.address,
       parentERC20SetupData,
@@ -114,7 +94,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    const predictedChildVotesERC20Address = await calculateProxyAddress(
+    const predictedChildVotesERC20Address = calculateProxyAddress(
       moduleProxyFactory,
       votesERC20Mastercopy.address,
       childERC20SetupData,
@@ -143,7 +123,7 @@ describe("ERC-20 Token Claiming", function () {
         ),
       ]);
 
-    const predictedERC20ClaimAddress = await calculateProxyAddress(
+    const predictedERC20ClaimAddress = calculateProxyAddress(
       moduleProxyFactory,
       erc20ClaimMastercopy.address,
       erc20ClaimSetupData,
@@ -287,7 +267,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    const predictedChildVotesERC20Address = await calculateProxyAddress(
+    const predictedChildVotesERC20Address = calculateProxyAddress(
       moduleProxyFactory,
       votesERC20Mastercopy.address,
       childERC20SetupData2,
@@ -314,7 +294,7 @@ describe("ERC-20 Token Claiming", function () {
         ),
       ]);
 
-    const predictedERC20ClaimAddress = await calculateProxyAddress(
+    const predictedERC20ClaimAddress = calculateProxyAddress(
       moduleProxyFactory,
       erc20ClaimMastercopy.address,
       erc20ClaimSetupData2,

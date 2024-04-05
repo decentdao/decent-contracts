@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber, Contract } from "ethers";
-import { ethers, network } from "hardhat";
+import { BigNumber } from "ethers";
+import { ethers } from "hardhat";
 import {
   VotesERC20__factory,
   FractalModule,
@@ -9,38 +9,37 @@ import {
   MultisigFreezeGuard,
   MultisigFreezeGuard__factory,
   ModuleProxyFactory,
+  GnosisSafeProxyFactory,
+  GnosisSafeL2,
+  GnosisSafeL2__factory,
+  MultiSendCallOnly__factory,
+  MultiSendCallOnly,
 } from "../typechain-types";
 import {
-  ifaceSafe,
-  abi,
-  abiSafe,
   calculateProxyAddress,
-  abiFactory,
   predictGnosisSafeAddress,
   buildContractCall,
   MetaTransaction,
-  multisendABI,
   encodeMultiSend,
-  ifaceMultiSend,
-  SAFE_FACTORY_ADDRESS,
-  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
+import {
+  getGnosisSafeL2Singleton,
+  getGnosisSafeProxyFactory,
+  getModuleProxyFactory,
+  getMultiSendCallOnly,
+} from "./GlobalSafeDeployments.test";
 
 describe("Fractal Module Tests", () => {
-  // Factories
-  let gnosisFactory: Contract;
+  let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
+  let moduleProxyFactory: ModuleProxyFactory;
+  let gnosisSafeL2Singleton: GnosisSafeL2;
 
   // Deployed contracts
-  let gnosisSafe: Contract;
-  let moduleFactory: Contract;
-  let multiSend: Contract;
+  let gnosisSafe: GnosisSafeL2;
+  let multiSendCallOnly: MultiSendCallOnly;
   let freezeGuard: MultisigFreezeGuard;
   let moduleImpl: FractalModule;
   let fractalModule: FractalModule;
-  let moduleProxyFactory: ModuleProxyFactory;
-
-  // Predicted Contracts
-  let predictedFractalModule: string;
 
   // Wallets
   let deployer: SignerWithAddress;
@@ -52,74 +51,49 @@ describe("Fractal Module Tests", () => {
   let createGnosisSetupCalldata: string;
   let freezeGuardSetup: string;
   let setModuleCalldata: string;
-  let sigs: string;
 
-  const moduleProxyFactoryAddress =
-    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
   beforeEach(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    setTimeout(function () {}, 500); // This timeout is to prevent API rate limit errors
-    // Fork Goerli to use contracts deployed on Goerli
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: process.env.GOERLI_PROVIDER
-              ? process.env.GOERLI_PROVIDER
-              : "",
-          },
-        },
-      ],
-    });
-
     [deployer, owner1, owner2, owner3] = await ethers.getSigners();
-    multiSend = new ethers.Contract(
-      "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
-      multisendABI,
-      deployer
-    );
-    gnosisFactory = new ethers.Contract(SAFE_FACTORY_ADDRESS, abi, deployer); // Gnosis Factory
-    moduleFactory = new ethers.Contract(
-      "0x00000000000DC7F163742Eb4aBEf650037b1f588",
-      // eslint-disable-next-line camelcase
-      abiFactory,
-      deployer
-    );
-    // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
-      "ModuleProxyFactory",
-      moduleProxyFactoryAddress
-    );
+
+    gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
+    moduleProxyFactory = getModuleProxyFactory();
+    gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
+    multiSendCallOnly = getMultiSendCallOnly();
 
     /// ////////////////// GNOSIS //////////////////
     // SETUP GnosisSafe
-    createGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [owner1.address, owner2.address, owner3.address, multiSend.address],
-      1,
-      ethers.constants.AddressZero,
-      ethers.constants.HashZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.AddressZero,
-    ]);
+    createGnosisSetupCalldata =
+      // eslint-disable-next-line camelcase
+      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+        [
+          owner1.address,
+          owner2.address,
+          owner3.address,
+          multiSendCallOnly.address,
+        ],
+        1,
+        ethers.constants.AddressZero,
+        ethers.constants.HashZero,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        0,
+        ethers.constants.AddressZero,
+      ]);
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
-      gnosisFactory.address,
       createGnosisSetupCalldata,
       saltNum,
-      SAFE_SINGLETON_ADDRESS,
-      gnosisFactory
+      gnosisSafeL2Singleton.address,
+      gnosisSafeProxyFactory
     );
 
     // Get Gnosis Safe contract
-    gnosisSafe = new ethers.Contract(
+    // eslint-disable-next-line camelcase
+    gnosisSafe = GnosisSafeL2__factory.connect(
       predictedGnosisSafeAddress,
-      abiSafe,
       deployer
     );
 
@@ -157,8 +131,8 @@ describe("Fractal Module Tests", () => {
         ),
       ]);
 
-    predictedFractalModule = await calculateProxyAddress(
-      moduleFactory,
+    const predictedFractalModule = calculateProxyAddress(
+      moduleProxyFactory,
       moduleImpl.address,
       setModuleCalldata,
       "10031021"
@@ -168,27 +142,20 @@ describe("Fractal Module Tests", () => {
       "FractalModule",
       predictedFractalModule
     );
-
-    // TX Array
-    sigs =
-      "0x000000000000000000000000" +
-      multiSend.address.slice(2) +
-      "0000000000000000000000000000000000000000000000000000000000000000" +
-      "01";
   });
 
   describe("Fractal Module", () => {
     it("Supports the expected ERC165 interface", async () => {
       const txs: MetaTransaction[] = [
         buildContractCall(
-          gnosisFactory,
+          gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
+          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
         buildContractCall(
-          moduleFactory,
+          moduleProxyFactory,
           "deployModule",
           [moduleImpl.address, setModuleCalldata, "10031021"],
           0,
@@ -196,22 +163,22 @@ describe("Fractal Module Tests", () => {
         ),
       ];
       const safeTx = encodeMultiSend(txs);
-      await expect(multiSend.multiSend(safeTx))
-        .to.emit(gnosisFactory, "ProxyCreation")
-        .withArgs(gnosisSafe.address, SAFE_SINGLETON_ADDRESS);
+      await expect(multiSendCallOnly.multiSend(safeTx))
+        .to.emit(gnosisSafeProxyFactory, "ProxyCreation")
+        .withArgs(gnosisSafe.address, gnosisSafeL2Singleton.address);
     });
 
     it("Owner may add/remove controllers", async () => {
       const txs: MetaTransaction[] = [
         buildContractCall(
-          gnosisFactory,
+          gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
+          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
         buildContractCall(
-          moduleFactory,
+          moduleProxyFactory,
           "deployModule",
           [moduleImpl.address, setModuleCalldata, "10031021"],
           0,
@@ -219,7 +186,7 @@ describe("Fractal Module Tests", () => {
         ),
       ];
       const safeTx = encodeMultiSend(txs);
-      await multiSend.multiSend(safeTx);
+      await multiSendCallOnly.multiSend(safeTx);
 
       // ADD Controller
       await expect(
@@ -253,23 +220,28 @@ describe("Fractal Module Tests", () => {
         ),
       ];
       const safeInternalTx = encodeMultiSend(internalTxs);
+      const sigs =
+        "0x000000000000000000000000" +
+        multiSendCallOnly.address.slice(2) +
+        "0000000000000000000000000000000000000000000000000000000000000000" +
+        "01";
       const txs: MetaTransaction[] = [
         buildContractCall(
-          gnosisFactory,
+          gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [SAFE_SINGLETON_ADDRESS, createGnosisSetupCalldata, saltNum],
+          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
           0,
           false
         ),
         buildContractCall(
-          moduleFactory,
+          moduleProxyFactory,
           "deployModule",
           [moduleImpl.address, setModuleCalldata, "10031021"],
           0,
           false
         ),
         buildContractCall(
-          moduleFactory,
+          moduleProxyFactory,
           "deployModule",
           [freezeGuard.address, freezeGuardSetup, "10031021"],
           0,
@@ -279,10 +251,13 @@ describe("Fractal Module Tests", () => {
           gnosisSafe,
           "execTransaction",
           [
-            multiSend.address, // to
+            multiSendCallOnly.address, // to
             "0", // value
             // eslint-disable-next-line camelcase
-            ifaceMultiSend.encodeFunctionData("multiSend", [safeInternalTx]), // calldata
+            MultiSendCallOnly__factory.createInterface().encodeFunctionData(
+              "multiSend",
+              [safeInternalTx]
+            ), // calldata
             "1", // operation
             "0", // tx gas
             "0", // base gas
@@ -296,7 +271,7 @@ describe("Fractal Module Tests", () => {
         ),
       ];
       const safeTx = encodeMultiSend(txs);
-      await multiSend.multiSend(safeTx);
+      await multiSendCallOnly.multiSend(safeTx);
 
       // FUND SAFE
       const abiCoder = new ethers.utils.AbiCoder(); // encode data
@@ -321,7 +296,7 @@ describe("Fractal Module Tests", () => {
         "10031021"
       );
 
-      const predictedVotesERC20Address = await calculateProxyAddress(
+      const predictedVotesERC20Address = calculateProxyAddress(
         moduleProxyFactory,
         votesERC20Mastercopy.address,
         votesERC20SetupData,

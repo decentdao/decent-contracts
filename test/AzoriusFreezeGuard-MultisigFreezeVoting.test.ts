@@ -1,11 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber, Contract } from "ethers";
-import { ethers, network } from "hardhat";
+import { BigNumber } from "ethers";
+import { ethers } from "hardhat";
 import time from "./time";
 
 import {
-  GnosisSafe,
   GnosisSafeProxyFactory,
   LinearERC20Voting,
   LinearERC20Voting__factory,
@@ -18,23 +17,28 @@ import {
   VotesERC20,
   VotesERC20__factory,
   ModuleProxyFactory,
+  GnosisSafeL2__factory,
+  GnosisSafeL2,
 } from "../typechain-types";
 
 import {
   buildSignatureBytes,
   buildSafeTransaction,
   safeSignTypedData,
-  ifaceSafe,
   predictGnosisSafeAddress,
   calculateProxyAddress,
-  SAFE_FACTORY_ADDRESS,
-  SAFE_SINGLETON_ADDRESS,
 } from "./helpers";
+
+import {
+  getGnosisSafeL2Singleton,
+  getGnosisSafeProxyFactory,
+  getModuleProxyFactory,
+} from "./GlobalSafeDeployments.test";
 
 describe("Azorius Child DAO with Multisig parent", () => {
   // Deployed contracts
-  let parentGnosisSafe: Contract;
-  let childGnosisSafe: GnosisSafe;
+  let parentGnosisSafe: GnosisSafeL2;
+  let childGnosisSafe: GnosisSafeL2;
   let freezeGuard: AzoriusFreezeGuard;
   let freezeGuardMastercopy: AzoriusFreezeGuard;
   let azoriusMastercopy: Azorius;
@@ -63,29 +67,17 @@ describe("Azorius Child DAO with Multisig parent", () => {
   let createChildGnosisSetupCalldata: string;
   let createParentGnosisSetupCalldata: string;
 
-  const moduleProxyFactoryAddress =
-    "0x00000000000DC7F163742Eb4aBEf650037b1f588";
   const parentThreshold = 2;
   const saltNum = BigNumber.from(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
   beforeEach(async () => {
-    const abiCoder = new ethers.utils.AbiCoder();
+    gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
+    moduleProxyFactory = getModuleProxyFactory();
+    const gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    // Fork Goerli to use contracts deployed on Goerli
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: process.env.GOERLI_PROVIDER
-              ? process.env.GOERLI_PROVIDER
-              : "",
-          },
-        },
-      ],
-    });
+    const abiCoder = new ethers.utils.AbiCoder();
 
     // Get the signer accounts
     [
@@ -100,70 +92,60 @@ describe("Azorius Child DAO with Multisig parent", () => {
       freezeVotingOwner,
     ] = await ethers.getSigners();
 
-    // Deploy Gnosis Safe Proxy factory
-    gnosisSafeProxyFactory = await ethers.getContractAt(
-      "GnosisSafeProxyFactory",
-      SAFE_FACTORY_ADDRESS
-    );
+    createParentGnosisSetupCalldata =
+      // eslint-disable-next-line camelcase
+      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+        [
+          parentMultisigOwner1.address,
+          parentMultisigOwner2.address,
+          parentMultisigOwner3.address,
+        ],
+        parentThreshold,
+        ethers.constants.AddressZero,
+        ethers.constants.HashZero,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        0,
+        ethers.constants.AddressZero,
+      ]);
 
-    // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
-      "ModuleProxyFactory",
-      moduleProxyFactoryAddress
-    );
-
-    createParentGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [
-        parentMultisigOwner1.address,
-        parentMultisigOwner2.address,
-        parentMultisigOwner3.address,
-      ],
-      parentThreshold,
-      ethers.constants.AddressZero,
-      ethers.constants.HashZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.AddressZero,
-    ]);
-
-    createChildGnosisSetupCalldata = ifaceSafe.encodeFunctionData("setup", [
-      [childSafeOwner.address],
-      1,
-      ethers.constants.AddressZero,
-      ethers.constants.HashZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      0,
-      ethers.constants.AddressZero,
-    ]);
+    createChildGnosisSetupCalldata =
+      // eslint-disable-next-line camelcase
+      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+        [childSafeOwner.address],
+        1,
+        ethers.constants.AddressZero,
+        ethers.constants.HashZero,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        0,
+        ethers.constants.AddressZero,
+      ]);
 
     const predictedParentGnosisSafeAddress = await predictGnosisSafeAddress(
-      gnosisSafeProxyFactory.address,
       createParentGnosisSetupCalldata,
       saltNum,
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       gnosisSafeProxyFactory
     );
 
     const predictedChildGnosisSafeAddress = await predictGnosisSafeAddress(
-      gnosisSafeProxyFactory.address,
       createChildGnosisSetupCalldata,
       saltNum,
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       gnosisSafeProxyFactory
     );
 
     // Deploy Parent Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       createParentGnosisSetupCalldata,
       saltNum
     );
 
     // Deploy Child Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      SAFE_SINGLETON_ADDRESS,
+      gnosisSafeL2Singleton.address,
       createChildGnosisSetupCalldata,
       saltNum
     );
@@ -209,7 +191,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    const predictedChildVotesERC20Address = await calculateProxyAddress(
+    const predictedChildVotesERC20Address = calculateProxyAddress(
       moduleProxyFactory,
       votesERC20Mastercopy.address,
       childVotesERC20SetupData,
@@ -254,7 +236,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    const predictedAzoriusAddress = await calculateProxyAddress(
+    const predictedAzoriusAddress = calculateProxyAddress(
       moduleProxyFactory,
       azoriusMastercopy.address,
       azoriusSetupCalldata,
@@ -302,7 +284,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    const predictedLinearERC20VotingAddress = await calculateProxyAddress(
+    const predictedLinearERC20VotingAddress = calculateProxyAddress(
       moduleProxyFactory,
       linearERC20VotingMastercopy.address,
       linearERC20VotingSetupCalldata,
@@ -348,7 +330,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    const predictedFreezeVotingAddress = await calculateProxyAddress(
+    const predictedFreezeVotingAddress = calculateProxyAddress(
       moduleProxyFactory,
       freezeVotingMastercopy.address,
       freezeVotingSetupCalldata,
@@ -383,7 +365,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    const predictedFreezeGuardAddress = await calculateProxyAddress(
+    const predictedFreezeGuardAddress = calculateProxyAddress(
       moduleProxyFactory,
       freezeGuardMastercopy.address,
       freezeGuardSetupCalldata,
@@ -405,7 +387,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       to: childGnosisSafe.address,
       data: enableAzoriusModuleData,
       safeTxGas: 1000000,
-      nonce: (await childGnosisSafe.nonce()).toNumber(),
+      nonce: await childGnosisSafe.nonce(),
     });
 
     const sigs = [
