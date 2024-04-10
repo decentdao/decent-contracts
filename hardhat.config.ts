@@ -55,6 +55,7 @@ const config: HardhatUserConfig = {
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
       sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
+      baseSepolia: `privatekey://${process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
     },
   },
   networks: {
