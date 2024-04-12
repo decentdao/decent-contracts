@@ -1,0 +1,101 @@
+{
+  "address": "0x535B64f9Ef529Ac8B34Ac7273033bBE67B34f131",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "IncorrectValueCount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "theAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "value",
+          "type": "string"
+        }
+      ],
+      "name": "ValueUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string[]",
+          "name": "_keys",
+          "type": "string[]"
+        },
+        {
+          "internalType": "string[]",
+          "name": "_values",
+          "type": "string[]"
+        }
+      ],
+      "name": "updateValues",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd291d2429474b3071ed4deb459b53a2751f1df87fbbd93ea9b1dbf06f45f34e9",
+  "receipt": {
+    "to": null,
+    "from": "0xb5Ca125166C1987A35EDD550E16846Fa1e1D9bB3",
+    "contractAddress": "0x535B64f9Ef529Ac8B34Ac7273033bBE67B34f131",
+    "transactionIndex": 7,
+    "gasUsed": "237658",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x17821333e4653634dec88d1c8256a9145ee20b8aa214c4236996eb6185d08685",
+    "transactionHash": "0xd291d2429474b3071ed4deb459b53a2751f1df87fbbd93ea9b1dbf06f45f34e9",
+    "logs": [],
+    "blockNumber": 118640420,
+    "cumulativeGasUsed": "1565774",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "6329ea68745179cd760d621f71df369d",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"IncorrectValueCount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"theAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"}],\"name\":\"ValueUpdated\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"string[]\",\"name\":\"_keys\",\"type\":\"string[]\"},{\"internalType\":\"string[]\",\"name\":\"_values\",\"type\":\"string[]\"}],\"name\":\"updateValues\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"updateValues(string[],string[])\":{\"params\":{\"_keys\":\"the keys\",\"_values\":\"the values\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"updateValues(string[],string[])\":{\"notice\":\"Logs the given key / value pairs, along with the caller's address.\"}},\"notice\":\"Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility  contract to log key / value pair events for the calling address.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/KeyValuePairs.sol\":\"KeyValuePairs\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/KeyValuePairs.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity =0.8.19;\\n\\nimport { IKeyValuePairs } from \\\"./interfaces/IKeyValuePairs.sol\\\";\\n\\n/**\\n * Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility \\n * contract to log key / value pair events for the calling address.\\n */\\ncontract KeyValuePairs is IKeyValuePairs {\\n\\n    event ValueUpdated(address indexed theAddress, string key, string value);\\n\\n    error IncorrectValueCount();\\n\\n    /** @inheritdoc IKeyValuePairs*/\\n    function updateValues(string[] memory _keys, string[] memory _values) external {\\n\\n        uint256 keyCount = _keys.length;\\n\\n        if (keyCount != _values.length)\\n            revert IncorrectValueCount();\\n\\n        for (uint256 i; i < keyCount; ) {\\n            emit ValueUpdated(msg.sender, _keys[i], _values[i]);\\n            unchecked {\\n                ++i;\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xf196ae9676d3c2621fa3738e69a21f03df7bdbd2ddf9196e9c4f5fcd2890e736\",\"license\":\"MIT\"},\"contracts/interfaces/IKeyValuePairs.sol\":{\"content\":\"//SPDX-License-Identifier: MIT\\npragma solidity =0.8.19;\\n\\n/**\\n * A utility contract to log key / value pair events for the calling address.\\n */\\ninterface IKeyValuePairs {\\n\\n    /**\\n     * Logs the given key / value pairs, along with the caller's address.\\n     *\\n     * @param _keys the keys\\n     * @param _values the values\\n     */\\n    function updateValues(string[] memory _keys, string[] memory _values) external;\\n}\\n\",\"keccak256\":\"0x60d45b76d03e4a5b5b93a479243128e6ab8321702b422e7221311c0e05e566b4\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610356806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063af26e97214610030575b600080fd5b61004361003e366004610232565b610045565b005b8151815181146100685760405163391ee29760e21b815260040160405180910390fd5b60005b818110156100f057336001600160a01b03167fd7ab480e2a20394fe09ec1c72d3c0a717929fba59f1c546080f608343da41ae78583815181106100b0576100b0610296565b60200260200101518584815181106100ca576100ca610296565b60200260200101516040516100e09291906102f2565b60405180910390a260010161006b565b50505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff81118282101715610135576101356100f6565b604052919050565b6000601f838184011261014f57600080fd5b8235602067ffffffffffffffff8083111561016c5761016c6100f6565b8260051b61017b83820161010c565b938452868101830193838101908986111561019557600080fd5b84890192505b85831015610225578235848111156101b35760008081fd5b8901603f81018b136101c55760008081fd5b858101356040868211156101db576101db6100f6565b6101ec828b01601f1916890161010c565b8281528d828486010111156102015760008081fd5b828285018a830137600092810189019290925250835250918401919084019061019b565b9998505050505050505050565b6000806040838503121561024557600080fd5b823567ffffffffffffffff8082111561025d57600080fd5b6102698683870161013d565b9350602085013591508082111561027f57600080fd5b5061028c8582860161013d565b9150509250929050565b634e487b7160e01b600052603260045260246000fd5b6000815180845260005b818110156102d2576020818501810151868301820152016102b6565b506000602082860101526020601f19601f83011685010191505092915050565b60408152600061030560408301856102ac565b828103602084015261031781856102ac565b9594505050505056fea2646970667358221220fb0ad2c544152c2c270900b6936ef3cfda3684c6a45ebe53bd19f123c2bfa6a564736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063af26e97214610030575b600080fd5b61004361003e366004610232565b610045565b005b8151815181146100685760405163391ee29760e21b815260040160405180910390fd5b60005b818110156100f057336001600160a01b03167fd7ab480e2a20394fe09ec1c72d3c0a717929fba59f1c546080f608343da41ae78583815181106100b0576100b0610296565b60200260200101518584815181106100ca576100ca610296565b60200260200101516040516100e09291906102f2565b60405180910390a260010161006b565b50505050565b634e487b7160e01b600052604160045260246000fd5b604051601f8201601f1916810167ffffffffffffffff81118282101715610135576101356100f6565b604052919050565b6000601f838184011261014f57600080fd5b8235602067ffffffffffffffff8083111561016c5761016c6100f6565b8260051b61017b83820161010c565b938452868101830193838101908986111561019557600080fd5b84890192505b85831015610225578235848111156101b35760008081fd5b8901603f81018b136101c55760008081fd5b858101356040868211156101db576101db6100f6565b6101ec828b01601f1916890161010c565b8281528d828486010111156102015760008081fd5b828285018a830137600092810189019290925250835250918401919084019061019b565b9998505050505050505050565b6000806040838503121561024557600080fd5b823567ffffffffffffffff8082111561025d57600080fd5b6102698683870161013d565b9350602085013591508082111561027f57600080fd5b5061028c8582860161013d565b9150509250929050565b634e487b7160e01b600052603260045260246000fd5b6000815180845260005b818110156102d2576020818501810151868301820152016102b6565b506000602082860101526020601f19601f83011685010191505092915050565b60408152600061030560408301856102ac565b828103602084015261031781856102ac565b9594505050505056fea2646970667358221220fb0ad2c544152c2c270900b6936ef3cfda3684c6a45ebe53bd19f123c2bfa6a564736f6c63430008130033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "updateValues(string[],string[])": {
+        "params": {
+          "_keys": "the keys",
+          "_values": "the values"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "updateValues(string[],string[])": {
+        "notice": "Logs the given key / value pairs, along with the caller's address."
+      }
+    },
+    "notice": "Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility  contract to log key / value pair events for the calling address.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
