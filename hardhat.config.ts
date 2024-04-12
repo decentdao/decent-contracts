@@ -57,6 +57,7 @@ const config: HardhatUserConfig = {
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
       baseSepolia: `privatekey://${process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       base: `privatekey://${process.env.BASE_DEPLOYER_PRIVATE_KEY}`,
+      optimism: `privatekey://${process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY}`,
     },
   },
   networks: {
@@ -95,6 +96,13 @@ const config: HardhatUserConfig = {
         ? [process.env.BASE_DEPLOYER_PRIVATE_KEY]
         : [],
     },
+    optimism: {
+      chainId: 10,
+      url: process.env.OPTIMISM_PROVIDER || "",
+      accounts: process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY
+        ? [process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
   },
   etherscan: {
     apiKey: {
@@ -103,6 +111,7 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_API_KEY || "",
       baseSepolia: process.env.BASESCAN_API_KEY || "",
       base: process.env.BASESCAN_API_KEY || "",
+      optimism: process.env.OPTIMISTIC_ETHERSCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -119,6 +128,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "optimism",
+        chainId: 10,
+        urls: {
+          apiURL: "https://api-optimistic.etherscan.io/api",
+          browserURL: "https://optimistic.etherscan.io",
         },
       },
     ],
