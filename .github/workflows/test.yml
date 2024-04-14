@@ -8,25 +8,13 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  deploy:
-    name: Tests
-    runs-on: ubuntu-latest
-
+  test:
+    name: Test
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Use Node.js
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-
-      - name: Install node modules
-        run: npm install
-
-      - name: Compile contracts
-        run: npx hardhat compile
-
-      - name: Run contract tests
-        id: run-tests
-        run: npx hardhat test
+      - run: npm install
+      - run: npm run compile
+      - run: npm run test
