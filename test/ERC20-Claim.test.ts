@@ -7,7 +7,8 @@ import {
   ModuleProxyFactory,
 } from "../typechain-types";
 import chai from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import time from "./time";
 import { calculateProxyAddress } from "./helpers";
 import { getModuleProxyFactory } from "./GlobalSafeDeployments.test";
@@ -29,7 +30,7 @@ describe("ERC-20 Token Claiming", function () {
   const abiCoder = new ethers.AbiCoder();
 
   beforeEach(async function () {
-    [deployer, userA, userB] = await ethers.getSigners();
+    [deployer, userA, userB] = await hre.ethers.getSigners();
 
     moduleProxyFactory = getModuleProxyFactory();
 
@@ -63,7 +64,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    parentERC20 = await ethers.getContractAt(
+    parentERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedParentVotesERC20Address
     );
@@ -95,12 +96,12 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    childERC20 = await ethers.getContractAt(
+    childERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedChildVotesERC20Address
     );
 
-    const latestBlock = await ethers.provider.getBlock("latest");
+    const latestBlock = await hre.ethers.provider.getBlock("latest");
 
     const erc20ClaimSetupData =
       // eslint-disable-next-line camelcase
@@ -134,7 +135,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    erc20Claim = await ethers.getContractAt(
+    erc20Claim = await hre.ethers.getContractAt(
       "ERC20Claim",
       predictedERC20ClaimAddress
     );
@@ -263,7 +264,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    childERC20 = await ethers.getContractAt(
+    childERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedChildVotesERC20Address
     );
@@ -300,7 +301,7 @@ describe("ERC-20 Token Claiming", function () {
       "10031021"
     );
 
-    erc20Claim = await ethers.getContractAt(
+    erc20Claim = await hre.ethers.getContractAt(
       "ERC20Claim",
       predictedERC20ClaimAddress
     );

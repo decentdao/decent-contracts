@@ -1,6 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import {
   Azorius__factory,
   FractalModule,
@@ -52,7 +53,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
 
-  const abiCoder = new ethers.AbiCoder(); // encode data
+  const abiCoder = new hre.ethers.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
   let freezeGuardFactoryInit: string;
   let setModuleCalldata: string;
@@ -70,7 +71,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
     multiSendCallOnly = getMultiSendCallOnly();
     gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    [deployer, owner1, owner2, owner3] = await ethers.getSigners();
+    [deployer, owner1, owner2, owner3] = await hre.ethers.getSigners();
 
     /// ////////////////// GNOSIS //////////////////
     // SETUP GnosisSafe
@@ -136,7 +137,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "MultisigFreezeGuard",
       predictedFreezeGuard
     );
@@ -169,7 +170,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
       "10031021"
     );
 
-    fractalModule = await ethers.getContractAt(
+    fractalModule = await hre.ethers.getContractAt(
       "FractalModule",
       predictedFractalModule
     );

@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 import {
   FractalRegistry,
@@ -20,7 +20,7 @@ describe("Fractal Registry", () => {
   let dao2: SignerWithAddress;
 
   beforeEach(async () => {
-    [deployer, dao1, dao2] = await ethers.getSigners();
+    [deployer, dao1, dao2] = await hre.ethers.getSigners();
 
     // Deploy the Fractal Name Registry
     fractalRegistry = await new FractalRegistry__factory(deployer).deploy();

@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import time from "./time";
 
 import {
@@ -90,7 +90,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       childTokenHolder2,
       azoriusModuleOwner,
       freezeVotingOwner,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     createParentGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -151,13 +151,13 @@ describe("Azorius Child DAO with Multisig parent", () => {
     );
 
     // Get Parent Gnosis Safe
-    parentGnosisSafe = await ethers.getContractAt(
+    parentGnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafeL2",
       predictedParentGnosisSafeAddress
     );
 
     // Get Child Gnosis Safe
-    childGnosisSafe = await ethers.getContractAt(
+    childGnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafeL2",
       predictedChildGnosisSafeAddress
     );
@@ -198,7 +198,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    childVotesERC20 = await ethers.getContractAt(
+    childVotesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedChildVotesERC20Address
     );
@@ -243,7 +243,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    azoriusModule = await ethers.getContractAt(
+    azoriusModule = await hre.ethers.getContractAt(
       "Azorius",
       predictedAzoriusAddress
     );
@@ -291,7 +291,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    linearERC20Voting = await ethers.getContractAt(
+    linearERC20Voting = await hre.ethers.getContractAt(
       "LinearERC20Voting",
       predictedLinearERC20VotingAddress
     );
@@ -337,7 +337,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    freezeVoting = await ethers.getContractAt(
+    freezeVoting = await hre.ethers.getContractAt(
       "MultisigFreezeVoting",
       predictedFreezeVotingAddress
     );
@@ -372,7 +372,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "AzoriusFreezeGuard",
       predictedFreezeGuardAddress
     );
@@ -1102,9 +1102,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // One voter casts freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const firstFreezeProposalCreatedBlock = (await ethers.provider.getBlock(
-        "latest"
-      ))!.number;
+      const firstFreezeProposalCreatedBlock =
+        (await hre.ethers.provider.getBlock("latest"))!.number;
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         firstFreezeProposalCreatedBlock
       );
@@ -1132,9 +1131,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // One voter casts freeze vote, this should create a new freeze proposal
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const secondFreezeProposalCreatedBlock = (await ethers.provider.getBlock(
-        "latest"
-      ))!.number;
+      const secondFreezeProposalCreatedBlock =
+        (await hre.ethers.provider.getBlock("latest"))!.number;
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         secondFreezeProposalCreatedBlock

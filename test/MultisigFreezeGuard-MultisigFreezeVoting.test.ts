@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import time from "./time";
 
 import {
@@ -67,7 +67,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       childMultisigOwner2,
       childMultisigOwner3,
       freezeGuardOwner,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     const moduleProxyFactory = getModuleProxyFactory();
@@ -175,7 +175,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       "10031021"
     );
 
-    votesERC20 = await ethers.getContractAt(
+    votesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedVotesERC20Address
     );
@@ -216,7 +216,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       "10031021"
     );
 
-    freezeVoting = await ethers.getContractAt(
+    freezeVoting = await hre.ethers.getContractAt(
       "MultisigFreezeVoting",
       predictedFreezeVotingAddress
     );
@@ -258,7 +258,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "MultisigFreezeGuard",
       predictedFreezeGuardAddress
     );
@@ -320,7 +320,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      const latestBlock = await ethers.provider.getBlock("latest");
+      const latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );
@@ -984,7 +984,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      let latestBlock = await ethers.provider.getBlock("latest");
+      let latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );
@@ -994,7 +994,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      latestBlock = await ethers.provider.getBlock("latest");
+      latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );

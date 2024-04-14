@@ -1,5 +1,4 @@
-import { BaseContract, Signer, ethers } from "ethers";
-import { AddressZero } from "@ethersproject/constants";
+import { ethers } from "ethers";
 import {
   GnosisSafeProxyFactory,
   IAzorius,
@@ -48,7 +47,7 @@ export const predictGnosisSafeAddress = async (
 };
 
 export const calculateProxyAddress = async (
-  factory: BaseContract,
+  factory: ethers.BaseContract,
   masterCopy: string,
   initData: string,
   saltNonce: string
@@ -72,8 +71,8 @@ export const calculateProxyAddress = async (
 };
 
 export const safeSignTypedData = async (
-  signer: Signer,
-  safe: BaseContract,
+  signer: ethers.Signer,
+  safe: ethers.BaseContract,
   safeTx: SafeTransaction
 ): Promise<SafeSignature> => {
   if (!signer.provider) {
@@ -117,7 +116,7 @@ export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
 };
 
 export const buildContractCall = async (
-  contract: BaseContract,
+  contract: ethers.BaseContract,
   method: string,
   params: any[],
   nonce: number,
@@ -158,8 +157,8 @@ export const buildSafeTransaction = (template: {
     safeTxGas: template.safeTxGas || 0,
     baseGas: template.baseGas || 0,
     gasPrice: template.gasPrice || 0,
-    gasToken: template.gasToken || AddressZero,
-    refundReceiver: template.refundReceiver || AddressZero,
+    gasToken: template.gasToken || ethers.ZeroAddress,
+    refundReceiver: template.refundReceiver || ethers.ZeroAddress,
     nonce: template.nonce,
   };
 };

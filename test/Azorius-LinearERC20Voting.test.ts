@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers, network } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import time from "./time";
 
 import {
@@ -78,16 +78,16 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       tokenHolder3,
       mockStrategy1,
       mockStrategy2,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     // Get Gnosis Safe Proxy factory
-    gnosisSafeProxyFactory = await ethers.getContractAt(
+    gnosisSafeProxyFactory = await hre.ethers.getContractAt(
       "GnosisSafeProxyFactory",
       await gnosisSafeProxyFactory.getAddress()
     );
 
     // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
+    moduleProxyFactory = await hre.ethers.getContractAt(
       "ModuleProxyFactory",
       await moduleProxyFactory.getAddress()
     );
@@ -119,7 +119,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       saltNum
     );
 
-    gnosisSafe = await ethers.getContractAt(
+    gnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafe",
       predictedGnosisSafeAddress
     );
@@ -159,7 +159,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    votesERC20 = await ethers.getContractAt(
+    votesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedVotesERC20Address
     );
@@ -205,7 +205,10 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
+    azorius = await hre.ethers.getContractAt(
+      "Azorius",
+      predictedAzoriusAddress
+    );
 
     // Deploy Linear ERC20 Voting Mastercopy
     linearERC20VotingMastercopy = await new LinearERC20Voting__factory(
@@ -250,7 +253,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       "10031021"
     );
 
-    linearERC20Voting = await ethers.getContractAt(
+    linearERC20Voting = await hre.ethers.getContractAt(
       "LinearERC20Voting",
       predictedLinearERC20VotingAddress
     );
@@ -571,7 +574,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -617,7 +620,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -663,7 +666,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -908,7 +911,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
           [proposalTransaction],
           proposalMetadata
         );
-      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt!.logs[1].data;
       const topics = receipt!.logs[1].topics;
       const event = azorius.interface.decodeEventLog(
@@ -1500,7 +1503,10 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         "10031021"
       );
 
-      azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
+      azorius = await hre.ethers.getContractAt(
+        "Azorius",
+        predictedAzoriusAddress
+      );
 
       expect(await azorius.isStrategyEnabled(tokenHolder1.address)).to.eq(true);
       expect(await azorius.isStrategyEnabled(tokenHolder2.address)).to.eq(true);
@@ -1541,7 +1547,7 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
         "10031021"
       );
 
-      mockVotingStrategy = await ethers.getContractAt(
+      mockVotingStrategy = await hre.ethers.getContractAt(
         "MockVotingStrategy",
         predictedMockVotingStrategyAddress
       );

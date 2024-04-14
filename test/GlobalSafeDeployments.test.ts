@@ -10,7 +10,7 @@ import {
   MockContract,
   MockContract__factory,
 } from "../typechain-types";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 let moduleProxyFactory: ModuleProxyFactory;
@@ -19,7 +19,7 @@ let multiSendCallOnly: MultiSendCallOnly;
 let mockContract: MockContract;
 
 beforeEach(async () => {
-  const [deployer] = await ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
 
   gnosisSafeProxyFactory = await new GnosisSafeProxyFactory__factory(
     deployer

@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import time from "./time";
 import {
   VotesERC20,
@@ -62,7 +62,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       tokenVetoer1,
       tokenVetoer2,
       freezeGuardOwner,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     const moduleProxyFactory = getModuleProxyFactory();
@@ -137,7 +137,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    votesERC20 = await ethers.getContractAt(
+    votesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedVotesERC20Address
     );
@@ -180,7 +180,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    freezeVoting = await ethers.getContractAt(
+    freezeVoting = await hre.ethers.getContractAt(
       "ERC20FreezeVoting",
       predictedFreezeVotingAddress
     );
@@ -222,7 +222,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "MultisigFreezeGuard",
       predictedFreezeGuardAddress
     );
@@ -283,7 +283,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      const latestBlock = await ethers.provider.getBlock("latest");
+      const latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );
@@ -326,7 +326,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
         tx.nonce
       );
 
-      const latestBlock = await ethers.provider.getBlock("latest");
+      const latestBlock = await hre.ethers.provider.getBlock("latest");
 
       const signaturesHash = ethers.solidityPackedKeccak256(
         ["bytes"],
@@ -547,7 +547,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      let latestBlock = await ethers.provider.getBlock("latest");
+      let latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );
@@ -557,7 +557,7 @@ describe("Child Multisig DAO with Azorius Parent", () => {
 
       await freezeVoting.connect(tokenVetoer1).castFreezeVote();
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      latestBlock = await ethers.provider.getBlock("latest");
+      latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         latestBlock!.number
       );

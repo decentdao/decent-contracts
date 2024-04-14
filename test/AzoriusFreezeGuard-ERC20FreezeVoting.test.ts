@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers, network } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import time from "./time";
 
 import {
@@ -84,7 +84,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       childTokenHolder1,
       childTokenHolder2,
       mockParentDAO,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -114,12 +114,12 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     );
 
     // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
+    moduleProxyFactory = await hre.ethers.getContractAt(
       "ModuleProxyFactory",
       await moduleProxyFactory.getAddress()
     );
 
-    childGnosisSafe = await ethers.getContractAt(
+    childGnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafe",
       predictedGnosisSafeAddress
     );
@@ -158,7 +158,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    childVotesERC20 = await ethers.getContractAt(
+    childVotesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedChildVotesERC20Address
     );
@@ -193,7 +193,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    parentVotesERC20 = await ethers.getContractAt(
+    parentVotesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedParentVotesERC20Address
     );
@@ -244,7 +244,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    azoriusModule = await ethers.getContractAt(
+    azoriusModule = await hre.ethers.getContractAt(
       "Azorius",
       predictedAzoriusAddress
     );
@@ -292,7 +292,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    linearERC20Voting = await ethers.getContractAt(
+    linearERC20Voting = await hre.ethers.getContractAt(
       "LinearERC20Voting",
       predictedLinearERC20VotingAddress
     );
@@ -335,7 +335,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    freezeVoting = await ethers.getContractAt(
+    freezeVoting = await hre.ethers.getContractAt(
       "ERC20FreezeVoting",
       predictedFreezeVotingAddress
     );
@@ -370,7 +370,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "AzoriusFreezeGuard",
       predictedFreezeGuardAddress
     );
@@ -876,7 +876,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
 
     // Increase time so that freeze has ended
     for (let i = 0; i <= 100; i++) {
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
     }
 
     const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
@@ -1104,7 +1104,7 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // One voter casts freeze vote
     await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
 
-    const firstFreezeProposalCreatedBlock = (await ethers.provider.getBlock(
+    const firstFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock(
       "latest"
     ))!.number;
     expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
@@ -1134,9 +1134,8 @@ describe("Azorius Child DAO with Azorius Parent", () => {
     // One voter casts freeze vote, this should create a new freeze proposal
     await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
 
-    const secondFreezeProposalCreatedBlock = (await ethers.provider.getBlock(
-      "latest"
-    ))!.number;
+    const secondFreezeProposalCreatedBlock =
+      (await hre.ethers.provider.getBlock("latest"))!.number;
 
     expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
       secondFreezeProposalCreatedBlock

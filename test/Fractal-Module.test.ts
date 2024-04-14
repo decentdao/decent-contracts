@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import {
   VotesERC20__factory,
   FractalModule,
@@ -57,7 +57,7 @@ describe("Fractal Module Tests", () => {
   );
 
   beforeEach(async () => {
-    [deployer, owner1, owner2, owner3] = await ethers.getSigners();
+    [deployer, owner1, owner2, owner3] = await hre.ethers.getSigners();
 
     gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     moduleProxyFactory = getModuleProxyFactory();
@@ -144,7 +144,7 @@ describe("Fractal Module Tests", () => {
       "10031021"
     );
 
-    fractalModule = await ethers.getContractAt(
+    fractalModule = await hre.ethers.getContractAt(
       "FractalModule",
       predictedFractalModule
     );
@@ -324,7 +324,7 @@ describe("Fractal Module Tests", () => {
         "10031021"
       );
 
-      const votesERC20 = await ethers.getContractAt(
+      const votesERC20 = await hre.ethers.getContractAt(
         "VotesERC20",
         predictedVotesERC20Address
       );

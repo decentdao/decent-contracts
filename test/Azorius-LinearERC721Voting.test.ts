@@ -1,9 +1,8 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-
-import { ethers, network } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import time from "./time";
-
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -17,7 +16,6 @@ import {
   MockContract__factory,
   GnosisSafeL2__factory,
 } from "../typechain-types";
-
 import {
   buildSignatureBytes,
   buildSafeTransaction,
@@ -27,7 +25,6 @@ import {
   mockTransaction,
   mockRevertTransaction,
 } from "./helpers";
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -93,16 +90,16 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
 
     // Get the signer accounts
     [deployer, gnosisSafeOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
-      await ethers.getSigners();
+      await hre.ethers.getSigners();
 
     // Get Gnosis Safe Proxy factory
-    gnosisSafeProxyFactory = await ethers.getContractAt(
+    gnosisSafeProxyFactory = await hre.ethers.getContractAt(
       "GnosisSafeProxyFactory",
       await gnosisSafeProxyFactory.getAddress()
     );
 
     // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
+    moduleProxyFactory = await hre.ethers.getContractAt(
       "ModuleProxyFactory",
       await moduleProxyFactory.getAddress()
     );
@@ -134,7 +131,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       saltNum
     );
 
-    gnosisSafe = await ethers.getContractAt(
+    gnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafe",
       predictedGnosisSafeAddress
     );
@@ -205,7 +202,10 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       "10031021"
     );
 
-    azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
+    azorius = await hre.ethers.getContractAt(
+      "Azorius",
+      predictedAzoriusAddress
+    );
 
     // Deploy Linear ERC721 Voting Mastercopy
     linearERC721VotingMastercopy = await new LinearERC721Voting__factory(
@@ -255,7 +255,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       "10031021"
     );
 
-    linearERC721Voting = await ethers.getContractAt(
+    linearERC721Voting = await hre.ethers.getContractAt(
       "LinearERC721Voting",
       predictedlinearERC721VotingAddress
     );
@@ -498,7 +498,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -537,7 +537,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -576,7 +576,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -776,7 +776,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           [proposalTransaction],
           proposalMetadata
         );
-      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+      const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt!.logs[1].data;
       const topics = receipt!.logs[1].topics;
       const event = azorius.interface.decodeEventLog(
