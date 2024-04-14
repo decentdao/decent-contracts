@@ -1,5 +1,4 @@
-import { Contract, utils, BigNumber, Signer, ethers } from "ethers";
-import { TypedDataSigner } from "@ethersproject/abstract-signer";
+import { BaseContract, Signer, ethers } from "ethers";
 import { AddressZero } from "@ethersproject/constants";
 import {
   GnosisSafeProxyFactory,
@@ -10,7 +9,7 @@ import { getMockContract } from "./GlobalSafeDeployments.test";
 
 export interface MetaTransaction {
   to: string;
-  value: string | number | BigNumber;
+  value: string | number | bigint;
   data: string;
   operation: number;
 }
@@ -21,7 +20,7 @@ export interface SafeTransaction extends MetaTransaction {
   gasPrice: string | number;
   gasToken: string;
   refundReceiver: string;
-  nonce: string | BigNumber;
+  nonce: string | bigint;
 }
 
 export interface SafeSignature {
@@ -31,50 +30,50 @@ export interface SafeSignature {
 
 export const predictGnosisSafeAddress = async (
   calldata: string,
-  saltNum: string | BigNumber,
+  saltNum: string | bigint,
   singleton: string,
   gnosisFactory: GnosisSafeProxyFactory
 ): Promise<string> => {
-  return ethers.utils.getCreate2Address(
-    gnosisFactory.address,
-    ethers.utils.solidityKeccak256(
+  return ethers.getCreate2Address(
+    await gnosisFactory.getAddress(),
+    ethers.solidityPackedKeccak256(
       ["bytes", "uint256"],
-      [ethers.utils.solidityKeccak256(["bytes"], [calldata]), saltNum]
+      [ethers.solidityPackedKeccak256(["bytes"], [calldata]), saltNum]
     ),
-    ethers.utils.solidityKeccak256(
+    ethers.solidityPackedKeccak256(
       ["bytes", "uint256"],
       [await gnosisFactory.proxyCreationCode(), singleton]
     )
   );
 };
 
-export const calculateProxyAddress = (
-  factory: Contract,
+export const calculateProxyAddress = async (
+  factory: BaseContract,
   masterCopy: string,
   initData: string,
   saltNonce: string
-): string => {
+): Promise<string> => {
   const masterCopyAddress = masterCopy.toLowerCase().replace(/^0x/, "");
   const byteCode =
     "0x602d8060093d393df3363d3d373d3d3d363d73" +
     masterCopyAddress +
     "5af43d82803e903d91602b57fd5bf3";
 
-  const salt = ethers.utils.solidityKeccak256(
+  const salt = ethers.solidityPackedKeccak256(
     ["bytes32", "uint256"],
-    [ethers.utils.solidityKeccak256(["bytes"], [initData]), saltNonce]
+    [ethers.solidityPackedKeccak256(["bytes"], [initData]), saltNonce]
   );
 
-  return ethers.utils.getCreate2Address(
-    factory.address,
+  return ethers.getCreate2Address(
+    await factory.getAddress(),
     salt,
-    ethers.utils.keccak256(byteCode)
+    ethers.keccak256(byteCode)
   );
 };
 
 export const safeSignTypedData = async (
-  signer: Signer & TypedDataSigner,
-  safe: Contract,
+  signer: Signer,
+  safe: BaseContract,
   safeTx: SafeTransaction
 ): Promise<SafeSignature> => {
   if (!signer.provider) {
@@ -84,8 +83,8 @@ export const safeSignTypedData = async (
   const signerAddress = await signer.getAddress();
   return {
     signer: signerAddress,
-    data: await signer._signTypedData(
-      { verifyingContract: safe.address, chainId: cid },
+    data: await signer.signTypedData(
+      { verifyingContract: await safe.getAddress(), chainId: cid },
       {
         // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
         SafeTx: [
@@ -117,19 +116,19 @@ export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
   return signatureBytes;
 };
 
-export const buildContractCall = (
-  contract: Contract,
+export const buildContractCall = async (
+  contract: BaseContract,
   method: string,
   params: any[],
   nonce: number,
   delegateCall?: boolean,
   overrides?: Partial<SafeTransaction>
-): SafeTransaction => {
+): Promise<SafeTransaction> => {
   const data = contract.interface.encodeFunctionData(method, params);
   return buildSafeTransaction(
     Object.assign(
       {
-        to: contract.address,
+        to: await contract.getAddress(),
         data,
         operation: delegateCall ? 1 : 0,
         nonce,
@@ -141,7 +140,7 @@ export const buildContractCall = (
 
 export const buildSafeTransaction = (template: {
   to: string;
-  value?: BigNumber | number | string;
+  value?: bigint | number | string;
   data?: string;
   operation?: number;
   safeTxGas?: number | string;
@@ -149,7 +148,7 @@ export const buildSafeTransaction = (template: {
   gasPrice?: number | string;
   gasToken?: string;
   refundReceiver?: string;
-  nonce: BigNumber;
+  nonce: bigint;
 }): SafeTransaction => {
   return {
     to: template.to,
@@ -170,8 +169,8 @@ export const encodeMultiSend = (txs: MetaTransaction[]): string => {
     "0x" +
     txs
       .map((tx) => {
-        const data = utils.arrayify(tx.data);
-        const encoded = utils.solidityPack(
+        const data = ethers.getBytes(tx.data);
+        const encoded = ethers.solidityPacked(
           ["uint8", "address", "uint256", "uint256", "bytes"],
           [tx.operation, tx.to, tx.value, data.length, data]
         );
@@ -181,26 +180,28 @@ export const encodeMultiSend = (txs: MetaTransaction[]): string => {
   );
 };
 
-export const mockTransaction = (): IAzorius.TransactionStruct => {
-  return {
-    to: getMockContract().address,
-    value: BigNumber.from(0),
-    // eslint-disable-next-line camelcase
-    data: MockContract__factory.createInterface().encodeFunctionData(
-      "doSomething"
-    ),
-    operation: 0,
+export const mockTransaction =
+  async (): Promise<IAzorius.TransactionStruct> => {
+    return {
+      to: await getMockContract().getAddress(),
+      value: 0n,
+      // eslint-disable-next-line camelcase
+      data: MockContract__factory.createInterface().encodeFunctionData(
+        "doSomething"
+      ),
+      operation: 0,
+    };
   };
-};
 
-export const mockRevertTransaction = (): IAzorius.TransactionStruct => {
-  return {
-    to: getMockContract().address,
-    value: BigNumber.from(0),
-    // eslint-disable-next-line camelcase
-    data: MockContract__factory.createInterface().encodeFunctionData(
-      "revertSomething"
-    ),
-    operation: 0,
+export const mockRevertTransaction =
+  async (): Promise<IAzorius.TransactionStruct> => {
+    return {
+      to: await getMockContract().getAddress(),
+      value: 0n,
+      // eslint-disable-next-line camelcase
+      data: MockContract__factory.createInterface().encodeFunctionData(
+        "revertSomething"
+      ),
+      operation: 0,
+    };
   };
-};

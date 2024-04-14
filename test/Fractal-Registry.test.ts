@@ -1,4 +1,4 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
@@ -64,6 +64,6 @@ describe("Fractal Registry", () => {
   it("KeyValuePairs reverts if unequal array lengths are passed to it", async () => {
     await expect(
       keyValues.connect(dao1).updateValues(["twitter", "discord"], ["@awesome"])
-    ).to.be.revertedWith("IncorrectValueCount()");
+    ).to.be.revertedWithCustomError(keyValues, "IncorrectValueCount");
   });
 });
