@@ -1,4 +1,4 @@
-name: Tests
+name: Run Tests
 
 on:
   push:
@@ -8,8 +8,9 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  test:
-    name: Test
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
