@@ -21,9 +21,9 @@ Each transaction should has a different nonce to prevent replay attacks.
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 current transaction nonce |
+| Name | Type    | Description                       |
+| ---- | ------- | --------------------------------- |
+| [0]  | uint256 | uint256 current transaction nonce |
 
 ### setGuard
 
@@ -39,9 +39,9 @@ See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/Guard
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _guard | address | address of the guard to be used or the 0 address to disable a guard |
+| Name    | Type    | Description                                                         |
+| ------- | ------- | ------------------------------------------------------------------- |
+| \_guard | address | address of the guard to be used or the 0 address to disable a guard |
 
 ### execTransaction
 
@@ -53,23 +53,23 @@ Executes an arbitrary transaction on the Safe.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _to | address | destination address |
-| _value | uint256 | ETH value |
-| _data | bytes | data payload |
-| _operation | enum Enum.Operation | Operation type, Call or DelegateCall |
-| _safeTxGas | uint256 | gas that should be used for the safe transaction |
-| _baseGas | uint256 | gas costs that are independent of the transaction execution |
-| _gasPrice | uint256 | max gas price that should be used for this transaction |
-| _gasToken | address | token address (or 0 if ETH) that is used for the payment |
-| _refundReceiver | address payable | address of the receiver of gas payment (or 0 if tx.origin) |
-| _signatures | bytes | packed signature data |
+| Name             | Type                | Description                                                 |
+| ---------------- | ------------------- | ----------------------------------------------------------- |
+| \_to             | address             | destination address                                         |
+| \_value          | uint256             | ETH value                                                   |
+| \_data           | bytes               | data payload                                                |
+| \_operation      | enum Enum.Operation | Operation type, Call or DelegateCall                        |
+| \_safeTxGas      | uint256             | gas that should be used for the safe transaction            |
+| \_baseGas        | uint256             | gas costs that are independent of the transaction execution |
+| \_gasPrice       | uint256             | max gas price that should be used for this transaction      |
+| \_gasToken       | address             | token address (or 0 if ETH) that is used for the payment    |
+| \_refundReceiver | address payable     | address of the receiver of gas payment (or 0 if tx.origin)  |
+| \_signatures     | bytes               | packed signature data                                       |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name    | Type | Description                                        |
+| ------- | ---- | -------------------------------------------------- |
 | success | bool | bool whether the transaction was successful or not |
 
 ### checkSignatures
@@ -82,11 +82,11 @@ Checks whether the signature provided is valid for the provided data and hash. R
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _dataHash | bytes32 | Hash of the data (could be either a message hash or transaction hash) |
-| _data | bytes | That should be signed (this is passed to an external validator contract) |
-| _signatures | bytes | Signature data that should be verified. Can be packed ECDSA signature       ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash. |
+| Name         | Type    | Description                                                                                                                                              |
+| ------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| \_dataHash   | bytes32 | Hash of the data (could be either a message hash or transaction hash)                                                                                    |
+| \_data       | bytes   | That should be signed (this is passed to an external validator contract)                                                                                 |
+| \_signatures | bytes   | Signature data that should be verified. Can be packed ECDSA signature ({bytes32 r}{bytes32 s}{uint8 v}), contract signature (EIP-1271) or approved hash. |
 
 ### encodeTransactionData
 
@@ -98,24 +98,24 @@ Returns the pre-image of the transaction hash.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _to | address | destination address |
-| _value | uint256 | ETH value |
-| _data | bytes | data payload |
-| _operation | enum Enum.Operation | Operation type, Call or DelegateCall |
-| _safeTxGas | uint256 | gas that should be used for the safe transaction |
-| _baseGas | uint256 | gas costs that are independent of the transaction execution |
-| _gasPrice | uint256 | max gas price that should be used for this transaction |
-| _gasToken | address | token address (or 0 if ETH) that is used for the payment |
-| _refundReceiver | address | address of the receiver of gas payment (or 0 if tx.origin) |
-| _nonce | uint256 | transaction nonce |
+| Name             | Type                | Description                                                 |
+| ---------------- | ------------------- | ----------------------------------------------------------- |
+| \_to             | address             | destination address                                         |
+| \_value          | uint256             | ETH value                                                   |
+| \_data           | bytes               | data payload                                                |
+| \_operation      | enum Enum.Operation | Operation type, Call or DelegateCall                        |
+| \_safeTxGas      | uint256             | gas that should be used for the safe transaction            |
+| \_baseGas        | uint256             | gas costs that are independent of the transaction execution |
+| \_gasPrice       | uint256             | max gas price that should be used for this transaction      |
+| \_gasToken       | address             | token address (or 0 if ETH) that is used for the payment    |
+| \_refundReceiver | address             | address of the receiver of gas payment (or 0 if tx.origin)  |
+| \_nonce          | uint256             | transaction nonce                                           |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes | bytes hash bytes |
+| Name | Type  | Description      |
+| ---- | ----- | ---------------- |
+| [0]  | bytes | bytes hash bytes |
 
 ### isOwner
 
@@ -129,13 +129,12 @@ See https://github.com/safe-global/safe-contracts/blob/main/contracts/base/Owner
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _owner | address | the address to check |
+| Name    | Type    | Description          |
+| ------- | ------- | -------------------- |
+| \_owner | address | the address to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether _owner is an owner of the Safe |
-
+| Name | Type | Description                                  |
+| ---- | ---- | -------------------------------------------- |
+| [0]  | bool | bool whether \_owner is an owner of the Safe |

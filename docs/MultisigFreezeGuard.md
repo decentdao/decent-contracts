@@ -115,8 +115,8 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                                                                                                                     |
+| ---------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `uint256 _timelockPeriod`, `uint256 _executionPeriod`, `address _owner`, `address _freezeVoting`, `address _childGnosisSafe` |
 
 ### timelockTransaction
@@ -128,26 +128,26 @@ function timelockTransaction(address to, uint256 value, bytes data, enum Enum.Op
 Allows the caller to begin the `timelock` of a transaction.
 
 Timelock is the period during which a proposed transaction must wait before being
-executed, after it has passed.  This period is intended to allow the parent DAO
+executed, after it has passed. This period is intended to allow the parent DAO
 sufficient time to potentially freeze the DAO, if they should vote to do so.
 
 The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| to | address |  |
-| value | uint256 |  |
-| data | bytes |  |
-| operation | enum Enum.Operation |  |
-| safeTxGas | uint256 |  |
-| baseGas | uint256 |  |
-| gasPrice | uint256 |  |
-| gasToken | address |  |
-| refundReceiver | address payable |  |
-| signatures | bytes |  |
-| nonce | uint256 |  |
+| Name           | Type                | Description |
+| -------------- | ------------------- | ----------- |
+| to             | address             |             |
+| value          | uint256             |             |
+| data           | bytes               |             |
+| operation      | enum Enum.Operation |             |
+| safeTxGas      | uint256             |             |
+| baseGas        | uint256             |             |
+| gasPrice       | uint256             |             |
+| gasToken       | address             |             |
+| refundReceiver | address payable     |             |
+| signatures     | bytes               |             |
+| nonce          | uint256             |             |
 
 ### updateTimelockPeriod
 
@@ -159,9 +159,9 @@ Sets the subDAO's timelock period.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
+| Name             | Type   | Description                                    |
+| ---------------- | ------ | ---------------------------------------------- |
+| \_timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
 
 ### updateExecutionPeriod
 
@@ -178,9 +178,9 @@ This period begins immediately after the timelock period has ended.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _executionPeriod | uint32 | number of blocks a transaction has to be executed within |
+| Name              | Type   | Description                                              |
+| ----------------- | ------ | -------------------------------------------------------- |
+| \_executionPeriod | uint32 | number of blocks a transaction has to be executed within |
 
 ### checkTransaction
 
@@ -210,17 +210,17 @@ Gets the block number that the given transaction was timelocked at.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _signaturesHash | bytes32 | hash of the transaction signatures |
+| Name             | Type    | Description                        |
+| ---------------- | ------- | ---------------------------------- |
+| \_signaturesHash | bytes32 | hash of the transaction signatures |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint32 | uint32 block number in which the transaction began its timelock period |
+| Name | Type   | Description                                                            |
+| ---- | ------ | ---------------------------------------------------------------------- |
+| [0]  | uint32 | uint32 block number in which the transaction began its timelock period |
 
-### _updateTimelockPeriod
+### \_updateTimelockPeriod
 
 ```solidity
 function _updateTimelockPeriod(uint32 _timelockPeriod) internal
@@ -228,11 +228,10 @@ function _updateTimelockPeriod(uint32 _timelockPeriod) internal
 
 Internal implementation of `updateTimelockPeriod`
 
-### _updateExecutionPeriod
+### \_updateExecutionPeriod
 
 ```solidity
 function _updateExecutionPeriod(uint32 _executionPeriod) internal
 ```
 
 Internal implementation of `updateExecutionPeriod`
-

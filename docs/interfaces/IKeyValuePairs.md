@@ -14,8 +14,7 @@ Logs the given key / value pairs, along with the caller's address.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _keys | string[] | the keys |
-| _values | string[] | the values |
-
+| Name     | Type     | Description |
+| -------- | -------- | ----------- |
+| \_keys   | string[] | the keys    |
+| \_values | string[] | the values  |

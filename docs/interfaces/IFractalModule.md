@@ -19,8 +19,8 @@ Allows an authorized address to execute arbitrary transactions on the Safe.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name       | Type  | Description                        |
+| ---------- | ----- | ---------------------------------- |
 | execTxData | bytes | data of the transaction to execute |
 
 ### addControllers
@@ -34,9 +34,9 @@ to execute transactions on the Safe.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _controllers | address[] | addresses to add to the contoller list |
+| Name          | Type      | Description                            |
+| ------------- | --------- | -------------------------------------- |
+| \_controllers | address[] | addresses to add to the contoller list |
 
 ### removeControllers
 
@@ -48,7 +48,6 @@ Removes `_controllers` from the list of controllers.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _controllers | address[] | addresses to remove from the controller list |
-
+| Name          | Type      | Description                                  |
+| ------------- | --------- | -------------------------------------------- |
+| \_controllers | address[] | addresses to remove from the controller list |

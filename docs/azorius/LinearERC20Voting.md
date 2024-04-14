@@ -2,8 +2,8 @@
 
 ## LinearERC20Voting
 
-An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that 
-enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address 
+An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that
+enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address
 in an `ERC20Votes` token equals 1 vote for a Proposal.
 
 ### VoteType
@@ -123,8 +123,8 @@ Sets up the contract with its initial parameters.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                                                                                                                                                 |
+| ---------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `address _owner`, `ERC20Votes _governanceToken`, `address _azoriusModule`, `uint32 _votingPeriod`, `uint256 _quorumNumerator`, `uint256 _basisNumerator` |
 
 ### updateVotingPeriod
@@ -137,9 +137,9 @@ Updates the voting time period for new Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _votingPeriod | uint32 | voting time period (in blocks) |
+| Name           | Type   | Description                    |
+| -------------- | ------ | ------------------------------ |
+| \_votingPeriod | uint32 | voting time period (in blocks) |
 
 ### updateRequiredProposerWeight
 
@@ -151,9 +151,9 @@ Updates the voting weight required to submit new Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _requiredProposerWeight | uint256 | required token voting weight |
+| Name                     | Type    | Description                  |
+| ------------------------ | ------- | ---------------------------- |
+| \_requiredProposerWeight | uint256 | required token voting weight |
 
 ### vote
 
@@ -165,10 +165,10 @@ Casts votes for a Proposal, equal to the caller's token delegation.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal to vote on |
-| _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
+| Name         | Type   | Description                                                |
+| ------------ | ------ | ---------------------------------------------------------- |
+| \_proposalId | uint32 | id of the Proposal to vote on                              |
+| \_voteType   | uint8  | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
 
 ### getProposalVotes
 
@@ -180,20 +180,20 @@ Returns the current state of the specified Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal |
+| Name         | Type   | Description        |
+| ------------ | ------ | ------------------ |
+| \_proposalId | uint32 | id of the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| noVotes | uint256 | current count of "NO" votes |
-| yesVotes | uint256 | current count of "YES" votes |
+| Name         | Type    | Description                      |
+| ------------ | ------- | -------------------------------- |
+| noVotes      | uint256 | current count of "NO" votes      |
+| yesVotes     | uint256 | current count of "YES" votes     |
 | abstainVotes | uint256 | current count of "ABSTAIN" votes |
-| startBlock | uint32 | block number voting starts |
-| endBlock | uint32 | block number voting ends |
-| votingSupply | uint256 |  |
+| startBlock   | uint32  | block number voting starts       |
+| endBlock     | uint32  | block number voting ends         |
+| votingSupply | uint256 |                                  |
 
 ### initializeProposal
 
@@ -201,14 +201,14 @@ Returns the current state of the specified Proposal.
 function initializeProposal(bytes _data) public virtual
 ```
 
-Called by the [Azorius](../Azorius.md) module. This notifies this 
+Called by the [Azorius](../Azorius.md) module. This notifies this
 [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _data | bytes | arbitrary data to pass to this BaseStrategy |
+| Name   | Type  | Description                                 |
+| ------ | ----- | ------------------------------------------- |
+| \_data | bytes | arbitrary data to pass to this BaseStrategy |
 
 ### hasVoted
 
@@ -220,16 +220,16 @@ Returns whether an address has voted on the specified Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal to check |
-| _address | address | address to check |
+| Name         | Type    | Description                 |
+| ------------ | ------- | --------------------------- |
+| \_proposalId | uint32  | id of the Proposal to check |
+| \_address    | address | address to check            |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the address has voted on the Proposal, otherwise false |
+| Name | Type | Description                                                         |
+| ---- | ---- | ------------------------------------------------------------------- |
+| [0]  | bool | bool true if the address has voted on the Proposal, otherwise false |
 
 ### isPassed
 
@@ -241,15 +241,15 @@ Returns whether a Proposal has been passed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the proposal has passed, otherwise false |
+| Name | Type | Description                                           |
+| ---- | ---- | ----------------------------------------------------- |
+| [0]  | bool | bool true if the proposal has passed, otherwise false |
 
 ### getProposalVotingSupply
 
@@ -257,21 +257,21 @@ Returns whether a Proposal has been passed.
 function getProposalVotingSupply(uint32 _proposalId) public view virtual returns (uint256)
 ```
 
-Returns a snapshot of total voting supply for a given Proposal.  Because token supplies can change,
+Returns a snapshot of total voting supply for a given Proposal. Because token supplies can change,
 it is necessary to calculate quorum from the supply available at the time of the Proposal's creation,
 not when it is being voted on passes / fails.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal |
+| Name         | Type   | Description        |
+| ------------ | ------ | ------------------ |
+| \_proposalId | uint32 | id of the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 voting supply snapshot for the given _proposalId |
+| Name | Type    | Description                                               |
+| ---- | ------- | --------------------------------------------------------- |
+| [0]  | uint256 | uint256 voting supply snapshot for the given \_proposalId |
 
 ### getVotingWeight
 
@@ -283,16 +283,16 @@ Calculates the voting weight an address has for a specific Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _voter | address | address of the voter |
-| _proposalId | uint32 | id of the Proposal |
+| Name         | Type    | Description          |
+| ------------ | ------- | -------------------- |
+| \_voter      | address | address of the voter |
+| \_proposalId | uint32  | id of the Proposal   |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 the address' voting weight |
+| Name | Type    | Description                        |
+| ---- | ------- | ---------------------------------- |
+| [0]  | uint256 | uint256 the address' voting weight |
 
 ### isProposer
 
@@ -309,15 +309,15 @@ delegation.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _address | address | address to check |
+| Name      | Type    | Description      |
+| --------- | ------- | ---------------- |
+| \_address | address | address to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the address can submit a Proposal, otherwise false |
+| Name | Type | Description                                                     |
+| ---- | ---- | --------------------------------------------------------------- |
+| [0]  | bool | bool true if the address can submit a Proposal, otherwise false |
 
 ### votingEndBlock
 
@@ -329,17 +329,17 @@ Returns the block number voting ends on a given Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint32 | uint32 block number when voting ends on the Proposal |
+| Name | Type   | Description                                          |
+| ---- | ------ | ---------------------------------------------------- |
+| [0]  | uint32 | uint32 block number when voting ends on the Proposal |
 
-### _updateVotingPeriod
+### \_updateVotingPeriod
 
 ```solidity
 function _updateVotingPeriod(uint32 _votingPeriod) internal
@@ -347,7 +347,7 @@ function _updateVotingPeriod(uint32 _votingPeriod) internal
 
 Internal implementation of `updateVotingPeriod`.
 
-### _updateRequiredProposerWeight
+### \_updateRequiredProposerWeight
 
 ```solidity
 function _updateRequiredProposerWeight(uint256 _requiredProposerWeight) internal
@@ -355,7 +355,7 @@ function _updateRequiredProposerWeight(uint256 _requiredProposerWeight) internal
 
 Internal implementation of `updateRequiredProposerWeight`.
 
-### _vote
+### \_vote
 
 ```solidity
 function _vote(uint32 _proposalId, address _voter, uint8 _voteType, uint256 _weight) internal
@@ -365,12 +365,12 @@ Internal function for casting a vote on a Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal |
-| _voter | address | address casting the vote |
-| _voteType | uint8 | vote support, as defined in VoteType |
-| _weight | uint256 | amount of voting weight cast, typically the          total number of tokens delegated |
+| Name         | Type    | Description                                                                  |
+| ------------ | ------- | ---------------------------------------------------------------------------- |
+| \_proposalId | uint32  | id of the Proposal                                                           |
+| \_voter      | address | address casting the vote                                                     |
+| \_voteType   | uint8   | vote support, as defined in VoteType                                         |
+| \_weight     | uint256 | amount of voting weight cast, typically the total number of tokens delegated |
 
 ### quorumVotes
 
@@ -382,13 +382,12 @@ Calculates the total number of votes required for a proposal to meet quorum.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | The ID of the proposal to get quorum votes for |
+| Name         | Type   | Description                                    |
+| ------------ | ------ | ---------------------------------------------- |
+| \_proposalId | uint32 | The ID of the proposal to get quorum votes for |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 The quantity of votes required to meet quorum |
-
+| Name | Type    | Description                                           |
+| ---- | ------- | ----------------------------------------------------- |
+| [0]  | uint256 | uint256 The quantity of votes required to meet quorum |

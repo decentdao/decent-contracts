@@ -2,7 +2,7 @@
 
 ## ERC20FreezeVoting
 
-A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles 
+A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles
 freezes on ERC20 based token voting DAOs.
 
 ### votesERC20
@@ -41,8 +41,8 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                                                                                                                           |
+| ---------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `address _owner`, `uint256 _freezeVotesThreshold`, `uint256 _freezeProposalPeriod`, `uint256 _freezePeriod`, `address _votesERC20` |
 
 ### castFreezeVote
@@ -57,4 +57,3 @@ holdings a "yes" votes towards freezing.
 
 Additionally, if a vote to freeze is not already running, calling this will initiate
 a new vote to freeze it.
-

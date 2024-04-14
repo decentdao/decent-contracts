@@ -120,8 +120,8 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                                                                                                                          |
+| ---------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `address _childTokenFunder`, `uint256 _deadlineBlock`, `address _parentERC20`, `address _childERC20`, `uint256 _parentAllocation` |
 
 ### claimTokens
@@ -130,14 +130,14 @@ Initialize function, will be triggered when a new instance is deployed.
 function claimTokens(address claimer) external
 ```
 
-Allows parent token holders to claim tokens allocated by a 
+Allows parent token holders to claim tokens allocated by a
 subDAO during its creation.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| claimer | address | address which is being claimed for, allowing any address to      process a claim for any other address |
+| Name    | Type    | Description                                                                                       |
+| ------- | ------- | ------------------------------------------------------------------------------------------------- |
+| claimer | address | address which is being claimed for, allowing any address to process a claim for any other address |
 
 ### reclaim
 
@@ -157,13 +157,12 @@ Gets an address' token claim amount.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name    | Type    | Description                          |
+| ------- | ------- | ------------------------------------ |
 | claimer | address | address to check the claim amount of |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 the given address' claim amount |
-
+| Name | Type    | Description                             |
+| ---- | ------- | --------------------------------------- |
+| [0]  | uint256 | uint256 the given address' claim amount |

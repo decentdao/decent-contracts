@@ -209,9 +209,9 @@ Initial setup of the Azorius instance.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`,  `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
+| Name             | Type  | Description                                                                                                                                                                      |
+| ---------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _avatar`, `address _target`, `address[] memory _strategies`, `uint256 _timelockPeriod`, `uint256 _executionPeriod` |
 
 ### updateTimelockPeriod
 
@@ -224,9 +224,9 @@ This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _timelockPeriod | uint32 | timelockPeriod (in blocks) to be used for new Proposals |
+| Name             | Type   | Description                                             |
+| ---------------- | ------ | ------------------------------------------------------- |
+| \_timelockPeriod | uint32 | timelockPeriod (in blocks) to be used for new Proposals |
 
 ### updateExecutionPeriod
 
@@ -238,9 +238,9 @@ Updates the execution period for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _executionPeriod | uint32 | new execution period (in blocks) |
+| Name              | Type   | Description                      |
+| ----------------- | ------ | -------------------------------- |
+| \_executionPeriod | uint32 | new execution period (in blocks) |
 
 ### submitProposal
 
@@ -253,12 +253,12 @@ New Proposals begin immediately in the `ACTIVE` state.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategy | address | address of the BaseStrategy implementation which the Proposal will use |
-| _data | bytes | arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies,  but is included in case future strategy contracts have a need for it |
-| _transactions | struct IAzorius.Transaction[] | array of transactions to propose |
-| _metadata | string | additional data such as a title/description to submit with the proposal |
+| Name           | Type                          | Description                                                                                                                                                            |
+| -------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| \_strategy     | address                       | address of the BaseStrategy implementation which the Proposal will use                                                                                                 |
+| \_data         | bytes                         | arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies, but is included in case future strategy contracts have a need for it |
+| \_transactions | struct IAzorius.Transaction[] | array of transactions to propose                                                                                                                                       |
+| \_metadata     | string                        | additional data such as a title/description to submit with the proposal                                                                                                |
 
 ### executeProposal
 
@@ -271,13 +271,13 @@ This will only be able to be called if the Proposal passed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the Proposal |
-| _targets | address[] | target contracts for each transaction |
-| _values | uint256[] | ETH values to be sent with each transaction |
-| _data | bytes[] | transaction data to be executed |
-| _operations | enum Enum.Operation[] | Calls or Delegatecalls |
+| Name         | Type                  | Description                                 |
+| ------------ | --------------------- | ------------------------------------------- |
+| \_proposalId | uint32                | identifier of the Proposal                  |
+| \_targets    | address[]             | target contracts for each transaction       |
+| \_values     | uint256[]             | ETH values to be sent with each transaction |
+| \_data       | bytes[]               | transaction data to be executed             |
+| \_operations | enum Enum.Operation[] | Calls or Delegatecalls                      |
 
 ### getStrategies
 
@@ -293,17 +293,17 @@ returning the whole list at once.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _startAddress | address | contract address of the BaseStrategy to start with |
-| _count | uint256 | maximum number of BaseStrategies that should be returned |
+| Name           | Type    | Description                                              |
+| -------------- | ------- | -------------------------------------------------------- |
+| \_startAddress | address | contract address of the BaseStrategy to start with       |
+| \_count        | uint256 | maximum number of BaseStrategies that should be returned |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategies | address[] | array of BaseStrategies |
-| _next | address | next BaseStrategy contract address in the linked list |
+| Name         | Type      | Description                                           |
+| ------------ | --------- | ----------------------------------------------------- |
+| \_strategies | address[] | array of BaseStrategies                               |
+| \_next       | address   | next BaseStrategy contract address in the linked list |
 
 ### getProposalTxHash
 
@@ -315,16 +315,16 @@ Returns the hash of a transaction in a Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the Proposal |
-| _txIndex | uint32 | index of the transaction within the Proposal |
+| Name         | Type   | Description                                  |
+| ------------ | ------ | -------------------------------------------- |
+| \_proposalId | uint32 | identifier of the Proposal                   |
+| \_txIndex    | uint32 | index of the transaction within the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | bytes32 hash of the specified transaction |
+| Name | Type    | Description                               |
+| ---- | ------- | ----------------------------------------- |
+| [0]  | bytes32 | bytes32 hash of the specified transaction |
 
 ### getProposalTxHashes
 
@@ -336,15 +336,15 @@ Returns the transaction hashes associated with a given `proposalId`.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the Proposal to get transaction hashes for |
+| Name         | Type   | Description                                              |
+| ------------ | ------ | -------------------------------------------------------- |
+| \_proposalId | uint32 | identifier of the Proposal to get transaction hashes for |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32[] | bytes32[] array of transaction hashes |
+| Name | Type      | Description                           |
+| ---- | --------- | ------------------------------------- |
+| [0]  | bytes32[] | bytes32[] array of transaction hashes |
 
 ### getProposal
 
@@ -356,19 +356,19 @@ Returns details about the specified Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the Proposal |
+| Name         | Type   | Description                |
+| ------------ | ------ | -------------------------- |
+| \_proposalId | uint32 | identifier of the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategy | address | address of the BaseStrategy contract the Proposal is on |
-| _txHashes | bytes32[] | hashes of the transactions the Proposal contains |
-| _timelockPeriod | uint32 | time (in blocks) the Proposal is timelocked for |
-| _executionPeriod | uint32 | time (in blocks) the Proposal must be executed within, after timelock ends |
-| _executionCounter | uint32 | counter of how many of the Proposals transactions have been executed |
+| Name               | Type      | Description                                                                |
+| ------------------ | --------- | -------------------------------------------------------------------------- |
+| \_strategy         | address   | address of the BaseStrategy contract the Proposal is on                    |
+| \_txHashes         | bytes32[] | hashes of the transactions the Proposal contains                           |
+| \_timelockPeriod   | uint32    | time (in blocks) the Proposal is timelocked for                            |
+| \_executionPeriod  | uint32    | time (in blocks) the Proposal must be executed within, after timelock ends |
+| \_executionCounter | uint32    | counter of how many of the Proposals transactions have been executed       |
 
 ### enableStrategy
 
@@ -383,9 +383,9 @@ created using any of the currently enabled strategies.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategy | address | contract address of the BaseStrategy to be enabled |
+| Name       | Type    | Description                                        |
+| ---------- | ------- | -------------------------------------------------- |
+| \_strategy | address | contract address of the BaseStrategy to be enabled |
 
 ### disableStrategy
 
@@ -398,10 +398,10 @@ This has no effect on existing Proposals, either `ACTIVE` or completed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _prevStrategy | address | BaseStrategy address that pointed in the linked list to the strategy to be removed |
-| _strategy | address | address of the BaseStrategy to be removed |
+| Name           | Type    | Description                                                                        |
+| -------------- | ------- | ---------------------------------------------------------------------------------- |
+| \_prevStrategy | address | BaseStrategy address that pointed in the linked list to the strategy to be removed |
+| \_strategy     | address | address of the BaseStrategy to be removed                                          |
 
 ### isStrategyEnabled
 
@@ -413,15 +413,15 @@ Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategy | address | contract address of the BaseStrategy to check |
+| Name       | Type    | Description                                   |
+| ---------- | ------- | --------------------------------------------- |
+| \_strategy | address | contract address of the BaseStrategy to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool True if the strategy is enabled, otherwise False |
+| Name | Type | Description                                           |
+| ---- | ---- | ----------------------------------------------------- |
+| [0]  | bool | bool True if the strategy is enabled, otherwise False |
 
 ### proposalState
 
@@ -433,15 +433,15 @@ Gets the state of a Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the Proposal |
+| Name         | Type   | Description                |
+| ------------ | ------ | -------------------------- |
+| \_proposalId | uint32 | identifier of the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the         current state of the proposal |
+| Name | Type                        | Description                                                                                   |
+| ---- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| [0]  | enum IAzorius.ProposalState | ProposalState uint256 ProposalState enum value representing the current state of the proposal |
 
 ### generateTxHashData
 
@@ -453,19 +453,19 @@ Generates the data for the module transaction hash (required for signing).
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _to | address | target address of the transaction |
-| _value | uint256 | ETH value to send with the transaction |
-| _data | bytes | encoded function call data of the transaction |
-| _operation | enum Enum.Operation | Enum.Operation to use for the transaction |
-| _nonce | uint256 | Safe nonce of the transaction |
+| Name        | Type                | Description                                   |
+| ----------- | ------------------- | --------------------------------------------- |
+| \_to        | address             | target address of the transaction             |
+| \_value     | uint256             | ETH value to send with the transaction        |
+| \_data      | bytes               | encoded function call data of the transaction |
+| \_operation | enum Enum.Operation | Enum.Operation to use for the transaction     |
+| \_nonce     | uint256             | Safe nonce of the transaction                 |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes | bytes hashed transaction data |
+| Name | Type  | Description                   |
+| ---- | ----- | ----------------------------- |
+| [0]  | bytes | bytes hashed transaction data |
 
 ### getTxHash
 
@@ -477,20 +477,20 @@ Returns the `keccak256` hash of the specified transaction.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _to | address | target address of the transaction |
-| _value | uint256 | ETH value to send with the transaction |
-| _data | bytes | encoded function call data of the transaction |
-| _operation | enum Enum.Operation | Enum.Operation to use for the transaction |
+| Name        | Type                | Description                                   |
+| ----------- | ------------------- | --------------------------------------------- |
+| \_to        | address             | target address of the transaction             |
+| \_value     | uint256             | ETH value to send with the transaction        |
+| \_data      | bytes               | encoded function call data of the transaction |
+| \_operation | enum Enum.Operation | Enum.Operation to use for the transaction     |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bytes32 | bytes32 transaction hash |
+| Name | Type    | Description              |
+| ---- | ------- | ------------------------ |
+| [0]  | bytes32 | bytes32 transaction hash |
 
-### _executeProposalTx
+### \_executeProposalTx
 
 ```solidity
 function _executeProposalTx(uint32 _proposalId, address _target, uint256 _value, bytes _data, enum Enum.Operation _operation) internal returns (bytes32 txHash)
@@ -501,15 +501,15 @@ Transactions in a Proposal must be called in order.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | identifier of the proposal |
-| _target | address | contract to be called by the avatar |
-| _value | uint256 | ETH value to pass with the call |
-| _data | bytes | data to be executed from the call |
-| _operation | enum Enum.Operation | Call or Delegatecall |
+| Name         | Type                | Description                         |
+| ------------ | ------------------- | ----------------------------------- |
+| \_proposalId | uint32              | identifier of the proposal          |
+| \_target     | address             | contract to be called by the avatar |
+| \_value      | uint256             | ETH value to pass with the call     |
+| \_data       | bytes               | data to be executed from the call   |
+| \_operation  | enum Enum.Operation | Call or Delegatecall                |
 
-### _setUpStrategies
+### \_setUpStrategies
 
 ```solidity
 function _setUpStrategies(address[] _strategies) internal
@@ -519,11 +519,11 @@ Enables the specified array of [BaseStrategy](./BaseStrategy.md) contract addres
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _strategies | address[] | array of `BaseStrategy` contract addresses to enable |
+| Name         | Type      | Description                                          |
+| ------------ | --------- | ---------------------------------------------------- |
+| \_strategies | address[] | array of `BaseStrategy` contract addresses to enable |
 
-### _updateTimelockPeriod
+### \_updateTimelockPeriod
 
 ```solidity
 function _updateTimelockPeriod(uint32 _timelockPeriod) internal
@@ -533,11 +533,11 @@ Updates the `timelockPeriod` for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _timelockPeriod | uint32 | new timelock period (in blocks) |
+| Name             | Type   | Description                     |
+| ---------------- | ------ | ------------------------------- |
+| \_timelockPeriod | uint32 | new timelock period (in blocks) |
 
-### _updateExecutionPeriod
+### \_updateExecutionPeriod
 
 ```solidity
 function _updateExecutionPeriod(uint32 _executionPeriod) internal
@@ -547,7 +547,6 @@ Updates the `executionPeriod` for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _executionPeriod | uint32 | new execution period (in blocks) |
-
+| Name              | Type   | Description                      |
+| ----------------- | ------ | -------------------------------- |
+| \_executionPeriod | uint32 | new execution period (in blocks) |

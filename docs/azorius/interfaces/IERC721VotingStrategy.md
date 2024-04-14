@@ -15,7 +15,6 @@ Returns the current token weight for the given ERC-721 token address.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _tokenAddress | address | the ERC-721 token address |
-
+| Name           | Type    | Description               |
+| -------------- | ------- | ------------------------- |
+| \_tokenAddress | address | the ERC-721 token address |

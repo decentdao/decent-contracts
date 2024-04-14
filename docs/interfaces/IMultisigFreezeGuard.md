@@ -28,26 +28,26 @@ function timelockTransaction(address _to, uint256 _value, bytes _data, enum Enum
 Allows the caller to begin the `timelock` of a transaction.
 
 Timelock is the period during which a proposed transaction must wait before being
-executed, after it has passed.  This period is intended to allow the parent DAO
+executed, after it has passed. This period is intended to allow the parent DAO
 sufficient time to potentially freeze the DAO, if they should vote to do so.
 
 The parameters for doing so are identical to [ISafe's](./ISafe.md) `execTransaction` function.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _to | address | destination address |
-| _value | uint256 | ETH value |
-| _data | bytes | data payload |
-| _operation | enum Enum.Operation | Operation type, Call or DelegateCall |
-| _safeTxGas | uint256 | gas that should be used for the safe transaction |
-| _baseGas | uint256 | gas costs that are independent of the transaction execution |
-| _gasPrice | uint256 | max gas price that should be used for this transaction |
-| _gasToken | address | token address (or 0 if ETH) that is used for the payment |
-| _refundReceiver | address payable | address of the receiver of gas payment (or 0 if tx.origin) |
-| _signatures | bytes | packed signature data |
-| _nonce | uint256 | nonce to use for the safe transaction |
+| Name             | Type                | Description                                                 |
+| ---------------- | ------------------- | ----------------------------------------------------------- |
+| \_to             | address             | destination address                                         |
+| \_value          | uint256             | ETH value                                                   |
+| \_data           | bytes               | data payload                                                |
+| \_operation      | enum Enum.Operation | Operation type, Call or DelegateCall                        |
+| \_safeTxGas      | uint256             | gas that should be used for the safe transaction            |
+| \_baseGas        | uint256             | gas costs that are independent of the transaction execution |
+| \_gasPrice       | uint256             | max gas price that should be used for this transaction      |
+| \_gasToken       | address             | token address (or 0 if ETH) that is used for the payment    |
+| \_refundReceiver | address payable     | address of the receiver of gas payment (or 0 if tx.origin)  |
+| \_signatures     | bytes               | packed signature data                                       |
+| \_nonce          | uint256             | nonce to use for the safe transaction                       |
 
 ### updateTimelockPeriod
 
@@ -59,9 +59,9 @@ Sets the subDAO's timelock period.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
+| Name             | Type   | Description                                    |
+| ---------------- | ------ | ---------------------------------------------- |
+| \_timelockPeriod | uint32 | new timelock period for the subDAO (in blocks) |
 
 ### updateExecutionPeriod
 
@@ -78,9 +78,9 @@ This period begins immediately after the timelock period has ended.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _executionPeriod | uint32 | number of blocks a transaction has to be executed within |
+| Name              | Type   | Description                                              |
+| ----------------- | ------ | -------------------------------------------------------- |
+| \_executionPeriod | uint32 | number of blocks a transaction has to be executed within |
 
 ### getTransactionTimelockedBlock
 
@@ -92,13 +92,12 @@ Gets the block number that the given transaction was timelocked at.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _signaturesHash | bytes32 | hash of the transaction signatures |
+| Name             | Type    | Description                        |
+| ---------------- | ------- | ---------------------------------- |
+| \_signaturesHash | bytes32 | hash of the transaction signatures |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint32 | uint32 block number in which the transaction began its timelock period |
-
+| Name | Type   | Description                                                            |
+| ---- | ------ | ---------------------------------------------------------------------- |
+| [0]  | uint32 | uint32 block number in which the transaction began its timelock period |

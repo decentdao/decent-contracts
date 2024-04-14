@@ -48,11 +48,11 @@ Updates the `basisNumerator` for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _basisNumerator | uint256 | numerator to use |
+| Name             | Type    | Description      |
+| ---------------- | ------- | ---------------- |
+| \_basisNumerator | uint256 | numerator to use |
 
-### _updateBasisNumerator
+### \_updateBasisNumerator
 
 ```solidity
 function _updateBasisNumerator(uint256 _basisNumerator) internal virtual
@@ -70,14 +70,13 @@ Calculates whether a vote meets its basis.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _yesVotes | uint256 | number of votes in favor |
-| _noVotes | uint256 | number of votes against |
+| Name       | Type    | Description              |
+| ---------- | ------- | ------------------------ |
+| \_yesVotes | uint256 | number of votes in favor |
+| \_noVotes  | uint256 | number of votes against  |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether the yes votes meets the set basis |
-
+| Name | Type | Description                                    |
+| ---- | ---- | ---------------------------------------------- |
+| [0]  | bool | bool whether the yes votes meets the set basis |

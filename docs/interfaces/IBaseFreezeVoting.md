@@ -43,9 +43,9 @@ votes necessary to begin a freeze on the subDAO.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezeVotesThreshold | uint256 | number of freeze votes required to activate a freeze |
+| Name                   | Type    | Description                                          |
+| ---------------------- | ------- | ---------------------------------------------------- |
+| \_freezeVotesThreshold | uint256 | number of freeze votes required to activate a freeze |
 
 ### updateFreezeProposalPeriod
 
@@ -58,9 +58,9 @@ Updates the freeze proposal period for future freeze votes. This is the length o
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezeProposalPeriod | uint32 | number of blocks a freeze proposal has to succeed |
+| Name                   | Type   | Description                                       |
+| ---------------------- | ------ | ------------------------------------------------- |
+| \_freezeProposalPeriod | uint32 | number of blocks a freeze proposal has to succeed |
 
 ### updateFreezePeriod
 
@@ -76,9 +76,9 @@ from the parentDAO.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
+| Name           | Type   | Description                                                            |
+| -------------- | ------ | ---------------------------------------------------------------------- |
+| \_freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
 
 ### isFrozen
 
@@ -90,7 +90,6 @@ Returns true if the DAO is currently frozen, false otherwise.
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether the DAO is currently frozen |
-
+| Name | Type | Description                              |
+| ---- | ---- | ---------------------------------------- |
+| [0]  | bool | bool whether the DAO is currently frozen |

@@ -45,11 +45,11 @@ Updates the quorum required for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _quorumNumerator | uint256 | numerator to use when calculating quorum (over 1,000,000) |
+| Name              | Type    | Description                                               |
+| ----------------- | ------- | --------------------------------------------------------- |
+| \_quorumNumerator | uint256 | numerator to use when calculating quorum (over 1,000,000) |
 
-### _updateQuorumNumerator
+### \_updateQuorumNumerator
 
 ```solidity
 function _updateQuorumNumerator(uint256 _quorumNumerator) internal virtual
@@ -68,17 +68,17 @@ votes.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _totalSupply | uint256 | the total supply of tokens |
-| _yesVotes | uint256 | number of votes in favor |
-| _abstainVotes | uint256 | number of votes abstaining |
+| Name           | Type    | Description                |
+| -------------- | ------- | -------------------------- |
+| \_totalSupply  | uint256 | the total supply of tokens |
+| \_yesVotes     | uint256 | number of votes in favor   |
+| \_abstainVotes | uint256 | number of votes abstaining |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether the total number of yes votes + abstain meets the quorum |
+| Name | Type | Description                                                           |
+| ---- | ---- | --------------------------------------------------------------------- |
+| [0]  | bool | bool whether the total number of yes votes + abstain meets the quorum |
 
 ### quorumVotes
 
@@ -90,13 +90,12 @@ Calculates the total number of votes required for a proposal to meet quorum.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | The ID of the proposal to get quorum votes for |
+| Name         | Type   | Description                                    |
+| ------------ | ------ | ---------------------------------------------- |
+| \_proposalId | uint32 | The ID of the proposal to get quorum votes for |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | uint256 The quantity of votes required to meet quorum |
-
+| Name | Type    | Description                                           |
+| ---- | ------- | ----------------------------------------------------- |
+| [0]  | uint256 | uint256 The quantity of votes required to meet quorum |

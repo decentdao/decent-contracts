@@ -17,14 +17,14 @@ a requirement for the Azorius protocol.
 function setAzorius(address _azoriusModule) external
 ```
 
-Sets the address of the [Azorius](../Azorius.md) contract this 
+Sets the address of the [Azorius](../Azorius.md) contract this
 [BaseStrategy](../BaseStrategy.md) is being used on.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _azoriusModule | address | address of the Azorius Safe module |
+| Name            | Type    | Description                        |
+| --------------- | ------- | ---------------------------------- |
+| \_azoriusModule | address | address of the Azorius Safe module |
 
 ### initializeProposal
 
@@ -32,14 +32,14 @@ Sets the address of the [Azorius](../Azorius.md) contract this
 function initializeProposal(bytes _data) external
 ```
 
-Called by the [Azorius](../Azorius.md) module. This notifies this 
+Called by the [Azorius](../Azorius.md) module. This notifies this
 [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _data | bytes | arbitrary data to pass to this BaseStrategy |
+| Name   | Type  | Description                                 |
+| ------ | ----- | ------------------------------------------- |
+| \_data | bytes | arbitrary data to pass to this BaseStrategy |
 
 ### isPassed
 
@@ -51,15 +51,15 @@ Returns whether a Proposal has been passed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the proposal has passed, otherwise false |
+| Name | Type | Description                                           |
+| ---- | ---- | ----------------------------------------------------- |
+| [0]  | bool | bool true if the proposal has passed, otherwise false |
 
 ### isProposer
 
@@ -76,15 +76,15 @@ delegation.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _address | address | address to check |
+| Name      | Type    | Description      |
+| --------- | ------- | ---------------- |
+| \_address | address | address to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the address can submit a Proposal, otherwise false |
+| Name | Type | Description                                                     |
+| ---- | ---- | --------------------------------------------------------------- |
+| [0]  | bool | bool true if the address can submit a Proposal, otherwise false |
 
 ### votingEndBlock
 
@@ -96,13 +96,12 @@ Returns the block number voting ends on a given Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint32 | uint32 block number when voting ends on the Proposal |
-
+| Name | Type   | Description                                          |
+| ---- | ------ | ---------------------------------------------------- |
+| [0]  | uint32 | uint32 block number when voting ends on the Proposal |

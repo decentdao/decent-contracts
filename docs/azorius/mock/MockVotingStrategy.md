@@ -21,8 +21,8 @@ Sets up the contract with its initial parameters.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                       |
+| ---------------- | ----- | --------------------------------- |
 | initializeParams | bytes | encoded initialization parameters |
 
 ### initializeProposal
@@ -48,4 +48,3 @@ function isProposer(address _proposer) external view returns (bool)
 ```solidity
 function votingEndBlock(uint32) external pure returns (uint32)
 ```
-

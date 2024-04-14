@@ -7,7 +7,7 @@ The base abstract contract which holds the state of a vote to freeze a childDAO.
 The freeze feature gives a way for parentDAOs to have a limited measure of control
 over their created subDAOs.
 
-Normally a subDAO operates independently, and can vote on or sign transactions, 
+Normally a subDAO operates independently, and can vote on or sign transactions,
 however should the parent disagree with a decision made by the subDAO, any parent
 token holder can initiate a vote to "freeze" it, making executing transactions impossible
 for the time denoted by `freezePeriod`.
@@ -64,7 +64,7 @@ Number of accrued freeze votes.
 mapping(address => mapping(uint256 => bool)) userHasFreezeVoted
 ```
 
-Mapping of address to the block the freeze vote was started to 
+Mapping of address to the block the freeze vote was started to
 whether the address has voted yet on the freeze proposal.
 
 ### FreezeVoteCast
@@ -126,9 +126,9 @@ Returns true if the DAO is currently frozen, false otherwise.
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool whether the DAO is currently frozen |
+| Name | Type | Description                              |
+| ---- | ---- | ---------------------------------------- |
+| [0]  | bool | bool whether the DAO is currently frozen |
 
 ### unfreeze
 
@@ -148,9 +148,9 @@ Updates the freeze votes threshold, the number of votes required to enact a free
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezeVotesThreshold | uint256 | number of freeze votes required to activate a freeze |
+| Name                   | Type    | Description                                          |
+| ---------------------- | ------- | ---------------------------------------------------- |
+| \_freezeVotesThreshold | uint256 | number of freeze votes required to activate a freeze |
 
 ### updateFreezeProposalPeriod
 
@@ -163,9 +163,9 @@ after a freeze vote has been initiated.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezeProposalPeriod | uint32 | number of blocks a freeze vote has to succeed to enact a freeze |
+| Name                   | Type   | Description                                                     |
+| ---------------------- | ------ | --------------------------------------------------------------- |
+| \_freezeProposalPeriod | uint32 | number of blocks a freeze vote has to succeed to enact a freeze |
 
 ### updateFreezePeriod
 
@@ -178,11 +178,11 @@ should a freeze vote pass.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
+| Name           | Type   | Description                                                            |
+| -------------- | ------ | ---------------------------------------------------------------------- |
+| \_freezePeriod | uint32 | number of blocks a freeze lasts, from time of freeze proposal creation |
 
-### _updateFreezeVotesThreshold
+### \_updateFreezeVotesThreshold
 
 ```solidity
 function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal
@@ -190,7 +190,7 @@ function _updateFreezeVotesThreshold(uint256 _freezeVotesThreshold) internal
 
 Internal implementation of `updateFreezeVotesThreshold`.
 
-### _updateFreezeProposalPeriod
+### \_updateFreezeProposalPeriod
 
 ```solidity
 function _updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) internal
@@ -198,11 +198,10 @@ function _updateFreezeProposalPeriod(uint32 _freezeProposalPeriod) internal
 
 Internal implementation of `updateFreezeProposalPeriod`.
 
-### _updateFreezePeriod
+### \_updateFreezePeriod
 
 ```solidity
 function _updateFreezePeriod(uint32 _freezePeriod) internal
 ```
 
 Internal implementation of `updateFreezePeriod`.
-

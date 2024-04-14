@@ -2,7 +2,7 @@
 
 ## KeyValuePairs
 
-Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility 
+Implementation of [IKeyValuePairs](./interfaces/IKeyValuePairs.md), a utility
 contract to log key / value pair events for the calling address.
 
 ### ValueUpdated
@@ -27,8 +27,7 @@ Logs the given key / value pairs, along with the caller's address.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _keys | string[] | the keys |
-| _values | string[] | the values |
-
+| Name     | Type     | Description |
+| -------- | -------- | ----------- |
+| \_keys   | string[] | the keys    |
+| \_values | string[] | the values  |

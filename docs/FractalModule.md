@@ -66,8 +66,8 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                                                                                |
+| ---------------- | ----- | -------------------------------------------------------------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `address _owner`, `address _avatar`, `address _target`, `address[] memory _controllers` |
 
 ### removeControllers
@@ -80,9 +80,9 @@ Removes `_controllers` from the list of controllers.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _controllers | address[] | addresses to remove from the controller list |
+| Name          | Type      | Description                                  |
+| ------------- | --------- | -------------------------------------------- |
+| \_controllers | address[] | addresses to remove from the controller list |
 
 ### execTx
 
@@ -94,8 +94,8 @@ Allows an authorized address to execute arbitrary transactions on the Safe.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name       | Type  | Description                        |
+| ---------- | ----- | ---------------------------------- |
 | execTxData | bytes | data of the transaction to execute |
 
 ### addControllers
@@ -109,7 +109,6 @@ to execute transactions on the Safe.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _controllers | address[] | addresses to add to the contoller list |
-
+| Name          | Type      | Description                            |
+| ------------- | --------- | -------------------------------------- |
+| \_controllers | address[] | addresses to add to the contoller list |

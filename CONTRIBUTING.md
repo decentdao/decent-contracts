@@ -1,4 +1,5 @@
 # Contributing to Fractal
+
 As an open-source, community driven project, we want to make contributing as easy and transparent as possible. This could include:
 
 - Reporting a bug
@@ -8,6 +9,7 @@ As an open-source, community driven project, we want to make contributing as eas
 - Becoming a maintainer
 
 ## We Develop with Github
+
 We use github to host code, to track issues and feature requests, as well as accept pull requests.
 
 Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:
@@ -20,6 +22,7 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 6. Submit that pull request!
 
 ## Report bugs using Github's [Issues](https://github.com/fractal-framework/fractal/issues)
+
 We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/fractal-framework/fractal/issues)
 
 **Great Bug Reports** tend to have:

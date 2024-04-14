@@ -21,11 +21,11 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                                                          |
+| ---------------- | ----- | -------------------------------------------------------------------- |
 | initializeParams | bytes | encoded initialization parameters: `address _underlyingTokenAddress` |
 
-### _mint
+### \_mint
 
 ```solidity
 function _mint(address to, uint256 amount) internal virtual
@@ -33,7 +33,7 @@ function _mint(address to, uint256 amount) internal virtual
 
 Overridden without modification.
 
-### _burn
+### \_burn
 
 ```solidity
 function _burn(address account, uint256 amount) internal virtual
@@ -41,7 +41,7 @@ function _burn(address account, uint256 amount) internal virtual
 
 Overridden without modification.
 
-### _beforeTokenTransfer
+### \_beforeTokenTransfer
 
 ```solidity
 function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual
@@ -49,7 +49,7 @@ function _beforeTokenTransfer(address from, address to, uint256 amount) internal
 
 Overridden without modification.
 
-### _afterTokenTransfer
+### \_afterTokenTransfer
 
 ```solidity
 function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual
@@ -64,4 +64,3 @@ function decimals() public view virtual returns (uint8)
 ```
 
 Overridden without modification.
-

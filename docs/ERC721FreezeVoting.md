@@ -2,7 +2,7 @@
 
 ## ERC721FreezeVoting
 
-A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles 
+A [BaseFreezeVoting](./BaseFreezeVoting.md) implementation which handles
 freezes on ERC721 based token voting DAOs.
 
 ### strategy
@@ -56,8 +56,8 @@ Initialize function, will be triggered when a new instance is deployed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name             | Type  | Description                        |
+| ---------------- | ----- | ---------------------------------- |
 | initializeParams | bytes | encoded initialization parameters. |
 
 ### castFreezeVote
@@ -79,9 +79,8 @@ a new vote to freeze it.
 function castFreezeVote(address[] _tokenAddresses, uint256[] _tokenIds) external
 ```
 
-### _getVotesAndUpdateHasVoted
+### \_getVotesAndUpdateHasVoted
 
 ```solidity
 function _getVotesAndUpdateHasVoted(address[] _tokenAddresses, uint256[] _tokenIds, address _voter) internal returns (uint256)
 ```
-

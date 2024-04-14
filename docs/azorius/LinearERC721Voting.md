@@ -2,14 +2,14 @@
 
 ## LinearERC721Voting
 
-An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens, 
+An Azorius strategy that allows multiple ERC721 tokens to be registered as governance tokens,
 each with their own voting weight.
 
 This is slightly different from ERC-20 voting, since there is no way to snapshot ERC721 holdings.
 Each ERC721 id can vote once, reguardless of what address held it when a proposal was created.
 
-Also, this uses "quorumThreshold" rather than LinearERC20Voting's quorumPercent, because the 
-total supply of NFTs is not knowable within the IERC721 interface.  This is similar to a multisig 
+Also, this uses "quorumThreshold" rather than LinearERC20Voting's quorumPercent, because the
+total supply of NFTs is not knowable within the IERC721 interface. This is similar to a multisig
 "total signers" required, rather than a percentage of the tokens.
 
 ### VoteType
@@ -74,7 +74,7 @@ uint256 quorumThreshold
 ```
 
 The total number of votes required to achieve quorum.
-"Quorum threshold" is used instead of a quorum percent because IERC721 has no 
+"Quorum threshold" is used instead of a quorum percent because IERC721 has no
 totalSupply function, so the contract cannot determine this.
 
 ### proposerThreshold
@@ -197,9 +197,9 @@ Sets up the contract with its initial parameters.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`,  `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`,  `uint256 _basisNumerator` |
+| Name             | Type  | Description                                                                                                                                                                                                                                         |
+| ---------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| initializeParams | bytes | encoded initialization parameters: `address _owner`, `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`, `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _proposerThreshold`, `uint256 _basisNumerator` |
 
 ### addGovernanceToken
 
@@ -211,10 +211,10 @@ Adds a new ERC-721 token as a governance token, along with its associated weight
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _tokenAddress | address | the address of the ERC-721 token |
-| _weight | uint256 | the number of votes each NFT id is worth |
+| Name           | Type    | Description                              |
+| -------------- | ------- | ---------------------------------------- |
+| \_tokenAddress | address | the address of the ERC-721 token         |
+| \_weight       | uint256 | the number of votes each NFT id is worth |
 
 ### updateVotingPeriod
 
@@ -226,9 +226,9 @@ Updates the voting time period for new Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _votingPeriod | uint32 | voting time period (in blocks) |
+| Name           | Type   | Description                    |
+| -------------- | ------ | ------------------------------ |
+| \_votingPeriod | uint32 | voting time period (in blocks) |
 
 ### updateQuorumThreshold
 
@@ -240,9 +240,9 @@ Updates the quorum required for future Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _quorumThreshold | uint256 | total voting weight required to achieve quorum |
+| Name              | Type    | Description                                    |
+| ----------------- | ------- | ---------------------------------------------- |
+| \_quorumThreshold | uint256 | total voting weight required to achieve quorum |
 
 ### updateProposerThreshold
 
@@ -254,9 +254,9 @@ Updates the voting weight required to submit new Proposals.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposerThreshold | uint256 | required voting weight |
+| Name                | Type    | Description            |
+| ------------------- | ------- | ---------------------- |
+| \_proposerThreshold | uint256 | required voting weight |
 
 ### getProposalVotes
 
@@ -268,19 +268,19 @@ Returns the current state of the specified Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal |
+| Name         | Type   | Description        |
+| ------------ | ------ | ------------------ |
+| \_proposalId | uint32 | id of the Proposal |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| noVotes | uint256 | current count of "NO" votes |
-| yesVotes | uint256 | current count of "YES" votes |
+| Name         | Type    | Description                      |
+| ------------ | ------- | -------------------------------- |
+| noVotes      | uint256 | current count of "NO" votes      |
+| yesVotes     | uint256 | current count of "YES" votes     |
 | abstainVotes | uint256 | current count of "ABSTAIN" votes |
-| startBlock | uint32 | block number voting starts |
-| endBlock | uint32 | block number voting ends |
+| startBlock   | uint32  | block number voting starts       |
+| endBlock     | uint32  | block number voting ends         |
 
 ### vote
 
@@ -292,12 +292,12 @@ Submits a vote on an existing Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal to vote on |
-| _voteType | uint8 | Proposal support as defined in VoteType (NO, YES, ABSTAIN) |
-| _tokenAddresses | address[] | list of ERC-721 addresses that correspond to ids in _tokenIds |
-| _tokenIds | uint256[] | list of unique token ids that correspond to their ERC-721 address in _tokenAddresses |
+| Name             | Type      | Description                                                                           |
+| ---------------- | --------- | ------------------------------------------------------------------------------------- |
+| \_proposalId     | uint32    | id of the Proposal to vote on                                                         |
+| \_voteType       | uint8     | Proposal support as defined in VoteType (NO, YES, ABSTAIN)                            |
+| \_tokenAddresses | address[] | list of ERC-721 addresses that correspond to ids in \_tokenIds                        |
+| \_tokenIds       | uint256[] | list of unique token ids that correspond to their ERC-721 address in \_tokenAddresses |
 
 ### getTokenWeight
 
@@ -309,9 +309,9 @@ Returns the current token weight for the given ERC-721 token address.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _tokenAddress | address | the ERC-721 token address |
+| Name           | Type    | Description               |
+| -------------- | ------- | ------------------------- |
+| \_tokenAddress | address | the ERC-721 token address |
 
 ### hasVoted
 
@@ -323,11 +323,11 @@ Returns whether an NFT id has already voted.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | the id of the Proposal |
-| _tokenAddress | address | the ERC-721 contract address |
-| _tokenId | uint256 | the unique id of the NFT |
+| Name           | Type    | Description                  |
+| -------------- | ------- | ---------------------------- |
+| \_proposalId   | uint32  | the id of the Proposal       |
+| \_tokenAddress | address | the ERC-721 contract address |
+| \_tokenId      | uint256 | the unique id of the NFT     |
 
 ### removeGovernanceToken
 
@@ -339,9 +339,9 @@ Removes the given ERC-721 token address from the list of governance tokens.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _tokenAddress | address | the ERC-721 token to remove |
+| Name           | Type    | Description                 |
+| -------------- | ------- | --------------------------- |
+| \_tokenAddress | address | the ERC-721 token to remove |
 
 ### initializeProposal
 
@@ -349,14 +349,14 @@ Removes the given ERC-721 token address from the list of governance tokens.
 function initializeProposal(bytes _data) public virtual
 ```
 
-Called by the [Azorius](../Azorius.md) module. This notifies this 
+Called by the [Azorius](../Azorius.md) module. This notifies this
 [BaseStrategy](../BaseStrategy.md) that a new Proposal has been created.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _data | bytes | arbitrary data to pass to this BaseStrategy |
+| Name   | Type  | Description                                 |
+| ------ | ----- | ------------------------------------------- |
+| \_data | bytes | arbitrary data to pass to this BaseStrategy |
 
 ### isPassed
 
@@ -368,15 +368,15 @@ Returns whether a Proposal has been passed.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the proposal has passed, otherwise false |
+| Name | Type | Description                                           |
+| ---- | ---- | ----------------------------------------------------- |
+| [0]  | bool | bool true if the proposal has passed, otherwise false |
 
 ### isProposer
 
@@ -393,15 +393,15 @@ delegation.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _address | address | address to check |
+| Name      | Type    | Description      |
+| --------- | ------- | ---------------- |
+| \_address | address | address to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | bool | bool true if the address can submit a Proposal, otherwise false |
+| Name | Type | Description                                                     |
+| ---- | ---- | --------------------------------------------------------------- |
+| [0]  | bool | bool true if the address can submit a Proposal, otherwise false |
 
 ### votingEndBlock
 
@@ -413,17 +413,17 @@ Returns the block number voting ends on a given Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | proposalId to check |
+| Name         | Type   | Description         |
+| ------------ | ------ | ------------------- |
+| \_proposalId | uint32 | proposalId to check |
 
 #### Return Values
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint32 | uint32 block number when voting ends on the Proposal |
+| Name | Type   | Description                                          |
+| ---- | ------ | ---------------------------------------------------- |
+| [0]  | uint32 | uint32 block number when voting ends on the Proposal |
 
-### _addGovernanceToken
+### \_addGovernanceToken
 
 ```solidity
 function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal
@@ -431,7 +431,7 @@ function _addGovernanceToken(address _tokenAddress, uint256 _weight) internal
 
 Internal implementation of `addGovernanceToken`
 
-### _updateVotingPeriod
+### \_updateVotingPeriod
 
 ```solidity
 function _updateVotingPeriod(uint32 _votingPeriod) internal
@@ -439,7 +439,7 @@ function _updateVotingPeriod(uint32 _votingPeriod) internal
 
 Internal implementation of `updateVotingPeriod`.
 
-### _updateQuorumThreshold
+### \_updateQuorumThreshold
 
 ```solidity
 function _updateQuorumThreshold(uint256 _quorumThreshold) internal
@@ -447,7 +447,7 @@ function _updateQuorumThreshold(uint256 _quorumThreshold) internal
 
 Internal implementation of `updateQuorumThreshold`.
 
-### _updateProposerThreshold
+### \_updateProposerThreshold
 
 ```solidity
 function _updateProposerThreshold(uint256 _proposerThreshold) internal
@@ -455,7 +455,7 @@ function _updateProposerThreshold(uint256 _proposerThreshold) internal
 
 Internal implementation of `updateProposerThreshold`.
 
-### _vote
+### \_vote
 
 ```solidity
 function _vote(uint32 _proposalId, address _voter, uint8 _voteType, address[] _tokenAddresses, uint256[] _tokenIds) internal
@@ -465,11 +465,10 @@ Internal function for casting a vote on a Proposal.
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _proposalId | uint32 | id of the Proposal |
-| _voter | address | address casting the vote |
-| _voteType | uint8 | vote support, as defined in VoteType |
-| _tokenAddresses | address[] | list of ERC-721 addresses that correspond to ids in _tokenIds |
-| _tokenIds | uint256[] | list of unique token ids that correspond to their ERC-721 address in _tokenAddresses |
-
+| Name             | Type      | Description                                                                           |
+| ---------------- | --------- | ------------------------------------------------------------------------------------- |
+| \_proposalId     | uint32    | id of the Proposal                                                                    |
+| \_voter          | address   | address casting the vote                                                              |
+| \_voteType       | uint8     | vote support, as defined in VoteType                                                  |
+| \_tokenAddresses | address[] | list of ERC-721 addresses that correspond to ids in \_tokenIds                        |
+| \_tokenIds       | uint256[] | list of unique token ids that correspond to their ERC-721 address in \_tokenAddresses |
