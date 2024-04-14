@@ -97,30 +97,10 @@ To include uncompiled contracts within typechain-types follow [these steps](http
 
 ## Publishing new versions to NPM
 
-First, increment the version in `package.json`, then:
-
-```shell
-npm install
-```
-
-to get those version updates into package-lock.json
-
-```shell
-npm run publish:prepare
-```
-
-to fully clean the project, compile contracts, create typechain directory, and compile the typechain directory
-
-```shell
-npm publish
-```
-
-to publish the compiled typechain files and solidity contracts to NPM
-
-```shell
-git commit
-git push
-```
+1. Increment the version in `package.json`, then `npm install` to get those version updates into `package-lock.json`.
+1. Get those changes into the main branch through a PR.
+1. Tag the merge commit with that version number you just bumped.
+1. Create a Release on GitHub.
 
 ## Versioning
 
