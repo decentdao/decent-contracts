@@ -2,8 +2,7 @@
   "name": "@fractal-framework/fractal-contracts",
   "version": "0.7.0",
   "files": [
-    "deployments",
-    "!deployments/*/solcInputs"
+    "deployments.ts"
   ],
   "repository": {
     "type": "git",
@@ -13,7 +12,7 @@
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "prepublishOnly": "npm run clean && npm run compile && npm run test"
+    "prepublishOnly": "npm run clean && npm run compile && npm run test && hardhat export --export-all deployments.ts"
   },
   "description": "A Safe Zodiac Module framework",
   "homepage": "https://github.com/decentdao/fractal-contracts/blob/develop/README.md",
