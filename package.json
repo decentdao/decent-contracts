@@ -2,7 +2,9 @@
   "name": "@fractal-framework/fractal-contracts",
   "version": "0.7.0",
   "files": [
-    "deployments.json"
+    "deployments.json",
+    "contracts",
+    "!contracts/mock"
   ],
   "repository": {
     "type": "git",
