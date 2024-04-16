@@ -1,6 +1,6 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 import {
   FractalRegistry,
@@ -20,7 +20,7 @@ describe("Fractal Registry", () => {
   let dao2: SignerWithAddress;
 
   beforeEach(async () => {
-    [deployer, dao1, dao2] = await ethers.getSigners();
+    [deployer, dao1, dao2] = await hre.ethers.getSigners();
 
     // Deploy the Fractal Name Registry
     fractalRegistry = await new FractalRegistry__factory(deployer).deploy();
@@ -64,6 +64,6 @@ describe("Fractal Registry", () => {
   it("KeyValuePairs reverts if unequal array lengths are passed to it", async () => {
     await expect(
       keyValues.connect(dao1).updateValues(["twitter", "discord"], ["@awesome"])
-    ).to.be.revertedWith("IncorrectValueCount()");
+    ).to.be.revertedWithCustomError(keyValues, "IncorrectValueCount");
   });
 });

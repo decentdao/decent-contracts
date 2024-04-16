@@ -1,9 +1,8 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
-import { ethers, network } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import time from "./time";
-
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -17,7 +16,6 @@ import {
   MockContract__factory,
   GnosisSafeL2__factory,
 } from "../typechain-types";
-
 import {
   buildSignatureBytes,
   buildSafeTransaction,
@@ -27,7 +25,6 @@ import {
   mockTransaction,
   mockRevertTransaction,
 } from "./helpers";
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -36,7 +33,7 @@ import {
 } from "./GlobalSafeDeployments.test";
 
 describe("Safe with Azorius module and linearERC721Voting", () => {
-  const abiCoder = new ethers.utils.AbiCoder();
+  const abiCoder = new ethers.AbiCoder();
 
   // Deployed contracts
   let gnosisSafe: GnosisSafe;
@@ -65,7 +62,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
   let mintNFTData: string;
   let proposalTransaction: {
     to: string;
-    value: BigNumber;
+    value: bigint;
     data: string;
     operation: number;
   };
@@ -73,7 +70,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
   // Gnosis
   let createGnosisSetupCalldata: string;
 
-  const saltNum = BigNumber.from(
+  const saltNum = BigInt(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
@@ -89,22 +86,22 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     moduleProxyFactory = getModuleProxyFactory();
     const gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    const abiCoder = new ethers.utils.AbiCoder();
+    const abiCoder = new ethers.AbiCoder();
 
     // Get the signer accounts
     [deployer, gnosisSafeOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
-      await ethers.getSigners();
+      await hre.ethers.getSigners();
 
     // Get Gnosis Safe Proxy factory
-    gnosisSafeProxyFactory = await ethers.getContractAt(
+    gnosisSafeProxyFactory = await hre.ethers.getContractAt(
       "GnosisSafeProxyFactory",
-      gnosisSafeProxyFactory.address
+      await gnosisSafeProxyFactory.getAddress()
     );
 
     // Get module proxy factory
-    moduleProxyFactory = await ethers.getContractAt(
+    moduleProxyFactory = await hre.ethers.getContractAt(
       "ModuleProxyFactory",
-      moduleProxyFactory.address
+      await moduleProxyFactory.getAddress()
     );
 
     createGnosisSetupCalldata =
@@ -112,29 +109,29 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
         [gnosisSafeOwner.address],
         1,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ]);
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       gnosisSafeProxyFactory
     );
 
     // Deploy Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       createGnosisSetupCalldata,
       saltNum
     );
 
-    gnosisSafe = await ethers.getContractAt(
+    gnosisSafe = await hre.ethers.getContractAt(
       "GnosisSafe",
       predictedGnosisSafeAddress
     );
@@ -155,9 +152,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     await mintNFT(mockNFT1, tokenHolder3);
     await mintNFT(mockNFT2, tokenHolder3);
 
-    holder1Tokens = [mockNFT1.address];
-    holder2Tokens = [mockNFT2.address];
-    holder3Tokens = [mockNFT1.address, mockNFT2.address];
+    holder1Tokens = [await mockNFT1.getAddress()];
+    holder2Tokens = [await mockNFT2.getAddress()];
+    holder3Tokens = [await mockNFT1.getAddress(), await mockNFT2.getAddress()];
     holder1Ids = [0];
     holder2Ids = [0];
     holder3Ids = [1, 1];
@@ -167,8 +164,8 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     ]);
 
     proposalTransaction = {
-      to: mockNFT1.address,
-      value: BigNumber.from(0),
+      to: await mockNFT1.getAddress(),
+      value: 0n,
       data: mintNFTData,
       operation: 0,
     };
@@ -183,8 +180,8 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           ["address", "address", "address", "address[]", "uint32", "uint32"],
           [
             gnosisSafeOwner.address,
-            gnosisSafe.address,
-            gnosisSafe.address,
+            await gnosisSafe.getAddress(),
+            await gnosisSafe.getAddress(),
             [],
             60, // timelock period in blocks
             60, // execution period in blocks
@@ -193,19 +190,22 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       ]);
 
     await moduleProxyFactory.deployModule(
-      azoriusMastercopy.address,
+      await azoriusMastercopy.getAddress(),
       azoriusSetupCalldata,
       "10031021"
     );
 
-    const predictedAzoriusAddress = calculateProxyAddress(
+    const predictedAzoriusAddress = await calculateProxyAddress(
       moduleProxyFactory,
-      azoriusMastercopy.address,
+      await azoriusMastercopy.getAddress(),
       azoriusSetupCalldata,
       "10031021"
     );
 
-    azorius = await ethers.getContractAt("Azorius", predictedAzoriusAddress);
+    azorius = await hre.ethers.getContractAt(
+      "Azorius",
+      predictedAzoriusAddress
+    );
 
     // Deploy Linear ERC721 Voting Mastercopy
     linearERC721VotingMastercopy = await new LinearERC721Voting__factory(
@@ -230,9 +230,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
             ],
             [
               gnosisSafeOwner.address, // owner
-              [mockNFT1.address, mockNFT2.address], // NFT addresses
+              [await mockNFT1.getAddress(), await mockNFT2.getAddress()], // NFT addresses
               [1, 2], // NFT weights
-              azorius.address, // Azorius module
+              await azorius.getAddress(), // Azorius module
               60, // voting period in blocks
               2, // quorom threshold
               2, // proposer threshold
@@ -243,19 +243,19 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       );
 
     await moduleProxyFactory.deployModule(
-      linearERC721VotingMastercopy.address,
+      await linearERC721VotingMastercopy.getAddress(),
       linearERC721VotingSetupCalldata,
       "10031021"
     );
 
-    const predictedlinearERC721VotingAddress = calculateProxyAddress(
+    const predictedlinearERC721VotingAddress = await calculateProxyAddress(
       moduleProxyFactory,
-      linearERC721VotingMastercopy.address,
+      await linearERC721VotingMastercopy.getAddress(),
       linearERC721VotingSetupCalldata,
       "10031021"
     );
 
-    linearERC721Voting = await ethers.getContractAt(
+    linearERC721Voting = await hre.ethers.getContractAt(
       "LinearERC721Voting",
       predictedlinearERC721VotingAddress
     );
@@ -263,16 +263,16 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     // Enable the Linear Voting strategy on Azorius
     await azorius
       .connect(gnosisSafeOwner)
-      .enableStrategy(linearERC721Voting.address);
+      .enableStrategy(await linearERC721Voting.getAddress());
 
     // Create transaction on Gnosis Safe to setup Azorius module
     const enableAzoriusModuleData = gnosisSafe.interface.encodeFunctionData(
       "enableModule",
-      [azorius.address]
+      [await azorius.getAddress()]
     );
 
     const enableAzoriusModuleTx = buildSafeTransaction({
-      to: gnosisSafe.address,
+      to: await gnosisSafe.getAddress(),
       data: enableAzoriusModuleData,
       safeTxGas: 1000000,
       nonce: await gnosisSafe.nonce(),
@@ -309,12 +309,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     it("Gets correctly initialized", async () => {
       expect(await linearERC721Voting.owner()).to.eq(gnosisSafeOwner.address);
       expect(await linearERC721Voting.tokenAddresses(0)).to.eq(
-        mockNFT1.address
+        await mockNFT1.getAddress()
       );
       expect(await linearERC721Voting.tokenAddresses(1)).to.eq(
-        mockNFT2.address
+        await mockNFT2.getAddress()
       );
-      expect(await linearERC721Voting.azoriusModule()).to.eq(azorius.address);
+      expect(await linearERC721Voting.azoriusModule()).to.eq(
+        await azorius.getAddress()
+      );
       expect(await linearERC721Voting.votingPeriod()).to.eq(60);
       expect(await linearERC721Voting.quorumThreshold()).to.eq(2);
       expect(await linearERC721Voting.proposerThreshold()).to.eq(2);
@@ -324,8 +326,8 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await expect(
         azorius
           .connect(gnosisSafeOwner)
-          .enableStrategy(linearERC721Voting.address)
-      ).to.be.revertedWith("StrategyEnabled()");
+          .enableStrategy(await linearERC721Voting.getAddress())
+      ).to.be.revertedWithCustomError(azorius, "StrategyEnabled()");
     });
 
     it("The owner can change the Azorius Module on the Strategy", async () => {
@@ -369,12 +371,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
     });
 
     it("Getting proposal state on an invalid proposal ID reverts", async () => {
-      await expect(azorius.proposalState(0)).to.be.revertedWith(
-        "InvalidProposal()"
+      await expect(azorius.proposalState(0)).to.be.revertedWithCustomError(
+        azorius,
+        "InvalidProposal"
       );
 
-      await expect(azorius.proposalState(0)).to.be.revertedWith(
-        "InvalidProposal()"
+      await expect(azorius.proposalState(0)).to.be.revertedWithCustomError(
+        azorius,
+        "InvalidProposal"
       );
     });
 
@@ -383,15 +387,20 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await expect(
         azorius
           .connect(tokenHolder2)
-          .submitProposal(mockNFT1.address, "0x", [mockTransaction()], "")
-      ).to.be.revertedWith("StrategyDisabled()");
+          .submitProposal(
+            await mockNFT1.getAddress(),
+            "0x",
+            [await mockTransaction()],
+            ""
+          )
+      ).to.be.revertedWithCustomError(azorius, "StrategyDisabled");
     });
 
     it("Proposal cannot be received by the strategy from address other than Azorius", async () => {
       // Submit call from address that isn't Azorius module
       await expect(
-        linearERC721Voting.initializeProposal([])
-      ).to.be.revertedWith("OnlyAzorius()");
+        linearERC721Voting.initializeProposal("0x")
+      ).to.be.revertedWithCustomError(linearERC721Voting, "OnlyAzorius");
     });
 
     it("Votes cannot be cast on a proposal that hasn't been submitted yet", async () => {
@@ -400,16 +409,16 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         linearERC721Voting
           .connect(tokenHolder1)
           .vote(0, 1, holder1Tokens, holder1Ids)
-      ).to.be.revertedWith("InvalidProposal()");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "InvalidProposal");
     });
 
     it("Votes cannot be cast after the voting period has ended", async () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
@@ -424,16 +433,16 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         linearERC721Voting
           .connect(tokenHolder1)
           .vote(0, 1, holder1Tokens, holder1Ids)
-      ).to.be.revertedWith("VotingEnded()");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "VotingEnded");
     });
 
     it("A voter cannot vote more than once on a proposal with the same id", async () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
@@ -450,16 +459,16 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         linearERC721Voting
           .connect(tokenHolder2)
           .vote(0, 1, holder2Tokens, holder2Ids)
-      ).to.be.revertedWith("IdAlreadyVoted(0)");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "IdAlreadyVoted");
     });
 
     it("A voter can vote more than once with different ids", async () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
@@ -469,12 +478,12 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       // User votes in support of proposal
       await linearERC721Voting
         .connect(tokenHolder3)
-        .vote(0, 1, [mockNFT1.address], [1]);
+        .vote(0, 1, [await mockNFT1.getAddress()], [1]);
 
       // User votes again
       await linearERC721Voting
         .connect(tokenHolder3)
-        .vote(0, 1, [mockNFT2.address], [1]);
+        .vote(0, 1, [await mockNFT2.getAddress()], [1]);
 
       expect((await linearERC721Voting.getProposalVotes(0)).yesVotes).to.eq(3);
     });
@@ -483,13 +492,13 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -522,13 +531,13 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -561,13 +570,13 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
-      await network.provider.send("evm_mine");
+      await hre.network.provider.send("evm_mine");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -608,9 +617,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
@@ -640,7 +649,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           ""
@@ -668,15 +677,21 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       expect(await azorius.proposalState(0)).to.eq(5);
 
       await expect(
-        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
-      ).to.be.revertedWith("ProposalNotExecutable()");
+        azorius.executeProposal(
+          0,
+          [await mockNFT1.getAddress()],
+          [0],
+          [mintNFTData],
+          [0]
+        )
+      ).to.be.revertedWithCustomError(azorius, "ProposalNotExecutable");
     });
 
     it("A proposal is not passed if quorum is not reached", async () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           ""
@@ -698,8 +713,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       await expect(
-        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
-      ).to.be.revertedWith("ProposalNotExecutable()");
+        azorius.executeProposal(
+          0,
+          [await mockNFT1.getAddress()],
+          [0],
+          [mintNFTData],
+          [0]
+        )
+      ).to.be.revertedWithCustomError(azorius, "ProposalNotExecutable");
 
       // Proposal in the failed state
       expect(await azorius.proposalState(0)).to.eq(5);
@@ -709,7 +730,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           ""
@@ -731,8 +752,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       await expect(
-        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
-      ).to.be.revertedWith("ProposalNotExecutable()");
+        azorius.executeProposal(
+          0,
+          [await mockNFT1.getAddress()],
+          [0],
+          [mintNFTData],
+          [0]
+        )
+      ).to.be.revertedWithCustomError(azorius, "ProposalNotExecutable");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -744,14 +771,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       const tx = await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           proposalMetadata
         );
-      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-      const data = receipt.logs[1].data;
-      const topics = receipt.logs[1].topics;
+      const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const data = receipt!.logs[1].data;
+      const topics = receipt!.logs[1].topics;
       const event = azorius.interface.decodeEventLog(
         "ProposalCreated",
         data,
@@ -775,15 +802,15 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           ""
         );
 
       const txHash = await azorius.getTxHash(
-        mockNFT1.address,
-        BigNumber.from(0),
+        await mockNFT1.getAddress(),
+        0n,
         mintNFTData,
         0
       );
@@ -797,7 +824,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       expect(txHash).to.deep.eq(proposalTxHash);
 
       expect(await azorius.getProposal(0)).to.deep.eq([
-        linearERC721Voting.address,
+        await linearERC721Voting.getAddress(),
         [txHash],
         60,
         60,
@@ -808,12 +835,12 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // NFT ids haven't voted yet
-      expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-        false
-      );
-      expect(await linearERC721Voting.hasVoted(0, mockNFT2.address, 0)).to.eq(
-        false
-      );
+      expect(
+        await linearERC721Voting.hasVoted(0, await mockNFT1.getAddress(), 0)
+      ).to.eq(false);
+      expect(
+        await linearERC721Voting.hasVoted(0, await mockNFT2.getAddress(), 0)
+      ).to.eq(false);
 
       // Users vote in support of proposal
       await linearERC721Voting
@@ -825,12 +852,12 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         .vote(0, 1, holder2Tokens, holder2Ids);
 
       // NFT ids have voted
-      expect(await linearERC721Voting.hasVoted(0, mockNFT1.address, 0)).to.eq(
-        true
-      );
-      expect(await linearERC721Voting.hasVoted(0, mockNFT2.address, 0)).to.eq(
-        true
-      );
+      expect(
+        await linearERC721Voting.hasVoted(0, await mockNFT1.getAddress(), 0)
+      ).to.eq(true);
+      expect(
+        await linearERC721Voting.hasVoted(0, await mockNFT2.getAddress(), 0)
+      ).to.eq(true);
 
       // Increase time so that voting period has ended
       await time.advanceBlocks(60);
@@ -849,14 +876,14 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       // Execute the transaction
       await azorius.executeProposal(
         0,
-        [mockNFT1.address],
+        [await mockNFT1.getAddress()],
         [0],
         [mintNFTData],
         [0]
       );
 
       expect(await azorius.getProposal(0)).to.deep.eq([
-        linearERC721Voting.address,
+        await linearERC721Voting.getAddress(),
         [txHash],
         60,
         60,
@@ -876,22 +903,22 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       const tokenTransferData3 = mintNFTData;
 
       const proposalTransaction1 = {
-        to: mockNFT1.address,
-        value: BigNumber.from(0),
+        to: await mockNFT1.getAddress(),
+        value: 0n,
         data: tokenTransferData1,
         operation: 0,
       };
 
       const proposalTransaction2 = {
-        to: mockNFT1.address,
-        value: BigNumber.from(0),
+        to: await mockNFT1.getAddress(),
+        value: 0n,
         data: tokenTransferData2,
         operation: 0,
       };
 
       const proposalTransaction3 = {
-        to: mockNFT1.address,
-        value: BigNumber.from(0),
+        to: await mockNFT1.getAddress(),
+        value: 0n,
         data: tokenTransferData3,
         operation: 0,
       };
@@ -899,7 +926,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction1, proposalTransaction2, proposalTransaction3],
           ""
@@ -933,7 +960,11 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       // Execute the transaction
       await azorius.executeProposal(
         0,
-        [mockNFT1.address, mockNFT1.address, mockNFT1.address],
+        [
+          await mockNFT1.getAddress(),
+          await mockNFT1.getAddress(),
+          await mockNFT1.getAddress(),
+        ],
         [0, 0, 0],
         [tokenTransferData1, tokenTransferData2, tokenTransferData3],
         [0, 0, 0]
@@ -949,9 +980,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockRevertTransaction()],
+          [await mockRevertTransaction()],
           ""
         );
 
@@ -982,7 +1013,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await expect(
         azorius.executeProposal(
           0,
-          [getMockContract().address],
+          [await getMockContract().getAddress()],
           [0],
           [
             // eslint-disable-next-line camelcase
@@ -992,7 +1023,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
           ],
           [0]
         )
-      ).to.be.revertedWith("TxFailed()");
+      ).to.be.revertedWithCustomError(azorius, "TxFailed");
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1002,7 +1033,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
           [proposalTransaction],
           ""
@@ -1039,14 +1070,20 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
 
       // Execute the transaction
       await expect(
-        azorius.executeProposal(0, [mockNFT1.address], [0], [mintNFTData], [0])
-      ).to.be.revertedWith("ProposalNotExecutable()");
+        azorius.executeProposal(
+          0,
+          [await mockNFT1.getAddress()],
+          [0],
+          [mintNFTData],
+          [0]
+        )
+      ).to.be.revertedWithCustomError(azorius, "ProposalNotExecutable");
     });
 
     it("A proposal with no transactions that passes goes immediately to executed", async () => {
       await azorius
         .connect(tokenHolder2)
-        .submitProposal(linearERC721Voting.address, "0x", [], "");
+        .submitProposal(await linearERC721Voting.getAddress(), "0x", [], "");
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -1127,7 +1164,10 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         linearERC721Voting
           .connect(gnosisSafeOwner)
           .updateBasisNumerator(1000001)
-      ).to.be.revertedWith("InvalidBasisNumerator()");
+      ).to.be.revertedWithCustomError(
+        linearERC721Voting,
+        "InvalidBasisNumerator"
+      );
     });
 
     it("Only the owner can update the proposer weight on the ERC721LinearVoting", async () => {
@@ -1168,9 +1208,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
               ],
               [
                 gnosisSafeOwner.address, // owner
-                [ethers.constants.AddressZero], // NFT addresses
+                [ethers.ZeroAddress], // NFT addresses
                 [1], // NFT weights
-                azorius.address, // Azorius module
+                await azorius.getAddress(), // Azorius module
                 60, // voting period in blocks
                 1, // quorom threshold
                 1, // proposer threshold
@@ -1182,7 +1222,7 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
 
       await expect(
         moduleProxyFactory.deployModule(
-          linearERC721VotingMastercopy.address,
+          await linearERC721VotingMastercopy.getAddress(),
           linearERC721VotingSetupCalldata,
           "10031021"
         )
@@ -1193,9 +1233,9 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
       await azorius
         .connect(tokenHolder2)
         .submitProposal(
-          linearERC721Voting.address,
+          await linearERC721Voting.getAddress(),
           "0x",
-          [mockTransaction()],
+          [await mockTransaction()],
           ""
         );
 
@@ -1207,17 +1247,17 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         linearERC721Voting
           .connect(tokenHolder2)
           .vote(0, 3, holder2Tokens, holder2Ids)
-      ).to.be.revertedWith("InvalidVote()");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "InvalidVote");
       await expect(
         linearERC721Voting
           .connect(tokenHolder2)
           .vote(0, 4, holder2Tokens, holder2Ids)
-      ).to.be.revertedWith("InvalidVote()");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "InvalidVote");
       await expect(
         linearERC721Voting
           .connect(tokenHolder2)
           .vote(0, 5, holder2Tokens, holder2Ids)
-      ).to.be.revertedWith("InvalidVote()");
+      ).to.be.revertedWithCustomError(linearERC721Voting, "InvalidVote");
     });
 
     it("A non-proposer can't submit a proposal", async () => {
@@ -1232,12 +1272,12 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         azorius
           .connect(deployer)
           .submitProposal(
-            linearERC721Voting.address,
+            await linearERC721Voting.getAddress(),
             "0x",
-            [mockTransaction()],
+            [await mockTransaction()],
             ""
           )
-      ).to.be.revertedWith("InvalidProposer()");
+      ).to.be.revertedWithCustomError(azorius, "InvalidProposer");
 
       await linearERC721Voting
         .connect(gnosisSafeOwner)
@@ -1254,23 +1294,23 @@ describe("Safe with Azorius module and linearERC721Voting", () => {
         azorius
           .connect(deployer)
           .submitProposal(
-            linearERC721Voting.address,
+            await linearERC721Voting.getAddress(),
             "0x",
-            [mockTransaction()],
+            [await mockTransaction()],
             ""
           )
-      ).to.be.revertedWith("InvalidProposer()");
+      ).to.be.revertedWithCustomError(azorius, "InvalidProposer");
 
       await expect(
         azorius
           .connect(tokenHolder2)
           .submitProposal(
-            linearERC721Voting.address,
+            await linearERC721Voting.getAddress(),
             "0x",
-            [mockTransaction()],
+            [await mockTransaction()],
             ""
           )
-      ).to.be.revertedWith("InvalidProposer()");
+      ).to.be.revertedWithCustomError(azorius, "InvalidProposer");
     });
 
     it("An proposal that hasn't been submitted yet is not passed", async () => {

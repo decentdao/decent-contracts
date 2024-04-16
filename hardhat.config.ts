@@ -1,30 +1,15 @@
 import * as dotenv from "dotenv";
-import { HardhatUserConfig, task } from "hardhat/config";
-import "@nomiclabs/hardhat-etherscan";
-import "@openzeppelin/hardhat-upgrades";
-import "@nomiclabs/hardhat-waffle";
-import "hardhat-deploy";
-import "@typechain/hardhat";
-import "hardhat-tracer";
-import "solidity-coverage";
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-dependency-compiler";
-import "hardhat-gas-reporter";
+import "hardhat-deploy";
 import "solidity-docgen";
 
 dotenv.config();
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
+// first address from `test test test test test test test test test test test junk`
+const dummyPrivateKey =
+  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -35,11 +20,6 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
-  },
-  gasReporter: {
-    enabled: true,
-    outputFile: "gas-report.txt",
-    noColors: true,
   },
   dependencyCompiler: {
     paths: [
@@ -63,45 +43,53 @@ const config: HardhatUserConfig = {
   networks: {
     mainnet: {
       chainId: 1,
-      url: process.env.MAINNET_PROVIDER || "",
+      url:
+        process.env.MAINNET_PROVIDER || "https://ethereum-rpc.publicnode.com",
       accounts: process.env.MAINNET_DEPLOYER_PRIVATE_KEY
         ? [process.env.MAINNET_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
     sepolia: {
       chainId: 11155111,
-      url: process.env.SEPOLIA_PROVIDER || "",
+      url:
+        process.env.SEPOLIA_PROVIDER ||
+        "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY
         ? [process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
     polygon: {
       chainId: 137,
-      url: process.env.POLYGON_PROVIDER || "",
+      url:
+        process.env.POLYGON_PROVIDER ||
+        "https://polygon-bor-rpc.publicnode.com",
       accounts: process.env.POLYGON_DEPLOYER_PRIVATE_KEY
         ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
     baseSepolia: {
       chainId: 84532,
-      url: process.env.BASE_SEPOLIA_PROVIDER || "",
+      url:
+        process.env.BASE_SEPOLIA_PROVIDER ||
+        "https://base-sepolia-rpc.publicnode.com",
       accounts: process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY
         ? [process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
     base: {
       chainId: 8453,
-      url: process.env.BASE_PROVIDER || "",
+      url: process.env.BASE_PROVIDER || "https://base-rpc.publicnode.com",
       accounts: process.env.BASE_DEPLOYER_PRIVATE_KEY
         ? [process.env.BASE_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
     optimism: {
       chainId: 10,
-      url: process.env.OPTIMISM_PROVIDER || "",
+      url:
+        process.env.OPTIMISM_PROVIDER || "https://optimism-rpc.publicnode.com",
       accounts: process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY
         ? [process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY]
-        : [],
+        : [dummyPrivateKey],
     },
   },
   etherscan: {
@@ -111,7 +99,7 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_API_KEY || "",
       baseSepolia: process.env.BASESCAN_API_KEY || "",
       base: process.env.BASESCAN_API_KEY || "",
-      optimism: process.env.OPTIMISTIC_ETHERSCAN_API_KEY || "",
+      optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -122,23 +110,10 @@ const config: HardhatUserConfig = {
           browserURL: "https://sepolia.basescan.org",
         },
       },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "optimism",
-        chainId: 10,
-        urls: {
-          apiURL: "https://api-optimistic.etherscan.io/api",
-          browserURL: "https://optimistic.etherscan.io",
-        },
-      },
     ],
+  },
+  sourcify: {
+    enabled: true,
   },
   paths: {
     deploy: "deploy/core",

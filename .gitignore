@@ -1,14 +1,16 @@
 node_modules
 .env
-coverage
-coverage.json
-typechain
-typechain-types
-.idea
-dist/
 
-#Hardhat files
-cache
-artifacts
-deployments/localhost
-gas-report.txt
+# Hardhat files
+/cache
+/artifacts
+/docs
+deployments.ts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json

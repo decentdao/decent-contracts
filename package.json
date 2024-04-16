@@ -2,9 +2,9 @@
   "name": "@fractal-framework/fractal-contracts",
   "version": "0.7.0",
   "files": [
-    "dist",
-    "deployments",
-    "contracts"
+    "deployments.ts",
+    "contracts",
+    "!contracts/mock"
   ],
   "repository": {
     "type": "git",
@@ -13,64 +13,26 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
+    "docgen": "hardhat docgen",
     "test": "hardhat test",
-    "publish:prepare": "npm run clean && npx rimraf dist && npm run compile && npx tsc",
-    "publish-packages": "npm run publish:prepare && npm publish --no-git-checks"
-  },
-  "devDependencies": {
-    "@gnosis.pm/safe-contracts": "^1.3.0",
-    "@gnosis.pm/zodiac": "^1.1.4",
-    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "^4.5.0",
-    "@openzeppelin/contracts-upgradeable": "^4.5.0",
-    "@openzeppelin/hardhat-upgrades": "^1.13.0",
-    "@typechain/ethers-v5": "^10.0.0",
-    "@typechain/hardhat": "^6.0.0",
-    "@types/chai": "^4.3.0",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "^12.20.41",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
-    "chai": "^4.3.4",
-    "dotenv": "^10.0.0",
-    "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^3.4.1",
-    "eslint-plugin-promise": "^5.2.0",
-    "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.6.0",
-    "hardhat": "^2.8.2",
-    "hardhat-dependency-compiler": "^1.1.3",
-    "hardhat-deploy": "^0.10.6",
-    "hardhat-deploy-ethers": "^0.3.0-beta.13",
-    "hardhat-gas-reporter": "^1.0.9",
-    "hardhat-tracer": "^1.0.0-alpha.6",
-    "prettier": "^2.5.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.19",
-    "solhint": "^3.3.6",
-    "solidity-coverage": "^0.7.17",
-    "ts-node": "^10.4.0",
-    "typechain": "^8.0.0",
-    "typescript": "^4.5.4"
+    "prepublishOnly": "npm run clean && npm run compile && npm run test && hardhat export --export-all deployments.ts"
   },
   "description": "A Safe Zodiac Module framework",
   "homepage": "https://github.com/decentdao/fractal-contracts/blob/develop/README.md",
   "author": "fractal-contributors",
   "license": "MIT",
-  "main": "dist/typechain-types/index.js",
-  "types": "dist/typechain-types/index.d.ts",
   "bugs": {
     "url": "https://github.com/decentdao/fractal-contracts/issues"
   },
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "solidity-docgen": "^0.6.0-beta.35"
+  "devDependencies": {
+    "@gnosis.pm/zodiac": "^1.1.4",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts-upgradeable": "^4.5.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.2",
+    "hardhat-dependency-compiler": "^1.1.4",
+    "hardhat-deploy": "^0.12.2",
+    "solidity-docgen": "^0.6.0-beta.36"
   }
 }

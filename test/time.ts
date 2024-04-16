@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 const advanceBlocks = async (blockCount: number) => {
   for (let i = 0; i < blockCount; i++) {
@@ -7,7 +7,7 @@ const advanceBlocks = async (blockCount: number) => {
 };
 
 const advanceBlock = async () => {
-  await ethers.provider.send("evm_mine", []);
+  await hre.ethers.provider.send("evm_mine", []);
 };
 
 const defaultExport = {

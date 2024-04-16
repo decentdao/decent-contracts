@@ -1,7 +1,7 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import {
   Azorius__factory,
   FractalModule,
@@ -53,7 +53,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
 
-  const abiCoder = new ethers.utils.AbiCoder(); // encode data
+  const abiCoder = new hre.ethers.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
   let freezeGuardFactoryInit: string;
   let setModuleCalldata: string;
@@ -61,7 +61,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
   const threshold = 2;
   let predictedFreezeGuard: string;
-  const saltNum = BigNumber.from(
+  const saltNum = BigInt(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
@@ -71,7 +71,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
     multiSendCallOnly = getMultiSendCallOnly();
     gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    [deployer, owner1, owner2, owner3] = await ethers.getSigners();
+    [deployer, owner1, owner2, owner3] = await hre.ethers.getSigners();
 
     /// ////////////////// GNOSIS //////////////////
     // SETUP GnosisSafe
@@ -82,21 +82,21 @@ describe("Atomic Gnosis Safe Deployment", () => {
           owner1.address,
           owner2.address,
           owner3.address,
-          multiSendCallOnly.address,
+          await multiSendCallOnly.getAddress(),
         ],
         1,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ]);
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       gnosisSafeProxyFactory
     );
 
@@ -119,19 +119,25 @@ describe("Atomic Gnosis Safe Deployment", () => {
         [
           abiCoder.encode(
             ["uint256", "uint256", "address", "address", "address"],
-            [10, 20, owner1.address, owner1.address, gnosisSafe.address]
+            [
+              10,
+              20,
+              owner1.address,
+              owner1.address,
+              await gnosisSafe.getAddress(),
+            ]
           ),
         ]
       );
 
-    predictedFreezeGuard = calculateProxyAddress(
+    predictedFreezeGuard = await calculateProxyAddress(
       moduleProxyFactory,
-      freezeGuardImplementation.address,
+      await freezeGuardImplementation.getAddress(),
       freezeGuardFactoryInit,
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "MultisigFreezeGuard",
       predictedFreezeGuard
     );
@@ -150,21 +156,21 @@ describe("Atomic Gnosis Safe Deployment", () => {
           ["address", "address", "address", "address[]"],
           [
             owner1.address,
-            gnosisSafe.address,
-            gnosisSafe.address,
+            await gnosisSafe.getAddress(),
+            await gnosisSafe.getAddress(),
             [owner2.address],
           ]
         ),
       ]);
 
-    predictedFractalModule = calculateProxyAddress(
+    predictedFractalModule = await calculateProxyAddress(
       moduleProxyFactory,
-      fractalModuleSingleton.address,
+      await fractalModuleSingleton.getAddress(),
       setModuleCalldata,
       "10031021"
     );
 
-    fractalModule = await ethers.getContractAt(
+    fractalModule = await hre.ethers.getContractAt(
       "FractalModule",
       predictedFractalModule
     );
@@ -172,7 +178,7 @@ describe("Atomic Gnosis Safe Deployment", () => {
     // TX Array
     sigs =
       "0x000000000000000000000000" +
-      multiSendCallOnly.address.slice(2) +
+      (await multiSendCallOnly.getAddress()).slice(2) +
       "0000000000000000000000000000000000000000000000000000000000000000" +
       "01";
   });
@@ -180,17 +186,25 @@ describe("Atomic Gnosis Safe Deployment", () => {
   describe("Atomic Gnosis Safe Deployment", () => {
     it("Setup Fractal Module w/ ModuleProxyCreationEvent", async () => {
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [fractalModuleSingleton.address, setModuleCalldata, "10031021"],
+          [
+            await fractalModuleSingleton.getAddress(),
+            setModuleCalldata,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -198,27 +212,36 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(moduleProxyFactory, "ModuleProxyCreation")
-        .withArgs(predictedFractalModule, fractalModuleSingleton.address);
+        .withArgs(
+          predictedFractalModule,
+          await fractalModuleSingleton.getAddress()
+        );
 
-      expect(await fractalModule.avatar()).eq(gnosisSafe.address);
-      expect(await fractalModule.target()).eq(gnosisSafe.address);
+      expect(await fractalModule.avatar()).eq(await gnosisSafe.getAddress());
+      expect(await fractalModule.getFunction("target")()).eq(
+        await gnosisSafe.getAddress()
+      );
       expect(await fractalModule.owner()).eq(owner1.address);
     });
 
     it("Setup FreezeGuard w/ ModuleProxyCreationEvent", async () => {
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
           [
-            freezeGuardImplementation.address,
+            await freezeGuardImplementation.getAddress(),
             freezeGuardFactoryInit,
             "10031021",
           ],
@@ -229,20 +252,25 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(moduleProxyFactory, "ModuleProxyCreation")
-        .withArgs(predictedFreezeGuard, freezeGuardImplementation.address);
+        .withArgs(
+          predictedFreezeGuard,
+          await freezeGuardImplementation.getAddress()
+        );
       expect(await freezeGuard.timelockPeriod()).eq(10);
       expect(await freezeGuard.freezeVoting()).eq(owner1.address);
-      expect(await freezeGuard.childGnosisSafe()).eq(gnosisSafe.address);
+      expect(await freezeGuard.childGnosisSafe()).eq(
+        await gnosisSafe.getAddress()
+      );
     });
 
     it("Setup Azorius Module w/ ModuleProxyCreationEvent", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = [];
-      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = abiCoder.encode(
         ["address", "address", "address", "address[]", "uint32", "uint32"],
         [
-          gnosisSafe.address,
-          gnosisSafe.address,
-          gnosisSafe.address,
+          await gnosisSafe.getAddress(),
+          await gnosisSafe.getAddress(),
+          await gnosisSafe.getAddress(),
           VOTING_STRATEGIES_TO_DEPLOY,
           0,
           0,
@@ -256,9 +284,9 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
       const azoriusSingleton = await new Azorius__factory(deployer).deploy();
 
-      const predictedAzoriusModule = calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleProxyFactory,
-        azoriusSingleton.address,
+        await azoriusSingleton.getAddress(),
         encodedSetupAzoriusData,
         "10031021"
       );
@@ -270,17 +298,25 @@ describe("Atomic Gnosis Safe Deployment", () => {
       );
 
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [azoriusSingleton.address, encodedSetupAzoriusData, "10031021"],
+          [
+            await azoriusSingleton.getAddress(),
+            encodedSetupAzoriusData,
+            "10031021",
+          ],
           0,
           false
         ),
@@ -291,55 +327,65 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
       await expect(tx)
         .to.emit(moduleProxyFactory, "ModuleProxyCreation")
-        .withArgs(predictedAzoriusModule, azoriusSingleton.address);
+        .withArgs(predictedAzoriusModule, await azoriusSingleton.getAddress());
 
-      expect(await azoriusContract.avatar()).eq(gnosisSafe.address);
-      expect(await azoriusContract.target()).eq(gnosisSafe.address);
-      expect(await azoriusContract.owner()).eq(gnosisSafe.address);
+      expect(await azoriusContract.avatar()).eq(await gnosisSafe.getAddress());
+      expect(await azoriusContract.getFunction("target")()).eq(
+        await gnosisSafe.getAddress()
+      );
+      expect(await azoriusContract.owner()).eq(await gnosisSafe.getAddress());
     });
 
     it("Setup Module w/ enabledModule event", async () => {
       const internalTxs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "enableModule",
-          [fractalModule.address],
+          [await fractalModule.getAddress()],
           0,
           false
         ),
       ];
       const safeInternalTx = encodeMultiSend(internalTxs);
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
-          moduleProxyFactory,
-          "deployModule",
-          [fractalModuleSingleton.address, setModuleCalldata, "10031021"],
-          0,
-          false
-        ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
           [
-            freezeGuardImplementation.address,
+            await fractalModuleSingleton.getAddress(),
+            setModuleCalldata,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+        await buildContractCall(
+          moduleProxyFactory,
+          "deployModule",
+          [
+            await freezeGuardImplementation.getAddress(),
             freezeGuardFactoryInit,
             "10031021",
           ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "execTransaction",
           [
-            multiSendCallOnly.address, // to
+            await multiSendCallOnly.getAddress(), // to
             "0", // value
             // eslint-disable-next-line camelcase
             MultiSendCallOnly__factory.createInterface().encodeFunctionData(
@@ -350,8 +396,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
             "0", // tx gas
             "0", // base gas
             "0", // gas price
-            ethers.constants.AddressZero, // gas token
-            ethers.constants.AddressZero, // receiver
+            ethers.ZeroAddress, // gas token
+            ethers.ZeroAddress, // receiver
             sigs, // sigs
           ],
           0,
@@ -361,20 +407,20 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(fractalModule.address);
-      expect(await gnosisSafe.isModuleEnabled(fractalModule.address)).to.eq(
-        true
-      );
+        .withArgs(await fractalModule.getAddress());
+      expect(
+        await gnosisSafe.isModuleEnabled(await fractalModule.getAddress())
+      ).to.eq(true);
     });
 
     it("Setup AzoriusModule w/ enabledModule event", async () => {
       const VOTING_STRATEGIES_TO_DEPLOY: string[] = []; // @todo pass expected addresses for voting strategies
-      const encodedInitAzoriusData = ethers.utils.defaultAbiCoder.encode(
+      const encodedInitAzoriusData = abiCoder.encode(
         ["address", "address", "address", "address[]", "uint32", "uint32"],
         [
-          gnosisSafe.address,
-          gnosisSafe.address,
-          gnosisSafe.address,
+          await gnosisSafe.getAddress(),
+          await gnosisSafe.getAddress(),
+          await gnosisSafe.getAddress(),
           VOTING_STRATEGIES_TO_DEPLOY,
           0,
           0,
@@ -388,9 +434,9 @@ describe("Atomic Gnosis Safe Deployment", () => {
 
       const azoriusSingleton = await new Azorius__factory(deployer).deploy();
 
-      const predictedAzoriusModule = calculateProxyAddress(
+      const predictedAzoriusModule = await calculateProxyAddress(
         moduleProxyFactory,
-        azoriusSingleton.address,
+        await azoriusSingleton.getAddress(),
         encodedSetupAzoriusData,
         "10031021"
       );
@@ -402,60 +448,72 @@ describe("Atomic Gnosis Safe Deployment", () => {
       );
 
       const internalTxs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "enableModule",
-          [fractalModule.address],
+          [await fractalModule.getAddress()],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "enableModule",
-          [azoriusContract.address],
+          [await azoriusContract.getAddress()],
           0,
           false
         ),
       ];
       const safeInternalTx = encodeMultiSend(internalTxs);
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
-          moduleProxyFactory,
-          "deployModule",
-          [fractalModuleSingleton.address, setModuleCalldata, "10031021"],
-          0,
-          false
-        ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
           [
-            freezeGuardImplementation.address,
+            await fractalModuleSingleton.getAddress(),
+            setModuleCalldata,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+        await buildContractCall(
+          moduleProxyFactory,
+          "deployModule",
+          [
+            await freezeGuardImplementation.getAddress(),
             freezeGuardFactoryInit,
             "10031021",
           ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [azoriusSingleton.address, encodedSetupAzoriusData, "10031021"],
+          [
+            await azoriusSingleton.getAddress(),
+            encodedSetupAzoriusData,
+            "10031021",
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "execTransaction",
           [
-            multiSendCallOnly.address, // to
+            await multiSendCallOnly.getAddress(), // to
             "0", // value
             // eslint-disable-next-line camelcase
             MultiSendCallOnly__factory.createInterface().encodeFunctionData(
@@ -466,8 +524,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
             "0", // tx gas
             "0", // base gas
             "0", // gas price
-            ethers.constants.AddressZero, // gas token
-            ethers.constants.AddressZero, // receiver
+            ethers.ZeroAddress, // gas token
+            ethers.ZeroAddress, // receiver
             sigs, // sigs
           ],
           0,
@@ -477,54 +535,62 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(azoriusContract.address);
-      expect(await gnosisSafe.isModuleEnabled(azoriusContract.address)).to.eq(
-        true
-      );
+        .withArgs(await azoriusContract.getAddress());
+      expect(
+        await gnosisSafe.isModuleEnabled(await azoriusContract.getAddress())
+      ).to.eq(true);
     });
 
     it("Setup Guard w/ changeGuard event", async () => {
       const internalTxs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "setGuard",
-          [freezeGuard.address],
+          [await freezeGuard.getAddress()],
           0,
           false
         ),
       ];
       const safeInternalTx = encodeMultiSend(internalTxs);
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
-          moduleProxyFactory,
-          "deployModule",
-          [fractalModuleSingleton.address, setModuleCalldata, "10031021"],
-          0,
-          false
-        ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
           [
-            freezeGuardImplementation.address,
+            await fractalModuleSingleton.getAddress(),
+            setModuleCalldata,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+        await buildContractCall(
+          moduleProxyFactory,
+          "deployModule",
+          [
+            await freezeGuardImplementation.getAddress(),
             freezeGuardFactoryInit,
             "10031021",
           ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "execTransaction",
           [
-            multiSendCallOnly.address, // to
+            await multiSendCallOnly.getAddress(), // to
             "0", // value
             // eslint-disable-next-line camelcase
             MultiSendCallOnly__factory.createInterface().encodeFunctionData(
@@ -535,8 +601,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
             "0", // tx gas
             "0", // base gas
             "0", // gas price
-            ethers.constants.AddressZero, // gas token
-            ethers.constants.AddressZero, // receiver
+            ethers.ZeroAddress, // gas token
+            ethers.ZeroAddress, // receiver
             sigs, // sigs
           ],
           0,
@@ -546,51 +612,59 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(gnosisSafe, "ChangedGuard")
-        .withArgs(freezeGuard.address);
+        .withArgs(await freezeGuard.getAddress());
     });
 
     it("Setup Gnosis Safe w/ removedOwner event", async () => {
       const internalTxs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "removeOwner",
-          [owner3.address, multiSendCallOnly.address, threshold],
+          [owner3.address, await multiSendCallOnly.getAddress(), threshold],
           0,
           false
         ),
       ];
       const safeInternalTx = encodeMultiSend(internalTxs);
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
-          moduleProxyFactory,
-          "deployModule",
-          [fractalModuleSingleton.address, setModuleCalldata, "10031021"],
-          0,
-          false
-        ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
           [
-            freezeGuardImplementation.address,
+            await fractalModuleSingleton.getAddress(),
+            setModuleCalldata,
+            "10031021",
+          ],
+          0,
+          false
+        ),
+        await buildContractCall(
+          moduleProxyFactory,
+          "deployModule",
+          [
+            await freezeGuardImplementation.getAddress(),
             freezeGuardFactoryInit,
             "10031021",
           ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "execTransaction",
           [
-            multiSendCallOnly.address, // to
+            await multiSendCallOnly.getAddress(), // to
             "0", // value
             // eslint-disable-next-line camelcase
             MultiSendCallOnly__factory.createInterface().encodeFunctionData(
@@ -601,8 +675,8 @@ describe("Atomic Gnosis Safe Deployment", () => {
             "0", // tx gas
             "0", // base gas
             "0", // gas price
-            ethers.constants.AddressZero, // gas token
-            ethers.constants.AddressZero, // receiver
+            ethers.ZeroAddress, // gas token
+            ethers.ZeroAddress, // receiver
             sigs, // sigs
           ],
           0,
@@ -612,12 +686,14 @@ describe("Atomic Gnosis Safe Deployment", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(gnosisSafe, "RemovedOwner")
-        .withArgs(multiSendCallOnly.address);
+        .withArgs(await multiSendCallOnly.getAddress());
 
       expect(await gnosisSafe.isOwner(owner1.address)).eq(true);
       expect(await gnosisSafe.isOwner(owner2.address)).eq(true);
       expect(await gnosisSafe.isOwner(owner3.address)).eq(true);
-      expect(await gnosisSafe.isOwner(multiSendCallOnly.address)).eq(false);
+      expect(await gnosisSafe.isOwner(await multiSendCallOnly.getAddress())).eq(
+        false
+      );
       expect(await gnosisSafe.getThreshold()).eq(threshold);
     });
   });

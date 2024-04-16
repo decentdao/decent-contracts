@@ -1,7 +1,7 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 import {
   VotesERC20__factory,
   FractalModule,
@@ -47,17 +47,17 @@ describe("Fractal Module Tests", () => {
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
 
-  const abiCoder = new ethers.utils.AbiCoder(); // encode data
+  const abiCoder = new ethers.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
   let freezeGuardSetup: string;
   let setModuleCalldata: string;
 
-  const saltNum = BigNumber.from(
+  const saltNum = BigInt(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
   beforeEach(async () => {
-    [deployer, owner1, owner2, owner3] = await ethers.getSigners();
+    [deployer, owner1, owner2, owner3] = await hre.ethers.getSigners();
 
     gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     moduleProxyFactory = getModuleProxyFactory();
@@ -73,20 +73,20 @@ describe("Fractal Module Tests", () => {
           owner1.address,
           owner2.address,
           owner3.address,
-          multiSendCallOnly.address,
+          await multiSendCallOnly.getAddress(),
         ],
         1,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ]);
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
       saltNum,
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       gnosisSafeProxyFactory
     );
 
@@ -107,7 +107,13 @@ describe("Fractal Module Tests", () => {
         [
           abiCoder.encode(
             ["uint256", "uint256", "address", "address", "address"],
-            [10, 10, owner1.address, owner1.address, gnosisSafe.address]
+            [
+              10,
+              10,
+              owner1.address,
+              owner1.address,
+              await gnosisSafe.getAddress(),
+            ]
           ),
         ]
       );
@@ -124,21 +130,21 @@ describe("Fractal Module Tests", () => {
           ["address", "address", "address", "address[]"],
           [
             owner1.address,
-            gnosisSafe.address,
-            gnosisSafe.address,
+            await gnosisSafe.getAddress(),
+            await gnosisSafe.getAddress(),
             [owner2.address],
           ]
         ),
       ]);
 
-    const predictedFractalModule = calculateProxyAddress(
+    const predictedFractalModule = await calculateProxyAddress(
       moduleProxyFactory,
-      moduleImpl.address,
+      await moduleImpl.getAddress(),
       setModuleCalldata,
       "10031021"
     );
 
-    fractalModule = await ethers.getContractAt(
+    fractalModule = await hre.ethers.getContractAt(
       "FractalModule",
       predictedFractalModule
     );
@@ -147,17 +153,21 @@ describe("Fractal Module Tests", () => {
   describe("Fractal Module", () => {
     it("Supports the expected ERC165 interface", async () => {
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [moduleImpl.address, setModuleCalldata, "10031021"],
+          [await moduleImpl.getAddress(), setModuleCalldata, "10031021"],
           0,
           false
         ),
@@ -165,22 +175,29 @@ describe("Fractal Module Tests", () => {
       const safeTx = encodeMultiSend(txs);
       await expect(multiSendCallOnly.multiSend(safeTx))
         .to.emit(gnosisSafeProxyFactory, "ProxyCreation")
-        .withArgs(gnosisSafe.address, gnosisSafeL2Singleton.address);
+        .withArgs(
+          await gnosisSafe.getAddress(),
+          await gnosisSafeL2Singleton.getAddress()
+        );
     });
 
     it("Owner may add/remove controllers", async () => {
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [moduleImpl.address, setModuleCalldata, "10031021"],
+          [await moduleImpl.getAddress(), setModuleCalldata, "10031021"],
           0,
           false
         ),
@@ -211,10 +228,10 @@ describe("Fractal Module Tests", () => {
 
     it("Authorized users may exec TXs", async () => {
       const internalTxs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "enableModule",
-          [fractalModule.address],
+          [await fractalModule.getAddress()],
           0,
           false
         ),
@@ -222,36 +239,40 @@ describe("Fractal Module Tests", () => {
       const safeInternalTx = encodeMultiSend(internalTxs);
       const sigs =
         "0x000000000000000000000000" +
-        multiSendCallOnly.address.slice(2) +
+        (await multiSendCallOnly.getAddress()).slice(2) +
         "0000000000000000000000000000000000000000000000000000000000000000" +
         "01";
       const txs: MetaTransaction[] = [
-        buildContractCall(
+        await buildContractCall(
           gnosisSafeProxyFactory,
           "createProxyWithNonce",
-          [gnosisSafeL2Singleton.address, createGnosisSetupCalldata, saltNum],
+          [
+            await gnosisSafeL2Singleton.getAddress(),
+            createGnosisSetupCalldata,
+            saltNum,
+          ],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [moduleImpl.address, setModuleCalldata, "10031021"],
+          [await moduleImpl.getAddress(), setModuleCalldata, "10031021"],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           moduleProxyFactory,
           "deployModule",
-          [freezeGuard.address, freezeGuardSetup, "10031021"],
+          [await freezeGuard.getAddress(), freezeGuardSetup, "10031021"],
           0,
           false
         ),
-        buildContractCall(
+        await buildContractCall(
           gnosisSafe,
           "execTransaction",
           [
-            multiSendCallOnly.address, // to
+            await multiSendCallOnly.getAddress(), // to
             "0", // value
             // eslint-disable-next-line camelcase
             MultiSendCallOnly__factory.createInterface().encodeFunctionData(
@@ -262,8 +283,8 @@ describe("Fractal Module Tests", () => {
             "0", // tx gas
             "0", // base gas
             "0", // gas price
-            ethers.constants.AddressZero, // gas token
-            ethers.constants.AddressZero, // receiver
+            ethers.ZeroAddress, // gas token
+            ethers.ZeroAddress, // receiver
             sigs, // sigs
           ],
           0,
@@ -274,7 +295,7 @@ describe("Fractal Module Tests", () => {
       await multiSendCallOnly.multiSend(safeTx);
 
       // FUND SAFE
-      const abiCoder = new ethers.utils.AbiCoder(); // encode data
+      const abiCoder = new ethers.AbiCoder(); // encode data
 
       // Deploy token mastercopy
       const votesERC20Mastercopy = await new VotesERC20__factory(
@@ -286,29 +307,31 @@ describe("Fractal Module Tests", () => {
         VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
           abiCoder.encode(
             ["string", "string", "address[]", "uint256[]"],
-            ["DCNT", "DCNT", [gnosisSafe.address], [1000]]
+            ["DCNT", "DCNT", [await gnosisSafe.getAddress()], [1000]]
           ),
         ]);
 
       await moduleProxyFactory.deployModule(
-        votesERC20Mastercopy.address,
+        await votesERC20Mastercopy.getAddress(),
         votesERC20SetupData,
         "10031021"
       );
 
-      const predictedVotesERC20Address = calculateProxyAddress(
+      const predictedVotesERC20Address = await calculateProxyAddress(
         moduleProxyFactory,
-        votesERC20Mastercopy.address,
+        await votesERC20Mastercopy.getAddress(),
         votesERC20SetupData,
         "10031021"
       );
 
-      const votesERC20 = await ethers.getContractAt(
+      const votesERC20 = await hre.ethers.getContractAt(
         "VotesERC20",
         predictedVotesERC20Address
       );
 
-      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(1000);
+      expect(await votesERC20.balanceOf(await gnosisSafe.getAddress())).to.eq(
+        1000
+      );
       expect(await votesERC20.balanceOf(owner1.address)).to.eq(0);
 
       // CLAWBACK FUNDS
@@ -322,12 +345,13 @@ describe("Fractal Module Tests", () => {
         // eslint-disable-next-line camelcase
         abiCoder.encode(
           ["address", "uint256", "bytes", "uint8"],
-          [votesERC20.address, 0, clawBackCalldata, 0]
+          [await votesERC20.getAddress(), 0, clawBackCalldata, 0]
         );
 
       // REVERT => NOT AUTHORIZED
-      await expect(fractalModule.execTx(txData)).to.be.revertedWith(
-        "Unauthorized()"
+      await expect(fractalModule.execTx(txData)).to.be.revertedWithCustomError(
+        fractalModule,
+        "Unauthorized"
       );
 
       // OWNER MAY EXECUTE
@@ -345,9 +369,11 @@ describe("Fractal Module Tests", () => {
       // REVERT => Execution Failure
       await expect(
         fractalModule.connect(owner1).execTx(txData)
-      ).to.be.revertedWith("TxFailed()");
+      ).to.be.revertedWithCustomError(fractalModule, "TxFailed");
 
-      expect(await votesERC20.balanceOf(gnosisSafe.address)).to.eq(0);
+      expect(await votesERC20.balanceOf(await gnosisSafe.getAddress())).to.eq(
+        0
+      );
       expect(await votesERC20.balanceOf(owner1.address)).to.eq(1000);
     });
   });

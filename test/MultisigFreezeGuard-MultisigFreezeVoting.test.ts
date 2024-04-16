@@ -1,7 +1,7 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
+import hre from "hardhat";
+import { ethers } from "ethers";
 import time from "./time";
 
 import {
@@ -53,7 +53,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
   let createChildGnosisSetupCalldata: string;
 
   const threshold = 2;
-  const saltNum = BigNumber.from(
+  const saltNum = BigInt(
     "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
   );
 
@@ -67,7 +67,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       childMultisigOwner2,
       childMultisigOwner3,
       freezeGuardOwner,
-    ] = await ethers.getSigners();
+    ] = await hre.ethers.getSigners();
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     const moduleProxyFactory = getModuleProxyFactory();
@@ -82,12 +82,12 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           parentMultisigOwner3.address,
         ],
         threshold,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ]);
 
     createChildGnosisSetupCalldata =
@@ -99,38 +99,38 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           childMultisigOwner3.address,
         ],
         threshold,
-        ethers.constants.AddressZero,
-        ethers.constants.HashZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        ethers.constants.AddressZero,
+        ethers.ZeroAddress,
       ]);
 
     const predictedParentGnosisSafeAddress = await predictGnosisSafeAddress(
       createParentGnosisSetupCalldata,
       saltNum,
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       gnosisSafeProxyFactory
     );
 
     const predictedChildGnosisSafeAddress = await predictGnosisSafeAddress(
       createChildGnosisSetupCalldata,
       saltNum,
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       gnosisSafeProxyFactory
     );
 
     // Deploy Parent Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       createParentGnosisSetupCalldata,
       saltNum
     );
 
     // Deploy Child Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
-      gnosisSafeL2Singleton.address,
+      await gnosisSafeL2Singleton.getAddress(),
       createChildGnosisSetupCalldata,
       saltNum
     );
@@ -152,30 +152,30 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     // Deploy token mastercopy
     votesERC20Mastercopy = await new VotesERC20__factory(deployer).deploy();
 
-    const abiCoder = new ethers.utils.AbiCoder(); // encode data
+    const abiCoder = new ethers.AbiCoder(); // encode data
     const votesERC20SetupData =
       // eslint-disable-next-line camelcase
       VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
         abiCoder.encode(
           ["string", "string", "address[]", "uint256[]"],
-          ["DCNT", "DCNT", [childGnosisSafe.address], [1000]]
+          ["DCNT", "DCNT", [await childGnosisSafe.getAddress()], [1000]]
         ),
       ]);
 
     await moduleProxyFactory.deployModule(
-      votesERC20Mastercopy.address,
+      await votesERC20Mastercopy.getAddress(),
       votesERC20SetupData,
       "10031021"
     );
 
-    const predictedVotesERC20Address = calculateProxyAddress(
+    const predictedVotesERC20Address = await calculateProxyAddress(
       moduleProxyFactory,
-      votesERC20Mastercopy.address,
+      await votesERC20Mastercopy.getAddress(),
       votesERC20SetupData,
       "10031021"
     );
 
-    votesERC20 = await ethers.getContractAt(
+    votesERC20 = await hre.ethers.getContractAt(
       "VotesERC20",
       predictedVotesERC20Address
     );
@@ -198,26 +198,26 @@ describe("Child Multisig DAO with Multisig Parent", () => {
               2, // freeze votes threshold
               10, // freeze proposal duration in blocks
               200, // freeze duration in blocks
-              parentGnosisSafe.address,
+              await parentGnosisSafe.getAddress(),
             ]
           ),
         ]
       );
     await moduleProxyFactory.deployModule(
-      freezeVotingMastercopy.address,
+      await freezeVotingMastercopy.getAddress(),
       freezeVotingSetupData,
       "10031021"
     );
 
-    const predictedFreezeVotingAddress = calculateProxyAddress(
+    const predictedFreezeVotingAddress = await calculateProxyAddress(
       moduleProxyFactory,
-      freezeVotingMastercopy.address,
+      await freezeVotingMastercopy.getAddress(),
       freezeVotingSetupData,
       "10031021"
     );
 
-    freezeVoting = await ethers.getContractAt(
-      "ERC20FreezeVoting",
+    freezeVoting = await hre.ethers.getContractAt(
+      "MultisigFreezeVoting",
       predictedFreezeVotingAddress
     );
 
@@ -238,27 +238,27 @@ describe("Child Multisig DAO with Multisig Parent", () => {
               60, // Timelock period
               60, // Execution period
               freezeGuardOwner.address,
-              freezeVoting.address,
-              childGnosisSafe.address,
+              await freezeVoting.getAddress(),
+              await childGnosisSafe.getAddress(),
             ]
           ),
         ]
       );
 
     await moduleProxyFactory.deployModule(
-      freezeGuardMastercopy.address,
+      await freezeGuardMastercopy.getAddress(),
       freezeGuardSetupData,
       "10031021"
     );
 
-    const predictedFreezeGuardAddress = calculateProxyAddress(
+    const predictedFreezeGuardAddress = await calculateProxyAddress(
       moduleProxyFactory,
-      freezeGuardMastercopy.address,
+      await freezeGuardMastercopy.getAddress(),
       freezeGuardSetupData,
       "10031021"
     );
 
-    freezeGuard = await ethers.getContractAt(
+    freezeGuard = await hre.ethers.getContractAt(
       "MultisigFreezeGuard",
       predictedFreezeGuardAddress
     );
@@ -266,11 +266,11 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     // Create transaction to set the guard address
     const setGuardData = childGnosisSafe.interface.encodeFunctionData(
       "setGuard",
-      [freezeGuard.address]
+      [await freezeGuard.getAddress()]
     );
 
     const tx = buildSafeTransaction({
-      to: childGnosisSafe.address,
+      to: await childGnosisSafe.getAddress(),
       data: setGuardData,
       safeTxGas: 1000000,
       nonce: await childGnosisSafe.nonce(),
@@ -298,7 +298,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
     ).to.emit(childGnosisSafe, "ExecutionSuccess");
 
     // Gnosis Safe received the 1,000 tokens
-    expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(1000);
+    expect(
+      await votesERC20.balanceOf(await childGnosisSafe.getAddress())
+    ).to.eq(1000);
   });
 
   describe("MultisigFreezeGuard with MultisigFreezeVoting", () => {
@@ -318,9 +320,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      const latestBlock = await ethers.provider.getBlock("latest");
+      const latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
+        latestBlock!.number
       );
 
       await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
@@ -335,7 +337,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -377,7 +379,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes
       );
 
-      expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
+      expect(
+        await votesERC20.balanceOf(await childGnosisSafe.getAddress())
+      ).to.eq(0);
       expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
     });
 
@@ -389,7 +393,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -431,7 +435,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes
       );
 
-      expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
+      expect(
+        await votesERC20.balanceOf(await childGnosisSafe.getAddress())
+      ).to.eq(0);
       expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
 
       await expect(
@@ -458,10 +464,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: BigNumber.from(1),
+        nonce: 1n,
       });
 
       const sigs1 = [
@@ -471,10 +477,10 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       const signatureBytes1 = buildSignatureBytes(sigs1);
 
       const tx2 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
-        nonce: BigNumber.from(2),
+        nonce: 2n,
       });
 
       const sigs2 = [
@@ -542,7 +548,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
         signatureBytes2
       );
 
-      expect(await votesERC20.balanceOf(childGnosisSafe.address)).to.eq(0);
+      expect(
+        await votesERC20.balanceOf(await childGnosisSafe.getAddress())
+      ).to.eq(0);
       expect(await votesERC20.balanceOf(deployer.address)).to.eq(1000);
     });
 
@@ -554,7 +562,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -579,7 +587,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("NotTimelocked()");
+      ).to.be.revertedWithCustomError(freezeGuard, "NotTimelocked");
     });
 
     it("A transaction cannot be timelocked if the signatures aren't valid", async () => {
@@ -590,7 +598,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -627,7 +635,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -666,7 +674,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx.refundReceiver,
           signatureBytes
         )
-      ).to.be.revertedWith("Timelocked()");
+      ).to.be.revertedWithCustomError(freezeGuard, "Timelocked");
     });
 
     it("A frozen DAO cannot execute any transactions", async () => {
@@ -682,14 +690,14 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
       });
 
       const tx2 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData2,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -749,7 +757,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAOFrozen()");
+      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
 
       // Timelock tx2
       await freezeGuard.timelockTransaction(
@@ -782,7 +790,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx2.refundReceiver,
           signatureBytes2
         )
-      ).to.be.revertedWith("DAOFrozen()");
+      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
     });
 
     it("A frozen DAO automatically unfreezes after the freeze period has ended", async () => {
@@ -798,14 +806,14 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
       });
 
       const tx2 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData2,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -865,7 +873,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAOFrozen()");
+      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
 
       // Timelock tx2
       await freezeGuard.timelockTransaction(
@@ -898,7 +906,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx2.refundReceiver,
           signatureBytes2
         )
-      ).to.be.revertedWith("DAOFrozen()");
+      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
 
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
@@ -923,7 +931,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -976,9 +984,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      let latestBlock = await ethers.provider.getBlock("latest");
+      let latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
+        latestBlock!.number
       );
 
       // Move time forward to elapse freeze proposal period
@@ -986,9 +994,9 @@ describe("Child Multisig DAO with Multisig Parent", () => {
 
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
-      latestBlock = await ethers.provider.getBlock("latest");
+      latestBlock = await hre.ethers.provider.getBlock("latest");
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        latestBlock.number
+        latestBlock!.number
       );
       expect(await freezeVoting.isFrozen()).to.eq(false);
     });
@@ -997,7 +1005,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
       await expect(
         freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
-      ).to.be.revertedWith("AlreadyVoted()");
+      ).to.be.revertedWithCustomError(freezeVoting, "AlreadyVoted");
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
     });
 
@@ -1017,7 +1025,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -1059,7 +1067,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("DAOFrozen()");
+      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
 
       // Move time forward to elapse freeze period
       await time.advanceBlocks(140);
@@ -1081,7 +1089,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           tx1.refundReceiver,
           signatureBytes1
         )
-      ).to.be.revertedWith("Expired()");
+      ).to.be.revertedWithCustomError(freezeGuard, "Expired");
     });
 
     it("Unfrozen DAOs may execute txs", async () => {
@@ -1102,7 +1110,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx1 = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData1,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -1156,7 +1164,7 @@ describe("Child Multisig DAO with Multisig Parent", () => {
       );
 
       const tx = buildSafeTransaction({
-        to: votesERC20.address,
+        to: await votesERC20.getAddress(),
         data: tokenTransferData,
         safeTxGas: 1000000,
         nonce: await childGnosisSafe.nonce(),
@@ -1196,13 +1204,13 @@ describe("Child Multisig DAO with Multisig Parent", () => {
           signatureBytes,
           tx.nonce
         )
-      ).to.be.revertedWith("AlreadyTimelocked()");
+      ).to.be.revertedWithCustomError(freezeGuard, "AlreadyTimelocked");
     });
 
     it("You must be a parent multisig owner to cast a freeze vote", async () => {
       await expect(
         freezeVoting.connect(freezeGuardOwner).castFreezeVote()
-      ).to.be.revertedWith("NotOwner()");
+      ).to.be.revertedWithCustomError(freezeVoting, "NotOwner");
     });
 
     it("Only owner methods must be called by the owner", async () => {
