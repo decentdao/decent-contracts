@@ -7,8 +7,8 @@ node_modules
 /docs
 
 # Publish files
-addresses.ts
-abis.ts
+index.ts
+/publish
 
 # TypeChain files
 /typechain

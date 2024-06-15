@@ -8,12 +8,18 @@ npx hardhat export --export-all deployments.json
 
 jq 'walk(if type == "object" then del(.abi, .name, .chainId) else . end)' deployments.json > temp_addresses.json
 jq 'to_entries | map({key: .key, value: .value[0]}) | from_entries' temp_addresses.json > addresses.json
-echo "export default $(cat addresses.json) as const;" > addresses.ts
+echo "export default $(cat addresses.json) as const;" > publish/addresses.ts
 rm temp_addresses.json addresses.json
 
 jq '."1"[0].contracts' deployments.json > temp_abis.json
 jq 'to_entries | map({key: .key, value: {abi: .value.abi}}) | from_entries' temp_abis.json > abis.json
-echo "export default $(cat abis.json) as const;" > abis.ts
+echo "export default $(cat abis.json) as const;" > publish/abis.ts
 rm temp_abis.json abis.json
 
 rm deployments.json 
+
+cat << EOF > index.ts
+import abis from "./publish/abis.ts";
+import addresses from "./publish/addresses.ts";
+export { abis, addresses };
+EOF
