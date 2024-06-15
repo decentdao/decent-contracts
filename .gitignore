@@ -5,7 +5,10 @@ node_modules
 /cache
 /artifacts
 /docs
-deployments.ts
+
+# Publish files
+addresses.ts
+abis.ts
 
 # TypeChain files
 /typechain
