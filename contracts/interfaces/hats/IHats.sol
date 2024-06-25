@@ -17,7 +17,24 @@
 pragma solidity >=0.8.13;
 
 interface IHats {
-    function mintTopHat(address _target, string memory _details, string memory _imageURI)
-        external
-        returns (uint256 topHatId);
+    function mintTopHat(
+        address _target,
+        string memory _details,
+        string memory _imageURI
+    ) external returns (uint256 topHatId);
+
+    function createHat(
+        uint256 _admin,
+        string calldata _details,
+        uint32 _maxSupply,
+        address _eligibility,
+        address _toggle,
+        bool _mutable,
+        string calldata _imageURI
+    ) external returns (uint256 newHatId);
+
+    function mintHat(
+        uint256 _hatId,
+        address _wearer
+    ) external returns (bool success);
 }
