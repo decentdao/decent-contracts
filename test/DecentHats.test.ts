@@ -61,8 +61,7 @@ const executeSafeTransaction = async ({
 };
 
 describe("DecentHats", () => {
-  let dao1: SignerWithAddress;
-  let dao2: SignerWithAddress;
+  let dao: SignerWithAddress;
 
   let keyValuePairs: KeyValuePairs;
   let gnosisSafe: GnosisSafeL2;
@@ -77,7 +76,7 @@ describe("DecentHats", () => {
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners();
     const [deployer] = signers;
-    [, dao1, dao2] = signers;
+    [, dao] = signers;
 
     const hats = await new MockHats__factory(deployer).deploy();
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy();
@@ -94,7 +93,7 @@ describe("DecentHats", () => {
 
     const createGnosisSetupCalldata =
       GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
-        [dao1.address],
+        [dao.address],
         1,
         ethers.ZeroAddress,
         ethers.ZeroHash,
@@ -136,7 +135,7 @@ describe("DecentHats", () => {
             "enableModule",
             [decentHatsAddress]
           ),
-        signers: [dao1],
+        signers: [dao],
       });
     });
 
@@ -160,9 +159,41 @@ describe("DecentHats", () => {
           transactionData:
             DecentHats__factory.createInterface().encodeFunctionData(
               "createAndDeclareTree",
-              ["", ""]
+              [
+                "",
+                "",
+                {
+                  eligibility: ethers.ZeroAddress,
+                  maxSupply: 1,
+                  toggle: ethers.ZeroAddress,
+                  details: "",
+                  imageURI: "",
+                  isMutable: false,
+                  wearer: ethers.ZeroAddress,
+                },
+                [
+                  {
+                    eligibility: ethers.ZeroAddress,
+                    maxSupply: 1,
+                    toggle: ethers.ZeroAddress,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                  },
+                  {
+                    eligibility: ethers.ZeroAddress,
+                    maxSupply: 1,
+                    toggle: ethers.ZeroAddress,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                  },
+                ],
+              ]
             ),
-          signers: [dao1],
+          signers: [dao],
         });
       });
 
@@ -179,7 +210,7 @@ describe("DecentHats", () => {
           .withArgs(decentHatsAddress);
       });
 
-      it("Emits a hatsTreeId ValueUpdated event", async () => {
+      it("Emits some hatsTreeId ValueUpdated events", async () => {
         await expect(createAndDeclareTreeTx)
           .to.emit(keyValuePairs, "ValueUpdated")
           .withArgs(gnosisSafeAddress, "hatsTreeId", "0");
@@ -195,9 +226,22 @@ describe("DecentHats", () => {
             transactionData:
               DecentHats__factory.createInterface().encodeFunctionData(
                 "createAndDeclareTree",
-                ["", ""]
+                [
+                  "",
+                  "",
+                  {
+                    eligibility: ethers.ZeroAddress,
+                    maxSupply: 1,
+                    toggle: ethers.ZeroAddress,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                  },
+                  [],
+                ]
               ),
-            signers: [dao1],
+            signers: [dao],
           });
         });
 
@@ -217,7 +261,7 @@ describe("DecentHats", () => {
         it("Creates Top Hats with sequential IDs", async () => {
           await expect(createAndDeclareTreeTx2)
             .to.emit(keyValuePairs, "ValueUpdated")
-            .withArgs(gnosisSafeAddress, "hatsTreeId", "1");
+            .withArgs(gnosisSafeAddress, "hatsTreeId", "4");
         });
       });
     });
