@@ -23,7 +23,7 @@ contract DecentHats {
     IERC6551Registry public registry;
     address public hatsAccountImplementation;
 
-    bytes32 public constant SALT = bytes32(abi.encode(0xdece974a75));
+    bytes32 public constant SALT = keccak256("DecentHats");
 
     constructor(
         IHats _hats,
