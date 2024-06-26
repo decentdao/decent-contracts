@@ -296,7 +296,7 @@ describe("DecentHats", () => {
           salt = await decentHats.SALT();
         });
 
-        const getHatAccount = async (hatId: number) => {
+        const getHatAccount = async (hatId: bigint) => {
           const hatAccountAddress = await erc6551Registry.account(
             mockHatsAccountImplementationAddress,
             salt,
@@ -313,8 +313,10 @@ describe("DecentHats", () => {
           return hatAccount;
         };
 
-        it("Generates the correct Addresses for the three Hats", async () => {
-          for (let i = 0; i < 3; i++) {
+        it("Generates the correct Addresses for the current Hats", async () => {
+          const currentCount = await mockHats.count();
+
+          for (let i = 0n; i < currentCount; i++) {
             const topHatAccount = await getHatAccount(i);
             expect(await topHatAccount.tokenId()).eq(i);
             expect(await topHatAccount.tokenImplementation()).eq(

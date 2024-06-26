@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import {IHats} from "../interfaces/hats/IHats.sol";
 
 contract MockHats is IHats {
-    uint256 count = 0;
+    uint256 public count = 0;
 
     function mintTopHat(
         address,
