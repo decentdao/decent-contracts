@@ -5,6 +5,12 @@ import {
   KeyValuePairs,
   KeyValuePairs__factory,
   MockHats__factory,
+  ERC6551Registry__factory,
+  MockHatsAccount__factory,
+  ERC6551Registry,
+  DecentHats,
+  MockHatsAccount,
+  MockHats,
 } from "../typechain-types";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -63,26 +69,40 @@ const executeSafeTransaction = async ({
 describe("DecentHats", () => {
   let dao: SignerWithAddress;
 
+  let mockHats: MockHats;
+  let mockHatsAddress: string;
+
   let keyValuePairs: KeyValuePairs;
   let gnosisSafe: GnosisSafeL2;
 
-  let gnosisSafeAddress: string;
+  let decentHats: DecentHats;
   let decentHatsAddress: string;
 
-  const saltNum = BigInt(
-    `0x${Buffer.from(ethers.randomBytes(32)).toString("hex")}`
-  );
+  let gnosisSafeAddress: string;
+  let erc6551Registry: ERC6551Registry;
+
+  let mockHatsAccountImplementation: MockHatsAccount;
+  let mockHatsAccountImplementationAddress: string;
 
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners();
     const [deployer] = signers;
     [, dao] = signers;
 
-    const hats = await new MockHats__factory(deployer).deploy();
+    mockHats = await new MockHats__factory(deployer).deploy();
+    mockHatsAddress = await mockHats.getAddress();
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy();
-    const decentHats = await new DecentHats__factory(deployer).deploy(
-      await hats.getAddress(),
-      await keyValuePairs.getAddress()
+    erc6551Registry = await new ERC6551Registry__factory(deployer).deploy();
+    mockHatsAccountImplementation = await new MockHatsAccount__factory(
+      deployer
+    ).deploy();
+    mockHatsAccountImplementationAddress =
+      await mockHatsAccountImplementation.getAddress();
+    decentHats = await new DecentHats__factory(deployer).deploy(
+      mockHatsAddress,
+      await keyValuePairs.getAddress(),
+      await erc6551Registry.getAddress(),
+      mockHatsAccountImplementationAddress
     );
     decentHatsAddress = await decentHats.getAddress();
 
@@ -102,6 +122,10 @@ describe("DecentHats", () => {
         0,
         ethers.ZeroAddress,
       ]);
+
+    const saltNum = BigInt(
+      `0x${Buffer.from(ethers.randomBytes(32)).toString("hex")}`
+    );
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
@@ -262,6 +286,41 @@ describe("DecentHats", () => {
           await expect(createAndDeclareTreeTx2)
             .to.emit(keyValuePairs, "ValueUpdated")
             .withArgs(gnosisSafeAddress, "hatsTreeId", "4");
+        });
+      });
+
+      describe("Creating Hats Accounts", () => {
+        let salt: string;
+
+        beforeEach(async () => {
+          salt = await decentHats.SALT();
+        });
+
+        const getHatAccount = async (hatId: number) => {
+          const hatAccountAddress = await erc6551Registry.account(
+            mockHatsAccountImplementationAddress,
+            salt,
+            await hre.getChainId(),
+            mockHatsAddress,
+            hatId
+          );
+
+          const hatAccount = MockHatsAccount__factory.connect(
+            hatAccountAddress,
+            hre.ethers.provider
+          );
+
+          return hatAccount;
+        };
+
+        it("Generates the correct Addresses for the three Hats", async () => {
+          for (let i = 0; i < 3; i++) {
+            const topHatAccount = await getHatAccount(i);
+            expect(await topHatAccount.tokenId()).eq(i);
+            expect(await topHatAccount.tokenImplementation()).eq(
+              mockHatsAddress
+            );
+          }
         });
       });
     });

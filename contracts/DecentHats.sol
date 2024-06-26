@@ -4,6 +4,7 @@ pragma solidity =0.8.19;
 import {Enum} from "@gnosis.pm/zodiac/contracts/core/Module.sol";
 import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
+import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract DecentHats {
@@ -19,10 +20,21 @@ contract DecentHats {
 
     IHats public hats;
     address public keyValuePairs;
+    IERC6551Registry public registry;
+    address public hatsAccountImplementation;
 
-    constructor(IHats _hats, address _keyValuePairs) {
+    bytes32 public constant SALT = bytes32(abi.encode(0xdece974a75));
+
+    constructor(
+        IHats _hats,
+        address _keyValuePairs,
+        IERC6551Registry _registry,
+        address _hatsAccountImplementation
+    ) {
         hats = _hats;
         keyValuePairs = _keyValuePairs;
+        registry = _registry;
+        hatsAccountImplementation = _hatsAccountImplementation;
     }
 
     function createAndDeclareTree(
@@ -35,6 +47,13 @@ contract DecentHats {
             msg.sender,
             _topHatDetails,
             _topHatImageURI
+        );
+        registry.createAccount(
+            hatsAccountImplementation,
+            SALT,
+            block.chainid,
+            address(hats),
+            topHatId
         );
 
         string[] memory keys = new string[](1);
@@ -63,6 +82,13 @@ contract DecentHats {
             _adminHat.isMutable,
             _adminHat.imageURI
         );
+        registry.createAccount(
+            hatsAccountImplementation,
+            SALT,
+            block.chainid,
+            address(hats),
+            adminHatId
+        );
 
         if (_adminHat.wearer != address(0)) {
             hats.mintHat(adminHatId, _adminHat.wearer);
@@ -78,6 +104,13 @@ contract DecentHats {
                 hat.toggle,
                 hat.isMutable,
                 hat.imageURI
+            );
+            registry.createAccount(
+                hatsAccountImplementation,
+                SALT,
+                block.chainid,
+                address(hats),
+                hatId
             );
 
             if (hat.wearer != address(0)) {
