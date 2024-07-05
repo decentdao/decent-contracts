@@ -31,4 +31,6 @@ contract MockHats is IHats {
     function mintHat(uint256, address) external pure returns (bool success) {
         success = true;
     }
+
+    function transferHat(uint256, address, address) external {}
 }

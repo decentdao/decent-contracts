@@ -44,7 +44,7 @@ contract DecentHats {
         Hat[] calldata _hats
     ) public {
         uint256 topHatId = hats.mintTopHat(
-            msg.sender,
+            address(this),
             _topHatDetails,
             _topHatImageURI
         );
@@ -121,5 +121,7 @@ contract DecentHats {
                 ++i;
             }
         }
+
+        hats.transferHat(topHatId, address(this), msg.sender);
     }
 }

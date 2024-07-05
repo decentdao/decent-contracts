@@ -37,4 +37,6 @@ interface IHats {
         uint256 _hatId,
         address _wearer
     ) external returns (bool success);
+
+    function transferHat(uint256 _hatId, address _from, address _to) external;
 }
