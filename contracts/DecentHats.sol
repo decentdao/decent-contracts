@@ -57,7 +57,7 @@ contract DecentHats {
         );
 
         string[] memory keys = new string[](1);
-        keys[0] = "hatsTreeId";
+        keys[0] = "topHatId";
 
         string[] memory values = new string[](1);
         values[0] = Strings.toString(topHatId);

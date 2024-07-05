@@ -237,7 +237,7 @@ describe("DecentHats", () => {
       it("Emits some hatsTreeId ValueUpdated events", async () => {
         await expect(createAndDeclareTreeTx)
           .to.emit(keyValuePairs, "ValueUpdated")
-          .withArgs(gnosisSafeAddress, "hatsTreeId", "0");
+          .withArgs(gnosisSafeAddress, "topHatId", "0");
       });
 
       describe("Multiple calls", () => {
@@ -285,7 +285,7 @@ describe("DecentHats", () => {
         it("Creates Top Hats with sequential IDs", async () => {
           await expect(createAndDeclareTreeTx2)
             .to.emit(keyValuePairs, "ValueUpdated")
-            .withArgs(gnosisSafeAddress, "hatsTreeId", "4");
+            .withArgs(gnosisSafeAddress, "topHatId", "4");
         });
       });
 
