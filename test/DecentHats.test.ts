@@ -100,9 +100,9 @@ describe("DecentHats", () => {
       await mockHatsAccountImplementation.getAddress();
     decentHats = await new DecentHats__factory(deployer).deploy(
       mockHatsAddress,
-      await keyValuePairs.getAddress(),
+      mockHatsAccountImplementationAddress,
       await erc6551Registry.getAddress(),
-      mockHatsAccountImplementationAddress
+      await keyValuePairs.getAddress()
     );
     decentHatsAddress = await decentHats.getAddress();
 

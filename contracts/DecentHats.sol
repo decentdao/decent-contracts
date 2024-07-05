@@ -19,22 +19,22 @@ contract DecentHats {
     }
 
     IHats public hats;
-    address public keyValuePairs;
-    IERC6551Registry public registry;
     address public hatsAccountImplementation;
+    IERC6551Registry public registry;
+    address public keyValuePairs;
 
     bytes32 public constant SALT = keccak256("DecentHats");
 
     constructor(
         IHats _hats,
-        address _keyValuePairs,
+        address _hatsAccountImplementation,
         IERC6551Registry _registry,
-        address _hatsAccountImplementation
+        address _keyValuePairs
     ) {
         hats = _hats;
-        keyValuePairs = _keyValuePairs;
-        registry = _registry;
         hatsAccountImplementation = _hatsAccountImplementation;
+        registry = _registry;
+        keyValuePairs = _keyValuePairs;
     }
 
     function createAndDeclareTree(
