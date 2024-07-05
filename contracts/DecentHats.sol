@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
 
-import {Enum} from "@gnosis.pm/zodiac/contracts/core/Module.sol";
+import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
 import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
