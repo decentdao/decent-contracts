@@ -35,7 +35,6 @@ const config: HardhatUserConfig = {
       mainnet: `privatekey://${process.env.MAINNET_DEPLOYER_PRIVATE_KEY}`,
       sepolia: `privatekey://${process.env.SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
-      baseSepolia: `privatekey://${process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY}`,
       base: `privatekey://${process.env.BASE_DEPLOYER_PRIVATE_KEY}`,
       optimism: `privatekey://${process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY}`,
     },
@@ -67,15 +66,6 @@ const config: HardhatUserConfig = {
         ? [process.env.POLYGON_DEPLOYER_PRIVATE_KEY]
         : [dummyPrivateKey],
     },
-    baseSepolia: {
-      chainId: 84532,
-      url:
-        process.env.BASE_SEPOLIA_PROVIDER ||
-        "https://base-sepolia-rpc.publicnode.com",
-      accounts: process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY
-        ? [process.env.BASE_SEPOLIA_DEPLOYER_PRIVATE_KEY]
-        : [dummyPrivateKey],
-    },
     base: {
       chainId: 8453,
       url: process.env.BASE_PROVIDER || "https://base-rpc.publicnode.com",
@@ -97,20 +87,9 @@ const config: HardhatUserConfig = {
       mainnet: process.env.ETHERSCAN_API_KEY || "",
       sepolia: process.env.ETHERSCAN_API_KEY || "",
       polygon: process.env.POLYGONSCAN_API_KEY || "",
-      baseSepolia: process.env.BASESCAN_API_KEY || "",
       base: process.env.BASESCAN_API_KEY || "",
       optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY || "",
     },
-    customChains: [
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
-    ],
   },
   sourcify: {
     enabled: true,
