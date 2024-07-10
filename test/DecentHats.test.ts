@@ -1,24 +1,22 @@
 /* eslint-disable camelcase */
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import {
   GnosisSafeL2,
   GnosisSafeL2__factory,
-  DecentHats__factory,
+  DecentHats_0_1_0__factory,
   KeyValuePairs,
   KeyValuePairs__factory,
   MockHats__factory,
   ERC6551Registry__factory,
   MockHatsAccount__factory,
   ERC6551Registry,
-  DecentHats,
+  DecentHats_0_1_0,
   MockHatsAccount,
   MockHats,
 } from "../typechain-types";
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
 import { expect } from "chai";
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
 import hre from "hardhat";
 
 import {
@@ -31,6 +29,7 @@ import {
   predictGnosisSafeAddress,
   safeSignTypedData,
 } from "./helpers";
+import { solidityKeccak256 } from "ethers/lib/utils";
 
 const executeSafeTransaction = async ({
   safe,
@@ -78,7 +77,7 @@ describe("DecentHats", () => {
   let keyValuePairs: KeyValuePairs;
   let gnosisSafe: GnosisSafeL2;
 
-  let decentHats: DecentHats;
+  let decentHats: DecentHats_0_1_0;
   let decentHatsAddress: string;
 
   let gnosisSafeAddress: string;
@@ -101,12 +100,7 @@ describe("DecentHats", () => {
     ).deploy();
     mockHatsAccountImplementationAddress =
       mockHatsAccountImplementation.address;
-    decentHats = await new DecentHats__factory(deployer).deploy(
-      mockHatsAddress,
-      mockHatsAccountImplementationAddress,
-      erc6551Registry.address,
-      keyValuePairs.address
-    );
+    decentHats = await new DecentHats_0_1_0__factory(deployer).deploy();
     decentHatsAddress = decentHats.address;
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
@@ -117,20 +111,17 @@ describe("DecentHats", () => {
       GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
         [dao.address],
         1,
-        AddressZero,
-        HashZero,
-        AddressZero,
-        AddressZero,
+        hre.ethers.constants.AddressZero,
+        hre.ethers.constants.HashZero,
+        hre.ethers.constants.AddressZero,
+        hre.ethers.constants.AddressZero,
         0,
-        AddressZero,
+        hre.ethers.constants.AddressZero,
       ]);
 
-    const randomBytes = ethers.utils.randomBytes(32);
-    // const hexString = ethers.utils.hexlify(randomBytes);
-    const saltNum = BigNumber.from(randomBytes);
-    // const saltNum = BigInt(
-    //   `0x${Buffer.from(ethers.utils.randomBytes(32)).toString("hex")}`
-    // );
+    const saltNum = ethers.BigNumber.from(
+      `0x${Buffer.from(hre.ethers.utils.randomBytes(32)).toString("hex")}`
+    );
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
@@ -186,40 +177,41 @@ describe("DecentHats", () => {
           safe: gnosisSafe,
           to: decentHatsAddress,
           transactionData:
-            DecentHats__factory.createInterface().encodeFunctionData(
+            DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
               "createAndDeclareTree",
               [
-                "",
-                "",
                 {
-                  eligibility: AddressZero,
-                  maxSupply: 1,
-                  toggle: AddressZero,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: AddressZero,
+                  hatsProtocol: mockHatsAddress,
+                  hatsAccountImplementation:
+                    mockHatsAccountImplementationAddress,
+                  registry: erc6551Registry.address,
+                  keyValuePairs: keyValuePairs.address,
+                  topHatDetails: "",
+                  topHatImageURI: "",
+                  adminHat: {
+                    maxSupply: 1,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.constants.AddressZero,
+                  },
+                  hats: [
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.constants.AddressZero,
+                    },
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.constants.AddressZero,
+                    },
+                  ],
                 },
-                [
-                  {
-                    eligibility: AddressZero,
-                    maxSupply: 1,
-                    toggle: AddressZero,
-                    details: "",
-                    imageURI: "",
-                    isMutable: false,
-                    wearer: AddressZero,
-                  },
-                  {
-                    eligibility: AddressZero,
-                    maxSupply: 1,
-                    toggle: AddressZero,
-                    details: "",
-                    imageURI: "",
-                    isMutable: false,
-                    wearer: AddressZero,
-                  },
-                ],
               ]
             ),
           signers: [dao],
@@ -253,21 +245,26 @@ describe("DecentHats", () => {
             safe: gnosisSafe,
             to: decentHatsAddress,
             transactionData:
-              DecentHats__factory.createInterface().encodeFunctionData(
+              DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
                 "createAndDeclareTree",
                 [
-                  "",
-                  "",
                   {
-                    eligibility: AddressZero,
-                    maxSupply: 1,
-                    toggle: AddressZero,
-                    details: "",
-                    imageURI: "",
-                    isMutable: false,
-                    wearer: AddressZero,
+                    hatsProtocol: mockHatsAddress,
+                    hatsAccountImplementation:
+                      mockHatsAccountImplementationAddress,
+                    registry: erc6551Registry.address,
+                    keyValuePairs: keyValuePairs.address,
+                    topHatDetails: "",
+                    topHatImageURI: "",
+                    adminHat: {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.constants.AddressZero,
+                    },
+                    hats: [],
                   },
-                  [],
                 ]
               ),
             signers: [dao],
@@ -298,10 +295,13 @@ describe("DecentHats", () => {
         let salt: string;
 
         beforeEach(async () => {
-          salt = await decentHats.SALT();
+          salt = solidityKeccak256(
+            ["string", "uint256", "address"],
+            ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
+          );
         });
 
-        const getHatAccount = async (hatId: BigNumber) => {
+        const getHatAccount = async (hatId: bigint) => {
           const hatAccountAddress = await erc6551Registry.account(
             mockHatsAccountImplementationAddress,
             salt,
@@ -321,8 +321,13 @@ describe("DecentHats", () => {
         it("Generates the correct Addresses for the current Hats", async () => {
           const currentCount = await mockHats.count();
 
-          for (let i = BigNumber.from(1); i.lt(currentCount); i = i.add(1)) {
-            const topHatAccount = await getHatAccount(i);
+          for (
+            let i = ethers.BigNumber.from(0);
+            i.lt(currentCount);
+            i = i.add(1)
+          ) {
+            const foo = BigInt(i.toString());
+            const topHatAccount = await getHatAccount(foo);
             expect(await topHatAccount.tokenId()).eq(i);
             expect(await topHatAccount.tokenImplementation()).eq(
               mockHatsAddress
