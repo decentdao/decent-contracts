@@ -6,7 +6,6 @@ npm run test
 
 npx hardhat export --export-all deployments.json
 
-rm index.ts
 rm -rf publish && mkdir publish
 
 # Step 1: Remove the `abi`, `name`, and `chainId` keys
@@ -30,8 +29,11 @@ rm abis.json
 
 rm deployments.json 
 
-cat << EOF > index.ts
-import abis from "./publish/abis";
-import addresses from "./publish/addresses";
+cat << EOF > publish/index.ts
+import abis from "./abis";
+import addresses from "./addresses";
 export { abis, addresses };
 EOF
+
+# Run TypeScript compilation
+npx tsc ./publish/index.ts

@@ -1,12 +1,12 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "1.2.1",
+  "version": "1.2.13",
   "files": [
-    "index.ts",
     "publish",
     "contracts",
     "!contracts/mock"
   ],
+  "main": "publish/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/decentdao/fractal-contracts.git"
