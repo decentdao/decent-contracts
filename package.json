@@ -1,8 +1,8 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "1.2.1",
+  "version": "1.2.11",
   "files": [
-    "index.js",
+    "dist",
     "publish",
     "contracts",
     "!contracts/mock"
