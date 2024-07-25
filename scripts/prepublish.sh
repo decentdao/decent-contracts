@@ -30,8 +30,8 @@ rm abis.json
 rm deployments.json 
 
 cat << EOF > publish/index.ts
-import abis from "./publish/abis";
-import addresses from "./publish/addresses";
+import abis from "./abis";
+import addresses from "./addresses";
 export { abis, addresses };
 EOF
 
