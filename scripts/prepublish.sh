@@ -36,4 +36,4 @@ export { abis, addresses };
 EOF
 
 # Run TypeScript compilation
-tsc ./publish/index.ts
+npx tsc ./publish/index.ts
