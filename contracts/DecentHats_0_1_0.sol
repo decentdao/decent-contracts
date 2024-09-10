@@ -4,11 +4,25 @@ pragma solidity =0.8.19;
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
+import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
+import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 
 contract DecentHats_0_1_0 {
     string public constant NAME = "DecentHats_0_1_0";
+
+    struct SablierStreamParams {
+        ISablierV2LockupLinear sablier;
+        address sender;
+        uint128 totalAmount;
+        address asset;
+        bool cancelable;
+        bool transferable;
+        LockupLinear.Durations durations;
+        LockupLinear.Broker broker;
+    }
 
     struct Hat {
         uint32 maxSupply;
@@ -16,6 +30,7 @@ contract DecentHats_0_1_0 {
         string imageURI;
         bool isMutable;
         address wearer;
+        SablierStreamParams sablierParams; // Optional Sablier stream parameters
     }
 
     struct CreateTreeParams {
@@ -42,36 +57,6 @@ contract DecentHats_0_1_0 {
         );
 
         salt = keccak256(concatenatedSaltInput);
-    }
-
-    function createTopHat(
-        IHats _hatsProtocol,
-        string memory _topHatDetails,
-        string memory _topHatImageURI
-    ) internal returns (uint256) {
-        return
-            _hatsProtocol.mintTopHat(
-                address(this),
-                _topHatDetails,
-                _topHatImageURI
-            );
-    }
-
-    function createAccount(
-        IERC6551Registry _registry,
-        address _hatsAccountImplementation,
-        bytes32 salt,
-        address protocolAddress,
-        uint256 hatId
-    ) internal returns (address) {
-        return
-            _registry.createAccount(
-                _hatsAccountImplementation,
-                salt,
-                block.chainid,
-                protocolAddress,
-                hatId
-            );
     }
 
     function updateKeyValuePairs(
@@ -113,7 +98,47 @@ contract DecentHats_0_1_0 {
             );
     }
 
-    function createHatAccountMint(
+    function createAccount(
+        IERC6551Registry _registry,
+        address _hatsAccountImplementation,
+        bytes32 salt,
+        address protocolAddress,
+        uint256 hatId
+    ) internal returns (address) {
+        return
+            _registry.createAccount(
+                _hatsAccountImplementation,
+                salt,
+                block.chainid,
+                protocolAddress,
+                hatId
+            );
+    }
+
+    function createTopHatAndAccount(
+        IHats _hatsProtocol,
+        string memory _topHatDetails,
+        string memory _topHatImageURI,
+        IERC6551Registry _registry,
+        address _hatsAccountImplementation,
+        bytes32 salt
+    ) internal returns (uint256 topHatId, address topHatAccount) {
+        topHatId = _hatsProtocol.mintTopHat(
+            address(this),
+            _topHatDetails,
+            _topHatImageURI
+        );
+
+        topHatAccount = createAccount(
+            _registry,
+            _hatsAccountImplementation,
+            salt,
+            address(_hatsProtocol),
+            topHatId
+        );
+    }
+
+    function createHatAndAccountAndMintAndStreams(
         IHats hatsProtocol,
         uint256 adminHatId,
         Hat calldata hat,
@@ -135,52 +160,40 @@ contract DecentHats_0_1_0 {
         if (hat.wearer != address(0)) {
             hatsProtocol.mintHat(hatId, hat.wearer);
         }
-    }
 
-    function handleHats(
-        IHats _hatsProtocol,
-        IERC6551Registry _registry,
-        address _hatsAccountImplementation,
-        bytes32 salt,
-        address topHatAccount,
-        uint256 adminHatId,
-        Hat[] calldata _hats
-    ) internal {
-        for (uint256 i = 0; i < _hats.length; ) {
-            createHatAccountMint(
-                _hatsProtocol,
-                adminHatId,
-                _hats[i],
-                topHatAccount,
-                _registry,
-                _hatsAccountImplementation,
-                salt
-            );
+        // Create Sablier stream if parameters are provided
+        if (address(hat.sablierParams.sablier) != address(0)) {
+            LockupLinear.CreateWithDurations memory params = LockupLinear
+                .CreateWithDurations({
+                    sender: hat.sablierParams.sender,
+                    recipient: accountAddress, // Use the hat account as the recipient
+                    totalAmount: hat.sablierParams.totalAmount,
+                    asset: IERC20(hat.sablierParams.asset),
+                    cancelable: hat.sablierParams.cancelable,
+                    transferable: hat.sablierParams.transferable,
+                    durations: hat.sablierParams.durations,
+                    broker: hat.sablierParams.broker
+                });
 
-            unchecked {
-                ++i;
-            }
+            hat.sablierParams.sablier.createWithDurations(params);
         }
     }
 
     function createAndDeclareTree(CreateTreeParams calldata params) public {
         bytes32 salt = getSalt();
-        uint256 topHatId = createTopHat(
+
+        (uint256 topHatId, address topHatAccount) = createTopHatAndAccount(
             params.hatsProtocol,
             params.topHatDetails,
-            params.topHatImageURI
-        );
-        address topHatAccount = createAccount(
+            params.topHatImageURI,
             params.registry,
             params.hatsAccountImplementation,
-            salt,
-            address(params.hatsProtocol),
-            topHatId
+            salt
         );
 
         updateKeyValuePairs(params.keyValuePairs, topHatId);
 
-        (uint256 adminHatId, ) = createHatAccountMint(
+        (uint256 adminHatId, ) = createHatAndAccountAndMintAndStreams(
             params.hatsProtocol,
             topHatId,
             params.adminHat,
@@ -190,15 +203,21 @@ contract DecentHats_0_1_0 {
             salt
         );
 
-        handleHats(
-            params.hatsProtocol,
-            params.registry,
-            params.hatsAccountImplementation,
-            salt,
-            topHatAccount,
-            adminHatId,
-            params.hats
-        );
+        for (uint256 i = 0; i < params.hats.length; ) {
+            createHatAndAccountAndMintAndStreams(
+                params.hatsProtocol,
+                adminHatId,
+                params.hats[i],
+                topHatAccount,
+                params.registry,
+                params.hatsAccountImplementation,
+                salt
+            );
+
+            unchecked {
+                ++i;
+            }
+        }
 
         params.hatsProtocol.transferHat(topHatId, address(this), msg.sender);
     }
