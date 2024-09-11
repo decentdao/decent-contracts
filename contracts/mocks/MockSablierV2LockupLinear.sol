@@ -4,7 +4,6 @@ pragma solidity =0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "../interfaces/sablier/LockupLinear.sol";
-import "hardhat/console.sol";
 
 contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
     // Define the Stream struct here
@@ -42,8 +41,6 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
             ),
             "Token transfer failed"
         );
-
-        console.log("Creating stream");
 
         streamId = nextStreamId++;
         streams[streamId] = Stream({
