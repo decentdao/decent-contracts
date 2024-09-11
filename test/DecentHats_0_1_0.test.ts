@@ -361,8 +361,12 @@ describe("DecentHats_0_1_0", () => {
 
     describe("Creating a new Top Hat and Tree with Sablier Streams", () => {
       let createAndDeclareTreeTx: ethers.ContractTransactionResponse;
+      let currentBlockTimestamp: number;
 
       beforeEach(async () => {
+        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!
+          .timestamp;
+
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
@@ -401,7 +405,11 @@ describe("DecentHats_0_1_0", () => {
                           asset: mockERC20Address,
                           cancelable: true,
                           transferable: false,
-                          durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: 0,
+                            end: currentBlockTimestamp + 2592000, // 30 days from now
+                          },
                           broker: { account: ethers.ZeroAddress, fee: 0 },
                         },
                       ],
@@ -459,13 +467,29 @@ describe("DecentHats_0_1_0", () => {
         );
         expect(streamCreatedEvents.length).to.equal(1); // Only one stream should be created
       });
+
+      it("Creates a Sablier stream with correct timestamps", async () => {
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
+        expect(streamCreatedEvents.length).to.equal(1);
+
+        const streamId = streamCreatedEvents[0].args.streamId;
+        const stream = await mockSablier.getStream(streamId);
+
+        expect(stream.startTime).to.equal(currentBlockTimestamp);
+        expect(stream.endTime).to.equal(currentBlockTimestamp + 2592000);
+      });
     });
 
     describe("Creating a new Top Hat and Tree with Multiple Sablier Streams per Hat", () => {
-      let createAndDeclareTreeTx: ethers.ContractTransactionResponse;
+      let currentBlockTimestamp: number;
 
       beforeEach(async () => {
-        createAndDeclareTreeTx = await executeSafeTransaction({
+        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!
+          .timestamp;
+
+        await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
           transactionData:
@@ -503,7 +527,11 @@ describe("DecentHats_0_1_0", () => {
                           asset: mockERC20Address,
                           cancelable: true,
                           transferable: false,
-                          durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: currentBlockTimestamp + 86400, // 1 day cliff
+                            end: currentBlockTimestamp + 2592000, // 30 days from now
+                          },
                           broker: { account: ethers.ZeroAddress, fee: 0 },
                         },
                         {
@@ -513,7 +541,11 @@ describe("DecentHats_0_1_0", () => {
                           asset: mockERC20Address,
                           cancelable: false,
                           transferable: true,
-                          durations: { cliff: 0, total: 1296000 }, // 15 days total
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: 0, // No cliff
+                            end: currentBlockTimestamp + 1296000, // 15 days from now
+                          },
                           broker: { account: ethers.ZeroAddress, fee: 0 },
                         },
                       ],
@@ -561,6 +593,24 @@ describe("DecentHats_0_1_0", () => {
         expect(stream2.cancelable).to.be.false;
         expect(stream2.transferable).to.be.true;
         expect(stream2.endTime - stream2.startTime).to.equal(1296000);
+      });
+
+      it("Creates streams with correct timestamps", async () => {
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
+
+        const stream1 = await mockSablier.getStream(
+          streamCreatedEvents[0].args.streamId
+        );
+        expect(stream1.startTime).to.equal(currentBlockTimestamp);
+        expect(stream1.endTime).to.equal(currentBlockTimestamp + 2592000);
+
+        const stream2 = await mockSablier.getStream(
+          streamCreatedEvents[1].args.streamId
+        );
+        expect(stream2.startTime).to.equal(currentBlockTimestamp);
+        expect(stream2.endTime).to.equal(currentBlockTimestamp + 1296000);
       });
     });
   });

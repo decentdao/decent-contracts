@@ -14,8 +14,9 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         address asset;
         bool cancelable;
         bool transferable;
-        uint256 startTime;
-        uint256 endTime;
+        uint40 startTime;
+        uint40 cliffTime;
+        uint40 endTime;
     }
 
     mapping(uint256 => Stream) public streams;
@@ -27,11 +28,16 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         address indexed sender,
         address indexed recipient,
         uint128 totalAmount,
-        address indexed asset
+        address indexed asset,
+        bool cancelable,
+        bool transferable,
+        uint40 startTime,
+        uint40 cliffTime,
+        uint40 endTime
     );
 
-    function createWithDurations(
-        LockupLinear.CreateWithDurations calldata params
+    function createWithTimestamps(
+        LockupLinear.CreateWithTimestamps calldata params
     ) external override returns (uint256 streamId) {
         require(
             params.asset.transferFrom(
@@ -50,10 +56,9 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
             asset: address(params.asset),
             cancelable: params.cancelable,
             transferable: params.transferable,
-            startTime: block.timestamp + params.durations.cliff,
-            endTime: block.timestamp +
-                params.durations.cliff +
-                params.durations.total
+            startTime: params.timestamps.start,
+            cliffTime: params.timestamps.cliff,
+            endTime: params.timestamps.end
         });
 
         // Emit the StreamCreated event
@@ -62,7 +67,12 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
             params.sender,
             params.recipient,
             params.totalAmount,
-            address(params.asset)
+            address(params.asset),
+            params.cancelable,
+            params.transferable,
+            params.timestamps.start,
+            params.timestamps.cliff,
+            params.timestamps.end
         );
 
         return streamId;

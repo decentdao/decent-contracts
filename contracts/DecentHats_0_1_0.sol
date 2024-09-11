@@ -20,7 +20,7 @@ contract DecentHats_0_1_0 {
         address asset;
         bool cancelable;
         bool transferable;
-        LockupLinear.Durations durations;
+        LockupLinear.Timestamps timestamps;
         LockupLinear.Broker broker;
     }
 
@@ -176,15 +176,15 @@ contract DecentHats_0_1_0 {
                 Enum.Operation.Call
             );
 
-            LockupLinear.CreateWithDurations memory params = LockupLinear
-                .CreateWithDurations({
+            LockupLinear.CreateWithTimestamps memory params = LockupLinear
+                .CreateWithTimestamps({
                     sender: sablierParams.sender,
                     recipient: accountAddress,
                     totalAmount: sablierParams.totalAmount,
                     asset: IERC20(sablierParams.asset),
                     cancelable: sablierParams.cancelable,
                     transferable: sablierParams.transferable,
-                    durations: sablierParams.durations,
+                    timestamps: sablierParams.timestamps,
                     broker: sablierParams.broker
                 });
 
@@ -193,7 +193,7 @@ contract DecentHats_0_1_0 {
                 address(sablierParams.sablier),
                 0,
                 abi.encodeWithSignature(
-                    "createWithDurations((address,address,uint128,address,bool,bool,(uint40,uint40),(address,uint256)))",
+                    "createWithTimestamps((address,address,uint128,address,bool,bool,(uint40,uint40,uint40),(address,uint256)))",
                     params
                 ),
                 Enum.Operation.Call
