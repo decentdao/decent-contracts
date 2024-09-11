@@ -164,43 +164,40 @@ contract DecentHats_0_1_0 {
         for (uint256 i = 0; i < hat.sablierParams.length; ) {
             SablierStreamParams memory sablierParams = hat.sablierParams[i];
 
-            // Create Sablier stream if parameters are provided
-            if (address(sablierParams.sablier) != address(0)) {
-                // Approve tokens for Sablier
-                IAvatar(msg.sender).execTransactionFromModule(
-                    sablierParams.asset,
-                    0,
-                    abi.encodeWithSignature(
-                        "approve(address,uint256)",
-                        address(sablierParams.sablier),
-                        sablierParams.totalAmount
-                    ),
-                    Enum.Operation.Call
-                );
-
-                LockupLinear.CreateWithDurations memory params = LockupLinear
-                    .CreateWithDurations({
-                        sender: sablierParams.sender,
-                        recipient: accountAddress,
-                        totalAmount: sablierParams.totalAmount,
-                        asset: IERC20(sablierParams.asset),
-                        cancelable: sablierParams.cancelable,
-                        transferable: sablierParams.transferable,
-                        durations: sablierParams.durations,
-                        broker: sablierParams.broker
-                    });
-
-                // Proxy the Sablier call through IAvatar
-                IAvatar(msg.sender).execTransactionFromModule(
+            // Approve tokens for Sablier
+            IAvatar(msg.sender).execTransactionFromModule(
+                sablierParams.asset,
+                0,
+                abi.encodeWithSignature(
+                    "approve(address,uint256)",
                     address(sablierParams.sablier),
-                    0,
-                    abi.encodeWithSignature(
-                        "createWithDurations((address,address,uint128,address,bool,bool,(uint40,uint40),(address,uint256)))",
-                        params
-                    ),
-                    Enum.Operation.Call
-                );
-            }
+                    sablierParams.totalAmount
+                ),
+                Enum.Operation.Call
+            );
+
+            LockupLinear.CreateWithDurations memory params = LockupLinear
+                .CreateWithDurations({
+                    sender: sablierParams.sender,
+                    recipient: accountAddress,
+                    totalAmount: sablierParams.totalAmount,
+                    asset: IERC20(sablierParams.asset),
+                    cancelable: sablierParams.cancelable,
+                    transferable: sablierParams.transferable,
+                    durations: sablierParams.durations,
+                    broker: sablierParams.broker
+                });
+
+            // Proxy the Sablier call through IAvatar
+            IAvatar(msg.sender).execTransactionFromModule(
+                address(sablierParams.sablier),
+                0,
+                abi.encodeWithSignature(
+                    "createWithDurations((address,address,uint128,address,bool,bool,(uint40,uint40),(address,uint256)))",
+                    params
+                ),
+                Enum.Operation.Call
+            );
 
             unchecked {
                 ++i;
