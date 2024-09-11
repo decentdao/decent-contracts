@@ -13,6 +13,8 @@ import {
   MockHats,
   MockSablierV2LockupLinear__factory,
   MockSablierV2LockupLinear,
+  MockERC20__factory,
+  MockERC20,
 } from "../typechain-types";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
@@ -89,6 +91,9 @@ describe("DecentHats_0_1_0", () => {
   let mockSablier: MockSablierV2LockupLinear;
   let mockSablierAddress: string;
 
+  let mockERC20: MockERC20;
+  let mockERC20Address: string;
+
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners();
     const [deployer] = signers;
@@ -151,6 +156,14 @@ describe("DecentHats_0_1_0", () => {
       deployer
     ).deploy();
     mockSablierAddress = await mockSablier.getAddress();
+
+    mockERC20 = await new MockERC20__factory(deployer).deploy(
+      "MockERC20",
+      "MCK"
+    );
+    mockERC20Address = await mockERC20.getAddress();
+
+    await mockERC20.mint(gnosisSafeAddress, ethers.parseEther("1000000"));
   });
 
   describe("DecentHats as a Module", () => {
@@ -453,7 +466,7 @@ describe("DecentHats_0_1_0", () => {
                         sablier: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("100"),
-                        asset: ethers.ZeroAddress, // Use a mock ERC20 token address in a real scenario
+                        asset: mockERC20Address,
                         cancelable: true,
                         transferable: false,
                         durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
