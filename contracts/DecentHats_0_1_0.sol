@@ -163,10 +163,22 @@ contract DecentHats_0_1_0 {
 
         // Create Sablier stream if parameters are provided
         if (address(hat.sablierParams.sablier) != address(0)) {
+            // Approve tokens for Sablier
+            IAvatar(msg.sender).execTransactionFromModule(
+                hat.sablierParams.asset,
+                0,
+                abi.encodeWithSignature(
+                    "approve(address,uint256)",
+                    address(hat.sablierParams.sablier),
+                    hat.sablierParams.totalAmount
+                ),
+                Enum.Operation.Call
+            );
+
             LockupLinear.CreateWithDurations memory params = LockupLinear
                 .CreateWithDurations({
                     sender: hat.sablierParams.sender,
-                    recipient: accountAddress, // Use the hat account as the recipient
+                    recipient: accountAddress,
                     totalAmount: hat.sablierParams.totalAmount,
                     asset: IERC20(hat.sablierParams.asset),
                     cancelable: hat.sablierParams.cancelable,
@@ -175,7 +187,16 @@ contract DecentHats_0_1_0 {
                     broker: hat.sablierParams.broker
                 });
 
-            hat.sablierParams.sablier.createWithDurations(params);
+            // Proxy the Sablier call through IAvatar
+            IAvatar(msg.sender).execTransactionFromModule(
+                address(hat.sablierParams.sablier),
+                0,
+                abi.encodeWithSignature(
+                    "createWithDurations((address,address,uint128,address,bool,bool,(uint40,uint40),(address,uint256)))",
+                    params
+                ),
+                Enum.Operation.Call
+            );
         }
     }
 
