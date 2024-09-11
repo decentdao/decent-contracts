@@ -217,22 +217,7 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    sablierParams: {
-                      sablier: ethers.ZeroAddress,
-                      sender: ethers.ZeroAddress,
-                      totalAmount: 0,
-                      asset: ethers.ZeroAddress,
-                      cancelable: false,
-                      transferable: false,
-                      durations: {
-                        cliff: 0,
-                        total: 0,
-                      },
-                      broker: {
-                        account: ethers.ZeroAddress,
-                        fee: 0,
-                      },
-                    },
+                    sablierParams: [],
                   },
                   hats: [
                     {
@@ -241,22 +226,7 @@ describe("DecentHats_0_1_0", () => {
                       imageURI: "",
                       isMutable: false,
                       wearer: ethers.ZeroAddress,
-                      sablierParams: {
-                        sablier: ethers.ZeroAddress,
-                        sender: ethers.ZeroAddress,
-                        totalAmount: 0,
-                        asset: ethers.ZeroAddress,
-                        cancelable: false,
-                        transferable: false,
-                        durations: {
-                          cliff: 0,
-                          total: 0,
-                        },
-                        broker: {
-                          account: ethers.ZeroAddress,
-                          fee: 0,
-                        },
-                      },
+                      sablierParams: [],
                     },
                     {
                       maxSupply: 1,
@@ -264,22 +234,7 @@ describe("DecentHats_0_1_0", () => {
                       imageURI: "",
                       isMutable: false,
                       wearer: ethers.ZeroAddress,
-                      sablierParams: {
-                        sablier: ethers.ZeroAddress,
-                        sender: ethers.ZeroAddress,
-                        totalAmount: 0,
-                        asset: ethers.ZeroAddress,
-                        cancelable: false,
-                        transferable: false,
-                        durations: {
-                          cliff: 0,
-                          total: 0,
-                        },
-                        broker: {
-                          account: ethers.ZeroAddress,
-                          fee: 0,
-                        },
-                      },
+                      sablierParams: [],
                     },
                   ],
                 },
@@ -333,22 +288,7 @@ describe("DecentHats_0_1_0", () => {
                       imageURI: "",
                       isMutable: false,
                       wearer: ethers.ZeroAddress,
-                      sablierParams: {
-                        sablier: ethers.ZeroAddress,
-                        sender: ethers.ZeroAddress,
-                        totalAmount: 0,
-                        asset: ethers.ZeroAddress,
-                        cancelable: false,
-                        transferable: false,
-                        durations: {
-                          cliff: 0,
-                          total: 0,
-                        },
-                        broker: {
-                          account: ethers.ZeroAddress,
-                          fee: 0,
-                        },
-                      },
+                      sablierParams: [],
                     },
                     hats: [],
                   },
@@ -444,16 +384,7 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    sablierParams: {
-                      sablier: ethers.ZeroAddress,
-                      sender: ethers.ZeroAddress,
-                      totalAmount: 0,
-                      asset: ethers.ZeroAddress,
-                      cancelable: false,
-                      transferable: false,
-                      durations: { cliff: 0, total: 0 },
-                      broker: { account: ethers.ZeroAddress, fee: 0 },
-                    },
+                    sablierParams: [],
                   },
                   hats: [
                     {
@@ -462,16 +393,18 @@ describe("DecentHats_0_1_0", () => {
                       imageURI: "",
                       isMutable: false,
                       wearer: ethers.ZeroAddress,
-                      sablierParams: {
-                        sablier: mockSablierAddress,
-                        sender: gnosisSafeAddress,
-                        totalAmount: ethers.parseEther("100"),
-                        asset: mockERC20Address,
-                        cancelable: true,
-                        transferable: false,
-                        durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
-                        broker: { account: ethers.ZeroAddress, fee: 0 },
-                      },
+                      sablierParams: [
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("100"),
+                          asset: mockERC20Address,
+                          cancelable: true,
+                          transferable: false,
+                          durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                      ],
                     },
                     {
                       maxSupply: 1,
@@ -479,16 +412,7 @@ describe("DecentHats_0_1_0", () => {
                       imageURI: "",
                       isMutable: false,
                       wearer: ethers.ZeroAddress,
-                      sablierParams: {
-                        sablier: ethers.ZeroAddress,
-                        sender: ethers.ZeroAddress,
-                        totalAmount: 0,
-                        asset: ethers.ZeroAddress,
-                        cancelable: false,
-                        transferable: false,
-                        durations: { cliff: 0, total: 0 },
-                        broker: { account: ethers.ZeroAddress, fee: 0 },
-                      },
+                      sablierParams: [],
                     },
                   ],
                 },
@@ -534,6 +458,109 @@ describe("DecentHats_0_1_0", () => {
           mockSablier.filters.StreamCreated()
         );
         expect(streamCreatedEvents.length).to.equal(1); // Only one stream should be created
+      });
+    });
+
+    describe("Creating a new Top Hat and Tree with Multiple Sablier Streams per Hat", () => {
+      let createAndDeclareTreeTx: ethers.ContractTransactionResponse;
+
+      beforeEach(async () => {
+        createAndDeclareTreeTx = await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentHatsAddress,
+          transactionData:
+            DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+              "createAndDeclareTree",
+              [
+                {
+                  hatsProtocol: mockHatsAddress,
+                  hatsAccountImplementation:
+                    mockHatsAccountImplementationAddress,
+                  registry: await erc6551Registry.getAddress(),
+                  keyValuePairs: await keyValuePairs.getAddress(),
+                  topHatDetails: "",
+                  topHatImageURI: "",
+                  adminHat: {
+                    maxSupply: 1,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                    sablierParams: [],
+                  },
+                  hats: [
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("100"),
+                          asset: mockERC20Address,
+                          cancelable: true,
+                          transferable: false,
+                          durations: { cliff: 86400, total: 2592000 }, // 1 day cliff, 30 days total
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("50"),
+                          asset: mockERC20Address,
+                          cancelable: false,
+                          transferable: true,
+                          durations: { cliff: 0, total: 1296000 }, // 15 days total
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ]
+            ),
+          signers: [dao],
+        });
+      });
+
+      it("Creates multiple Sablier streams for a single hat", async () => {
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
+        expect(streamCreatedEvents.length).to.equal(2);
+
+        const event1 = streamCreatedEvents[0];
+        expect(event1.args.sender).to.equal(gnosisSafeAddress);
+        expect(event1.args.recipient).to.not.equal(ethers.ZeroAddress);
+        expect(event1.args.totalAmount).to.equal(ethers.parseEther("100"));
+
+        const event2 = streamCreatedEvents[1];
+        expect(event2.args.sender).to.equal(gnosisSafeAddress);
+        expect(event2.args.recipient).to.equal(event1.args.recipient);
+        expect(event2.args.totalAmount).to.equal(ethers.parseEther("50"));
+      });
+
+      it("Creates streams with correct parameters", async () => {
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
+
+        const stream1 = await mockSablier.getStream(
+          streamCreatedEvents[0].args.streamId
+        );
+        expect(stream1.cancelable).to.be.true;
+        expect(stream1.transferable).to.be.false;
+        expect(stream1.endTime - stream1.startTime).to.equal(2592000);
+
+        const stream2 = await mockSablier.getStream(
+          streamCreatedEvents[1].args.streamId
+        );
+        expect(stream2.cancelable).to.be.false;
+        expect(stream2.transferable).to.be.true;
+        expect(stream2.endTime - stream2.startTime).to.equal(1296000);
       });
     });
   });
