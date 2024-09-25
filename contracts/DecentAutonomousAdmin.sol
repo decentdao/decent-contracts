@@ -4,8 +4,8 @@ import "./interfaces/hats/IHats.sol";
 import "./interfaces/hats/IHatsElectionEligibility.sol";
 import "./interfaces/sablier/ISablierV2LockupLinear.sol";
 
-contract DecentAutonomousAdminHat {
-    string public constant NAME = "DecentAutonomousAdminHat";
+contract DecentAutonomousAdmin {
+    string public constant NAME = "DecentAutonomousAdmin";
 
     uint256 public adminHatId;
 
