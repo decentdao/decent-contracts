@@ -156,4 +156,17 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
 
         stream.recipient = recipient;
     }
+
+    function withdrawMax(
+        uint256 streamId,
+        address to
+    ) external override returns (uint128 withdrawnAmount) {
+        withdrawnAmount = withdrawableAmountOf(streamId);
+        require(withdrawnAmount > 0, "No withdrawable amount");
+
+        Stream storage stream = streams[streamId];
+        stream.totalAmount -= withdrawnAmount;
+        IERC20(stream.asset).transfer(to, withdrawnAmount);
+        emit WithdrawFromLockupStream(streamId, to, IERC20(stream.asset), withdrawnAmount);
+    }
 }
