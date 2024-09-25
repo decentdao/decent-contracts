@@ -14,7 +14,6 @@ contract DecentAutonomousAdminHat {
         ISablierV2LockupLinear sablierV2LockupLinear;
     }
     struct TriggerStartArgs {
-        address userHatSmartAccountAddress;
         address currentWearer;
         IHats userHatProtocol;
         uint256 userHatId;
@@ -26,7 +25,7 @@ contract DecentAutonomousAdminHat {
     //                         Constructor
     // //////////////////////////////////////////////////////////////
     constructor(uint256 _adminHatId) {
-        adminHatId =_adminHatId;
+        adminHatId = _adminHatId;
     }
 
     // //////////////////////////////////////////////////////////////
@@ -40,7 +39,6 @@ contract DecentAutonomousAdminHat {
             ),
             "Not current wearer"
         );
-
         address hatsEligibilityModuleAddress = args
             .userHatProtocol
             .getHatEligibilityModule(args.userHatId);
