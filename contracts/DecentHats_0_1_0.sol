@@ -9,6 +9,7 @@ import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
 import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
+import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 
 contract DecentHats_0_1_0 {
     string public constant NAME = "DecentHats_0_1_0";
@@ -205,6 +206,30 @@ contract DecentHats_0_1_0 {
         }
     }
 
+    function createAdminHatAndAccount(
+        IHats hatsProtocol,
+        uint256 adminHatId,
+        Hat calldata hat,
+        address topHatAccount,
+        IERC6551Registry registry,
+        address hatsAccountImplementation,
+        bytes32 salt
+    ) internal returns (uint256 hatId, address accountAddress) {
+        hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
+
+        accountAddress = createAccount(
+            registry,
+            hatsAccountImplementation,
+            salt,
+            address(hatsProtocol),
+            hatId
+        );
+
+        // Set the Autonomous Admin as the wearer of the admin hat
+        DecentAutonomousAdmin adminHat = new DecentAutonomousAdmin(adminHatId);
+        hatsProtocol.mintHat(hatId, address(adminHat));
+    }
+
     function createAndDeclareTree(CreateTreeParams calldata params) public {
         bytes32 salt = getSalt();
 
@@ -219,7 +244,7 @@ contract DecentHats_0_1_0 {
 
         updateKeyValuePairs(params.keyValuePairs, topHatId);
 
-        (uint256 adminHatId, ) = createHatAndAccountAndMintAndStreams(
+        (uint256 adminHatId, ) = createAdminHatAndAccount(
             params.hatsProtocol,
             topHatId,
             params.adminHat,
