@@ -29,6 +29,7 @@ contract DecentHats_0_1_0 {
         uint32 maxSupply;
         string details;
         string imageURI;
+        address eligibility;
         bool isMutable;
         address wearer;
         SablierStreamParams[] sablierParams; // Optional Sablier stream parameters
@@ -93,7 +94,7 @@ contract DecentHats_0_1_0 {
                 _hat.details,
                 _hat.maxSupply,
                 topHatAccount,
-                topHatAccount,
+                _hat.eligibility,
                 _hat.isMutable,
                 _hat.imageURI
             );
