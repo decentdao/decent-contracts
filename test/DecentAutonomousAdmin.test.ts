@@ -12,7 +12,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { expect } from "chai"
 import hre from "hardhat"
 
-describe.only("DecentAutonomousAdminHat", function () {
+describe("DecentAutonomousAdminHat", function () {
   // Signer accounts
   let deployer: SignerWithAddress
   let currentWearer: SignerWithAddress
