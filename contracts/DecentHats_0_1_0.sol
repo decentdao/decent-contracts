@@ -235,9 +235,7 @@ contract DecentHats_0_1_0 {
             "setUp(uint256)",
             adminHatId
         );
-        uint256 saltNonce = uint256(
-            keccak256(abi.encodePacked(block.timestamp, initializer))
-        );
+        uint256 saltNonce = uint256(salt);
         hatsProtocol.mintHat(
             hatId,
             moduleProxyFactory.deployModule(
