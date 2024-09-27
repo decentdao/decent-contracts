@@ -156,4 +156,8 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
 
         stream.recipient = recipient;
     }
+
+    function getRecipient(uint256 streamId) external view returns (address) {
+        return streams[streamId].recipient;
+    }
 }
