@@ -69,7 +69,7 @@ const executeSafeTransaction = async ({
   return tx
 }
 
-describe.only("DecentHats_0_1_0", () => {
+describe("DecentHats_0_1_0", () => {
   let dao: SignerWithAddress
 
   let mockHats: MockHats
