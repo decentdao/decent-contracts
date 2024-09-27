@@ -231,17 +231,12 @@ contract DecentHats_0_1_0 {
             hatId
         );
 
-        bytes memory initializer = abi.encodeWithSignature(
-            "setUp(uint256)",
-            adminHatId
-        );
-        uint256 saltNonce = uint256(salt);
         hatsProtocol.mintHat(
             hatId,
             moduleProxyFactory.deployModule(
                 decentAutonomousAdminMasterCopy,
-                initializer,
-                saltNonce
+                abi.encodeWithSignature("setUp(uint256)", adminHatId),
+                uint256(salt)
             )
         );
     }
