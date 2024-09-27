@@ -10,6 +10,7 @@ import {IHats} from "./interfaces/hats/IHats.sol";
 import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
+import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
 
 contract DecentHats_0_1_0 {
     string public constant NAME = "DecentHats_0_1_0";
@@ -38,6 +39,8 @@ contract DecentHats_0_1_0 {
     struct CreateTreeParams {
         IHats hatsProtocol;
         address hatsAccountImplementation;
+        ModuleProxyFactory moduleProxyFactory;
+        address decentAutonomousAdminMasterCopy;
         IERC6551Registry registry;
         address keyValuePairs;
         string topHatDetails;
@@ -214,7 +217,9 @@ contract DecentHats_0_1_0 {
         address topHatAccount,
         IERC6551Registry registry,
         address hatsAccountImplementation,
-        bytes32 salt
+        bytes32 salt,
+        ModuleProxyFactory moduleProxyFactory,
+        address decentAutonomousAdminMasterCopy
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
 
@@ -226,9 +231,21 @@ contract DecentHats_0_1_0 {
             hatId
         );
 
-        // Set the Autonomous Admin as the wearer of the admin hat
-        DecentAutonomousAdmin adminHat = new DecentAutonomousAdmin(adminHatId);
-        hatsProtocol.mintHat(hatId, address(adminHat));
+        bytes memory initializer = abi.encodeWithSignature(
+            "setUp(uint256)",
+            adminHatId
+        );
+        uint256 saltNonce = uint256(
+            keccak256(abi.encodePacked(block.timestamp, initializer))
+        );
+        hatsProtocol.mintHat(
+            hatId,
+            moduleProxyFactory.deployModule(
+                decentAutonomousAdminMasterCopy,
+                initializer,
+                saltNonce
+            )
+        );
     }
 
     function createAndDeclareTree(CreateTreeParams calldata params) public {
@@ -252,7 +269,9 @@ contract DecentHats_0_1_0 {
             topHatAccount,
             params.registry,
             params.hatsAccountImplementation,
-            salt
+            salt,
+            params.moduleProxyFactory,
+            params.decentAutonomousAdminMasterCopy
         );
 
         for (uint256 i = 0; i < params.hats.length; ) {
