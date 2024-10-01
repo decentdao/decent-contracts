@@ -17,6 +17,7 @@ import {
   MockERC20,
   DecentAutonomousAdmin__factory,
   ModuleProxyFactory__factory,
+  MockHatsElectionEligibility__factory,
 } from "../typechain-types"
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -96,6 +97,9 @@ describe("DecentHats_0_1_0", () => {
   let mockERC20: MockERC20
   let mockERC20Address: string
 
+  let mockHatsElectionEligibilityImplementationAddress: string
+  let mockHatsModuleFactoryAddress: string
+
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners()
     const [deployer] = signers
@@ -103,6 +107,12 @@ describe("DecentHats_0_1_0", () => {
 
     mockHats = await new MockHats__factory(deployer).deploy()
     mockHatsAddress = await mockHats.getAddress()
+    const mockHatsElectionEligibilityImplementation =
+      await new MockHatsElectionEligibility__factory(deployer).deploy()
+    mockHatsElectionEligibilityImplementationAddress =
+      await mockHatsElectionEligibilityImplementation.getAddress()
+    const mockHatsModuleFactory = await new ModuleProxyFactory__factory(deployer).deploy()
+    mockHatsModuleFactoryAddress = await mockHatsModuleFactory.getAddress()
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy()
     erc6551Registry = await new ERC6551Registry__factory(deployer).deploy()
     mockHatsAccountImplementation = await new MockHatsAccount__factory(deployer).deploy()
@@ -209,8 +219,12 @@ describe("DecentHats_0_1_0", () => {
                   imageURI: "",
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
-                  eligibility: ethers.ZeroAddress,
                   sablierParams: [],
+                  isTermed: false,
+                  termedParams: {
+                    firstTermEnd: 0,
+                    nominatedWearers: [],
+                  },
                 },
                 hats: [
                   {
@@ -219,8 +233,12 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    eligibility: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                   {
                     maxSupply: 1,
@@ -228,10 +246,16 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    eligibility: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -281,9 +305,15 @@ describe("DecentHats_0_1_0", () => {
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
                     sablierParams: [],
-                    eligibility: ethers.ZeroAddress,
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                   hats: [],
+                  hatsModuleFactory: mockHatsModuleFactoryAddress,
+                  hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
                 },
               ]
             ),
@@ -376,7 +406,11 @@ describe("DecentHats_0_1_0", () => {
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
                   sablierParams: [],
-                  eligibility: ethers.ZeroAddress,
+                  isTermed: false,
+                  termedParams: {
+                    firstTermEnd: 0,
+                    nominatedWearers: [],
+                  },
                 },
                 hats: [
                   {
@@ -385,7 +419,6 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    eligibility: ethers.ZeroAddress,
                     sablierParams: [
                       {
                         sablier: mockSablierAddress,
@@ -402,6 +435,11 @@ describe("DecentHats_0_1_0", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                     ],
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                   {
                     maxSupply: 1,
@@ -409,10 +447,16 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    eligibility: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -497,7 +541,11 @@ describe("DecentHats_0_1_0", () => {
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
                   sablierParams: [],
-                  eligibility: ethers.ZeroAddress,
+                  isTermed: false,
+                  termedParams: {
+                    firstTermEnd: 0,
+                    nominatedWearers: [],
+                  },
                 },
                 hats: [
                   {
@@ -506,7 +554,6 @@ describe("DecentHats_0_1_0", () => {
                     imageURI: "",
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
-                    eligibility: ethers.ZeroAddress,
                     sablierParams: [
                       {
                         sablier: mockSablierAddress,
@@ -537,8 +584,15 @@ describe("DecentHats_0_1_0", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                     ],
+                    isTermed: false,
+                    termedParams: {
+                      firstTermEnd: 0,
+                      nominatedWearers: [],
+                    },
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
