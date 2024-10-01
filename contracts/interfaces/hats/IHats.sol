@@ -48,4 +48,6 @@ interface IHats {
         address _user,
         uint256 _hatId
     ) external view returns (bool isWearer);
+
+    function changeHatEligibility(uint256 _hatId, address _newEligibility) external;
 }

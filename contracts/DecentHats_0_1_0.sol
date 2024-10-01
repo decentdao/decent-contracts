@@ -11,6 +11,8 @@ import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinea
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
+import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
+import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
 
 contract DecentHats_0_1_0 {
     string public constant NAME = "DecentHats_0_1_0";
@@ -26,14 +28,20 @@ contract DecentHats_0_1_0 {
         LockupLinear.Broker broker;
     }
 
+    struct TermedParams {
+        uint128 firstTermEnd;
+        address[] nominatedWearers;
+    }
+
     struct Hat {
         uint32 maxSupply;
         string details;
         string imageURI;
-        address eligibility;
         bool isMutable;
         address wearer;
+        bool isTermed;
         SablierStreamParams[] sablierParams; // Optional Sablier stream parameters
+        TermedParams termedParams; // Optional termed parameters
     }
 
     struct CreateTreeParams {
@@ -47,6 +55,8 @@ contract DecentHats_0_1_0 {
         string topHatImageURI;
         Hat adminHat;
         Hat[] hats;
+        IHatsModuleFactory hatsModuleFactory;
+        address hatsElectionEligibilityImplementation;
     }
 
     function getSalt() internal view returns (bytes32 salt) {
@@ -96,8 +106,9 @@ contract DecentHats_0_1_0 {
                 adminHatId,
                 _hat.details,
                 _hat.maxSupply,
+                // ? @todo should be this be dead HATS address?
                 topHatAccount,
-                _hat.eligibility,
+                topHatAccount,
                 _hat.isMutable,
                 _hat.imageURI
             );
@@ -150,9 +161,26 @@ contract DecentHats_0_1_0 {
         address topHatAccount,
         IERC6551Registry registry,
         address hatsAccountImplementation,
-        bytes32 salt
+        bytes32 salt,
+        IHatsModuleFactory hatsModuleFactory,
+        address hatsElectionEligibilityImplementation,
+        uint256 topHatId
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
+
+        if (hat.isTermed) {
+            // Create election module and set as eligiblity, elect, and start next term
+            createElectionModuleAndExecuteFirstTerm(
+                hatsProtocol,
+                hatsModuleFactory,
+                hatsElectionEligibilityImplementation,
+                hatId,
+                hat.termedParams.firstTermEnd,
+                hat.termedParams.nominatedWearers,
+                abi.encodePacked(topHatId),
+                uint256(salt)
+            );
+        }
 
         accountAddress = createAccount(
             registry,
@@ -241,6 +269,33 @@ contract DecentHats_0_1_0 {
         );
     }
 
+    function createElectionModuleAndExecuteFirstTerm(
+        IHats hatsProtocol,
+        IHatsModuleFactory hatsModuleFactory,
+        address hatsElectionEligibilityImplementation,
+        uint256 hatId,
+        uint128 firstTermEnd,
+        address[] memory nominatedWearer,
+        bytes memory otherImmutableArgs,
+        uint256 saltNonce
+    ) internal returns (address) {
+        address electionModuleAddress = hatsModuleFactory.createHatsModule(
+            hatsElectionEligibilityImplementation,
+            hatId,
+            otherImmutableArgs,
+            abi.encode(firstTermEnd),
+            saltNonce
+        );
+        hatsProtocol.changeHatEligibility(hatId, electionModuleAddress);
+
+        IHatsElectionEligibility(electionModuleAddress).elect(
+            firstTermEnd,
+            nominatedWearer
+        );
+        IHatsElectionEligibility(electionModuleAddress).startNextTerm();
+        return electionModuleAddress;
+    }
+
     function createAndDeclareTree(CreateTreeParams calldata params) public {
         bytes32 salt = getSalt();
 
@@ -275,7 +330,10 @@ contract DecentHats_0_1_0 {
                 topHatAccount,
                 params.registry,
                 params.hatsAccountImplementation,
-                salt
+                salt,
+                params.hatsModuleFactory,
+                params.hatsElectionEligibilityImplementation,
+                topHatId
             );
 
             unchecked {

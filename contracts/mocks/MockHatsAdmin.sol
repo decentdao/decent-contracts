@@ -74,4 +74,8 @@ contract MockHatsAutoAdmin is IHats {
         from;
         wearer[_hatId] = to;
     }
+
+    function changeHatEligibility(uint256 _hatId, address _newEligibility) external override {
+        eligibility[_hatId] = _newEligibility;
+    }
 }
