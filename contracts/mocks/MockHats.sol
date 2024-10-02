@@ -44,4 +44,11 @@ contract MockHats is IHats {
         hatWearers[_hatId][_from] = false;
         hatWearers[_hatId][_to] = true;
     }
+
+    function isWearerOfHat(
+        address _user,
+        uint256 _hatId
+    ) external view returns (bool) {
+        return hatWearers[_hatId][_user];
+    }
 }
