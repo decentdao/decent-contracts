@@ -222,7 +222,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    firstTermEnd: 0,
+                    termEndTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -236,7 +236,7 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -249,7 +249,7 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -307,7 +307,7 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -408,7 +408,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    firstTermEnd: 0,
+                    termEndTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -437,7 +437,7 @@ describe("DecentHats_0_1_0", () => {
                     ],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -450,7 +450,7 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -543,7 +543,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    firstTermEnd: 0,
+                    termEndTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -586,7 +586,7 @@ describe("DecentHats_0_1_0", () => {
                     ],
                     isTermed: false,
                     termedParams: {
-                      firstTermEnd: 0,
+                      termEndTs: 0,
                       nominatedWearers: [],
                     },
                   },
