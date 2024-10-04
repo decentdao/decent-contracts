@@ -10,7 +10,6 @@ import {IHats} from "./interfaces/hats/IHats.sol";
 import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
-import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
 import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
 
@@ -47,8 +46,6 @@ contract DecentHats_0_1_0 {
     struct CreateTreeParams {
         IHats hatsProtocol;
         address hatsAccountImplementation;
-        ModuleProxyFactory moduleProxyFactory;
-        address decentAutonomousAdminMasterCopy;
         IERC6551Registry registry;
         address keyValuePairs;
         string topHatDetails;
@@ -245,9 +242,7 @@ contract DecentHats_0_1_0 {
         address topHatAccount,
         IERC6551Registry registry,
         address hatsAccountImplementation,
-        bytes32 salt,
-        ModuleProxyFactory moduleProxyFactory,
-        address decentAutonomousAdminMasterCopy
+        bytes32 salt
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
 
@@ -261,11 +256,7 @@ contract DecentHats_0_1_0 {
 
         hatsProtocol.mintHat(
             hatId,
-            moduleProxyFactory.deployModule(
-                decentAutonomousAdminMasterCopy,
-                abi.encodeWithSignature("setUp(uint256)", adminHatId),
-                uint256(salt)
-            )
+            address(new DecentAutonomousAdmin("0_0_1", adminHatId))
         );
     }
 
@@ -317,9 +308,7 @@ contract DecentHats_0_1_0 {
             topHatAccount,
             params.registry,
             params.hatsAccountImplementation,
-            salt,
-            params.moduleProxyFactory,
-            params.decentAutonomousAdminMasterCopy
+            salt
         );
 
         for (uint256 i = 0; i < params.hats.length; ) {

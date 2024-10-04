@@ -24,14 +24,8 @@ contract DecentAutonomousAdmin {
     // //////////////////////////////////////////////////////////////
     //                         Constructor
     // //////////////////////////////////////////////////////////////
-    constructor(string memory _version) {
+    constructor(string memory _version, uint256 _adminHatId) {
         version_ = _version;
-    }
-
-    // //////////////////////////////////////////////////////////////
-    //                         Initializer
-    // //////////////////////////////////////////////////////////////
-    function setUp(uint256 _adminHatId) public {
         adminHatId = _adminHatId;
     }
 
