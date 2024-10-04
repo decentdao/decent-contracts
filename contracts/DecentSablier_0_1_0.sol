@@ -38,4 +38,21 @@ contract DecentSablierStreamManagement {
             Enum.Operation.Call
         );
     }
+
+    function cancelStream(ISablierV2LockupLinear sablier, uint256 streamId) public {
+        // Check if the stream is still active
+        if (!sablier.isCancelable(streamId)) {
+            return;
+        }
+
+        IAvatar(msg.sender).execTransactionFromModule(
+            address(sablier),
+            0,
+            abi.encodeWithSignature(
+                "cancel(uint256)",
+                streamId,
+            ),
+            Enum.Operation.Call
+        );
+    }
 }
