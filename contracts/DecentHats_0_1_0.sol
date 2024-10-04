@@ -28,7 +28,7 @@ contract DecentHats_0_1_0 {
     }
 
     struct TermedParams {
-        uint128 termEndTs;
+        uint128 termEndDateTs;
         address[] nominatedWearers;
     }
 
@@ -172,7 +172,7 @@ contract DecentHats_0_1_0 {
                 hatsModuleFactory,
                 hatsElectionEligibilityImplementation,
                 hatId,
-                hat.termedParams.termEndTs,
+                hat.termedParams.termEndDateTs,
                 hat.termedParams.nominatedWearers,
                 abi.encodePacked(topHatId),
                 uint256(salt)
@@ -265,7 +265,7 @@ contract DecentHats_0_1_0 {
         IHatsModuleFactory hatsModuleFactory,
         address hatsElectionEligibilityImplementation,
         uint256 hatId,
-        uint128 termEndTs,
+        uint128 termEndDateTs,
         address[] memory nominatedWearer,
         bytes memory otherImmutableArgs,
         uint256 saltNonce
@@ -274,13 +274,13 @@ contract DecentHats_0_1_0 {
             hatsElectionEligibilityImplementation,
             hatId,
             otherImmutableArgs,
-            abi.encode(termEndTs),
+            abi.encode(termEndDateTs),
             saltNonce
         );
         hatsProtocol.changeHatEligibility(hatId, electionModuleAddress);
 
         IHatsElectionEligibility(electionModuleAddress).elect(
-            termEndTs,
+            termEndDateTs,
             nominatedWearer
         );
         IHatsElectionEligibility(electionModuleAddress).startNextTerm();
