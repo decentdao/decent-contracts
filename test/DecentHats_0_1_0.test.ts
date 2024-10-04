@@ -15,8 +15,7 @@ import {
   MockSablierV2LockupLinear,
   MockERC20__factory,
   MockERC20,
-  DecentAutonomousAdmin__factory,
-  ModuleProxyFactory__factory,
+  MockHatsModuleFactory__factory,
   MockHatsElectionEligibility__factory,
 } from "../typechain-types"
 
@@ -85,9 +84,6 @@ describe("DecentHats_0_1_0", () => {
   let gnosisSafeAddress: string
   let erc6551Registry: ERC6551Registry
 
-  let adminHatMasterCopyAddress: string
-  let moduleProxyFactoryAddress: string
-
   let mockHatsAccountImplementation: MockHatsAccount
   let mockHatsAccountImplementationAddress: string
 
@@ -111,7 +107,7 @@ describe("DecentHats_0_1_0", () => {
       await new MockHatsElectionEligibility__factory(deployer).deploy()
     mockHatsElectionEligibilityImplementationAddress =
       await mockHatsElectionEligibilityImplementation.getAddress()
-    const mockHatsModuleFactory = await new ModuleProxyFactory__factory(deployer).deploy()
+    const mockHatsModuleFactory = await new MockHatsModuleFactory__factory(deployer).deploy()
     mockHatsModuleFactoryAddress = await mockHatsModuleFactory.getAddress()
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy()
     erc6551Registry = await new ERC6551Registry__factory(deployer).deploy()
@@ -119,11 +115,6 @@ describe("DecentHats_0_1_0", () => {
     mockHatsAccountImplementationAddress = await mockHatsAccountImplementation.getAddress()
     decentHats = await new DecentHats_0_1_0__factory(deployer).deploy()
     decentHatsAddress = await decentHats.getAddress()
-
-    const moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy()
-    moduleProxyFactoryAddress = await moduleProxyFactory.getAddress()
-    const adminHatMasterCopy = await new DecentAutonomousAdmin__factory(deployer).deploy("TEST")
-    adminHatMasterCopyAddress = await adminHatMasterCopy.getAddress()
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory()
     const gnosisSafeL2Singleton = getGnosisSafeL2Singleton()
@@ -209,8 +200,6 @@ describe("DecentHats_0_1_0", () => {
                 hatsAccountImplementation: mockHatsAccountImplementationAddress,
                 registry: await erc6551Registry.getAddress(),
                 keyValuePairs: await keyValuePairs.getAddress(),
-                moduleProxyFactory: moduleProxyFactoryAddress,
-                decentAutonomousAdminMasterCopy: adminHatMasterCopyAddress,
                 topHatDetails: "",
                 topHatImageURI: "",
                 adminHat: {
@@ -222,7 +211,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    termEndTs: 0,
+                    termEndDateTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -236,7 +225,7 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -249,13 +238,14 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
                 ],
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
-                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -294,8 +284,6 @@ describe("DecentHats_0_1_0", () => {
                   hatsAccountImplementation: mockHatsAccountImplementationAddress,
                   registry: await erc6551Registry.getAddress(),
                   keyValuePairs: await keyValuePairs.getAddress(),
-                  moduleProxyFactory: moduleProxyFactoryAddress,
-                  decentAutonomousAdminMasterCopy: adminHatMasterCopyAddress,
                   topHatDetails: "",
                   topHatImageURI: "",
                   adminHat: {
@@ -307,13 +295,14 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
                   hats: [],
                   hatsModuleFactory: mockHatsModuleFactoryAddress,
-                  hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
+                  hatsElectionEligibilityImplementation:
+                    mockHatsElectionEligibilityImplementationAddress,
                 },
               ]
             ),
@@ -395,8 +384,6 @@ describe("DecentHats_0_1_0", () => {
                 hatsAccountImplementation: mockHatsAccountImplementationAddress,
                 registry: await erc6551Registry.getAddress(),
                 keyValuePairs: await keyValuePairs.getAddress(),
-                moduleProxyFactory: moduleProxyFactoryAddress,
-                decentAutonomousAdminMasterCopy: adminHatMasterCopyAddress,
                 topHatDetails: "",
                 topHatImageURI: "",
                 adminHat: {
@@ -408,7 +395,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    termEndTs: 0,
+                    termEndDateTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -437,7 +424,7 @@ describe("DecentHats_0_1_0", () => {
                     ],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
@@ -450,13 +437,14 @@ describe("DecentHats_0_1_0", () => {
                     sablierParams: [],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
                 ],
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
-                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -530,8 +518,6 @@ describe("DecentHats_0_1_0", () => {
                 hatsAccountImplementation: mockHatsAccountImplementationAddress,
                 registry: await erc6551Registry.getAddress(),
                 keyValuePairs: await keyValuePairs.getAddress(),
-                moduleProxyFactory: moduleProxyFactoryAddress,
-                decentAutonomousAdminMasterCopy: adminHatMasterCopyAddress,
                 topHatDetails: "",
                 topHatImageURI: "",
                 adminHat: {
@@ -543,7 +529,7 @@ describe("DecentHats_0_1_0", () => {
                   sablierParams: [],
                   isTermed: false,
                   termedParams: {
-                    termEndTs: 0,
+                    termEndDateTs: 0,
                     nominatedWearers: [],
                   },
                 },
@@ -586,13 +572,14 @@ describe("DecentHats_0_1_0", () => {
                     ],
                     isTermed: false,
                     termedParams: {
-                      termEndTs: 0,
+                      termEndDateTs: 0,
                       nominatedWearers: [],
                     },
                   },
                 ],
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
-                hatsElectionEligibilityImplementation: mockHatsElectionEligibilityImplementationAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),

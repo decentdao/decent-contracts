@@ -31,8 +31,7 @@ describe("DecentAutonomousAdminHat", function () {
 
   beforeEach(async function () {
     // Get signers
-    ;[deployer, currentWearer, nominatedWearer, randomUser] =
-      await hre.ethers.getSigners()
+    ;[deployer, currentWearer, nominatedWearer, randomUser] = await hre.ethers.getSigners()
 
     moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy()
     // Deploy MockHatsAutoAdmin (Mock Hats Protocol)
@@ -55,23 +54,14 @@ describe("DecentAutonomousAdminHat", function () {
     const adminHatId = createAdminTxReceipt?.toJSON().logs[0].args[0]
 
     // Deploy DecentAutonomousAdminHat contract with the admin hat ID
-    adminHatMasterCopy = await new DecentAutonomousAdmin__factory(deployer).deploy("TEST")
-    const proxyDeployTx = await moduleProxyFactory.deployModule(
-      await adminHatMasterCopy.getAddress(),
-      adminHatMasterCopy.interface.encodeFunctionData("setUp", [adminHatId]),
-      1n
-    )
-    const proxyDeployTxReceipt = await proxyDeployTx.wait()
-    const proxyAddress = await proxyDeployTxReceipt?.toJSON().logs[0].args[0]
-
-    adminHat = DecentAutonomousAdmin__factory.connect(proxyAddress, deployer)
-
+    adminHat = await new DecentAutonomousAdmin__factory(deployer).deploy("TEST", adminHatId)
+    const adminHatAddress = await adminHat.getAddress()
     // Mint the admin hat to adminHatWearer
-    await hatsProtocol.mintHat(adminHatId, proxyAddress)
+    await hatsProtocol.mintHat(adminHatId, adminHatAddress)
 
     // Create User Hat under the admin hat
     const createUserTx = await hatsProtocol.createHat(
-      proxyAddress, // Admin address (adminHat contract)
+      adminHatAddress, // Admin address (adminHat contract)
       "Details", // Hat details
       100, // Max supply
       await hatsElectionModule.getAddress(), // Eligibility module (election module)
