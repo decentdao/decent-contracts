@@ -9,9 +9,6 @@ import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
 import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
-import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
-import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
-import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
 
 contract DecentHats_0_1_0 {
     string public constant NAME = "DecentHats_0_1_0";
@@ -27,20 +24,13 @@ contract DecentHats_0_1_0 {
         LockupLinear.Broker broker;
     }
 
-    struct TermedParams {
-        uint128 termEndDateTs;
-        address[] nominatedWearers;
-    }
-
     struct Hat {
         uint32 maxSupply;
         string details;
         string imageURI;
         bool isMutable;
         address wearer;
-        bool isTermed;
         SablierStreamParams[] sablierParams; // Optional Sablier stream parameters
-        TermedParams termedParams; // Optional termed parameters
     }
 
     struct CreateTreeParams {
@@ -52,8 +42,6 @@ contract DecentHats_0_1_0 {
         string topHatImageURI;
         Hat adminHat;
         Hat[] hats;
-        IHatsModuleFactory hatsModuleFactory;
-        address hatsElectionEligibilityImplementation;
     }
 
     function getSalt() internal view returns (bytes32 salt) {
@@ -103,7 +91,6 @@ contract DecentHats_0_1_0 {
                 adminHatId,
                 _hat.details,
                 _hat.maxSupply,
-                // ? @todo should be this be dead HATS address?
                 topHatAccount,
                 topHatAccount,
                 _hat.isMutable,
@@ -158,26 +145,9 @@ contract DecentHats_0_1_0 {
         address topHatAccount,
         IERC6551Registry registry,
         address hatsAccountImplementation,
-        bytes32 salt,
-        IHatsModuleFactory hatsModuleFactory,
-        address hatsElectionEligibilityImplementation,
-        uint256 topHatId
+        bytes32 salt
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
-
-        if (hat.isTermed) {
-            // Create election module and set as eligiblity, elect, and start next term
-            createElectionModuleAndExecuteFirstTerm(
-                hatsProtocol,
-                hatsModuleFactory,
-                hatsElectionEligibilityImplementation,
-                hatId,
-                hat.termedParams.termEndDateTs,
-                hat.termedParams.nominatedWearers,
-                abi.encodePacked(topHatId),
-                uint256(salt)
-            );
-        }
 
         accountAddress = createAccount(
             registry,
@@ -235,58 +205,6 @@ contract DecentHats_0_1_0 {
         }
     }
 
-    function createAdminHatAndAccount(
-        IHats hatsProtocol,
-        uint256 adminHatId,
-        Hat calldata hat,
-        address topHatAccount,
-        IERC6551Registry registry,
-        address hatsAccountImplementation,
-        bytes32 salt
-    ) internal returns (uint256 hatId, address accountAddress) {
-        hatId = createHat(hatsProtocol, adminHatId, hat, topHatAccount);
-
-        accountAddress = createAccount(
-            registry,
-            hatsAccountImplementation,
-            salt,
-            address(hatsProtocol),
-            hatId
-        );
-
-        hatsProtocol.mintHat(
-            hatId,
-            address(new DecentAutonomousAdmin("0_0_1", adminHatId))
-        );
-    }
-
-    function createElectionModuleAndExecuteFirstTerm(
-        IHats hatsProtocol,
-        IHatsModuleFactory hatsModuleFactory,
-        address hatsElectionEligibilityImplementation,
-        uint256 hatId,
-        uint128 termEndDateTs,
-        address[] memory nominatedWearer,
-        bytes memory otherImmutableArgs,
-        uint256 saltNonce
-    ) internal returns (address) {
-        address electionModuleAddress = hatsModuleFactory.createHatsModule(
-            hatsElectionEligibilityImplementation,
-            hatId,
-            otherImmutableArgs,
-            abi.encode(termEndDateTs),
-            saltNonce
-        );
-        hatsProtocol.changeHatEligibility(hatId, electionModuleAddress);
-
-        IHatsElectionEligibility(electionModuleAddress).elect(
-            termEndDateTs,
-            nominatedWearer
-        );
-        IHatsElectionEligibility(electionModuleAddress).startNextTerm();
-        return electionModuleAddress;
-    }
-
     function createAndDeclareTree(CreateTreeParams calldata params) public {
         bytes32 salt = getSalt();
 
@@ -301,7 +219,7 @@ contract DecentHats_0_1_0 {
 
         updateKeyValuePairs(params.keyValuePairs, topHatId);
 
-        (uint256 adminHatId, ) = createAdminHatAndAccount(
+        (uint256 adminHatId, ) = createHatAndAccountAndMintAndStreams(
             params.hatsProtocol,
             topHatId,
             params.adminHat,
@@ -319,10 +237,7 @@ contract DecentHats_0_1_0 {
                 topHatAccount,
                 params.registry,
                 params.hatsAccountImplementation,
-                salt,
-                params.hatsModuleFactory,
-                params.hatsElectionEligibilityImplementation,
-                topHatId
+                salt
             );
 
             unchecked {
