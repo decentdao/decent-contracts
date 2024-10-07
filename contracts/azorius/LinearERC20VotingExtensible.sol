@@ -10,6 +10,12 @@ import {BaseVotingBasisPercent} from "./BaseVotingBasisPercent.sol";
  * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that
  * enables linear (i.e. 1 to 1) token voting. Each token delegated to a given address
  * in an `ERC20Votes` token equals 1 vote for a Proposal.
+ *
+ * This contract is an extensible version of LinearERC20Voting, with all functions
+ * marked as `virtual`. This allows other contracts to inherit from it and override
+ * any part of its functionality. The existence of this contract enables the creation
+ * of more specialized voting strategies that build upon the basic linear ERC20 voting
+ * mechanism while allowing for customization of specific aspects as needed.
  */
 abstract contract LinearERC20VotingExtensible is
     BaseStrategy,
