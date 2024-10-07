@@ -360,6 +360,48 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
     ).to.be.revertedWith("Initializable: contract is already initialized");
   });
 
+  it.skip("Cannot initialize with no whitelisted hats", async () => {
+    const linearERC20VotingWithHatsSetupCalldata =
+      LinearERC20VotingWithHatsProposalCreation__factory.createInterface().encodeFunctionData(
+        "setUp",
+        [
+          ethers.AbiCoder.defaultAbiCoder().encode(
+            [
+              "address",
+              "address",
+              "address",
+              "uint32",
+              "uint256",
+              "uint256",
+              "address",
+              "uint256[]",
+            ],
+            [
+              gnosisSafeOwner.address,
+              await votesERC20.getAddress(),
+              await azorius.getAddress(),
+              60,
+              500000,
+              500000,
+              await hatsContract.getAddress(),
+              [],
+            ]
+          ),
+        ]
+      );
+
+    await expect(
+      moduleProxyFactory.deployModule(
+        await linearERC20VotingWithHatsMastercopy.getAddress(),
+        linearERC20VotingWithHatsSetupCalldata,
+        "93874908709823098740982309874098230987409823098740982309874098230"
+      )
+    ).to.be.revertedWithCustomError(
+      linearERC20VotingWithHatsMastercopy,
+      "NoHatsWhitelisted"
+    );
+  });
+
   it("Only owner can whitelist a hat", async () => {
     await expect(
       linearERC20VotingWithHats

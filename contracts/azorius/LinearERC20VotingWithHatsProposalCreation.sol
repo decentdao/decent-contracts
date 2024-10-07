@@ -22,6 +22,7 @@ contract LinearERC20VotingWithHatsProposalCreation is
     uint256[] public whitelistedHatIds;
 
     error InvalidHatsContract();
+    error NoHatsWhitelisted();
     error HatAlreadyWhitelisted();
     error HatNotWhitelisted();
 
@@ -72,6 +73,7 @@ contract LinearERC20VotingWithHatsProposalCreation is
         if (_hatsContract == address(0)) revert InvalidHatsContract();
         hatsContract = IHats(_hatsContract);
 
+        if (_initialWhitelistedHats.length == 0) revert NoHatsWhitelisted();
         for (uint256 i = 0; i < _initialWhitelistedHats.length; i++) {
             _whitelistHat(_initialWhitelistedHats[i]);
         }
