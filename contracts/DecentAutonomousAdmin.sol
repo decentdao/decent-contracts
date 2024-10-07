@@ -6,7 +6,8 @@ import "./interfaces/sablier/ISablierV2LockupLinear.sol";
 
 contract DecentAutonomousAdmin {
     string public constant NAME = "DecentAutonomousAdmin";
-    string public version_;
+    string public version_ = "0.1.0";
+
     uint256 public adminHatId;
 
     struct SablierStreamInfo {
@@ -24,8 +25,7 @@ contract DecentAutonomousAdmin {
     // //////////////////////////////////////////////////////////////
     //                         Constructor
     // //////////////////////////////////////////////////////////////
-    constructor(string memory _version, uint256 _adminHatId) {
-        version_ = _version;
+    constructor(uint256 _adminHatId) {
         adminHatId = _adminHatId;
     }
 
