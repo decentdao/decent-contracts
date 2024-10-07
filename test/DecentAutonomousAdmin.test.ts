@@ -1,4 +1,3 @@
-import { ModuleProxyFactory } from "../typechain-types/@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory"
 import {
   DecentAutonomousAdmin,
   DecentAutonomousAdmin__factory,
@@ -6,7 +5,6 @@ import {
   MockHatsAutoAdmin__factory,
   MockHatsElectionEligibility,
   MockHatsElectionEligibility__factory,
-  ModuleProxyFactory__factory,
 } from "../typechain-types"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { expect } from "chai"
@@ -23,8 +21,6 @@ describe("DecentAutonomousAdminHat", function () {
   let hatsProtocol: MockHatsAutoAdmin
   let hatsElectionModule: MockHatsElectionEligibility
   let adminHat: DecentAutonomousAdmin
-  let adminHatMasterCopy: DecentAutonomousAdmin
-  let moduleProxyFactory: ModuleProxyFactory
 
   // Variables
   let userHatId: bigint
@@ -33,7 +29,6 @@ describe("DecentAutonomousAdminHat", function () {
     // Get signers
     ;[deployer, currentWearer, nominatedWearer, randomUser] = await hre.ethers.getSigners()
 
-    moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy()
     // Deploy MockHatsAutoAdmin (Mock Hats Protocol)
     hatsProtocol = await new MockHatsAutoAdmin__factory(deployer).deploy()
 
@@ -54,7 +49,7 @@ describe("DecentAutonomousAdminHat", function () {
     const adminHatId = createAdminTxReceipt?.toJSON().logs[0].args[0]
 
     // Deploy DecentAutonomousAdminHat contract with the admin hat ID
-    adminHat = await new DecentAutonomousAdmin__factory(deployer).deploy("TEST", adminHatId)
+    adminHat = await new DecentAutonomousAdmin__factory(deployer).deploy(adminHatId)
     const adminHatAddress = await adminHat.getAddress()
     // Mint the admin hat to adminHatWearer
     await hatsProtocol.mintHat(adminHatId, adminHatAddress)
