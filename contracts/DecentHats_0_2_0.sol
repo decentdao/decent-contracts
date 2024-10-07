@@ -19,12 +19,12 @@ contract DecentHats_0_2_0 {
     struct SablierStreamParams {
         ISablierV2LockupLinear sablier;
         address sender;
-        uint128 totalAmount;
         address asset;
-        bool cancelable;
-        bool transferable;
         LockupLinear.Timestamps timestamps;
         LockupLinear.Broker broker;
+        uint128 totalAmount;
+        bool cancelable;
+        bool transferable;
     }
 
     struct TermedParams {
@@ -33,27 +33,27 @@ contract DecentHats_0_2_0 {
     }
 
     struct Hat {
-        uint32 maxSupply;
+        address wearer;
         string details;
         string imageURI;
+        SablierStreamParams[] sablierParams;
+        TermedParams[] termedParams;
+        uint32 maxSupply;
         bool isMutable;
-        address wearer;
         bool isTermed;
-        SablierStreamParams[] sablierParams; // Optional Sablier stream parameters
-        TermedParams[] termedParams; // Optional termed parameters
     }
 
     struct CreateTreeParams {
         IHats hatsProtocol;
-        address hatsAccountImplementation;
         IERC6551Registry registry;
+        IHatsModuleFactory hatsModuleFactory;
+        address hatsAccountImplementation;
         address keyValuePairs;
-        string topHatDetails;
-        string topHatImageURI;
+        address hatsElectionEligibilityImplementation;
         Hat adminHat;
         Hat[] hats;
-        IHatsModuleFactory hatsModuleFactory;
-        address hatsElectionEligibilityImplementation;
+        string topHatDetails;
+        string topHatImageURI;
     }
 
     /* /////////////////////////////////////////////////////////////////////////////
