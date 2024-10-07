@@ -1,20 +1,22 @@
 import {
   GnosisSafeL2,
   GnosisSafeL2__factory,
-  DecentHats_0_1_0__factory,
+  DecentHats_0_2_0__factory,
   KeyValuePairs,
   KeyValuePairs__factory,
   MockHats__factory,
   ERC6551Registry__factory,
   MockHatsAccount__factory,
   ERC6551Registry,
-  DecentHats_0_1_0,
+  DecentHats_0_2_0,
   MockHatsAccount,
   MockHats,
   MockSablierV2LockupLinear__factory,
   MockSablierV2LockupLinear,
   MockERC20__factory,
   MockERC20,
+  MockHatsModuleFactory__factory,
+  MockHatsElectionEligibility__factory,
 } from "../typechain-types"
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -67,7 +69,7 @@ const executeSafeTransaction = async ({
   return tx
 }
 
-describe("DecentHats_0_1_0", () => {
+describe("DecentHats_0_2_0", () => {
   let dao: SignerWithAddress
 
   let mockHats: MockHats
@@ -76,7 +78,7 @@ describe("DecentHats_0_1_0", () => {
   let keyValuePairs: KeyValuePairs
   let gnosisSafe: GnosisSafeL2
 
-  let decentHats: DecentHats_0_1_0
+  let decentHats: DecentHats_0_2_0
   let decentHatsAddress: string
 
   let gnosisSafeAddress: string
@@ -91,6 +93,9 @@ describe("DecentHats_0_1_0", () => {
   let mockERC20: MockERC20
   let mockERC20Address: string
 
+  let mockHatsElectionEligibilityImplementationAddress: string
+  let mockHatsModuleFactoryAddress: string
+
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners()
     const [deployer] = signers
@@ -98,11 +103,17 @@ describe("DecentHats_0_1_0", () => {
 
     mockHats = await new MockHats__factory(deployer).deploy()
     mockHatsAddress = await mockHats.getAddress()
+    const mockHatsElectionEligibilityImplementation =
+      await new MockHatsElectionEligibility__factory(deployer).deploy()
+    mockHatsElectionEligibilityImplementationAddress =
+      await mockHatsElectionEligibilityImplementation.getAddress()
+    const mockHatsModuleFactory = await new MockHatsModuleFactory__factory(deployer).deploy()
+    mockHatsModuleFactoryAddress = await mockHatsModuleFactory.getAddress()
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy()
     erc6551Registry = await new ERC6551Registry__factory(deployer).deploy()
     mockHatsAccountImplementation = await new MockHatsAccount__factory(deployer).deploy()
     mockHatsAccountImplementationAddress = await mockHatsAccountImplementation.getAddress()
-    decentHats = await new DecentHats_0_1_0__factory(deployer).deploy()
+    decentHats = await new DecentHats_0_2_0__factory(deployer).deploy()
     decentHatsAddress = await decentHats.getAddress()
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory()
@@ -181,7 +192,7 @@ describe("DecentHats_0_1_0", () => {
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -198,6 +209,13 @@ describe("DecentHats_0_1_0", () => {
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
                   sablierParams: [],
+                  isTermed: false,
+                  termedParams: [
+                    {
+                      termEndDateTs: 0,
+                      nominatedWearers: [],
+                    },
+                  ],
                 },
                 hats: [
                   {
@@ -207,6 +225,13 @@ describe("DecentHats_0_1_0", () => {
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                   {
                     maxSupply: 1,
@@ -215,8 +240,18 @@ describe("DecentHats_0_1_0", () => {
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -247,7 +282,7 @@ describe("DecentHats_0_1_0", () => {
           createAndDeclareTreeTx2 = await executeSafeTransaction({
             safe: gnosisSafe,
             to: decentHatsAddress,
-            transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+            transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
               "createAndDeclareTree",
               [
                 {
@@ -264,8 +299,18 @@ describe("DecentHats_0_1_0", () => {
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                   hats: [],
+                  hatsModuleFactory: mockHatsModuleFactoryAddress,
+                  hatsElectionEligibilityImplementation:
+                    mockHatsElectionEligibilityImplementationAddress,
                 },
               ]
             ),
@@ -296,7 +341,7 @@ describe("DecentHats_0_1_0", () => {
         beforeEach(async () => {
           salt = solidityPackedKeccak256(
             ["string", "uint256", "address"],
-            ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
+            ["DecentHats_0_2_0", await hre.getChainId(), decentHatsAddress]
           )
         })
 
@@ -339,7 +384,7 @@ describe("DecentHats_0_1_0", () => {
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -356,6 +401,13 @@ describe("DecentHats_0_1_0", () => {
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
                   sablierParams: [],
+                  isTermed: false,
+                  termedParams: [
+                    {
+                      termEndDateTs: 0,
+                      nominatedWearers: [],
+                    },
+                  ],
                 },
                 hats: [
                   {
@@ -380,6 +432,13 @@ describe("DecentHats_0_1_0", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                     ],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                   {
                     maxSupply: 1,
@@ -388,8 +447,18 @@ describe("DecentHats_0_1_0", () => {
                     isMutable: false,
                     wearer: ethers.ZeroAddress,
                     sablierParams: [],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
@@ -455,7 +524,7 @@ describe("DecentHats_0_1_0", () => {
         await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -472,6 +541,13 @@ describe("DecentHats_0_1_0", () => {
                   isMutable: false,
                   wearer: ethers.ZeroAddress,
                   sablierParams: [],
+                  isTermed: false,
+                  termedParams: [
+                    {
+                      termEndDateTs: 0,
+                      nominatedWearers: [],
+                    },
+                  ],
                 },
                 hats: [
                   {
@@ -510,8 +586,18 @@ describe("DecentHats_0_1_0", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                     ],
+                    isTermed: false,
+                    termedParams: [
+                      {
+                        termEndDateTs: 0,
+                        nominatedWearers: [],
+                      },
+                    ],
                   },
                 ],
+                hatsModuleFactory: mockHatsModuleFactoryAddress,
+                hatsElectionEligibilityImplementation:
+                  mockHatsElectionEligibilityImplementationAddress,
               },
             ]
           ),
