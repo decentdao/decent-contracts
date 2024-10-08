@@ -10,6 +10,7 @@ contract DecentSablierStreamManagement {
 
     function withdrawMaxFromStream(
         ISablierV2LockupLinear sablier,
+        address recipientHatAccount,
         uint256 streamId,
         address to
     ) public {
@@ -21,12 +22,18 @@ contract DecentSablierStreamManagement {
 
         // Proxy the Sablier withdrawMax call through IAvatar (Safe)
         IAvatar(msg.sender).execTransactionFromModule(
-            address(sablier),
+            recipientHatAccount,
             0,
             abi.encodeWithSignature(
-                "withdrawMax(uint256,address)",
-                streamId,
-                to
+                "execute(address,uint256,bytes,uint8)",
+                address(sablier),
+                0,
+                abi.encodeWithSignature(
+                    "withdrawMax(uint256,address)",
+                    streamId,
+                    to
+                ),
+                0
             ),
             Enum.Operation.Call
         );

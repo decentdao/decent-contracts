@@ -95,14 +95,17 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         withdrawnAmount = withdrawableAmountOf(streamId);
         LockupLinear.Stream storage stream = streams[streamId];
 
-        require(to == stream.recipient, "Only recipient can withdraw");
+        require(
+            msg.sender == stream.recipient,
+            "Only recipient can call withdraw"
+        );
         require(
             withdrawnAmount <= withdrawableAmountOf(streamId),
             "Insufficient withdrawable amount"
         );
 
         stream.totalAmount -= withdrawnAmount;
-        IERC20(stream.asset).transfer(stream.recipient, withdrawnAmount);
+        IERC20(stream.asset).transfer(to, withdrawnAmount);
     }
 
     function cancel(uint256 streamId) external {
@@ -113,6 +116,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         uint128 withdrawableAmount = withdrawableAmountOf(streamId);
         uint128 refundAmount = stream.totalAmount - withdrawableAmount;
 
+        // TODO: instead of deleting, update state similar to how the real Sablier contract does
         delete streams[streamId];
 
         if (withdrawableAmount > 0) {

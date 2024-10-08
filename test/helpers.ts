@@ -232,7 +232,8 @@ export const getHatAccount = async (
   erc6551RegistryImplementation: ERC6551Registry,
   mockHatsAccountImplementationAddress: string,
   mockHatsAddress: string,
-  decentHatsAddress: string
+  decentHatsAddress: string,
+  signer: ethers.Signer
 ) => {
   const salt = solidityPackedKeccak256(
     ["string", "uint256", "address"],
@@ -247,7 +248,7 @@ export const getHatAccount = async (
     hatId
   );
 
-  const hatAccount = MockHatsAccount__factory.connect(hatAccountAddress, hre.ethers.provider);
+  const hatAccount = MockHatsAccount__factory.connect(hatAccountAddress, signer);
 
   return hatAccount;
 };

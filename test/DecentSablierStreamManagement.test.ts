@@ -27,7 +27,7 @@ import { executeSafeTransaction, getHatAccount, predictGnosisSafeAddress } from 
 
 import { getGnosisSafeProxyFactory, getGnosisSafeL2Singleton } from "./GlobalSafeDeployments.test";
 
-describe.only("DecentSablierStreamManagement", () => {
+describe("DecentSablierStreamManagement", () => {
   let dao: SignerWithAddress;
   let gnosisSafe: GnosisSafeL2;
 
@@ -59,6 +59,7 @@ describe.only("DecentSablierStreamManagement", () => {
 
   let enableModuleTx: ethers.ContractTransactionResponse;
   let createAndDeclareTreeWithRolesAndStreamsTx: ethers.ContractTransactionResponse;
+  const streamFundsMax = ethers.parseEther("100");
 
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners();
@@ -157,7 +158,7 @@ describe.only("DecentSablierStreamManagement", () => {
                 {
                   sablier: mockSablierAddress,
                   sender: gnosisSafeAddress,
-                  totalAmount: ethers.parseEther("100"),
+                  totalAmount: streamFundsMax,
                   asset: mockERC20Address,
                   cancelable: true,
                   transferable: false,
@@ -210,19 +211,20 @@ describe.only("DecentSablierStreamManagement", () => {
 
     describe("When the stream has funds", () => {
       beforeEach(async () => {
-        // No action has been taken yet on the stream. Balance should be untouched.
-        expect(await mockSablier.withdrawableAmountOf(streamId)).to.not.eq(0);
-
         // Advance time to the end of the stream
         await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 2592000]);
         await hre.ethers.provider.send("evm_mine", []);
+
+        // No action has been taken yet on the stream. Balance should be untouched.
+        expect(await mockSablier.withdrawableAmountOf(streamId)).to.eq(streamFundsMax);
 
         const recipientHatAccount = await getHatAccount(
           2n,
           erc6551Registry,
           mockHatsAccountImplementationAddress,
           mockHatsAddress,
-          decentHatsAddress
+          decentHatsAddress,
+          dao
         );
 
         withdrawTx = await executeSafeTransaction({
@@ -230,13 +232,12 @@ describe.only("DecentSablierStreamManagement", () => {
           to: decentSablierManagementAddress,
           transactionData: DecentSablierStreamManagement__factory.createInterface().encodeFunctionData(
             "withdrawMaxFromStream",
-            [mockSablierAddress, streamId, await recipientHatAccount.getAddress()]
+            [mockSablierAddress, await recipientHatAccount.getAddress(), streamId, dao.address]
           ),
           signers: [dao],
         });
 
-        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 2692000]);
-        await hre.ethers.provider.send("evm_mine", []);
+        expect(withdrawTx).to.not.reverted;
       });
 
       it("Emits an ExecutionSuccess event", async () => {
@@ -265,14 +266,21 @@ describe.only("DecentSablierStreamManagement", () => {
           erc6551Registry,
           mockHatsAccountImplementationAddress,
           mockHatsAddress,
-          decentHatsAddress
+          decentHatsAddress,
+          dao
         );
 
         // The recipient withdraws the full amount
-        await MockSablierV2LockupLinear__factory.connect(mockSablierAddress, dao).withdrawMax(
-          streamId,
-          await recipientHatAccount.getAddress()
+        await recipientHatAccount.execute(
+          mockSablierAddress,
+          0n,
+          MockSablierV2LockupLinear__factory.createInterface().encodeFunctionData("withdrawMax", [
+            streamId,
+            dao.address,
+          ]),
+          0
         );
+
         expect(await mockSablier.withdrawableAmountOf(streamId)).to.equal(0);
 
         withdrawTx = await executeSafeTransaction({
@@ -280,7 +288,7 @@ describe.only("DecentSablierStreamManagement", () => {
           to: decentSablierManagementAddress,
           transactionData: DecentSablierStreamManagement__factory.createInterface().encodeFunctionData(
             "withdrawMaxFromStream",
-            [mockSablierAddress, streamId, await recipientHatAccount.getAddress()]
+            [mockSablierAddress, await recipientHatAccount.getAddress(), streamId, dao.address]
           ),
           signers: [dao],
         });
@@ -331,6 +339,7 @@ describe.only("DecentSablierStreamManagement", () => {
       });
 
       it("Cancels the stream", async () => {
+        // TODO: use stream.statusOf instead
         expect((await mockSablier.getStream(streamId)).cancelable).to.equal(false);
       });
     });
