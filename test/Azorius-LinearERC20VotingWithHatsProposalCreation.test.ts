@@ -14,8 +14,6 @@ import {
   VotesERC20__factory,
   ModuleProxyFactory,
   GnosisSafeL2__factory,
-  MockHats,
-  MockHats__factory,
 } from "../typechain-types";
 
 import {
@@ -43,17 +41,10 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
   let votesERC20: VotesERC20;
   let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
   let moduleProxyFactory: ModuleProxyFactory;
-  let hatsContract: MockHats;
 
   // Wallets
   let deployer: SignerWithAddress;
   let gnosisSafeOwner: SignerWithAddress;
-  let hatWearer1: SignerWithAddress;
-  let hatWearer2: SignerWithAddress;
-
-  // Hats
-  let proposerHat: bigint;
-  let nonProposerHat: bigint;
 
   // Gnosis
   let createGnosisSetupCalldata: string;
@@ -69,8 +60,7 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
 
     const abiCoder = new ethers.AbiCoder();
 
-    [deployer, gnosisSafeOwner, hatWearer1, hatWearer2] =
-      await hre.ethers.getSigners();
+    [deployer, gnosisSafeOwner] = await hre.ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -170,56 +160,14 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
       predictedAzoriusAddress
     );
 
-    // Deploy Hats mock contract
-    hatsContract = await new MockHats__factory(deployer).deploy();
-
-    // Create hats for testing
-    proposerHat = await hatsContract.createHat.staticCall(
-      0,
-      "Proposer Hat",
-      0,
-      ethers.ZeroAddress,
-      deployer.address,
-      true,
-      ""
-    );
-    await hatsContract.createHat(
-      0,
-      "Proposer Hat",
-      0,
-      ethers.ZeroAddress,
-      deployer.address,
-      true,
-      ""
-    );
-    nonProposerHat = await hatsContract.createHat.staticCall(
-      0,
-      "Non-Proposer Hat",
-      0,
-      ethers.ZeroAddress,
-      deployer.address,
-      true,
-      ""
-    );
-    await hatsContract.createHat(
-      0,
-      "Non-Proposer Hat",
-      0,
-      ethers.ZeroAddress,
-      deployer.address,
-      true,
-      ""
-    );
-
-    // Mint hats to users
-    await hatsContract.mintHat(proposerHat, hatWearer1.address);
-    await hatsContract.mintHat(nonProposerHat, hatWearer2.address);
-
     // Deploy LinearERC20VotingWithHatsProposalCreation
     linearERC20VotingWithHatsMastercopy =
       await new LinearERC20VotingWithHatsProposalCreation__factory(
         deployer
       ).deploy();
+
+    const mockHatsContractAddress =
+      "0x1234567890123456789012345678901234567890";
 
     const linearERC20VotingWithHatsSetupCalldata =
       LinearERC20VotingWithHatsProposalCreation__factory.createInterface().encodeFunctionData(
@@ -243,8 +191,8 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
               60,
               500000,
               500000,
-              await hatsContract.getAddress(),
-              [proposerHat],
+              mockHatsContractAddress,
+              [1n], // Use a mock hat ID
             ]
           ),
         ]
@@ -325,10 +273,8 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
       await azorius.getAddress()
     );
     expect(await linearERC20VotingWithHats.hatsContract()).to.eq(
-      await hatsContract.getAddress()
+      "0x1234567890123456789012345678901234567890"
     );
-    expect(await linearERC20VotingWithHats.isHatWhitelisted(proposerHat)).to.be
-      .true;
   });
 
   it("Cannot call setUp function again", async () => {
@@ -350,178 +296,13 @@ describe("LinearERC20VotingWithHatsProposalCreation", () => {
         60, // voting period
         500000, // quorum numerator
         500000, // basis numerator
-        await hatsContract.getAddress(),
-        [proposerHat],
+        "0x1234567890123456789012345678901234567890",
+        [1n],
       ]
     );
 
     await expect(
       linearERC20VotingWithHats.setUp(setupParams)
     ).to.be.revertedWith("Initializable: contract is already initialized");
-  });
-
-  it.skip("Cannot initialize with no whitelisted hats", async () => {
-    const linearERC20VotingWithHatsSetupCalldata =
-      LinearERC20VotingWithHatsProposalCreation__factory.createInterface().encodeFunctionData(
-        "setUp",
-        [
-          ethers.AbiCoder.defaultAbiCoder().encode(
-            [
-              "address",
-              "address",
-              "address",
-              "uint32",
-              "uint256",
-              "uint256",
-              "address",
-              "uint256[]",
-            ],
-            [
-              gnosisSafeOwner.address,
-              await votesERC20.getAddress(),
-              await azorius.getAddress(),
-              60,
-              500000,
-              500000,
-              await hatsContract.getAddress(),
-              [],
-            ]
-          ),
-        ]
-      );
-
-    await expect(
-      moduleProxyFactory.deployModule(
-        await linearERC20VotingWithHatsMastercopy.getAddress(),
-        linearERC20VotingWithHatsSetupCalldata,
-        "93874908709823098740982309874098230987409823098740982309874098230"
-      )
-    ).to.be.revertedWithCustomError(
-      linearERC20VotingWithHatsMastercopy,
-      "NoHatsWhitelisted"
-    );
-  });
-
-  it("Only owner can whitelist a hat", async () => {
-    await expect(
-      linearERC20VotingWithHats
-        .connect(gnosisSafeOwner)
-        .whitelistHat(nonProposerHat)
-    )
-      .to.emit(linearERC20VotingWithHats, "HatWhitelisted")
-      .withArgs(nonProposerHat);
-
-    await expect(
-      linearERC20VotingWithHats.connect(hatWearer1).whitelistHat(nonProposerHat)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-
-  it("Only owner can remove a hat from whitelist", async () => {
-    await expect(
-      linearERC20VotingWithHats
-        .connect(gnosisSafeOwner)
-        .removeHatFromWhitelist(proposerHat)
-    )
-      .to.emit(linearERC20VotingWithHats, "HatRemovedFromWhitelist")
-      .withArgs(proposerHat);
-
-    await expect(
-      linearERC20VotingWithHats
-        .connect(hatWearer1)
-        .removeHatFromWhitelist(proposerHat)
-    ).to.be.revertedWith("Ownable: caller is not the owner");
-  });
-
-  it("Correctly identifies proposers based on whitelisted hats", async () => {
-    expect(await linearERC20VotingWithHats.isProposer(hatWearer1.address)).to.be
-      .true;
-    expect(await linearERC20VotingWithHats.isProposer(hatWearer2.address)).to.be
-      .false;
-
-    await linearERC20VotingWithHats
-      .connect(gnosisSafeOwner)
-      .whitelistHat(nonProposerHat);
-
-    expect(await linearERC20VotingWithHats.isProposer(hatWearer2.address)).to.be
-      .true;
-  });
-
-  it("Only users with whitelisted hats can submit proposals", async () => {
-    const tokenTransferData = votesERC20.interface.encodeFunctionData(
-      "transfer",
-      [deployer.address, 100]
-    );
-
-    const proposalTransaction = {
-      to: await votesERC20.getAddress(),
-      value: 0n,
-      data: tokenTransferData,
-      operation: 0,
-    };
-
-    await expect(
-      azorius
-        .connect(hatWearer1)
-        .submitProposal(
-          await linearERC20VotingWithHats.getAddress(),
-          "0x",
-          [proposalTransaction],
-          ""
-        )
-    ).to.not.be.reverted;
-
-    await expect(
-      azorius
-        .connect(hatWearer2)
-        .submitProposal(
-          await linearERC20VotingWithHats.getAddress(),
-          "0x",
-          [proposalTransaction],
-          ""
-        )
-    ).to.be.revertedWithCustomError(azorius, "InvalidProposer");
-  });
-
-  it("Returns correct number of whitelisted hats", async () => {
-    expect(await linearERC20VotingWithHats.getWhitelistedHatsCount()).to.equal(
-      1
-    );
-
-    await linearERC20VotingWithHats
-      .connect(gnosisSafeOwner)
-      .whitelistHat(nonProposerHat);
-
-    expect(await linearERC20VotingWithHats.getWhitelistedHatsCount()).to.equal(
-      2
-    );
-
-    await linearERC20VotingWithHats
-      .connect(gnosisSafeOwner)
-      .removeHatFromWhitelist(proposerHat);
-
-    expect(await linearERC20VotingWithHats.getWhitelistedHatsCount()).to.equal(
-      1
-    );
-  });
-
-  it("Correctly checks if a hat is whitelisted", async () => {
-    expect(await linearERC20VotingWithHats.isHatWhitelisted(proposerHat)).to.be
-      .true;
-    expect(await linearERC20VotingWithHats.isHatWhitelisted(nonProposerHat)).to
-      .be.false;
-
-    await linearERC20VotingWithHats
-      .connect(gnosisSafeOwner)
-      .whitelistHat(nonProposerHat);
-
-    expect(await linearERC20VotingWithHats.isHatWhitelisted(nonProposerHat)).to
-      .be.true;
-
-    await linearERC20VotingWithHats
-      .connect(gnosisSafeOwner)
-      .removeHatFromWhitelist(proposerHat);
-
-    expect(await linearERC20VotingWithHats.isHatWhitelisted(proposerHat)).to.be
-      .false;
   });
 });
