@@ -10,7 +10,7 @@ import {
   MockHats__factory,
 } from "../typechain-types";
 
-describe.only("HatsProposalCreationWhitelist", () => {
+describe("HatsProposalCreationWhitelist", () => {
   let mockHatsProposalCreationWhitelist: MockHatsProposalCreationWhitelist;
   let hatsContract: MockHats;
 
