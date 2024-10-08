@@ -19,4 +19,8 @@ interface ISablierV2Lockup {
     ) external view returns (LockupLinear.Stream memory);
 
     function cancel(uint256 streamId) external;
+
+    function statusOf(
+        uint256 streamId
+    ) external view returns (LockupLinear.Status status);
 }

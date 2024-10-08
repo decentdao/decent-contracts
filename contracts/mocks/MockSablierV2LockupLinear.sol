@@ -42,6 +42,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
             totalAmount: params.totalAmount,
             asset: address(params.asset),
             cancelable: params.cancelable,
+            wasCanceled: false,
             transferable: params.transferable,
             startTime: params.timestamps.start,
             cliffTime: params.timestamps.cliff,
@@ -116,8 +117,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         uint128 withdrawableAmount = withdrawableAmountOf(streamId);
         uint128 refundAmount = stream.totalAmount - withdrawableAmount;
 
-        // TODO: instead of deleting, update state similar to how the real Sablier contract does
-        delete streams[streamId];
+        streams[streamId].wasCanceled = true;
 
         if (withdrawableAmount > 0) {
             IERC20(stream.asset).transfer(stream.recipient, withdrawableAmount);
@@ -129,5 +129,27 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
 
     function isCancelable(uint256 streamId) external view returns (bool) {
         return streams[streamId].cancelable;
+    }
+
+    /// @dev Retrieves the stream's status without performing a null check.
+    function statusOf(
+        uint256 streamId
+    ) public view returns (LockupLinear.Status) {
+        uint256 withdrawableAmount = withdrawableAmountOf(streamId);
+        if (withdrawableAmount == 0) {
+            return LockupLinear.Status.DEPLETED;
+        } else if (streams[streamId].wasCanceled) {
+            return LockupLinear.Status.CANCELED;
+        }
+
+        if (block.timestamp < streams[streamId].startTime) {
+            return LockupLinear.Status.PENDING;
+        }
+
+        if (block.timestamp < streams[streamId].endTime) {
+            return LockupLinear.Status.STREAMING;
+        } else {
+            return LockupLinear.Status.SETTLED;
+        }
     }
 }

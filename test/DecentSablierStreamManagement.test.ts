@@ -339,8 +339,7 @@ describe("DecentSablierStreamManagement", () => {
       });
 
       it("Cancels the stream", async () => {
-        // TODO: use stream.statusOf instead
-        expect((await mockSablier.getStream(streamId)).cancelable).to.equal(false);
+        expect(await mockSablier.statusOf(streamId)).to.equal(3); // 3 === LockupLinear.Status.CANCELED
       });
     });
 
