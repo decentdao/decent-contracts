@@ -6,20 +6,7 @@ import "../interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "../interfaces/sablier/LockupLinear.sol";
 
 contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
-    // Define the Stream struct here
-    struct Stream {
-        address sender;
-        address recipient;
-        uint128 totalAmount;
-        address asset;
-        bool cancelable;
-        bool transferable;
-        uint40 startTime;
-        uint40 cliffTime;
-        uint40 endTime;
-    }
-
-    mapping(uint256 => Stream) public streams;
+    mapping(uint256 => LockupLinear.Stream) public streams;
     uint256 public nextStreamId = 1;
 
     // Add this event declaration at the contract level
@@ -49,7 +36,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         );
 
         streamId = nextStreamId++;
-        streams[streamId] = Stream({
+        streams[streamId] = LockupLinear.Stream({
             sender: params.sender,
             recipient: params.recipient,
             totalAmount: params.totalAmount,
@@ -78,14 +65,16 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         return streamId;
     }
 
-    function getStream(uint256 streamId) external view returns (Stream memory) {
+    function getStream(
+        uint256 streamId
+    ) external view returns (LockupLinear.Stream memory) {
         return streams[streamId];
     }
 
     function withdrawableAmountOf(
         uint256 streamId
     ) public view returns (uint128) {
-        Stream memory stream = streams[streamId];
+        LockupLinear.Stream memory stream = streams[streamId];
         if (block.timestamp <= stream.startTime) {
             return 0;
         }
@@ -104,7 +93,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         address to
     ) external returns (uint128 withdrawnAmount) {
         withdrawnAmount = withdrawableAmountOf(streamId);
-        Stream storage stream = streams[streamId];
+        LockupLinear.Stream storage stream = streams[streamId];
 
         require(to == stream.recipient, "Only recipient can withdraw");
         require(
@@ -117,7 +106,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
     }
 
     function cancel(uint256 streamId) external {
-        Stream memory stream = streams[streamId];
+        LockupLinear.Stream memory stream = streams[streamId];
         require(stream.cancelable, "Stream is not cancelable");
         require(msg.sender == stream.sender, "Only sender can cancel");
 

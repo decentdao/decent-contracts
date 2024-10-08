@@ -208,7 +208,6 @@ export const executeSafeTransaction = async ({
     data: transactionData,
     nonce: await safe.nonce(),
   });
-  console.log("safeIx");
 
   const sigs = await Promise.all(signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx)));
 
@@ -224,8 +223,6 @@ export const executeSafeTransaction = async ({
     safeTx.refundReceiver,
     buildSignatureBytes(sigs)
   );
-
-  console.log("done?");
 
   return tx;
 };

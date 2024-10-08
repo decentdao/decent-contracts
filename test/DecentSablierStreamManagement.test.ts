@@ -290,12 +290,129 @@ describe.only("DecentSablierStreamManagement", () => {
         await expect(withdrawTx).to.emit(gnosisSafe, "ExecutionSuccess");
       });
 
-      it("Emits an ExecutionFromModuleSuccess event", async () => {
+      it("Does not emit an ExecutionFromModuleSuccess event", async () => {
         await expect(withdrawTx).to.not.emit(gnosisSafe, "ExecutionFromModuleSuccess");
       });
 
       it("Does not revert", async () => {
         expect(withdrawTx).to.not.reverted;
+      });
+    });
+  });
+
+  describe("Cancelling From Stream", () => {
+    let cancelTx: ethers.ContractTransactionResponse;
+
+    describe("When the stream is active", () => {
+      beforeEach(async () => {
+        // Advance time to before the end of the stream
+        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 60000]); // 1 minute from now
+        await hre.ethers.provider.send("evm_mine", []);
+
+        cancelTx = await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentSablierManagementAddress,
+          transactionData: DecentSablierStreamManagement__factory.createInterface().encodeFunctionData("cancelStream", [
+            mockSablierAddress,
+            streamId,
+          ]),
+          signers: [dao],
+        });
+      });
+
+      it("Emits an ExecutionSuccess event", async () => {
+        await expect(cancelTx).to.emit(gnosisSafe, "ExecutionSuccess");
+      });
+
+      it("Emits an ExecutionFromModuleSuccess event", async () => {
+        await expect(cancelTx)
+          .to.emit(gnosisSafe, "ExecutionFromModuleSuccess")
+          .withArgs(decentSablierManagementAddress);
+      });
+
+      it("Cancels the stream", async () => {
+        expect((await mockSablier.getStream(streamId)).cancelable).to.equal(false);
+      });
+    });
+
+    describe("When the stream has expired", () => {
+      beforeEach(async () => {
+        // Advance time to the end of the stream
+        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 2592000 + 60000]); // 30 days from now + 1 minute
+        await hre.ethers.provider.send("evm_mine", []);
+
+        cancelTx = await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentSablierManagementAddress,
+          transactionData: DecentSablierStreamManagement__factory.createInterface().encodeFunctionData("cancelStream", [
+            mockSablierAddress,
+            streamId,
+          ]),
+          signers: [dao],
+        });
+      });
+
+      it("Emits an ExecutionSuccess event", async () => {
+        await expect(cancelTx).to.emit(gnosisSafe, "ExecutionSuccess");
+      });
+
+      it("Does not emit an ExecutionFromModuleSuccess event", async () => {
+        await expect(cancelTx).to.not.emit(gnosisSafe, "ExecutionFromModuleSuccess");
+      });
+
+      it("Does not revert", async () => {
+        expect(cancelTx).to.not.reverted;
+      });
+    });
+
+    describe("When the stream has been previously cancelled", () => {
+      beforeEach(async () => {
+        // Advance time to before the end of the stream
+        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 120000]); // 2 minutes from now
+        await hre.ethers.provider.send("evm_mine", []);
+
+        await MockSablierV2LockupLinear__factory.connect(mockSablierAddress, dao).cancel(streamId);
+
+        const stream = await mockSablier.getStream(streamId);
+
+        expect(stream.startTime).to.equal(currentBlockTimestamp);
+        expect(stream.endTime).to.equal(currentBlockTimestamp + 2592000);
+
+        // The safe cancels the stream
+        await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: mockSablierAddress,
+          transactionData: MockSablierV2LockupLinear__factory.createInterface().encodeFunctionData("cancel", [
+            streamId,
+          ]),
+          signers: [dao],
+        });
+
+        // advance 1 minute
+        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 60000]);
+        await hre.ethers.provider.send("evm_mine", []);
+
+        cancelTx = await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentSablierManagementAddress,
+          transactionData: DecentSablierStreamManagement__factory.createInterface().encodeFunctionData("cancelStream", [
+            mockSablierAddress,
+            streamId,
+          ]),
+          signers: [dao],
+        });
+      });
+
+      it("Emits an ExecutionSuccess event", async () => {
+        await expect(cancelTx).to.emit(gnosisSafe, "ExecutionSuccess");
+      });
+
+      it("Does not emit an ExecutionFromModuleSuccess event", async () => {
+        await expect(cancelTx).to.not.emit(gnosisSafe, "ExecutionFromModuleSuccess");
+      });
+
+      it("Does not revert", async () => {
+        expect(cancelTx).to.not.reverted;
       });
     });
   });

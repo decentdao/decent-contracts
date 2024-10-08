@@ -25,4 +25,16 @@ library LockupLinear {
         address account;
         uint256 fee;
     }
+
+    struct Stream {
+        address sender;
+        address recipient;
+        uint128 totalAmount;
+        address asset;
+        bool cancelable;
+        bool transferable;
+        uint40 startTime;
+        uint40 cliffTime;
+        uint40 endTime;
+    }
 }
