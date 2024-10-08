@@ -39,7 +39,7 @@ contract DecentSablierStreamManagement {
         // Check if the stream is still active
         if (
             !sablier.isCancelable(streamId) ||
-            sablier.getStream(streamId).endTime < block.timestamp
+            sablier.getStream(streamId).endTime <= block.timestamp
         ) {
             return;
         }

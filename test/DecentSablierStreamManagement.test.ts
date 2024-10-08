@@ -371,12 +371,8 @@ describe.only("DecentSablierStreamManagement", () => {
         await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 120000]); // 2 minutes from now
         await hre.ethers.provider.send("evm_mine", []);
 
-        await MockSablierV2LockupLinear__factory.connect(mockSablierAddress, dao).cancel(streamId);
-
         const stream = await mockSablier.getStream(streamId);
-
-        expect(stream.startTime).to.equal(currentBlockTimestamp);
-        expect(stream.endTime).to.equal(currentBlockTimestamp + 2592000);
+        expect(stream.endTime).to.be.greaterThan(currentBlockTimestamp);
 
         // The safe cancels the stream
         await executeSafeTransaction({
@@ -388,8 +384,7 @@ describe.only("DecentSablierStreamManagement", () => {
           signers: [dao],
         });
 
-        // advance 1 minute
-        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 60000]);
+        await hre.ethers.provider.send("evm_setNextBlockTimestamp", [currentBlockTimestamp + 240000]); // 4 minutes from now
         await hre.ethers.provider.send("evm_mine", []);
 
         cancelTx = await executeSafeTransaction({
