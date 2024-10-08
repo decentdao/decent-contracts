@@ -10,9 +10,8 @@ contract DecentSablierStreamManagement {
 
     function withdrawMaxFromStream(
         ISablierV2LockupLinear sablier,
-        HatsAccount1ofNAbi smartAccount,
         uint256 streamId,
-        address to,
+        address to
     ) public {
         // Check if there are funds to withdraw
         uint128 withdrawableAmount = sablier.withdrawableAmountOf(streamId);
@@ -22,24 +21,21 @@ contract DecentSablierStreamManagement {
 
         // Proxy the Sablier withdrawMax call through IAvatar (Safe)
         IAvatar(msg.sender).execTransactionFromModule(
-            address(smartAccount),
+            address(sablier),
             0,
             abi.encodeWithSignature(
-                "execute(address,uint256,bytes,uint8)",
-                address(sablier),
-                0,
-                abi.encodeWithSignature(
-                    "withdrawMax(uint256,address)",
-                    streamId,
-                    to
-                ),
-                0
+                "withdrawMax(uint256,address)",
+                streamId,
+                to
             ),
             Enum.Operation.Call
         );
     }
 
-    function cancelStream(ISablierV2LockupLinear sablier, uint256 streamId) public {
+    function cancelStream(
+        ISablierV2LockupLinear sablier,
+        uint256 streamId
+    ) public {
         // Check if the stream is still active
         if (!sablier.isCancelable(streamId)) {
             return;
@@ -48,10 +44,7 @@ contract DecentSablierStreamManagement {
         IAvatar(msg.sender).execTransactionFromModule(
             address(sablier),
             0,
-            abi.encodeWithSignature(
-                "cancel(uint256)",
-                streamId,
-            ),
+            abi.encodeWithSignature("cancel(uint256)", streamId),
             Enum.Operation.Call
         );
     }

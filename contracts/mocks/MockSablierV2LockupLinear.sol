@@ -99,16 +99,21 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
             );
     }
 
-    function withdraw(uint256 streamId, uint128 amount) external {
+    function withdrawMax(
+        uint256 streamId,
+        address to
+    ) external returns (uint128 withdrawnAmount) {
+        withdrawnAmount = withdrawableAmountOf(streamId);
         Stream storage stream = streams[streamId];
-        require(msg.sender == stream.recipient, "Only recipient can withdraw");
+
+        require(to == stream.recipient, "Only recipient can withdraw");
         require(
-            amount <= withdrawableAmountOf(streamId),
+            withdrawnAmount <= withdrawableAmountOf(streamId),
             "Insufficient withdrawable amount"
         );
 
-        stream.totalAmount -= amount;
-        IERC20(stream.asset).transfer(stream.recipient, amount);
+        stream.totalAmount -= withdrawnAmount;
+        IERC20(stream.asset).transfer(stream.recipient, withdrawnAmount);
     }
 
     function cancel(uint256 streamId) external {
@@ -129,35 +134,7 @@ contract MockSablierV2LockupLinear is ISablierV2LockupLinear {
         }
     }
 
-    function renounce(uint256 streamId) external {
-        Stream memory stream = streams[streamId];
-        require(msg.sender == stream.recipient, "Only recipient can renounce");
-
-        uint128 withdrawableAmount = withdrawableAmountOf(streamId);
-        uint128 refundAmount = stream.totalAmount - withdrawableAmount;
-
-        delete streams[streamId];
-
-        if (withdrawableAmount > 0) {
-            IERC20(stream.asset).transfer(stream.recipient, withdrawableAmount);
-        }
-        if (refundAmount > 0) {
-            IERC20(stream.asset).transfer(stream.sender, refundAmount);
-        }
-    }
-
-    function transferFrom(uint256 streamId, address recipient) external {
-        Stream storage stream = streams[streamId];
-        require(stream.transferable, "Stream is not transferable");
-        require(
-            msg.sender == stream.recipient,
-            "Only current recipient can transfer"
-        );
-
-        stream.recipient = recipient;
-    }
-
-    function getRecipient(uint256 streamId) external view returns (address) {
-        return streams[streamId].recipient;
+    function isCancelable(uint256 streamId) external view returns (bool) {
+        return streams[streamId].cancelable;
     }
 }
