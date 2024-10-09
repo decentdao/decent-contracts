@@ -2,7 +2,7 @@
 pragma solidity =0.8.19;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IHats} from "../interfaces/hats/IHats.sol";
+import {IHats} from "../interfaces/hats/IHatsFull.sol";
 
 abstract contract HatsProposalCreationWhitelist is OwnableUpgradeable {
     event HatWhitelisted(uint256 hatId);
