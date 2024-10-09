@@ -7,7 +7,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
-import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
@@ -19,7 +18,7 @@ contract DecentHats_0_2_0 {
     string public constant NAME = "DecentHats_0_2_0";
 
     struct SablierStreamParams {
-        ISablierV2LockupLinear sablier;
+        address sablierV2LockupLinear;
         address sender;
         address asset;
         LockupLinear.Timestamps timestamps;
@@ -252,7 +251,7 @@ contract DecentHats_0_2_0 {
                 0,
                 abi.encodeWithSignature(
                     "approve(address,uint256)",
-                    address(sablierParams.sablier),
+                    sablierParams.sablierV2LockupLinear,
                     sablierParams.totalAmount
                 ),
                 Enum.Operation.Call
@@ -272,7 +271,7 @@ contract DecentHats_0_2_0 {
 
             // Proxy the Sablier call through IAvatar
             IAvatar(msg.sender).execTransactionFromModule(
-                address(sablierParams.sablier),
+                sablierParams.sablierV2LockupLinear,
                 0,
                 abi.encodeWithSignature(
                     "createWithTimestamps((address,address,uint128,address,bool,bool,(uint40,uint40,uint40),(address,uint256)))",

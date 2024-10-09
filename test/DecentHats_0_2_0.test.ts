@@ -434,7 +434,7 @@ describe("DecentHats_0_2_0", () => {
                     wearer: ethers.ZeroAddress,
                     sablierParams: [
                       {
-                        sablier: mockSablierAddress,
+                        sablierV2LockupLinear: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("100"),
                         asset: mockERC20Address,
@@ -576,7 +576,7 @@ describe("DecentHats_0_2_0", () => {
                     wearer: ethers.ZeroAddress,
                     sablierParams: [
                       {
-                        sablier: mockSablierAddress,
+                        sablierV2LockupLinear: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("100"),
                         asset: mockERC20Address,
@@ -590,7 +590,7 @@ describe("DecentHats_0_2_0", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                       {
-                        sablier: mockSablierAddress,
+                        sablierV2LockupLinear: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("50"),
                         asset: mockERC20Address,
