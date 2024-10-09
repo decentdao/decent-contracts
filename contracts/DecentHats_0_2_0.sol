@@ -7,7 +7,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
 import {IHats} from "./interfaces/hats/IHats.sol";
-import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
+import {LockupLinear, Broker} from "./interfaces/sablier/full/types/DataTypes.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
@@ -22,7 +22,7 @@ contract DecentHats_0_2_0 {
         address sender;
         address asset;
         LockupLinear.Timestamps timestamps;
-        LockupLinear.Broker broker;
+        Broker broker;
         uint128 totalAmount;
         bool cancelable;
         bool transferable;
