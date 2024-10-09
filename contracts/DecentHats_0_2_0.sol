@@ -10,7 +10,7 @@ import {IHats} from "./interfaces/hats/IHats.sol";
 import {LockupLinear, Broker} from "./interfaces/sablier/full/types/DataTypes.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/hats/full/IHatsModuleFactory.sol";
-import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
+import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
 
