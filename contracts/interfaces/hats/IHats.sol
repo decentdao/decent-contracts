@@ -39,15 +39,4 @@ interface IHats {
     ) external returns (bool success);
 
     function transferHat(uint256 _hatId, address _from, address _to) external;
-
-    function getHatEligibilityModule(
-        uint256 _hatId
-    ) external view returns (address eligibility);
-
-    function isWearerOfHat(
-        address _user,
-        uint256 _hatId
-    ) external view returns (bool isWearer);
-
-    function changeHatEligibility(uint256 _hatId, address _newEligibility) external;
 }
