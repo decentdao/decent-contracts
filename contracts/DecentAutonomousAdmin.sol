@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
-import "./interfaces/hats/IHats.sol";
-import "./interfaces/hats/IHatsElectionEligibility.sol";
-import "./interfaces/sablier/full/ISablierV2Lockup.sol";
+import {IHats} from "./interfaces/hats/IHats.sol";
+import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
+import {ISablierV2Lockup} from "./interfaces/sablier/full/ISablierV2Lockup.sol";
 
 contract DecentAutonomousAdmin {
     string public constant NAME = "DecentAutonomousAdmin";
