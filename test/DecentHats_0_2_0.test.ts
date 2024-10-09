@@ -17,6 +17,10 @@ import {
   MockERC20,
   MockHatsModuleFactory__factory,
   MockHatsElectionEligibility__factory,
+  ModuleProxyFactory__factory,
+  ModuleProxyFactory,
+  DecentAutonomousAdmin__factory,
+  DecentAutonomousAdmin,
 } from "../typechain-types"
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -96,6 +100,9 @@ describe("DecentHats_0_2_0", () => {
   let mockHatsElectionEligibilityImplementationAddress: string
   let mockHatsModuleFactoryAddress: string
 
+  let moduleProxyFactory: ModuleProxyFactory
+  let decentAutonomousAdminMasterCopy: DecentAutonomousAdmin
+
   beforeEach(async () => {
     const signers = await hre.ethers.getSigners()
     const [deployer] = signers
@@ -115,6 +122,9 @@ describe("DecentHats_0_2_0", () => {
     mockHatsAccountImplementationAddress = await mockHatsAccountImplementation.getAddress()
     decentHats = await new DecentHats_0_2_0__factory(deployer).deploy()
     decentHatsAddress = await decentHats.getAddress()
+
+    moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy()
+    decentAutonomousAdminMasterCopy = await new DecentAutonomousAdmin__factory(deployer).deploy()
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory()
     const gnosisSafeL2Singleton = getGnosisSafeL2Singleton()
@@ -202,6 +212,8 @@ describe("DecentHats_0_2_0", () => {
                 keyValuePairs: await keyValuePairs.getAddress(),
                 topHatDetails: "",
                 topHatImageURI: "",
+                decentAutonomousAdminMasterCopy: await decentAutonomousAdminMasterCopy.getAddress(),
+                moduleProxyFactory: await moduleProxyFactory.getAddress(),
                 adminHat: {
                   maxSupply: 1,
                   details: "",
@@ -292,6 +304,8 @@ describe("DecentHats_0_2_0", () => {
                   keyValuePairs: await keyValuePairs.getAddress(),
                   topHatDetails: "",
                   topHatImageURI: "",
+                  decentAutonomousAdminMasterCopy: await decentAutonomousAdminMasterCopy.getAddress(),
+                  moduleProxyFactory: await moduleProxyFactory.getAddress(),
                   adminHat: {
                     maxSupply: 1,
                     details: "",
@@ -394,6 +408,8 @@ describe("DecentHats_0_2_0", () => {
                 keyValuePairs: await keyValuePairs.getAddress(),
                 topHatDetails: "",
                 topHatImageURI: "",
+                decentAutonomousAdminMasterCopy: await decentAutonomousAdminMasterCopy.getAddress(),
+                moduleProxyFactory: await moduleProxyFactory.getAddress(),
                 adminHat: {
                   maxSupply: 1,
                   details: "",
@@ -534,6 +550,8 @@ describe("DecentHats_0_2_0", () => {
                 keyValuePairs: await keyValuePairs.getAddress(),
                 topHatDetails: "",
                 topHatImageURI: "",
+                decentAutonomousAdminMasterCopy: await decentAutonomousAdminMasterCopy.getAddress(),
+                moduleProxyFactory: await moduleProxyFactory.getAddress(),
                 adminHat: {
                   maxSupply: 1,
                   details: "",

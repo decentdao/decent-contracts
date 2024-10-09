@@ -49,7 +49,7 @@ describe("DecentAutonomousAdminHat", function () {
     const adminHatId = createAdminTxReceipt?.toJSON().logs[0].args[0]
 
     // Deploy DecentAutonomousAdminHat contract with the admin hat ID
-    adminHat = await new DecentAutonomousAdmin__factory(deployer).deploy(adminHatId)
+    adminHat = await new DecentAutonomousAdmin__factory(deployer).deploy()
     const adminHatAddress = await adminHat.getAddress()
     // Mint the admin hat to adminHatWearer
     await hatsProtocol.mintHat(adminHatId, adminHatAddress)
