@@ -2,7 +2,7 @@
 pragma solidity =0.8.19;
 import "./interfaces/hats/IHats.sol";
 import "./interfaces/hats/IHatsElectionEligibility.sol";
-import "./interfaces/sablier/ISablierV2LockupLinear.sol";
+import "./interfaces/sablier/full/ISablierV2Lockup.sol";
 
 contract DecentAutonomousAdmin {
     string public constant NAME = "DecentAutonomousAdmin";
@@ -10,7 +10,7 @@ contract DecentAutonomousAdmin {
 
     struct SablierStreamInfo {
         uint256 streamId;
-        ISablierV2LockupLinear sablierV2LockupLinear;
+        ISablierV2Lockup sablierV2Lockup;
     }
     struct TriggerStartArgs {
         address currentWearer;
@@ -80,7 +80,7 @@ contract DecentAutonomousAdmin {
         address withdrawTo
     ) internal {
         for (uint256 i = 0; i < _sablierStreamInfo.length; i++) {
-            _sablierStreamInfo[i].sablierV2LockupLinear.withdrawMax(
+            _sablierStreamInfo[i].sablierV2Lockup.withdrawMax(
                 _sablierStreamInfo[i].streamId,
                 withdrawTo
             );
@@ -99,7 +99,7 @@ contract DecentAutonomousAdmin {
 
         for (uint256 i = 0; i < _sablierStreamInfo.length; i++) {
             uint128 withdrawableAmount = _sablierStreamInfo[i]
-                .sablierV2LockupLinear
+                .sablierV2Lockup
                 .withdrawableAmountOf(_sablierStreamInfo[i].streamId);
 
             if (withdrawableAmount > 0) {
@@ -115,7 +115,7 @@ contract DecentAutonomousAdmin {
 
         for (uint256 i = 0; i < _sablierStreamInfo.length; i++) {
             uint128 withdrawableAmount = _sablierStreamInfo[i]
-                .sablierV2LockupLinear
+                .sablierV2Lockup
                 .withdrawableAmountOf(_sablierStreamInfo[i].streamId);
 
             if (withdrawableAmount > 0) {
