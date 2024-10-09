@@ -12,6 +12,8 @@ import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/IHatModuleFactory.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/IHatsElectionEligibility.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
 
 contract DecentHats_0_2_0 {
     string public constant NAME = "DecentHats_0_2_0";
@@ -47,6 +49,8 @@ contract DecentHats_0_2_0 {
         IHats hatsProtocol;
         IERC6551Registry registry;
         IHatsModuleFactory hatsModuleFactory;
+        ModuleProxyFactory moduleProxyFactory;
+        address decentAutonomousAdminMasterCopy;
         address hatsAccountImplementation;
         address keyValuePairs;
         address hatsElectionEligibilityImplementation;
@@ -75,11 +79,13 @@ contract DecentHats_0_2_0 {
 
         (uint256 adminHatId, ) = _createAdminHatAndAccount(
             params.hatsProtocol,
+            params.registry,
+            params.moduleProxyFactory,
+            params.decentAutonomousAdminMasterCopy,
+            params.hatsAccountImplementation,
+            topHatAccount,
             topHatId,
             params.adminHat,
-            topHatAccount,
-            params.registry,
-            params.hatsAccountImplementation,
             salt
         );
 
@@ -138,10 +144,12 @@ contract DecentHats_0_2_0 {
         address _keyValuePairs,
         uint256 topHatId
     ) internal {
-        string[] memory keys = new string[](1);
-        string[] memory values = new string[](1);
+        string[] memory keys = new string[](2);
+        string[] memory values = new string[](2);
         keys[0] = "topHatId";
         values[0] = Strings.toString(topHatId);
+        keys[1] = "decentHatsAddress";
+        values[1] = Strings.toHexString(address(this));
 
         IAvatar(msg.sender).execTransactionFromModule(
             _keyValuePairs,
@@ -281,11 +289,13 @@ contract DecentHats_0_2_0 {
 
     function _createAdminHatAndAccount(
         IHats hatsProtocol,
+        IERC6551Registry registry,
+        ModuleProxyFactory moduleProxyFactory,
+        address decentAutonomousAdminMasterCopy,
+        address hatsAccountImplementation,
+        address topHatAccount,
         uint256 topHatId,
         Hat calldata hat,
-        address topHatAccount,
-        IERC6551Registry registry,
-        address hatsAccountImplementation,
         bytes32 salt
     ) internal returns (uint256 adminHatId, address accountAddress) {
         adminHatId = _createHat(hatsProtocol, topHatId, hat, topHatAccount);
@@ -297,26 +307,15 @@ contract DecentHats_0_2_0 {
             address(hatsProtocol),
             adminHatId
         );
-        address adminInstance = _deployDecentAutonomousAdmin(salt, topHatId);
-        hatsProtocol.mintHat(adminHatId, adminInstance);
-    }
 
-    function _deployDecentAutonomousAdmin(
-        bytes32 salt,
-        uint256 _adminHatId
-    ) internal returns (address deployedAddress) {
-        bytes memory creationCode = _getCreationCode(_adminHatId);
-
-        assembly {
-            deployedAddress := create2(
-                0,
-                add(creationCode, 0x20),
-                mload(creationCode),
-                salt
+        hatsProtocol.mintHat(
+            adminHatId,
+            moduleProxyFactory.deployModule(
+                decentAutonomousAdminMasterCopy,
+                abi.encodeWithSignature("setUp()"),
+                uint256(keccak256(abi.encodePacked(salt, adminHatId)))
             )
-        }
-
-        require(deployedAddress != address(0), "CREATE2: Failed on deploy");
+        );
     }
 
     function _getCreationCode(

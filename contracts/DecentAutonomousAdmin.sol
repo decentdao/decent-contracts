@@ -8,8 +8,6 @@ contract DecentAutonomousAdmin {
     string public constant NAME = "DecentAutonomousAdmin";
     string public version_ = "0.1.0";
 
-    uint256 public adminHatId;
-
     struct SablierStreamInfo {
         uint256 streamId;
         ISablierV2LockupLinear sablierV2LockupLinear;
@@ -23,11 +21,9 @@ contract DecentAutonomousAdmin {
     }
 
     // //////////////////////////////////////////////////////////////
-    //                         Constructor
+    //                         initializer
     // //////////////////////////////////////////////////////////////
-    constructor(uint256 _adminHatId) {
-        adminHatId = _adminHatId;
-    }
+    function setUp() public {}
 
     // //////////////////////////////////////////////////////////////
     //                         Public Functions
