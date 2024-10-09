@@ -3,14 +3,14 @@ pragma solidity =0.8.19;
 
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
-import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
-import {LockupLinear} from "./interfaces/sablier/LockupLinear.sol";
+import {ISablierV2Lockup} from "./interfaces/sablier/ISablierV2Lockup.sol";
+import {LockupLinear2} from "./interfaces/sablier/LockupLinear2.sol";
 
 contract DecentSablierStreamManagement {
     string public constant NAME = "DecentSablierStreamManagement";
 
     function withdrawMaxFromStream(
-        ISablierV2LockupLinear sablier,
+        ISablierV2Lockup sablier,
         address recipientHatAccount,
         uint256 streamId,
         address to
@@ -40,15 +40,12 @@ contract DecentSablierStreamManagement {
         );
     }
 
-    function cancelStream(
-        ISablierV2LockupLinear sablier,
-        uint256 streamId
-    ) public {
+    function cancelStream(ISablierV2Lockup sablier, uint256 streamId) public {
         // Check if the stream can be cancelled
-        LockupLinear.Status streamStatus = sablier.statusOf(streamId);
+        LockupLinear2.Status streamStatus = sablier.statusOf(streamId);
         if (
-            streamStatus != LockupLinear.Status.PENDING &&
-            streamStatus != LockupLinear.Status.STREAMING
+            streamStatus != LockupLinear2.Status.PENDING &&
+            streamStatus != LockupLinear2.Status.STREAMING
         ) {
             return;
         }

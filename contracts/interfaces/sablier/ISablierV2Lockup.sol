@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import {LockupLinear} from "../sablier/LockupLinear.sol";
+import {LockupLinear2} from "../sablier/LockupLinear2.sol";
 
 interface ISablierV2Lockup {
     function withdrawableAmountOf(
@@ -16,11 +16,11 @@ interface ISablierV2Lockup {
 
     function getStream(
         uint256 streamId
-    ) external view returns (LockupLinear.Stream memory);
+    ) external view returns (LockupLinear2.Stream memory);
 
     function cancel(uint256 streamId) external;
 
     function statusOf(
         uint256 streamId
-    ) external view returns (LockupLinear.Status status);
+    ) external view returns (LockupLinear2.Status status);
 }
