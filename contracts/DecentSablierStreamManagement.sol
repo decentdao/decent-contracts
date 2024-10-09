@@ -3,8 +3,8 @@ pragma solidity =0.8.19;
 
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
-import {ISablierV2Lockup} from "./interfaces/sablier/ISablierV2Lockup.sol";
-import {LockupLinear2} from "./interfaces/sablier/LockupLinear2.sol";
+import {ISablierV2Lockup} from "./interfaces/sablier/full/ISablierV2Lockup.sol";
+import {Lockup} from "./interfaces/sablier/full/types/DataTypes.sol";
 
 contract DecentSablierStreamManagement {
     string public constant NAME = "DecentSablierStreamManagement";
@@ -42,10 +42,10 @@ contract DecentSablierStreamManagement {
 
     function cancelStream(ISablierV2Lockup sablier, uint256 streamId) public {
         // Check if the stream can be cancelled
-        LockupLinear2.Status streamStatus = sablier.statusOf(streamId);
+        Lockup.Status streamStatus = sablier.statusOf(streamId);
         if (
-            streamStatus != LockupLinear2.Status.PENDING &&
-            streamStatus != LockupLinear2.Status.STREAMING
+            streamStatus != Lockup.Status.PENDING &&
+            streamStatus != Lockup.Status.STREAMING
         ) {
             return;
         }
