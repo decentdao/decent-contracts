@@ -11,33 +11,22 @@ contract MockHatsAutoAdmin is IHats {
     event HatCreated(uint256 hatId);
 
     function mintTopHat(
-        address _target,
-        string memory _details,
-        string memory _imageURI
+        address,
+        string memory,
+        string memory
     ) external pure returns (uint256 topHatId) {
-        // Silence unused variable warnings
-        _target;
-        _details;
-        _imageURI;
         return 0;
     }
 
     function createHat(
-        uint256 _admin,
-        string calldata _details,
-        uint32 _maxSupply,
+        uint256,
+        string calldata,
+        uint32,
         address _eligibility,
-        address _toggle,
-        bool _mutable,
-        string calldata _imageURI
+        address,
+        bool,
+        string calldata
     ) external returns (uint256 newHatId) {
-        // Silence unused variable warnings
-        _admin;
-        _details;
-        _maxSupply;
-        _toggle;
-        _mutable;
-        _imageURI;
         hatId++;
         eligibility[hatId] = _eligibility;
         emit HatCreated(hatId);
@@ -67,15 +56,16 @@ contract MockHatsAutoAdmin is IHats {
 
     function transferHat(
         uint256 _hatId,
-        address from,
+        address,
         address to
     ) external override {
-        // Silence unused variable warnings
-        from;
         wearer[_hatId] = to;
     }
 
-    function changeHatEligibility(uint256 _hatId, address _newEligibility) external override {
+    function changeHatEligibility(
+        uint256 _hatId,
+        address _newEligibility
+    ) external override {
         eligibility[_hatId] = _newEligibility;
     }
 }
