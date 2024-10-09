@@ -22,7 +22,10 @@ import { expect } from "chai";
 import { ethers, solidityPackedKeccak256 } from "ethers";
 import hre from "hardhat";
 
-import { getGnosisSafeL2Singleton, getGnosisSafeProxyFactory } from "./GlobalSafeDeployments.test";
+import {
+  getGnosisSafeL2Singleton,
+  getGnosisSafeProxyFactory,
+} from "./GlobalSafeDeployments.test";
 import {
   buildSafeTransaction,
   buildSignatureBytes,
@@ -64,27 +67,34 @@ describe("DecentHats_0_1_0", () => {
     mockHatsAddress = await mockHats.getAddress();
     keyValuePairs = await new KeyValuePairs__factory(deployer).deploy();
     erc6551Registry = await new ERC6551Registry__factory(deployer).deploy();
-    mockHatsAccountImplementation = await new MockHatsAccount__factory(deployer).deploy();
-    mockHatsAccountImplementationAddress = await mockHatsAccountImplementation.getAddress();
+    mockHatsAccountImplementation = await new MockHatsAccount__factory(
+      deployer
+    ).deploy();
+    mockHatsAccountImplementationAddress =
+      await mockHatsAccountImplementation.getAddress();
     decentHats = await new DecentHats_0_1_0__factory(deployer).deploy();
     decentHatsAddress = await decentHats.getAddress();
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     const gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
-    const gnosisSafeL2SingletonAddress = await gnosisSafeL2Singleton.getAddress();
+    const gnosisSafeL2SingletonAddress =
+      await gnosisSafeL2Singleton.getAddress();
 
-    const createGnosisSetupCalldata = GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
-      [dao.address],
-      1,
-      hre.ethers.ZeroAddress,
-      hre.ethers.ZeroHash,
-      hre.ethers.ZeroAddress,
-      hre.ethers.ZeroAddress,
-      0,
-      hre.ethers.ZeroAddress,
-    ]);
+    const createGnosisSetupCalldata =
+      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+        [dao.address],
+        1,
+        hre.ethers.ZeroAddress,
+        hre.ethers.ZeroHash,
+        hre.ethers.ZeroAddress,
+        hre.ethers.ZeroAddress,
+        0,
+        hre.ethers.ZeroAddress,
+      ]);
 
-    const saltNum = BigInt(`0x${Buffer.from(hre.ethers.randomBytes(32)).toString("hex")}`);
+    const saltNum = BigInt(
+      `0x${Buffer.from(hre.ethers.randomBytes(32)).toString("hex")}`
+    );
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
@@ -94,15 +104,27 @@ describe("DecentHats_0_1_0", () => {
     );
     gnosisSafeAddress = predictedGnosisSafeAddress;
 
-    await gnosisSafeProxyFactory.createProxyWithNonce(gnosisSafeL2SingletonAddress, createGnosisSetupCalldata, saltNum);
+    await gnosisSafeProxyFactory.createProxyWithNonce(
+      gnosisSafeL2SingletonAddress,
+      createGnosisSetupCalldata,
+      saltNum
+    );
 
-    gnosisSafe = GnosisSafeL2__factory.connect(predictedGnosisSafeAddress, deployer);
+    gnosisSafe = GnosisSafeL2__factory.connect(
+      predictedGnosisSafeAddress,
+      deployer
+    );
 
     // Deploy MockSablierV2LockupLinear
-    mockSablier = await new MockSablierV2LockupLinear__factory(deployer).deploy();
+    mockSablier = await new MockSablierV2LockupLinear__factory(
+      deployer
+    ).deploy();
     mockSablierAddress = await mockSablier.getAddress();
 
-    mockERC20 = await new MockERC20__factory(deployer).deploy("MockERC20", "MCK");
+    mockERC20 = await new MockERC20__factory(deployer).deploy(
+      "MockERC20",
+      "MCK"
+    );
     mockERC20Address = await mockERC20.getAddress();
 
     await mockERC20.mint(gnosisSafeAddress, ethers.parseEther("1000000"));
@@ -115,9 +137,11 @@ describe("DecentHats_0_1_0", () => {
       enableModuleTx = await executeSafeTransaction({
         safe: gnosisSafe,
         to: gnosisSafeAddress,
-        transactionData: GnosisSafeL2__factory.createInterface().encodeFunctionData("enableModule", [
-          decentHatsAddress,
-        ]),
+        transactionData:
+          GnosisSafeL2__factory.createInterface().encodeFunctionData(
+            "enableModule",
+            [decentHatsAddress]
+          ),
         signers: [dao],
       });
     });
@@ -128,7 +152,9 @@ describe("DecentHats_0_1_0", () => {
       });
 
       it("Emits an EnabledModule event", async () => {
-        await expect(enableModuleTx).to.emit(gnosisSafe, "EnabledModule").withArgs(decentHatsAddress);
+        await expect(enableModuleTx)
+          .to.emit(gnosisSafe, "EnabledModule")
+          .withArgs(decentHatsAddress);
       });
     });
 
@@ -139,48 +165,56 @@ describe("DecentHats_0_1_0", () => {
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData("createAndDeclareTree", [
-            {
-              hatsProtocol: mockHatsAddress,
-              hatsAccountImplementation: mockHatsAccountImplementationAddress,
-              registry: await erc6551Registry.getAddress(),
-              keyValuePairs: await keyValuePairs.getAddress(),
-              topHatDetails: "",
-              topHatImageURI: "",
-              adminHat: {
-                maxSupply: 1,
-                details: "",
-                imageURI: "",
-                isMutable: false,
-                wearer: ethers.ZeroAddress,
-                sablierParams: [],
-              },
-              hats: [
+          transactionData:
+            DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+              "createAndDeclareTree",
+              [
                 {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [],
+                  hatsProtocol: mockHatsAddress,
+                  hatsAccountImplementation:
+                    mockHatsAccountImplementationAddress,
+                  registry: await erc6551Registry.getAddress(),
+                  keyValuePairs: await keyValuePairs.getAddress(),
+                  topHatDetails: "",
+                  topHatImageURI: "",
+                  adminHat: {
+                    maxSupply: 1,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                    sablierParams: [],
+                  },
+                  hats: [
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [],
+                    },
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [],
+                    },
+                  ],
                 },
-                {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [],
-                },
-              ],
-            },
-          ]),
+              ]
+            ),
           signers: [dao],
         });
       });
 
       it("Emits an ExecutionSuccess event", async () => {
-        await expect(createAndDeclareTreeTx).to.emit(gnosisSafe, "ExecutionSuccess");
+        await expect(createAndDeclareTreeTx).to.emit(
+          gnosisSafe,
+          "ExecutionSuccess"
+        );
       });
 
       it("Emits an ExecutionFromModuleSuccess event", async () => {
@@ -202,31 +236,39 @@ describe("DecentHats_0_1_0", () => {
           createAndDeclareTreeTx2 = await executeSafeTransaction({
             safe: gnosisSafe,
             to: decentHatsAddress,
-            transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData("createAndDeclareTree", [
-              {
-                hatsProtocol: mockHatsAddress,
-                hatsAccountImplementation: mockHatsAccountImplementationAddress,
-                registry: await erc6551Registry.getAddress(),
-                keyValuePairs: await keyValuePairs.getAddress(),
-                topHatDetails: "",
-                topHatImageURI: "",
-                adminHat: {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [],
-                },
-                hats: [],
-              },
-            ]),
+            transactionData:
+              DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+                "createAndDeclareTree",
+                [
+                  {
+                    hatsProtocol: mockHatsAddress,
+                    hatsAccountImplementation:
+                      mockHatsAccountImplementationAddress,
+                    registry: await erc6551Registry.getAddress(),
+                    keyValuePairs: await keyValuePairs.getAddress(),
+                    topHatDetails: "",
+                    topHatImageURI: "",
+                    adminHat: {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [],
+                    },
+                    hats: [],
+                  },
+                ]
+              ),
             signers: [dao],
           });
         });
 
         it("Emits an ExecutionSuccess event", async () => {
-          await expect(createAndDeclareTreeTx2).to.emit(gnosisSafe, "ExecutionSuccess");
+          await expect(createAndDeclareTreeTx2).to.emit(
+            gnosisSafe,
+            "ExecutionSuccess"
+          );
         });
 
         it("Emits an ExecutionFromModuleSuccess event", async () => {
@@ -261,7 +303,10 @@ describe("DecentHats_0_1_0", () => {
             hatId
           );
 
-          const hatAccount = MockHatsAccount__factory.connect(hatAccountAddress, hre.ethers.provider);
+          const hatAccount = MockHatsAccount__factory.connect(
+            hatAccountAddress,
+            hre.ethers.provider
+          );
 
           return hatAccount;
         };
@@ -272,7 +317,9 @@ describe("DecentHats_0_1_0", () => {
           for (let i = 0n; i < currentCount; i++) {
             const topHatAccount = await getHatAccount(i);
             expect(await topHatAccount.tokenId()).eq(i);
-            expect(await topHatAccount.tokenImplementation()).eq(mockHatsAddress);
+            expect(await topHatAccount.tokenImplementation()).eq(
+              mockHatsAddress
+            );
           }
         });
       });
@@ -283,68 +330,77 @@ describe("DecentHats_0_1_0", () => {
       let currentBlockTimestamp: number;
 
       beforeEach(async () => {
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!.timestamp;
+        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!
+          .timestamp;
 
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData("createAndDeclareTree", [
-            {
-              hatsProtocol: mockHatsAddress,
-              hatsAccountImplementation: mockHatsAccountImplementationAddress,
-              registry: await erc6551Registry.getAddress(),
-              keyValuePairs: await keyValuePairs.getAddress(),
-              topHatDetails: "",
-              topHatImageURI: "",
-              adminHat: {
-                maxSupply: 1,
-                details: "",
-                imageURI: "",
-                isMutable: false,
-                wearer: ethers.ZeroAddress,
-                sablierParams: [],
-              },
-              hats: [
+          transactionData:
+            DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+              "createAndDeclareTree",
+              [
                 {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [
+                  hatsProtocol: mockHatsAddress,
+                  hatsAccountImplementation:
+                    mockHatsAccountImplementationAddress,
+                  registry: await erc6551Registry.getAddress(),
+                  keyValuePairs: await keyValuePairs.getAddress(),
+                  topHatDetails: "",
+                  topHatImageURI: "",
+                  adminHat: {
+                    maxSupply: 1,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                    sablierParams: [],
+                  },
+                  hats: [
                     {
-                      sablier: mockSablierAddress,
-                      sender: gnosisSafeAddress,
-                      totalAmount: ethers.parseEther("100"),
-                      asset: mockERC20Address,
-                      cancelable: true,
-                      transferable: false,
-                      timestamps: {
-                        start: currentBlockTimestamp,
-                        cliff: 0,
-                        end: currentBlockTimestamp + 2592000, // 30 days from now
-                      },
-                      broker: { account: ethers.ZeroAddress, fee: 0 },
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("100"),
+                          asset: mockERC20Address,
+                          cancelable: true,
+                          transferable: false,
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: 0,
+                            end: currentBlockTimestamp + 2592000, // 30 days from now
+                          },
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                      ],
+                    },
+                    {
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [],
                     },
                   ],
                 },
-                {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [],
-                },
-              ],
-            },
-          ]),
+              ]
+            ),
           signers: [dao],
         });
       });
 
       it("Emits an ExecutionSuccess event", async () => {
-        await expect(createAndDeclareTreeTx).to.emit(gnosisSafe, "ExecutionSuccess");
+        await expect(createAndDeclareTreeTx).to.emit(
+          gnosisSafe,
+          "ExecutionSuccess"
+        );
       });
 
       it("Emits an ExecutionFromModuleSuccess event", async () => {
@@ -360,7 +416,9 @@ describe("DecentHats_0_1_0", () => {
       });
 
       it("Creates a Sablier stream for the hat with stream parameters", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
         expect(streamCreatedEvents.length).to.equal(1);
 
         const event = streamCreatedEvents[0];
@@ -370,12 +428,16 @@ describe("DecentHats_0_1_0", () => {
       });
 
       it("Does not create a Sablier stream for hats without stream parameters", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
         expect(streamCreatedEvents.length).to.equal(1); // Only one stream should be created
       });
 
       it("Creates a Sablier stream with correct timestamps", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
         expect(streamCreatedEvents.length).to.equal(1);
 
         const streamId = streamCreatedEvents[0].args.streamId;
@@ -390,74 +452,82 @@ describe("DecentHats_0_1_0", () => {
       let currentBlockTimestamp: number;
 
       beforeEach(async () => {
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!.timestamp;
+        currentBlockTimestamp = (await hre.ethers.provider.getBlock("latest"))!
+          .timestamp;
 
         await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData("createAndDeclareTree", [
-            {
-              hatsProtocol: mockHatsAddress,
-              hatsAccountImplementation: mockHatsAccountImplementationAddress,
-              registry: await erc6551Registry.getAddress(),
-              keyValuePairs: await keyValuePairs.getAddress(),
-              topHatDetails: "",
-              topHatImageURI: "",
-              adminHat: {
-                maxSupply: 1,
-                details: "",
-                imageURI: "",
-                isMutable: false,
-                wearer: ethers.ZeroAddress,
-                sablierParams: [],
-              },
-              hats: [
+          transactionData:
+            DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+              "createAndDeclareTree",
+              [
                 {
-                  maxSupply: 1,
-                  details: "",
-                  imageURI: "",
-                  isMutable: false,
-                  wearer: ethers.ZeroAddress,
-                  sablierParams: [
+                  hatsProtocol: mockHatsAddress,
+                  hatsAccountImplementation:
+                    mockHatsAccountImplementationAddress,
+                  registry: await erc6551Registry.getAddress(),
+                  keyValuePairs: await keyValuePairs.getAddress(),
+                  topHatDetails: "",
+                  topHatImageURI: "",
+                  adminHat: {
+                    maxSupply: 1,
+                    details: "",
+                    imageURI: "",
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                    sablierParams: [],
+                  },
+                  hats: [
                     {
-                      sablier: mockSablierAddress,
-                      sender: gnosisSafeAddress,
-                      totalAmount: ethers.parseEther("100"),
-                      asset: mockERC20Address,
-                      cancelable: true,
-                      transferable: false,
-                      timestamps: {
-                        start: currentBlockTimestamp,
-                        cliff: currentBlockTimestamp + 86400, // 1 day cliff
-                        end: currentBlockTimestamp + 2592000, // 30 days from now
-                      },
-                      broker: { account: ethers.ZeroAddress, fee: 0 },
-                    },
-                    {
-                      sablier: mockSablierAddress,
-                      sender: gnosisSafeAddress,
-                      totalAmount: ethers.parseEther("50"),
-                      asset: mockERC20Address,
-                      cancelable: false,
-                      transferable: true,
-                      timestamps: {
-                        start: currentBlockTimestamp,
-                        cliff: 0, // No cliff
-                        end: currentBlockTimestamp + 1296000, // 15 days from now
-                      },
-                      broker: { account: ethers.ZeroAddress, fee: 0 },
+                      maxSupply: 1,
+                      details: "",
+                      imageURI: "",
+                      isMutable: false,
+                      wearer: ethers.ZeroAddress,
+                      sablierParams: [
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("100"),
+                          asset: mockERC20Address,
+                          cancelable: true,
+                          transferable: false,
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: currentBlockTimestamp + 86400, // 1 day cliff
+                            end: currentBlockTimestamp + 2592000, // 30 days from now
+                          },
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                        {
+                          sablier: mockSablierAddress,
+                          sender: gnosisSafeAddress,
+                          totalAmount: ethers.parseEther("50"),
+                          asset: mockERC20Address,
+                          cancelable: false,
+                          transferable: true,
+                          timestamps: {
+                            start: currentBlockTimestamp,
+                            cliff: 0, // No cliff
+                            end: currentBlockTimestamp + 1296000, // 15 days from now
+                          },
+                          broker: { account: ethers.ZeroAddress, fee: 0 },
+                        },
+                      ],
                     },
                   ],
                 },
-              ],
-            },
-          ]),
+              ]
+            ),
           signers: [dao],
         });
       });
 
       it("Creates multiple Sablier streams for a single hat", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
         expect(streamCreatedEvents.length).to.equal(2);
 
         const event1 = streamCreatedEvents[0];
@@ -472,27 +542,39 @@ describe("DecentHats_0_1_0", () => {
       });
 
       it("Creates streams with correct parameters", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
 
-        const stream1 = await mockSablier.getStream(streamCreatedEvents[0].args.streamId);
+        const stream1 = await mockSablier.getStream(
+          streamCreatedEvents[0].args.streamId
+        );
         expect(stream1.cancelable).to.be.true;
         expect(stream1.transferable).to.be.false;
         expect(stream1.endTime - stream1.startTime).to.equal(2592000);
 
-        const stream2 = await mockSablier.getStream(streamCreatedEvents[1].args.streamId);
+        const stream2 = await mockSablier.getStream(
+          streamCreatedEvents[1].args.streamId
+        );
         expect(stream2.cancelable).to.be.false;
         expect(stream2.transferable).to.be.true;
         expect(stream2.endTime - stream2.startTime).to.equal(1296000);
       });
 
       it("Creates streams with correct timestamps", async () => {
-        const streamCreatedEvents = await mockSablier.queryFilter(mockSablier.filters.StreamCreated());
+        const streamCreatedEvents = await mockSablier.queryFilter(
+          mockSablier.filters.StreamCreated()
+        );
 
-        const stream1 = await mockSablier.getStream(streamCreatedEvents[0].args.streamId);
+        const stream1 = await mockSablier.getStream(
+          streamCreatedEvents[0].args.streamId
+        );
         expect(stream1.startTime).to.equal(currentBlockTimestamp);
         expect(stream1.endTime).to.equal(currentBlockTimestamp + 2592000);
 
-        const stream2 = await mockSablier.getStream(streamCreatedEvents[1].args.streamId);
+        const stream2 = await mockSablier.getStream(
+          streamCreatedEvents[1].args.streamId
+        );
         expect(stream2.startTime).to.equal(currentBlockTimestamp);
         expect(stream2.endTime).to.equal(currentBlockTimestamp + 1296000);
       });

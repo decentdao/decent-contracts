@@ -44,7 +44,10 @@ export const predictGnosisSafeAddress = async (
       ["bytes", "uint256"],
       [ethers.solidityPackedKeccak256(["bytes"], [calldata]), saltNum]
     ),
-    ethers.solidityPackedKeccak256(["bytes", "uint256"], [await gnosisFactory.proxyCreationCode(), singleton])
+    ethers.solidityPackedKeccak256(
+      ["bytes", "uint256"],
+      [await gnosisFactory.proxyCreationCode(), singleton]
+    )
   );
 };
 
@@ -55,14 +58,21 @@ export const calculateProxyAddress = async (
   saltNonce: string
 ): Promise<string> => {
   const masterCopyAddress = masterCopy.toLowerCase().replace(/^0x/, "");
-  const byteCode = "0x602d8060093d393df3363d3d373d3d3d363d73" + masterCopyAddress + "5af43d82803e903d91602b57fd5bf3";
+  const byteCode =
+    "0x602d8060093d393df3363d3d373d3d3d363d73" +
+    masterCopyAddress +
+    "5af43d82803e903d91602b57fd5bf3";
 
   const salt = ethers.solidityPackedKeccak256(
     ["bytes32", "uint256"],
     [ethers.solidityPackedKeccak256(["bytes"], [initData]), saltNonce]
   );
 
-  return ethers.getCreate2Address(await factory.getAddress(), salt, ethers.keccak256(byteCode));
+  return ethers.getCreate2Address(
+    await factory.getAddress(),
+    salt,
+    ethers.keccak256(byteCode)
+  );
 };
 
 export const safeSignTypedData = async (
@@ -100,7 +110,9 @@ export const safeSignTypedData = async (
 };
 
 export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
-  signatures.sort((left, right) => left.signer.toLowerCase().localeCompare(right.signer.toLowerCase()));
+  signatures.sort((left, right) =>
+    left.signer.toLowerCase().localeCompare(right.signer.toLowerCase())
+  );
   let signatureBytes = "0x";
   for (const sig of signatures) {
     signatureBytes += sig.data.slice(2);
@@ -172,25 +184,31 @@ export const encodeMultiSend = (txs: MetaTransaction[]): string => {
   );
 };
 
-export const mockTransaction = async (): Promise<IAzorius.TransactionStruct> => {
-  return {
-    to: await getMockContract().getAddress(),
-    value: 0n,
-    // eslint-disable-next-line camelcase
-    data: MockContract__factory.createInterface().encodeFunctionData("doSomething"),
-    operation: 0,
+export const mockTransaction =
+  async (): Promise<IAzorius.TransactionStruct> => {
+    return {
+      to: await getMockContract().getAddress(),
+      value: 0n,
+      // eslint-disable-next-line camelcase
+      data: MockContract__factory.createInterface().encodeFunctionData(
+        "doSomething"
+      ),
+      operation: 0,
+    };
   };
-};
 
-export const mockRevertTransaction = async (): Promise<IAzorius.TransactionStruct> => {
-  return {
-    to: await getMockContract().getAddress(),
-    value: 0n,
-    // eslint-disable-next-line camelcase
-    data: MockContract__factory.createInterface().encodeFunctionData("revertSomething"),
-    operation: 0,
+export const mockRevertTransaction =
+  async (): Promise<IAzorius.TransactionStruct> => {
+    return {
+      to: await getMockContract().getAddress(),
+      value: 0n,
+      // eslint-disable-next-line camelcase
+      data: MockContract__factory.createInterface().encodeFunctionData(
+        "revertSomething"
+      ),
+      operation: 0,
+    };
   };
-};
 
 export const executeSafeTransaction = async ({
   safe,
@@ -209,7 +227,9 @@ export const executeSafeTransaction = async ({
     nonce: await safe.nonce(),
   });
 
-  const sigs = await Promise.all(signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx)));
+  const sigs = await Promise.all(
+    signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx))
+  );
 
   const tx = await safe.execTransaction(
     safeTx.to,
@@ -248,7 +268,10 @@ export const getHatAccount = async (
     hatId
   );
 
-  const hatAccount = MockHatsAccount__factory.connect(hatAccountAddress, signer);
+  const hatAccount = MockHatsAccount__factory.connect(
+    hatAccountAddress,
+    signer
+  );
 
   return hatAccount;
 };
