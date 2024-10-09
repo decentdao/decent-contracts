@@ -6,7 +6,7 @@ import {IAvatar} from "@gnosis.pm/zodiac/contracts/interfaces/IAvatar.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC6551Registry} from "./interfaces/IERC6551Registry.sol";
-import {IHats} from "./interfaces/hats/IHats.sol";
+import {IHats} from "./interfaces/hats/full/IHats.sol";
 import {LockupLinear, Broker} from "./interfaces/sablier/full/types/DataTypes.sol";
 import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/hats/full/IHatsModuleFactory.sol";

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.19;
-import {IHats} from "./interfaces/hats/IHats.sol";
+import {IHats} from "./interfaces/hats/full/IHats.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
 import {ISablierV2Lockup} from "./interfaces/sablier/full/ISablierV2Lockup.sol";
 
