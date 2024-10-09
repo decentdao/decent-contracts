@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IHatsModuleFactory} from "../interfaces/IHatModuleFactory.sol";
+import {IHatsModuleFactory} from "../interfaces/hats/full/IHatsModuleFactory.sol";
 
 contract MockHatsModuleFactory is IHatsModuleFactory {
     function createHatsModule(
@@ -33,4 +33,23 @@ contract MockHatsModuleFactory is IHatsModuleFactory {
         _saltNonce;
         return address(0);
     }
+
+    function HATS() external view override returns (address) {}
+
+    function version() external view override returns (string memory) {}
+
+    function batchCreateHatsModule(
+        address[] calldata _implementations,
+        uint256[] calldata _hatIds,
+        bytes[] calldata _otherImmutableArgsArray,
+        bytes[] calldata _initDataArray,
+        uint256[] calldata _saltNonces
+    ) external override returns (bool success) {}
+
+    function deployed(
+        address _implementation,
+        uint256 _hatId,
+        bytes calldata _otherImmutableArgs,
+        uint256 _saltNonce
+    ) external view override returns (bool) {}
 }
