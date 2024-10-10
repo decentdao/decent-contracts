@@ -1,10 +1,15 @@
-import { ethers } from "ethers";
+import { ethers, solidityPackedKeccak256 } from "ethers";
 import {
+  ERC6551Registry,
+  GnosisSafeL2,
   GnosisSafeProxyFactory,
   IAzorius,
   MockContract__factory,
+  MockHatsAccount__factory,
 } from "../typechain-types";
 import { getMockContract } from "./GlobalSafeDeployments.test";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import hre from "hardhat";
 
 export interface MetaTransaction {
   to: string;
@@ -204,3 +209,69 @@ export const mockRevertTransaction =
       operation: 0,
     };
   };
+
+export const executeSafeTransaction = async ({
+  safe,
+  to,
+  transactionData,
+  signers,
+}: {
+  safe: GnosisSafeL2;
+  to: string;
+  transactionData: string;
+  signers: SignerWithAddress[];
+}) => {
+  const safeTx = buildSafeTransaction({
+    to,
+    data: transactionData,
+    nonce: await safe.nonce(),
+  });
+
+  const sigs = await Promise.all(
+    signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx))
+  );
+
+  const tx = await safe.execTransaction(
+    safeTx.to,
+    safeTx.value,
+    safeTx.data,
+    safeTx.operation,
+    safeTx.safeTxGas,
+    safeTx.baseGas,
+    safeTx.gasPrice,
+    safeTx.gasToken,
+    safeTx.refundReceiver,
+    buildSignatureBytes(sigs)
+  );
+
+  return tx;
+};
+
+export const getHatAccount = async (
+  hatId: bigint,
+  erc6551RegistryImplementation: ERC6551Registry,
+  mockHatsAccountImplementationAddress: string,
+  mockHatsAddress: string,
+  decentHatsAddress: string,
+  signer: ethers.Signer
+) => {
+  const salt = solidityPackedKeccak256(
+    ["string", "uint256", "address"],
+    ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
+  );
+
+  const hatAccountAddress = await erc6551RegistryImplementation.account(
+    mockHatsAccountImplementationAddress,
+    salt,
+    await hre.getChainId(),
+    mockHatsAddress,
+    hatId
+  );
+
+  const hatAccount = MockHatsAccount__factory.connect(
+    hatAccountAddress,
+    signer
+  );
+
+  return hatAccount;
+};

@@ -29,46 +29,10 @@ import {
 import {
   buildSafeTransaction,
   buildSignatureBytes,
+  executeSafeTransaction,
   predictGnosisSafeAddress,
   safeSignTypedData,
 } from "./helpers";
-
-const executeSafeTransaction = async ({
-  safe,
-  to,
-  transactionData,
-  signers,
-}: {
-  safe: GnosisSafeL2;
-  to: string;
-  transactionData: string;
-  signers: SignerWithAddress[];
-}) => {
-  const safeTx = buildSafeTransaction({
-    to,
-    data: transactionData,
-    nonce: await safe.nonce(),
-  });
-
-  const sigs = await Promise.all(
-    signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx))
-  );
-
-  const tx = await safe.execTransaction(
-    safeTx.to,
-    safeTx.value,
-    safeTx.data,
-    safeTx.operation,
-    safeTx.safeTxGas,
-    safeTx.baseGas,
-    safeTx.gasPrice,
-    safeTx.gasToken,
-    safeTx.refundReceiver,
-    buildSignatureBytes(sigs)
-  );
-
-  return tx;
-};
 
 describe("DecentHats_0_1_0", () => {
   let dao: SignerWithAddress;
@@ -166,7 +130,7 @@ describe("DecentHats_0_1_0", () => {
     await mockERC20.mint(gnosisSafeAddress, ethers.parseEther("1000000"));
   });
 
-  describe("DecentHats as a Module", () => {
+  describe("DecentHats", () => {
     let enableModuleTx: ethers.ContractTransactionResponse;
 
     beforeEach(async () => {
@@ -182,14 +146,16 @@ describe("DecentHats_0_1_0", () => {
       });
     });
 
-    it("Emits an ExecutionSuccess event", async () => {
-      await expect(enableModuleTx).to.emit(gnosisSafe, "ExecutionSuccess");
-    });
+    describe("Enabled as a module", () => {
+      it("Emits an ExecutionSuccess event", async () => {
+        await expect(enableModuleTx).to.emit(gnosisSafe, "ExecutionSuccess");
+      });
 
-    it("Emits an EnabledModule event", async () => {
-      await expect(enableModuleTx)
-        .to.emit(gnosisSafe, "EnabledModule")
-        .withArgs(decentHatsAddress);
+      it("Emits an EnabledModule event", async () => {
+        await expect(enableModuleTx)
+          .to.emit(gnosisSafe, "EnabledModule")
+          .withArgs(decentHatsAddress);
+      });
     });
 
     describe("Creating a new Top Hat and Tree", () => {
