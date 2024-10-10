@@ -44,19 +44,9 @@ contract DecentHats_0_1_0 {
         Hat[] hats;
     }
 
-    function getSalt() internal view returns (bytes32 salt) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-
-        bytes memory concatenatedSaltInput = abi.encodePacked(
-            NAME,
-            chainId,
-            address(this)
-        );
-
-        salt = keccak256(concatenatedSaltInput);
+    function getSalt() public pure returns (bytes32 salt) {
+        return
+            0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
     }
 
     function updateKeyValuePairs(

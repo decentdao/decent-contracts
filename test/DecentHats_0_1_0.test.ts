@@ -19,7 +19,7 @@ import {
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers, solidityPackedKeccak256 } from "ethers";
+import { ethers } from "ethers";
 import hre from "hardhat";
 
 import {
@@ -27,11 +27,9 @@ import {
   getGnosisSafeProxyFactory,
 } from "./GlobalSafeDeployments.test";
 import {
-  buildSafeTransaction,
-  buildSignatureBytes,
   executeSafeTransaction,
+  getHatAccount,
   predictGnosisSafeAddress,
-  safeSignTypedData,
 } from "./helpers";
 
 describe("DecentHats_0_1_0", () => {
@@ -285,37 +283,17 @@ describe("DecentHats_0_1_0", () => {
       });
 
       describe("Creating Hats Accounts", () => {
-        let salt: string;
-
-        beforeEach(async () => {
-          salt = solidityPackedKeccak256(
-            ["string", "uint256", "address"],
-            ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
-          );
-        });
-
-        const getHatAccount = async (hatId: bigint) => {
-          const hatAccountAddress = await erc6551Registry.account(
-            mockHatsAccountImplementationAddress,
-            salt,
-            await hre.getChainId(),
-            mockHatsAddress,
-            hatId
-          );
-
-          const hatAccount = MockHatsAccount__factory.connect(
-            hatAccountAddress,
-            hre.ethers.provider
-          );
-
-          return hatAccount;
-        };
-
         it("Generates the correct Addresses for the current Hats", async () => {
           const currentCount = await mockHats.count();
 
           for (let i = 0n; i < currentCount; i++) {
-            const topHatAccount = await getHatAccount(i);
+            const topHatAccount = await getHatAccount(
+              i,
+              erc6551Registry,
+              mockHatsAccountImplementationAddress,
+              mockHatsAddress
+            );
+
             expect(await topHatAccount.tokenId()).eq(i);
             expect(await topHatAccount.tokenImplementation()).eq(
               mockHatsAddress
