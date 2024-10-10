@@ -44,7 +44,7 @@ contract DecentHats_0_1_0 {
         Hat[] hats;
     }
 
-    function getSalt() internal pure returns (bytes32 salt) {
+    function getSalt() public pure returns (bytes32 salt) {
         return
             0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
     }
