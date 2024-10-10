@@ -276,7 +276,6 @@ describe("DecentSablierStreamManagement", () => {
           erc6551Registry,
           mockHatsAccountImplementationAddress,
           mockHatsAddress,
-          decentHatsAddress,
           dao
         );
 
@@ -327,7 +326,6 @@ describe("DecentSablierStreamManagement", () => {
           erc6551Registry,
           mockHatsAccountImplementationAddress,
           mockHatsAddress,
-          decentHatsAddress,
           dao
         );
 

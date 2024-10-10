@@ -26,7 +26,11 @@ import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
 } from "./GlobalSafeDeployments.test";
-import { executeSafeTransaction, predictGnosisSafeAddress } from "./helpers";
+import {
+  executeSafeTransaction,
+  getHatAccount,
+  predictGnosisSafeAddress,
+} from "./helpers";
 
 describe("DecentHats_0_1_0", () => {
   let dao: SignerWithAddress;
@@ -279,31 +283,17 @@ describe("DecentHats_0_1_0", () => {
       });
 
       describe("Creating Hats Accounts", () => {
-        const salt =
-          "0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072";
-
-        const getHatAccount = async (hatId: bigint) => {
-          const hatAccountAddress = await erc6551Registry.account(
-            mockHatsAccountImplementationAddress,
-            salt,
-            await hre.getChainId(),
-            mockHatsAddress,
-            hatId
-          );
-
-          const hatAccount = MockHatsAccount__factory.connect(
-            hatAccountAddress,
-            hre.ethers.provider
-          );
-
-          return hatAccount;
-        };
-
         it("Generates the correct Addresses for the current Hats", async () => {
           const currentCount = await mockHats.count();
 
           for (let i = 0n; i < currentCount; i++) {
-            const topHatAccount = await getHatAccount(i);
+            const topHatAccount = await getHatAccount(
+              i,
+              erc6551Registry,
+              mockHatsAccountImplementationAddress,
+              mockHatsAddress
+            );
+
             expect(await topHatAccount.tokenId()).eq(i);
             expect(await topHatAccount.tokenImplementation()).eq(
               mockHatsAddress
