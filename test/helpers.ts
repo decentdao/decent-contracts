@@ -255,10 +255,8 @@ export const getHatAccount = async (
   decentHatsAddress: string,
   signer: ethers.Signer
 ) => {
-  const salt = solidityPackedKeccak256(
-    ["string", "uint256", "address"],
-    ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
-  );
+  const salt =
+    "0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072";
 
   const hatAccountAddress = await erc6551RegistryImplementation.account(
     mockHatsAccountImplementationAddress,

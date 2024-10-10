@@ -19,20 +19,14 @@ import {
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers, solidityPackedKeccak256 } from "ethers";
+import { ethers } from "ethers";
 import hre from "hardhat";
 
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
 } from "./GlobalSafeDeployments.test";
-import {
-  buildSafeTransaction,
-  buildSignatureBytes,
-  executeSafeTransaction,
-  predictGnosisSafeAddress,
-  safeSignTypedData,
-} from "./helpers";
+import { executeSafeTransaction, predictGnosisSafeAddress } from "./helpers";
 
 describe("DecentHats_0_1_0", () => {
   let dao: SignerWithAddress;
@@ -285,14 +279,8 @@ describe("DecentHats_0_1_0", () => {
       });
 
       describe("Creating Hats Accounts", () => {
-        let salt: string;
-
-        beforeEach(async () => {
-          salt = solidityPackedKeccak256(
-            ["string", "uint256", "address"],
-            ["DecentHats_0_1_0", await hre.getChainId(), decentHatsAddress]
-          );
-        });
+        const salt =
+          "0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072";
 
         const getHatAccount = async (hatId: bigint) => {
           const hatAccountAddress = await erc6551Registry.account(
