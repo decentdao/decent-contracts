@@ -6,12 +6,16 @@ import {IHats} from "../interfaces/hats/IHats.sol";
 contract MockHats is IHats {
     uint256 public count = 0;
 
+    // Mapping to track which addresses wear which hats
+    mapping(uint256 => mapping(address => bool)) private hatWearers;
+
     function mintTopHat(
-        address,
+        address _wearer,
         string memory,
         string memory
     ) external returns (uint256 topHatId) {
         topHatId = count;
+        hatWearers[topHatId][_wearer] = true;
         count++;
     }
 
@@ -28,9 +32,23 @@ contract MockHats is IHats {
         count++;
     }
 
-    function mintHat(uint256, address) external pure returns (bool success) {
+    function mintHat(
+        uint256 _hatId,
+        address _wearer
+    ) external returns (bool success) {
+        hatWearers[_hatId][_wearer] = true;
         success = true;
     }
 
-    function transferHat(uint256, address, address) external {}
+    function transferHat(uint256 _hatId, address _from, address _to) external {
+        hatWearers[_hatId][_from] = false;
+        hatWearers[_hatId][_to] = true;
+    }
+
+    function isWearerOfHat(
+        address _user,
+        uint256 _hatId
+    ) external view returns (bool) {
+        return hatWearers[_hatId][_user];
+    }
 }

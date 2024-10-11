@@ -80,18 +80,6 @@ describe("Safe with Azorius module and linearERC20Voting", () => {
       mockStrategy2,
     ] = await hre.ethers.getSigners();
 
-    // Get Gnosis Safe Proxy factory
-    gnosisSafeProxyFactory = await hre.ethers.getContractAt(
-      "GnosisSafeProxyFactory",
-      await gnosisSafeProxyFactory.getAddress()
-    );
-
-    // Get module proxy factory
-    moduleProxyFactory = await hre.ethers.getContractAt(
-      "ModuleProxyFactory",
-      await moduleProxyFactory.getAddress()
-    );
-
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
       GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
