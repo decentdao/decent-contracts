@@ -1,14 +1,14 @@
 import {
   GnosisSafeL2,
   GnosisSafeL2__factory,
-  DecentHats_0_2_0__factory,
+  DecentHats__factory,
   KeyValuePairs,
   KeyValuePairs__factory,
   MockHats__factory,
   ERC6551Registry__factory,
   MockHatsAccount__factory,
   ERC6551Registry,
-  DecentHats_0_2_0,
+  DecentHats,
   MockHatsAccount,
   MockHats,
   MockSablierV2LockupLinear__factory,
@@ -25,7 +25,7 @@ import {
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { expect } from "chai"
-import { ethers, solidityPackedKeccak256 } from "ethers"
+import { ethers, keccak256, solidityPackedKeccak256, toUtf8Bytes } from "ethers"
 import hre from "hardhat"
 
 import { getGnosisSafeL2Singleton, getGnosisSafeProxyFactory } from "./GlobalSafeDeployments.test"
@@ -73,7 +73,7 @@ const executeSafeTransaction = async ({
   return tx
 }
 
-describe("DecentHats_0_2_0", () => {
+describe.only("DecentHats", () => {
   let dao: SignerWithAddress
 
   let mockHats: MockHats
@@ -82,7 +82,7 @@ describe("DecentHats_0_2_0", () => {
   let keyValuePairs: KeyValuePairs
   let gnosisSafe: GnosisSafeL2
 
-  let decentHats: DecentHats_0_2_0
+  let decentHats: DecentHats
   let decentHatsAddress: string
 
   let gnosisSafeAddress: string
@@ -120,7 +120,7 @@ describe("DecentHats_0_2_0", () => {
     erc6551Registry = await new ERC6551Registry__factory(deployer).deploy()
     mockHatsAccountImplementation = await new MockHatsAccount__factory(deployer).deploy()
     mockHatsAccountImplementationAddress = await mockHatsAccountImplementation.getAddress()
-    decentHats = await new DecentHats_0_2_0__factory(deployer).deploy()
+    decentHats = await new DecentHats__factory(deployer).deploy()
     decentHatsAddress = await decentHats.getAddress()
 
     moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy()
@@ -202,7 +202,7 @@ describe("DecentHats_0_2_0", () => {
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -264,6 +264,7 @@ describe("DecentHats_0_2_0", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
+                pepper: keccak256(toUtf8Bytes("pepper")),
               },
             ]
           ),
@@ -294,7 +295,7 @@ describe("DecentHats_0_2_0", () => {
           createAndDeclareTreeTx2 = await executeSafeTransaction({
             safe: gnosisSafe,
             to: decentHatsAddress,
-            transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
+            transactionData: DecentHats__factory.createInterface().encodeFunctionData(
               "createAndDeclareTree",
               [
                 {
@@ -304,7 +305,8 @@ describe("DecentHats_0_2_0", () => {
                   keyValuePairs: await keyValuePairs.getAddress(),
                   topHatDetails: "",
                   topHatImageURI: "",
-                  decentAutonomousAdminMasterCopy: await decentAutonomousAdminMasterCopy.getAddress(),
+                  decentAutonomousAdminMasterCopy:
+                    await decentAutonomousAdminMasterCopy.getAddress(),
                   moduleProxyFactory: await moduleProxyFactory.getAddress(),
                   adminHat: {
                     maxSupply: 1,
@@ -325,6 +327,7 @@ describe("DecentHats_0_2_0", () => {
                   hatsModuleFactory: mockHatsModuleFactoryAddress,
                   hatsElectionEligibilityImplementation:
                     mockHatsElectionEligibilityImplementationAddress,
+                  pepper: keccak256(toUtf8Bytes("pepper")),
                 },
               ]
             ),
@@ -353,10 +356,7 @@ describe("DecentHats_0_2_0", () => {
         let salt: string
 
         beforeEach(async () => {
-          salt = solidityPackedKeccak256(
-            ["string", "uint256", "address"],
-            ["DecentHats_0_2_0", await hre.getChainId(), decentHatsAddress]
-          )
+          salt = keccak256(toUtf8Bytes("pepper"))
         })
 
         const getHatAccount = async (hatId: bigint) => {
@@ -398,7 +398,7 @@ describe("DecentHats_0_2_0", () => {
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -475,6 +475,7 @@ describe("DecentHats_0_2_0", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
+                pepper: keccak256(toUtf8Bytes("pepper")),
               },
             ]
           ),
@@ -540,7 +541,7 @@ describe("DecentHats_0_2_0", () => {
         await executeSafeTransaction({
           safe: gnosisSafe,
           to: decentHatsAddress,
-          transactionData: DecentHats_0_2_0__factory.createInterface().encodeFunctionData(
+          transactionData: DecentHats__factory.createInterface().encodeFunctionData(
             "createAndDeclareTree",
             [
               {
@@ -616,6 +617,7 @@ describe("DecentHats_0_2_0", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
+                pepper: keccak256(toUtf8Bytes("pepper")),
               },
             ]
           ),

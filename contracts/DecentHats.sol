@@ -13,8 +13,9 @@ import {IHatsModuleFactory} from "./interfaces/hats/full/IHatsModuleFactory.sol"
 import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
 import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
 
-contract DecentHats_0_2_0 {
-    string public constant NAME = "DecentHats_0_2_0";
+contract DecentHats {
+    string public constant NAME = "DecentHats";
+    bytes32 public constant SALT = 0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
 
     struct SablierStreamParams {
         address sablierV2LockupLinear;
@@ -56,21 +57,20 @@ contract DecentHats_0_2_0 {
         Hat[] hats;
         string topHatDetails;
         string topHatImageURI;
+
     }
 
     /* /////////////////////////////////////////////////////////////////////////////
                         EXTERNAL FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////// */
     function createAndDeclareTree(CreateTreeParams calldata params) public {
-        bytes32 salt = _getSalt();
 
         (uint256 topHatId, address topHatAccount) = _createTopHatAndAccount(
             params.hatsProtocol,
             params.topHatDetails,
             params.topHatImageURI,
             params.registry,
-            params.hatsAccountImplementation,
-            salt
+            params.hatsAccountImplementation
         );
 
         _updateKeyValuePairs(params.keyValuePairs, topHatId);
@@ -83,8 +83,7 @@ contract DecentHats_0_2_0 {
             params.hatsAccountImplementation,
             topHatAccount,
             topHatId,
-            params.adminHat,
-            salt
+            params.adminHat
         );
 
         for (uint256 i = 0; i < params.hats.length; ) {
@@ -94,8 +93,7 @@ contract DecentHats_0_2_0 {
                 topHatAccount,
                 params.hatsAccountImplementation,
                 adminHatId,
-                params.hats[i],
-                salt
+                params.hats[i]
             );
 
             if (params.hats[i].isTermed) {
@@ -106,8 +104,7 @@ contract DecentHats_0_2_0 {
                     params.hatsElectionEligibilityImplementation,
                     hatId,
                     topHatId,
-                    params.hats[i].termedParams[0],
-                    uint256(keccak256(abi.encode(salt, hatId)))
+                    params.hats[i].termedParams[0]
                 );
             }
 
@@ -123,31 +120,14 @@ contract DecentHats_0_2_0 {
                         INTERAL FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////// */
 
-    function _getSalt() internal view returns (bytes32 salt) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-
-        bytes memory concatenatedSaltInput = abi.encodePacked(
-            NAME,
-            chainId,
-            address(this)
-        );
-
-        salt = keccak256(concatenatedSaltInput);
-    }
-
     function _updateKeyValuePairs(
         address _keyValuePairs,
         uint256 topHatId
     ) internal {
-        string[] memory keys = new string[](2);
-        string[] memory values = new string[](2);
+        string[] memory keys = new string[](1);
+        string[] memory values = new string[](1);
         keys[0] = "topHatId";
         values[0] = Strings.toString(topHatId);
-        keys[1] = "decentHatsAddress";
-        values[1] = Strings.toHexString(address(this));
 
         IAvatar(msg.sender).execTransactionFromModule(
             _keyValuePairs,
@@ -182,14 +162,13 @@ contract DecentHats_0_2_0 {
     function _createAccount(
         IERC6551Registry _registry,
         address _hatsAccountImplementation,
-        bytes32 salt,
         address protocolAddress,
         uint256 hatId
     ) internal returns (address) {
         return
             _registry.createAccount(
                 _hatsAccountImplementation,
-                salt,
+                SALT,
                 block.chainid,
                 protocolAddress,
                 hatId
@@ -201,8 +180,7 @@ contract DecentHats_0_2_0 {
         string memory _topHatDetails,
         string memory _topHatImageURI,
         IERC6551Registry _registry,
-        address _hatsAccountImplementation,
-        bytes32 salt
+        address _hatsAccountImplementation
     ) internal returns (uint256 topHatId, address topHatAccount) {
         topHatId = _hatsProtocol.mintTopHat(
             address(this),
@@ -213,7 +191,6 @@ contract DecentHats_0_2_0 {
         topHatAccount = _createAccount(
             _registry,
             _hatsAccountImplementation,
-            salt,
             address(_hatsProtocol),
             topHatId
         );
@@ -225,15 +202,13 @@ contract DecentHats_0_2_0 {
         address topHatAccount,
         address hatsAccountImplementation,
         uint256 adminHatId,
-        Hat calldata hat,
-        bytes32 salt
+        Hat calldata hat
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = _createHat(hatsProtocol, adminHatId, hat, topHatAccount);
 
         accountAddress = _createAccount(
             registry,
             hatsAccountImplementation,
-            salt,
             address(hatsProtocol),
             hatId
         );
@@ -293,15 +268,13 @@ contract DecentHats_0_2_0 {
         address hatsAccountImplementation,
         address topHatAccount,
         uint256 topHatId,
-        Hat calldata hat,
-        bytes32 salt
+        Hat calldata hat
     ) internal returns (uint256 adminHatId, address accountAddress) {
         adminHatId = _createHat(hatsProtocol, topHatId, hat, topHatAccount);
 
         accountAddress = _createAccount(
             registry,
             hatsAccountImplementation,
-            salt,
             address(hatsProtocol),
             adminHatId
         );
@@ -311,7 +284,7 @@ contract DecentHats_0_2_0 {
             moduleProxyFactory.deployModule(
                 decentAutonomousAdminMasterCopy,
                 abi.encodeWithSignature("setUp()"),
-                uint256(keccak256(abi.encodePacked(salt, adminHatId)))
+                uint256(keccak256(abi.encodePacked(SALT, adminHatId)))
             )
         );
     }
@@ -330,15 +303,14 @@ contract DecentHats_0_2_0 {
         address hatsElectionEligibilityImplementation,
         uint256 hatId,
         uint256 topHatId,
-        TermedParams calldata termedParams,
-        uint256 saltNonce
+        TermedParams calldata termedParams
     ) internal returns (address) {
         address electionModuleAddress = hatsModuleFactory.createHatsModule(
             hatsElectionEligibilityImplementation,
             hatId,
             abi.encode(topHatId, uint256(0)),
             abi.encode(termedParams.termEndDateTs),
-            saltNonce
+            uint256(SALT)
         );
         hatsProtocol.changeHatEligibility(hatId, electionModuleAddress);
 
