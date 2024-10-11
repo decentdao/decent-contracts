@@ -73,7 +73,7 @@ const executeSafeTransaction = async ({
   return tx
 }
 
-describe.only("DecentHats", () => {
+describe("DecentHats", () => {
   let dao: SignerWithAddress
 
   let mockHats: MockHats
@@ -264,7 +264,6 @@ describe.only("DecentHats", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
-                pepper: keccak256(toUtf8Bytes("pepper")),
               },
             ]
           ),
@@ -327,7 +326,7 @@ describe.only("DecentHats", () => {
                   hatsModuleFactory: mockHatsModuleFactoryAddress,
                   hatsElectionEligibilityImplementation:
                     mockHatsElectionEligibilityImplementationAddress,
-                  pepper: keccak256(toUtf8Bytes("pepper")),
+                  
                 },
               ]
             ),
@@ -356,7 +355,7 @@ describe.only("DecentHats", () => {
         let salt: string
 
         beforeEach(async () => {
-          salt = keccak256(toUtf8Bytes("pepper"))
+          salt = await decentHats.SALT()
         })
 
         const getHatAccount = async (hatId: bigint) => {
@@ -475,7 +474,7 @@ describe.only("DecentHats", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
-                pepper: keccak256(toUtf8Bytes("pepper")),
+                
               },
             ]
           ),
@@ -617,7 +616,7 @@ describe.only("DecentHats", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
-                pepper: keccak256(toUtf8Bytes("pepper")),
+                
               },
             ]
           ),
