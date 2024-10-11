@@ -22,4 +22,15 @@ contract MockHatsAccount {
         }
         return abi.decode(footer, (address));
     }
+
+    function execute(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        uint8
+    ) external returns (bytes memory) {
+        (bool success, bytes memory result) = to.call{value: value}(data);
+        require(success, "HatsAccount: execution failed");
+        return result;
+    }
 }

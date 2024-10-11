@@ -1,10 +1,15 @@
-import { ethers } from "ethers";
+import { ethers, solidityPackedKeccak256 } from "ethers";
 import {
+  ERC6551Registry,
+  GnosisSafeL2,
   GnosisSafeProxyFactory,
   IAzorius,
   MockContract__factory,
+  MockHatsAccount__factory,
 } from "../typechain-types";
 import { getMockContract } from "./GlobalSafeDeployments.test";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import hre from "hardhat";
 
 export interface MetaTransaction {
   to: string;
@@ -204,3 +209,66 @@ export const mockRevertTransaction =
       operation: 0,
     };
   };
+
+export const executeSafeTransaction = async ({
+  safe,
+  to,
+  transactionData,
+  signers,
+}: {
+  safe: GnosisSafeL2;
+  to: string;
+  transactionData: string;
+  signers: SignerWithAddress[];
+}) => {
+  const safeTx = buildSafeTransaction({
+    to,
+    data: transactionData,
+    nonce: await safe.nonce(),
+  });
+
+  const sigs = await Promise.all(
+    signers.map(async (signer) => await safeSignTypedData(signer, safe, safeTx))
+  );
+
+  const tx = await safe.execTransaction(
+    safeTx.to,
+    safeTx.value,
+    safeTx.data,
+    safeTx.operation,
+    safeTx.safeTxGas,
+    safeTx.baseGas,
+    safeTx.gasPrice,
+    safeTx.gasToken,
+    safeTx.refundReceiver,
+    buildSignatureBytes(sigs)
+  );
+
+  return tx;
+};
+
+export const getHatAccount = async (
+  hatId: bigint,
+  erc6551RegistryImplementation: ERC6551Registry,
+  mockHatsAccountImplementationAddress: string,
+  mockHatsAddress: string,
+  signer?: ethers.Signer
+) => {
+  const salt =
+    "0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072";
+
+  const hatAccountAddress = await erc6551RegistryImplementation.account(
+    mockHatsAccountImplementationAddress,
+    salt,
+    await hre.getChainId(),
+    mockHatsAddress,
+    hatId
+  );
+
+  const hatAccount = MockHatsAccount__factory.connect(
+    hatAccountAddress,
+    signer ?? hre.ethers.provider
+  );
+
+  return hatAccount;
+};
