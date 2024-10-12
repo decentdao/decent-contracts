@@ -12,13 +12,15 @@ import {DecentAutonomousAdmin} from "./DecentAutonomousAdmin.sol";
 import {IHatsModuleFactory} from "./interfaces/hats/full/IHatsModuleFactory.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
 import {ModuleProxyFactory} from "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol";
+import {ISablierV2LockupLinear} from "./interfaces/sablier/ISablierV2LockupLinear.sol";
 
 contract DecentHats {
     string public constant NAME = "DecentHats";
-    bytes32 public constant SALT = 0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
+    bytes32 public constant SALT =
+        0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
 
     struct SablierStreamParams {
-        address sablierV2LockupLinear;
+        ISablierV2LockupLinear sablier;
         address sender;
         address asset;
         LockupLinear.Timestamps timestamps;
@@ -57,14 +59,12 @@ contract DecentHats {
         Hat[] hats;
         string topHatDetails;
         string topHatImageURI;
-
     }
 
     /* /////////////////////////////////////////////////////////////////////////////
                         EXTERNAL FUNCTIONS
     ///////////////////////////////////////////////////////////////////////////// */
     function createAndDeclareTree(CreateTreeParams calldata params) public {
-
         (uint256 topHatId, address topHatAccount) = _createTopHatAndAccount(
             params.hatsProtocol,
             params.topHatDetails,
@@ -225,7 +225,7 @@ contract DecentHats {
                 0,
                 abi.encodeWithSignature(
                     "approve(address,uint256)",
-                    sablierParams.sablierV2LockupLinear,
+                    sablierParams.sablier,
                     sablierParams.totalAmount
                 ),
                 Enum.Operation.Call
@@ -245,7 +245,7 @@ contract DecentHats {
 
             // Proxy the Sablier call through IAvatar
             IAvatar(msg.sender).execTransactionFromModule(
-                sablierParams.sablierV2LockupLinear,
+                address(sablierParams.sablier),
                 0,
                 abi.encodeWithSignature(
                     "createWithTimestamps((address,address,uint128,address,bool,bool,(uint40,uint40,uint40),(address,uint256)))",
