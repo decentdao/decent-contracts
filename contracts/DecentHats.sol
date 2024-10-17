@@ -87,24 +87,32 @@ contract DecentHats {
         );
 
         for (uint256 i = 0; i < params.hats.length; ) {
-            (uint256 hatId, ) = _createHatAndAccountAndMintAndStreams(
-                params.hatsProtocol,
-                params.registry,
-                topHatAccount,
-                params.hatsAccountImplementation,
-                adminHatId,
-                params.hats[i]
-            );
-
+            address eligibilityAddress = topHatAccount;
             if (params.hats[i].isTermed) {
+                uint256 hatId = params.hatsProtocol.getNextId(adminHatId);
                 // Create election module and set as eligiblity, elect, and start next term
-                _createElectionModuleAndExecuteFirstTerm(
-                    params.hatsProtocol,
+                eligibilityAddress = _createElectionModule(
                     params.hatsModuleFactory,
                     params.hatsElectionEligibilityImplementation,
                     hatId,
                     topHatId,
                     params.hats[i].termedParams[0]
+                );
+            }
+            _createHatAndAccountAndMintAndStreams(
+                params.hatsProtocol,
+                params.registry,
+                topHatAccount,
+                params.hatsAccountImplementation,
+                adminHatId,
+                params.hats[i],
+                eligibilityAddress
+            );
+
+            if (params.hats[i].isTermed) {
+                IHatsElectionEligibility(eligibilityAddress).elect(
+                    params.hats[i].termedParams[0].termEndDateTs,
+                    params.hats[i].termedParams[0].nominatedWearers
                 );
             }
 
@@ -145,15 +153,16 @@ contract DecentHats {
         IHats _hatsProtocol,
         uint256 adminHatId,
         Hat memory _hat,
-        address topHatAccount
+        address toggle,
+        address eligibility
     ) internal returns (uint256) {
         return
             _hatsProtocol.createHat(
                 adminHatId,
                 _hat.details,
                 _hat.maxSupply,
-                topHatAccount,
-                topHatAccount,
+                eligibility,
+                toggle,
                 _hat.isMutable,
                 _hat.imageURI
             );
@@ -202,9 +211,16 @@ contract DecentHats {
         address topHatAccount,
         address hatsAccountImplementation,
         uint256 adminHatId,
-        Hat calldata hat
+        Hat calldata hat,
+        address eligibilityAddress
     ) internal returns (uint256 hatId, address accountAddress) {
-        hatId = _createHat(hatsProtocol, adminHatId, hat, topHatAccount);
+        hatId = _createHat(
+            hatsProtocol,
+            adminHatId,
+            hat,
+            topHatAccount,
+            eligibilityAddress
+        );
 
         accountAddress = _createAccount(
             registry,
@@ -270,7 +286,13 @@ contract DecentHats {
         uint256 topHatId,
         Hat calldata hat
     ) internal returns (uint256 adminHatId, address accountAddress) {
-        adminHatId = _createHat(hatsProtocol, topHatId, hat, topHatAccount);
+        adminHatId = _createHat(
+            hatsProtocol,
+            topHatId,
+            hat,
+            topHatAccount,
+            topHatAccount
+        );
 
         accountAddress = _createAccount(
             registry,
@@ -297,28 +319,19 @@ contract DecentHats {
         return abi.encodePacked(bytecode, constructorArgs);
     }
 
-    function _createElectionModuleAndExecuteFirstTerm(
-        IHats hatsProtocol,
+    function _createElectionModule(
         IHatsModuleFactory hatsModuleFactory,
         address hatsElectionEligibilityImplementation,
         uint256 hatId,
         uint256 topHatId,
         TermedParams calldata termedParams
-    ) internal returns (address) {
-        address electionModuleAddress = hatsModuleFactory.createHatsModule(
+    ) internal returns (address electionModuleAddress) {
+        electionModuleAddress = hatsModuleFactory.createHatsModule(
             hatsElectionEligibilityImplementation,
             hatId,
             abi.encode(topHatId, uint256(0)),
             abi.encode(termedParams.termEndDateTs),
             uint256(SALT)
         );
-        hatsProtocol.changeHatEligibility(hatId, electionModuleAddress);
-
-        IHatsElectionEligibility(electionModuleAddress).elect(
-            termedParams.termEndDateTs,
-            termedParams.nominatedWearers
-        );
-
-        return electionModuleAddress;
     }
 }
