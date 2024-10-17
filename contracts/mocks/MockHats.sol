@@ -33,4 +33,15 @@ contract MockHats is IHats {
     }
 
     function transferHat(uint256, address, address) external {}
+
+    function getHatEligibilityModule(
+        uint256 _hatId
+    ) external view returns (address eligibility) {}
+
+    function isWearerOfHat(
+        address _user,
+        uint256 _hatId
+    ) external view returns (bool isWearer) {}
+
+    function changeHatEligibility(uint256, address) external {}
 }
