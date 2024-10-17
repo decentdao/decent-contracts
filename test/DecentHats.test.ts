@@ -326,7 +326,6 @@ describe("DecentHats", () => {
                   hatsModuleFactory: mockHatsModuleFactoryAddress,
                   hatsElectionEligibilityImplementation:
                     mockHatsElectionEligibilityImplementationAddress,
-                  
                 },
               ]
             ),
@@ -433,7 +432,7 @@ describe("DecentHats", () => {
                     wearer: ethers.ZeroAddress,
                     sablierParams: [
                       {
-                        sablierV2LockupLinear: mockSablierAddress,
+                        sablier: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("100"),
                         asset: mockERC20Address,
@@ -474,7 +473,6 @@ describe("DecentHats", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
-                
               },
             ]
           ),
@@ -576,7 +574,7 @@ describe("DecentHats", () => {
                     wearer: ethers.ZeroAddress,
                     sablierParams: [
                       {
-                        sablierV2LockupLinear: mockSablierAddress,
+                        sablier: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("100"),
                         asset: mockERC20Address,
@@ -590,7 +588,7 @@ describe("DecentHats", () => {
                         broker: { account: ethers.ZeroAddress, fee: 0 },
                       },
                       {
-                        sablierV2LockupLinear: mockSablierAddress,
+                        sablier: mockSablierAddress,
                         sender: gnosisSafeAddress,
                         totalAmount: ethers.parseEther("50"),
                         asset: mockERC20Address,
@@ -616,7 +614,6 @@ describe("DecentHats", () => {
                 hatsModuleFactory: mockHatsModuleFactoryAddress,
                 hatsElectionEligibilityImplementation:
                   mockHatsElectionEligibilityImplementationAddress,
-                
               },
             ]
           ),
