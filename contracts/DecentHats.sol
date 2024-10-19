@@ -109,13 +109,6 @@ contract DecentHats {
                 eligibilityAddress
             );
 
-            if (params.hats[i].isTermed) {
-                IHatsElectionEligibility(eligibilityAddress).elect(
-                    params.hats[i].termedParams[0].termEndDateTs,
-                    params.hats[i].termedParams[0].nominatedWearers
-                );
-            }
-
             unchecked {
                 ++i;
             }
@@ -221,13 +214,22 @@ contract DecentHats {
             topHatAccount,
             eligibilityAddress
         );
+        if (!hat.isTermed) {
+            accountAddress = _createAccount(
+                registry,
+                hatsAccountImplementation,
+                address(hatsProtocol),
+                hatId
+            );
+        } else {
+            IHatsElectionEligibility(eligibilityAddress).elect(
+                hat.termedParams[0].termEndDateTs,
+                hat.termedParams[0].nominatedWearers
+            );
+            // Payments are made directly to the hat wearer
+            accountAddress = hat.wearer;
+        }
 
-        accountAddress = _createAccount(
-            registry,
-            hatsAccountImplementation,
-            address(hatsProtocol),
-            hatId
-        );
         if (hat.wearer != address(0)) {
             hatsProtocol.mintHat(hatId, hat.wearer);
         }
