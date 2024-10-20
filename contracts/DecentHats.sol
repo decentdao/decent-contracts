@@ -87,27 +87,33 @@ contract DecentHats {
         );
 
         for (uint256 i = 0; i < params.hats.length; ) {
-            address eligibilityAddress = topHatAccount;
             if (params.hats[i].isTermed) {
                 uint256 hatId = params.hatsProtocol.getNextId(adminHatId);
-                // Create election module and set as eligiblity, elect, and start next term
-                eligibilityAddress = _createElectionModule(
-                    params.hatsModuleFactory,
-                    params.hatsElectionEligibilityImplementation,
-                    hatId,
-                    topHatId,
-                    params.hats[i].termedParams[0]
+
+                // Create election module and set as eligiblity
+                _createTermedHatAndAccountAndMintAndStreams(
+                    params.hatsProtocol,
+                    topHatAccount,
+                    _createElectionEligiblityModule(
+                        params.hatsModuleFactory,
+                        params.hatsElectionEligibilityImplementation,
+                        hatId,
+                        topHatId,
+                        params.hats[i].termedParams[0]
+                    ),
+                    adminHatId,
+                    params.hats[i]
+                );
+            } else {
+                _createHatAndAccountAndMintAndStreams(
+                    params.hatsProtocol,
+                    params.registry,
+                    topHatAccount,
+                    params.hatsAccountImplementation,
+                    adminHatId,
+                    params.hats[i]
                 );
             }
-            _createHatAndAccountAndMintAndStreams(
-                params.hatsProtocol,
-                params.registry,
-                topHatAccount,
-                params.hatsAccountImplementation,
-                adminHatId,
-                params.hats[i],
-                eligibilityAddress
-            );
 
             unchecked {
                 ++i;
@@ -204,31 +210,21 @@ contract DecentHats {
         address topHatAccount,
         address hatsAccountImplementation,
         uint256 adminHatId,
-        Hat calldata hat,
-        address eligibilityAddress
+        Hat calldata hat
     ) internal returns (uint256 hatId, address accountAddress) {
         hatId = _createHat(
             hatsProtocol,
             adminHatId,
             hat,
             topHatAccount,
-            eligibilityAddress
+            topHatAccount
         );
-        if (!hat.isTermed) {
-            accountAddress = _createAccount(
-                registry,
-                hatsAccountImplementation,
-                address(hatsProtocol),
-                hatId
-            );
-        } else {
-            IHatsElectionEligibility(eligibilityAddress).elect(
-                hat.termedParams[0].termEndDateTs,
-                hat.termedParams[0].nominatedWearers
-            );
-            // Payments are made directly to the hat wearer
-            accountAddress = hat.wearer;
-        }
+        accountAddress = _createAccount(
+            registry,
+            hatsAccountImplementation,
+            address(hatsProtocol),
+            hatId
+        );
 
         if (hat.wearer != address(0)) {
             hatsProtocol.mintHat(hatId, hat.wearer);
@@ -253,6 +249,74 @@ contract DecentHats {
                 .CreateWithTimestamps({
                     sender: sablierParams.sender,
                     recipient: accountAddress,
+                    totalAmount: sablierParams.totalAmount,
+                    asset: IERC20(sablierParams.asset),
+                    cancelable: sablierParams.cancelable,
+                    transferable: sablierParams.transferable,
+                    timestamps: sablierParams.timestamps,
+                    broker: sablierParams.broker
+                });
+
+            // Proxy the Sablier call through IAvatar
+            IAvatar(msg.sender).execTransactionFromModule(
+                address(sablierParams.sablier),
+                0,
+                abi.encodeWithSignature(
+                    "createWithTimestamps((address,address,uint128,address,bool,bool,(uint40,uint40,uint40),(address,uint256)))",
+                    params
+                ),
+                Enum.Operation.Call
+            );
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function _createTermedHatAndAccountAndMintAndStreams(
+        IHats hatsProtocol,
+        address topHatAccount,
+        address eligibilityAddress,
+        uint256 adminHatId,
+        Hat calldata hat
+    ) internal {
+        uint256 hatId = _createHat(
+            hatsProtocol,
+            adminHatId,
+            hat,
+            topHatAccount,
+            eligibilityAddress
+        );
+
+        IHatsElectionEligibility(eligibilityAddress).elect(
+            hat.termedParams[0].termEndDateTs,
+            hat.termedParams[0].nominatedWearers
+        );
+
+        if (hat.wearer != address(0)) {
+            hatsProtocol.mintHat(hatId, hat.wearer);
+        }
+
+        for (uint256 i = 0; i < hat.sablierParams.length; ) {
+            SablierStreamParams memory sablierParams = hat.sablierParams[i];
+
+            // Approve tokens for Sablier
+            IAvatar(msg.sender).execTransactionFromModule(
+                sablierParams.asset,
+                0,
+                abi.encodeWithSignature(
+                    "approve(address,uint256)",
+                    sablierParams.sablier,
+                    sablierParams.totalAmount
+                ),
+                Enum.Operation.Call
+            );
+
+            LockupLinear.CreateWithTimestamps memory params = LockupLinear
+                .CreateWithTimestamps({
+                    sender: sablierParams.sender,
+                    recipient: hat.wearer,
                     totalAmount: sablierParams.totalAmount,
                     asset: IERC20(sablierParams.asset),
                     cancelable: sablierParams.cancelable,
@@ -307,21 +371,13 @@ contract DecentHats {
             adminHatId,
             moduleProxyFactory.deployModule(
                 decentAutonomousAdminMasterCopy,
-                abi.encodeWithSignature("setUp()"),
+                abi.encodeWithSignature("setUp(bytes)", bytes("")),
                 uint256(keccak256(abi.encodePacked(SALT, adminHatId)))
             )
         );
     }
 
-    function _getCreationCode(
-        uint256 _adminHatId
-    ) internal pure returns (bytes memory) {
-        bytes memory bytecode = type(DecentAutonomousAdmin).creationCode;
-        bytes memory constructorArgs = abi.encode(_adminHatId);
-        return abi.encodePacked(bytecode, constructorArgs);
-    }
-
-    function _createElectionModule(
+    function _createElectionEligiblityModule(
         IHatsModuleFactory hatsModuleFactory,
         address hatsElectionEligibilityImplementation,
         uint256 hatId,
