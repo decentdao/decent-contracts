@@ -4,10 +4,11 @@ pragma solidity 0.8.28;
 import {IHats} from "./interfaces/hats/full/IHats.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
 import {ISablierV2Lockup} from "./interfaces/sablier/full/ISablierV2Lockup.sol";
+import {FactoryFriendly} from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
 
-contract DecentAutonomousAdmin {
+contract DecentAutonomousAdmin is FactoryFriendly {
     string public constant NAME = "DecentAutonomousAdmin";
-    string public version_ = "0.1.0";
+    string public constant version_ = "0.1.0";
 
     struct SablierStreamInfo {
         uint256 streamId;
@@ -23,7 +24,7 @@ contract DecentAutonomousAdmin {
     // //////////////////////////////////////////////////////////////
     //                         initializer
     // //////////////////////////////////////////////////////////////
-    function setUp() public {}
+    function setUp(bytes memory initializeParams) public override initializer {}
 
     // //////////////////////////////////////////////////////////////
     //                         Public Functions
