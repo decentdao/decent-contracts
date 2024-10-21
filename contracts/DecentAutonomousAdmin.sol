@@ -47,11 +47,12 @@ contract DecentAutonomousAdmin is FactoryFriendly {
 
         hatsElectionModule.startNextTerm();
 
-        // transfer user hat to self
+        // This will burn the hat since wearer is no longer eligible
         args.userHatProtocol.checkHatWearerStatus(
             args.userHatId,
             args.currentWearer
         );
+        // This will mint the hat to the nominated wearer
         args.userHatProtocol.mintHat(args.userHatId, args.nominatedWearer);
     }
 
