@@ -88,8 +88,6 @@ contract DecentHats {
 
         for (uint256 i = 0; i < params.hats.length; ) {
             if (params.hats[i].isTermed) {
-                uint256 hatId = params.hatsProtocol.getNextId(adminHatId);
-
                 // Create election module and set as eligiblity
                 _createTermedHatAndAccountAndMintAndStreams(
                     params.hatsProtocol,
@@ -97,7 +95,7 @@ contract DecentHats {
                     _createElectionEligiblityModule(
                         params.hatsModuleFactory,
                         params.hatsElectionEligibilityImplementation,
-                        hatId,
+                        params.hatsProtocol.getNextId(adminHatId),
                         topHatId,
                         params.hats[i].termedParams[0]
                     ),
