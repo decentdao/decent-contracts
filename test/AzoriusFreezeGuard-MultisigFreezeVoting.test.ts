@@ -1,8 +1,6 @@
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { expect } from "chai";
-import { ethers } from "ethers";
-import hre from "hardhat";
-import time from "./time";
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { expect } from 'chai';
+import hre, { ethers } from 'hardhat';
 
 import {
   GnosisSafeProxyFactory,
@@ -19,23 +17,24 @@ import {
   ModuleProxyFactory,
   GnosisSafeL2__factory,
   GnosisSafeL2,
-} from "../typechain-types";
+} from '../typechain-types';
 
+import {
+  getGnosisSafeL2Singleton,
+  getGnosisSafeProxyFactory,
+  getModuleProxyFactory,
+} from './GlobalSafeDeployments.test';
 import {
   buildSignatureBytes,
   buildSafeTransaction,
   safeSignTypedData,
   predictGnosisSafeAddress,
   calculateProxyAddress,
-} from "./helpers";
+} from './helpers';
 
-import {
-  getGnosisSafeL2Singleton,
-  getGnosisSafeProxyFactory,
-  getModuleProxyFactory,
-} from "./GlobalSafeDeployments.test";
+import time from './time';
 
-describe("Azorius Child DAO with Multisig parent", () => {
+describe('Azorius Child DAO with Multisig parent', () => {
   // Deployed contracts
   let parentGnosisSafe: GnosisSafeL2;
   let childGnosisSafe: GnosisSafeL2;
@@ -68,9 +67,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
   let createParentGnosisSetupCalldata: string;
 
   const parentThreshold = 2;
-  const saltNum = BigInt(
-    "0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c"
-  );
+  const saltNum = BigInt('0x856d90216588f9ffc124d1480a440e1c012c7a816952bc968d737bae5d4e139c');
 
   beforeEach(async () => {
     gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
@@ -94,12 +91,8 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     createParentGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
-      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
-        [
-          parentMultisigOwner1.address,
-          parentMultisigOwner2.address,
-          parentMultisigOwner3.address,
-        ],
+      GnosisSafeL2__factory.createInterface().encodeFunctionData('setup', [
+        [parentMultisigOwner1.address, parentMultisigOwner2.address, parentMultisigOwner3.address],
         parentThreshold,
         ethers.ZeroAddress,
         ethers.ZeroHash,
@@ -111,7 +104,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     createChildGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
-      GnosisSafeL2__factory.createInterface().encodeFunctionData("setup", [
+      GnosisSafeL2__factory.createInterface().encodeFunctionData('setup', [
         [childSafeOwner.address],
         1,
         ethers.ZeroAddress,
@@ -126,40 +119,40 @@ describe("Azorius Child DAO with Multisig parent", () => {
       createParentGnosisSetupCalldata,
       saltNum,
       await gnosisSafeL2Singleton.getAddress(),
-      gnosisSafeProxyFactory
+      gnosisSafeProxyFactory,
     );
 
     const predictedChildGnosisSafeAddress = await predictGnosisSafeAddress(
       createChildGnosisSetupCalldata,
       saltNum,
       await gnosisSafeL2Singleton.getAddress(),
-      gnosisSafeProxyFactory
+      gnosisSafeProxyFactory,
     );
 
     // Deploy Parent Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
       await gnosisSafeL2Singleton.getAddress(),
       createParentGnosisSetupCalldata,
-      saltNum
+      saltNum,
     );
 
     // Deploy Child Gnosis Safe
     await gnosisSafeProxyFactory.createProxyWithNonce(
       await gnosisSafeL2Singleton.getAddress(),
       createChildGnosisSetupCalldata,
-      saltNum
+      saltNum,
     );
 
     // Get Parent Gnosis Safe
     parentGnosisSafe = await hre.ethers.getContractAt(
-      "GnosisSafeL2",
-      predictedParentGnosisSafeAddress
+      'GnosisSafeL2',
+      predictedParentGnosisSafeAddress,
     );
 
     // Get Child Gnosis Safe
     childGnosisSafe = await hre.ethers.getContractAt(
-      "GnosisSafeL2",
-      predictedChildGnosisSafeAddress
+      'GnosisSafeL2',
+      predictedChildGnosisSafeAddress,
     );
 
     // Deploy Votes ERC-20 Mastercopy
@@ -167,19 +160,19 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
     const childVotesERC20SetupData =
       // eslint-disable-next-line camelcase
-      VotesERC20__factory.createInterface().encodeFunctionData("setUp", [
+      VotesERC20__factory.createInterface().encodeFunctionData('setUp', [
         abiCoder.encode(
-          ["string", "string", "address[]", "uint256[]"],
+          ['string', 'string', 'address[]', 'uint256[]'],
           [
-            "CHILD",
-            "CHILD",
+            'CHILD',
+            'CHILD',
             [
               childTokenHolder1.address,
               childTokenHolder2.address,
               await childGnosisSafe.getAddress(),
             ],
             [100, 100, 100],
-          ]
+          ],
         ),
       ]);
 
@@ -188,37 +181,30 @@ describe("Azorius Child DAO with Multisig parent", () => {
     await moduleProxyFactory.deployModule(
       await votesERC20Mastercopy.getAddress(),
       childVotesERC20SetupData,
-      "10031021"
+      '10031021',
     );
 
     const predictedChildVotesERC20Address = await calculateProxyAddress(
       moduleProxyFactory,
       await votesERC20Mastercopy.getAddress(),
       childVotesERC20SetupData,
-      "10031021"
+      '10031021',
     );
 
-    childVotesERC20 = await hre.ethers.getContractAt(
-      "VotesERC20",
-      predictedChildVotesERC20Address
-    );
+    childVotesERC20 = await hre.ethers.getContractAt('VotesERC20', predictedChildVotesERC20Address);
 
     // Token holders delegate their votes to themselves
-    await childVotesERC20
-      .connect(childTokenHolder1)
-      .delegate(childTokenHolder1.address);
-    await childVotesERC20
-      .connect(childTokenHolder2)
-      .delegate(childTokenHolder2.address);
+    await childVotesERC20.connect(childTokenHolder1).delegate(childTokenHolder1.address);
+    await childVotesERC20.connect(childTokenHolder2).delegate(childTokenHolder2.address);
 
     // Deploy Azorius module mastercopy
     azoriusMastercopy = await new Azorius__factory(deployer).deploy();
 
     const azoriusSetupCalldata =
       // eslint-disable-next-line camelcase
-      Azorius__factory.createInterface().encodeFunctionData("setUp", [
+      Azorius__factory.createInterface().encodeFunctionData('setUp', [
         abiCoder.encode(
-          ["address", "address", "address", "address[]", "uint32", "uint32"],
+          ['address', 'address', 'address', 'address[]', 'uint32', 'uint32'],
           [
             azoriusModuleOwner.address,
             await childGnosisSafe.getAddress(),
@@ -226,46 +212,33 @@ describe("Azorius Child DAO with Multisig parent", () => {
             [],
             60, // Timelock period in blocks
             60, // Execution period in blocks
-          ]
+          ],
         ),
       ]);
 
     await moduleProxyFactory.deployModule(
       await azoriusMastercopy.getAddress(),
       azoriusSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     const predictedAzoriusAddress = await calculateProxyAddress(
       moduleProxyFactory,
       await azoriusMastercopy.getAddress(),
       azoriusSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
-    azoriusModule = await hre.ethers.getContractAt(
-      "Azorius",
-      predictedAzoriusAddress
-    );
+    azoriusModule = await hre.ethers.getContractAt('Azorius', predictedAzoriusAddress);
 
     // Deploy Linear ERC-20 Voting Strategy Mastercopy
-    linearERC20VotingMastercopy = await new LinearERC20Voting__factory(
-      deployer
-    ).deploy();
+    linearERC20VotingMastercopy = await new LinearERC20Voting__factory(deployer).deploy();
 
     const linearERC20VotingSetupCalldata =
       // eslint-disable-next-line camelcase
-      LinearERC20Voting__factory.createInterface().encodeFunctionData("setUp", [
+      LinearERC20Voting__factory.createInterface().encodeFunctionData('setUp', [
         abiCoder.encode(
-          [
-            "address",
-            "address",
-            "address",
-            "uint32",
-            "uint256",
-            "uint256",
-            "uint256",
-          ],
+          ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256'],
           [
             await parentGnosisSafe.getAddress(), // owner
             await childVotesERC20.getAddress(), // governance token
@@ -274,26 +247,26 @@ describe("Azorius Child DAO with Multisig parent", () => {
             0, // proposer weight
             500000, // quorom numerator, denominator is 1,000,000
             500000, // basis numerator, denominator is 1,000,000, so basis percentage is 50% (simple majority)
-          ]
+          ],
         ),
       ]);
 
     await moduleProxyFactory.deployModule(
       await linearERC20VotingMastercopy.getAddress(),
       linearERC20VotingSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     const predictedLinearERC20VotingAddress = await calculateProxyAddress(
       moduleProxyFactory,
       await linearERC20VotingMastercopy.getAddress(),
       linearERC20VotingSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     linearERC20Voting = await hre.ethers.getContractAt(
-      "LinearERC20Voting",
-      predictedLinearERC20VotingAddress
+      'LinearERC20Voting',
+      predictedLinearERC20VotingAddress,
     );
 
     // Enable the Linear Token Voting strategy on Azorius
@@ -302,86 +275,75 @@ describe("Azorius Child DAO with Multisig parent", () => {
       .enableStrategy(await linearERC20Voting.getAddress());
 
     // Deploy MultisigFreezeVoting mastercopy contract
-    freezeVotingMastercopy = await new MultisigFreezeVoting__factory(
-      deployer
-    ).deploy();
+    freezeVotingMastercopy = await new MultisigFreezeVoting__factory(deployer).deploy();
 
     const freezeVotingSetupCalldata =
       // eslint-disable-next-line camelcase
-      MultisigFreezeVoting__factory.createInterface().encodeFunctionData(
-        "setUp",
-        [
-          abiCoder.encode(
-            ["address", "uint256", "uint32", "uint32", "address"],
-            [
-              freezeVotingOwner.address, // owner
-              2, // freeze votes threshold
-              10, // freeze proposal duration in blocks
-              200, // freeze duration in blocks
-              await parentGnosisSafe.getAddress(),
-            ]
-          ),
-        ]
-      );
+      MultisigFreezeVoting__factory.createInterface().encodeFunctionData('setUp', [
+        abiCoder.encode(
+          ['address', 'uint256', 'uint32', 'uint32', 'address'],
+          [
+            freezeVotingOwner.address, // owner
+            2, // freeze votes threshold
+            10, // freeze proposal duration in blocks
+            200, // freeze duration in blocks
+            await parentGnosisSafe.getAddress(),
+          ],
+        ),
+      ]);
 
     await moduleProxyFactory.deployModule(
       await freezeVotingMastercopy.getAddress(),
       freezeVotingSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     const predictedFreezeVotingAddress = await calculateProxyAddress(
       moduleProxyFactory,
       await freezeVotingMastercopy.getAddress(),
       freezeVotingSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     freezeVoting = await hre.ethers.getContractAt(
-      "MultisigFreezeVoting",
-      predictedFreezeVotingAddress
+      'MultisigFreezeVoting',
+      predictedFreezeVotingAddress,
     );
 
     // Deploy and setUp AzoriusFreezeGuard mastercopy contract
-    freezeGuardMastercopy = await new AzoriusFreezeGuard__factory(
-      deployer
-    ).deploy();
+    freezeGuardMastercopy = await new AzoriusFreezeGuard__factory(deployer).deploy();
 
     const freezeGuardSetupCalldata =
       // eslint-disable-next-line camelcase
-      LinearERC20Voting__factory.createInterface().encodeFunctionData("setUp", [
+      LinearERC20Voting__factory.createInterface().encodeFunctionData('setUp', [
         abiCoder.encode(
-          ["address", "address"],
+          ['address', 'address'],
           [
             freezeVotingOwner.address, // owner
             await freezeVoting.getAddress(), // freeze voting contract
-          ]
+          ],
         ),
       ]);
 
     await moduleProxyFactory.deployModule(
       await freezeGuardMastercopy.getAddress(),
       freezeGuardSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
     const predictedFreezeGuardAddress = await calculateProxyAddress(
       moduleProxyFactory,
       await freezeGuardMastercopy.getAddress(),
       freezeGuardSetupCalldata,
-      "10031021"
+      '10031021',
     );
 
-    freezeGuard = await hre.ethers.getContractAt(
-      "AzoriusFreezeGuard",
-      predictedFreezeGuardAddress
-    );
+    freezeGuard = await hre.ethers.getContractAt('AzoriusFreezeGuard', predictedFreezeGuardAddress);
 
     // Create transaction on child Gnosis Safe to setup Azorius module
-    const enableAzoriusModuleData =
-      childGnosisSafe.interface.encodeFunctionData("enableModule", [
-        await azoriusModule.getAddress(),
-      ]);
+    const enableAzoriusModuleData = childGnosisSafe.interface.encodeFunctionData('enableModule', [
+      await azoriusModule.getAddress(),
+    ]);
 
     const enableAzoriusModuleTx = buildSafeTransaction({
       to: await childGnosisSafe.getAddress(),
@@ -390,13 +352,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       nonce: await childGnosisSafe.nonce(),
     });
 
-    const sigs = [
-      await safeSignTypedData(
-        childSafeOwner,
-        childGnosisSafe,
-        enableAzoriusModuleTx
-      ),
-    ];
+    const sigs = [await safeSignTypedData(childSafeOwner, childGnosisSafe, enableAzoriusModuleTx)];
 
     const signatureBytes = buildSignatureBytes(sigs);
 
@@ -412,28 +368,24 @@ describe("Azorius Child DAO with Multisig parent", () => {
         enableAzoriusModuleTx.gasPrice,
         enableAzoriusModuleTx.gasToken,
         enableAzoriusModuleTx.refundReceiver,
-        signatureBytes
-      )
-    ).to.emit(childGnosisSafe, "ExecutionSuccess");
+        signatureBytes,
+      ),
+    ).to.emit(childGnosisSafe, 'ExecutionSuccess');
 
     // Set the Azorius Freeze Guard as the Guard on the Azorius Module
-    await azoriusModule
-      .connect(azoriusModuleOwner)
-      .setGuard(await freezeGuard.getAddress());
+    await azoriusModule.connect(azoriusModuleOwner).setGuard(await freezeGuard.getAddress());
 
     // Gnosis Safe received the 100 tokens
-    expect(
-      await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-    ).to.eq(100);
+    expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
   });
 
-  describe("AzoriusFreezeGuard Functionality", () => {
-    it("A proposal can be created and executed", async () => {
+  describe('AzoriusFreezeGuard Functionality', () => {
+    it('A proposal can be created and executed', async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 10]
-      );
+      const tokenTransferData = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        10,
+      ]);
 
       const proposalTransaction = {
         to: await childVotesERC20.getAddress(),
@@ -444,9 +396,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction],
-        ""
+        '',
       );
 
       // Proposal is active
@@ -468,9 +420,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(100);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
@@ -479,31 +429,29 @@ describe("Azorius Child DAO with Multisig parent", () => {
         [await childVotesERC20.getAddress()],
         [0],
         [tokenTransferData],
-        [0]
+        [0],
       );
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(90);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(90);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
     });
 
-    it("A proposal containing multiple transactions can be created and executed", async () => {
+    it('A proposal containing multiple transactions can be created and executed', async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 1]
-      );
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        1,
+      ]);
 
-      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 2]
-      );
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        2,
+      ]);
 
-      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 3]
-      );
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        3,
+      ]);
 
       const proposalTransactions = [
         {
@@ -528,9 +476,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         proposalTransactions,
-        ""
+        '',
       );
 
       // Proposal is active
@@ -552,9 +500,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(100);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
@@ -567,32 +513,30 @@ describe("Azorius Child DAO with Multisig parent", () => {
         ],
         [0, 0, 0],
         [tokenTransferData1, tokenTransferData2, tokenTransferData3],
-        [0, 0, 0]
+        [0, 0, 0],
       );
 
       // Check that all three token transfer TX's were executed
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(94);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(94);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(6);
     });
 
-    it("A frozen DAO cannot execute any transaction", async () => {
+    it('A frozen DAO cannot execute any transaction', async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 10]
-      );
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        10,
+      ]);
 
-      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 5]
-      );
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        5,
+      ]);
 
-      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 4]
-      );
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        4,
+      ]);
 
       const proposalTransaction1 = {
         to: await childVotesERC20.getAddress(),
@@ -617,21 +561,21 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction1],
-        ""
+        '',
       );
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction2],
-        ""
+        '',
       );
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction3],
-        ""
+        '',
       );
 
       // Proposal is active
@@ -681,9 +625,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData1],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // This proposal should fail due to freeze
       await expect(
@@ -692,9 +636,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData2],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // This proposal should fail due to freeze
       await expect(
@@ -703,17 +647,17 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData3],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
     });
 
-    it("A proposal can still be executed if a freeze proposal has been created, but threshold has not been met", async () => {
+    it('A proposal can still be executed if a freeze proposal has been created, but threshold has not been met', async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 10]
-      );
+      const tokenTransferData = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        10,
+      ]);
 
       const proposalTransaction = {
         to: await childVotesERC20.getAddress(),
@@ -724,9 +668,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction],
-        ""
+        '',
       );
 
       // Proposal is active
@@ -755,9 +699,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(100);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
@@ -766,29 +708,27 @@ describe("Azorius Child DAO with Multisig parent", () => {
         [await childVotesERC20.getAddress()],
         [0],
         [tokenTransferData],
-        [0]
+        [0],
       );
 
       // Proposal is executed
       expect(await azoriusModule.proposalState(0)).to.eq(3);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(90);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(90);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
     });
 
-    it("A frozen DAO is automatically unfrozen after the freeze duration is over", async () => {
+    it('A frozen DAO is automatically unfrozen after the freeze duration is over', async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 10]
-      );
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        10,
+      ]);
 
-      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 5]
-      );
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        5,
+      ]);
 
       const proposalTransaction1 = {
         to: await childVotesERC20.getAddress(),
@@ -806,16 +746,16 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction1],
-        ""
+        '',
       );
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction2],
-        ""
+        '',
       );
 
       // Proposal is active
@@ -858,9 +798,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData1],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // This proposal should fail due to freeze
       await expect(
@@ -869,17 +809,17 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData2],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // Increase time so that freeze period has ended
       await time.advanceBlocks(200);
 
-      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 4]
-      );
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        4,
+      ]);
 
       const proposalTransaction3 = {
         to: await childVotesERC20.getAddress(),
@@ -890,9 +830,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction3],
-        ""
+        '',
       );
 
       expect(await azoriusModule.proposalState(2)).to.eq(0);
@@ -912,9 +852,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(2)).to.eq(2);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(100);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
@@ -923,34 +861,32 @@ describe("Azorius Child DAO with Multisig parent", () => {
         [await childVotesERC20.getAddress()],
         [0],
         [tokenTransferData3],
-        [0]
+        [0],
       );
 
       // Proposal is executed
       expect(await azoriusModule.proposalState(2)).to.eq(3);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(96);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(96);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(4);
     });
 
     it("A frozen DAO can be unfrozen by its owner, and continue to execute TX's", async () => {
       // Create transaction to transfer tokens to the deployer
-      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 10]
-      );
+      const tokenTransferData1 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        10,
+      ]);
 
-      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 5]
-      );
+      const tokenTransferData2 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        5,
+      ]);
 
-      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData(
-        "transfer",
-        [deployer.address, 4]
-      );
+      const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
+        deployer.address,
+        4,
+      ]);
 
       const proposalTransaction1 = {
         to: await childVotesERC20.getAddress(),
@@ -975,21 +911,21 @@ describe("Azorius Child DAO with Multisig parent", () => {
 
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction1],
-        ""
+        '',
       );
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction2],
-        ""
+        '',
       );
       await azoriusModule.submitProposal(
         await linearERC20Voting.getAddress(),
-        "0x",
+        '0x',
         [proposalTransaction3],
-        ""
+        '',
       );
 
       // Proposal is active
@@ -1039,9 +975,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData1],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // This proposal should fail due to freeze
       await expect(
@@ -1050,9 +986,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData2],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // This proposal should fail due to freeze
       await expect(
@@ -1061,9 +997,9 @@ describe("Azorius Child DAO with Multisig parent", () => {
           [await childVotesERC20.getAddress()],
           [0],
           [tokenTransferData3],
-          [0]
-        )
-      ).to.be.revertedWithCustomError(freezeGuard, "DAOFrozen()");
+          [0],
+        ),
+      ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // Parent DAO unfreezes the child
       await freezeVoting.connect(freezeVotingOwner).unfreeze();
@@ -1071,9 +1007,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // Child DAO is now unfrozen
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(100);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(100);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(0);
 
       // Execute the transaction
@@ -1082,19 +1016,17 @@ describe("Azorius Child DAO with Multisig parent", () => {
         [await childVotesERC20.getAddress()],
         [0],
         [tokenTransferData1],
-        [0]
+        [0],
       );
 
       // Proposal is executed
       expect(await azoriusModule.proposalState(0)).to.eq(3);
 
-      expect(
-        await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())
-      ).to.eq(90);
+      expect(await childVotesERC20.balanceOf(await childGnosisSafe.getAddress())).to.eq(90);
       expect(await childVotesERC20.balanceOf(deployer.address)).to.eq(10);
     });
 
-    it("Freeze state values are updated correctly throughout the freeze process", async () => {
+    it('Freeze state values are updated correctly throughout the freeze process', async () => {
       // freeze votes threshold => 2
       // freeze proposal duration in blocks => 10
       // freeze duration in blocks => 200
@@ -1102,10 +1034,10 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // One voter casts freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const firstFreezeProposalCreatedBlock =
-        (await hre.ethers.provider.getBlock("latest"))!.number;
+      const firstFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!
+        .number;
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        firstFreezeProposalCreatedBlock
+        firstFreezeProposalCreatedBlock,
       );
 
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
@@ -1115,14 +1047,14 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner1.address,
-          firstFreezeProposalCreatedBlock
-        )
+          firstFreezeProposalCreatedBlock,
+        ),
       ).to.eq(true);
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner2.address,
-          firstFreezeProposalCreatedBlock
-        )
+          firstFreezeProposalCreatedBlock,
+        ),
       ).to.eq(false);
 
       // Increase time so freeze proposal has ended
@@ -1131,11 +1063,11 @@ describe("Azorius Child DAO with Multisig parent", () => {
       // One voter casts freeze vote, this should create a new freeze proposal
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const secondFreezeProposalCreatedBlock =
-        (await hre.ethers.provider.getBlock("latest"))!.number;
+      const secondFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!
+        .number;
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        secondFreezeProposalCreatedBlock
+        secondFreezeProposalCreatedBlock,
       );
 
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(1);
@@ -1145,26 +1077,26 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner1.address,
-          secondFreezeProposalCreatedBlock
-        )
+          secondFreezeProposalCreatedBlock,
+        ),
       ).to.eq(true);
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner2.address,
-          secondFreezeProposalCreatedBlock
-        )
+          secondFreezeProposalCreatedBlock,
+        ),
       ).to.eq(false);
 
       // First voter cannot vote again
       await expect(
-        freezeVoting.connect(parentMultisigOwner1).castFreezeVote()
-      ).to.be.revertedWithCustomError(freezeVoting, "AlreadyVoted");
+        freezeVoting.connect(parentMultisigOwner1).castFreezeVote(),
+      ).to.be.revertedWithCustomError(freezeVoting, 'AlreadyVoted');
 
       // Second voter casts freeze vote, should update state of current freeze proposal
       await freezeVoting.connect(parentMultisigOwner2).castFreezeVote();
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        secondFreezeProposalCreatedBlock
+        secondFreezeProposalCreatedBlock,
       );
 
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);
@@ -1174,14 +1106,14 @@ describe("Azorius Child DAO with Multisig parent", () => {
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner1.address,
-          secondFreezeProposalCreatedBlock
-        )
+          secondFreezeProposalCreatedBlock,
+        ),
       ).to.eq(true);
       expect(
         await freezeVoting.userHasFreezeVoted(
           parentMultisigOwner2.address,
-          secondFreezeProposalCreatedBlock
-        )
+          secondFreezeProposalCreatedBlock,
+        ),
       ).to.eq(true);
 
       // Move time forward, freeze should still be active
@@ -1193,7 +1125,7 @@ describe("Azorius Child DAO with Multisig parent", () => {
       await time.advanceBlocks(200);
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
-        secondFreezeProposalCreatedBlock
+        secondFreezeProposalCreatedBlock,
       );
 
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(2);

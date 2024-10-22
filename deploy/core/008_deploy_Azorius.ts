@@ -1,11 +1,11 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { deployNonUpgradeable } from "../helpers/deployNonUpgradeable";
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
+import { deployNonUpgradeable } from '../helpers/deployNonUpgradeable';
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  await deployNonUpgradeable(hre, "Azorius", []);
+  await deployNonUpgradeable(hre, 'Azorius', []);
 };
 
-func.tags = ["Azorius"];
+func.tags = ['Azorius'];
 
 export default func;
