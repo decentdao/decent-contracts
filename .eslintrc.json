@@ -1,0 +1,43 @@
+{
+  "env": {
+    "es2021": true
+  },
+  "extends": ["plugin:import/recommended", "airbnb-typescript/base", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    // required for "type-aware linting"
+    "project": ["./tsconfig.json"],
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": ["import", "@typescript-eslint"],
+  "settings": {
+    // resolves imports without file extensions for listed extensions
+    "import/resolver": {
+      "node": {
+        "extensions": [".ts"]
+      }
+    }
+  },
+  "rules": {
+    "comma-dangle": "off",
+    "@typescript-eslint/comma-dangle": "off",
+    "indent": "off",
+    "@typescript-eslint/indent": "off",
+    "import/order": [
+      "error",
+      {
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        }
+      }
+    ],
+    // var rules
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "error",
+    "@typescript-eslint/no-unused-vars": "warn",
+    // class rules
+    "@typescript-eslint/lines-between-class-members": "off"
+  }
+}
