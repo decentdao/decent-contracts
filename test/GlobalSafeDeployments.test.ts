@@ -1,3 +1,4 @@
+import hre from 'hardhat';
 import {
   GnosisSafeProxyFactory,
   GnosisSafeProxyFactory__factory,
@@ -9,8 +10,7 @@ import {
   GnosisSafeL2__factory,
   MockContract,
   MockContract__factory,
-} from "../typechain-types";
-import hre from "hardhat";
+} from '../typechain-types';
 
 let gnosisSafeProxyFactory: GnosisSafeProxyFactory;
 let moduleProxyFactory: ModuleProxyFactory;
@@ -21,9 +21,7 @@ let mockContract: MockContract;
 beforeEach(async () => {
   const [deployer] = await hre.ethers.getSigners();
 
-  gnosisSafeProxyFactory = await new GnosisSafeProxyFactory__factory(
-    deployer
-  ).deploy();
+  gnosisSafeProxyFactory = await new GnosisSafeProxyFactory__factory(deployer).deploy();
   moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy();
   gnosisSafeL2Singleton = await new GnosisSafeL2__factory(deployer).deploy();
   multiSendCallOnly = await new MultiSendCallOnly__factory(deployer).deploy();
