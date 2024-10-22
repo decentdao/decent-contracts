@@ -12,6 +12,10 @@
     "url": "git+https://github.com/decentdao/fractal-contracts.git"
   },
   "scripts": {
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
+    "pretty": "prettier . --write",
+    "pretty:check": "prettier . --check",
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "docgen": "hardhat docgen",
@@ -25,16 +29,25 @@
   "bugs": {
     "url": "https://github.com/decentdao/fractal-contracts/issues"
   },
-  "devDependencies": {
+  "dependencies": {
     "@gnosis.pm/zodiac": "^1.1.4",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.0",
     "@prb/math": "^4.0.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "chai": "^4.2.0",
     "dotenv": "^16.4.5",
+    "eslint": "^8.22.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
     "hardhat": "^2.22.2",
     "hardhat-dependency-compiler": "^1.1.4",
     "hardhat-deploy": "^0.12.2",
+    "prettier": "^3.3.3",
     "solidity-docgen": "^0.6.0-beta.36"
   }
 }
