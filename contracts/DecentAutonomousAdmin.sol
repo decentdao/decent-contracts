@@ -3,24 +3,15 @@ pragma solidity 0.8.28;
 
 import {IHats} from "./interfaces/hats/full/IHats.sol";
 import {IHatsElectionEligibility} from "./interfaces/hats/full/IHatsElectionEligibility.sol";
-import {ISablierV2Lockup} from "./interfaces/sablier/full/ISablierV2Lockup.sol";
 import {FactoryFriendly} from "@gnosis.pm/zodiac/contracts/factory/FactoryFriendly.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IDecentAutonomousAdmin} from "./interfaces/IDecentAutonomousAdmin.sol";
 
-contract DecentAutonomousAdmin is FactoryFriendly {
-    string public constant NAME = "DecentAutonomousAdmin";
-    string public constant version_ = "0.1.0";
-
-    struct SablierStreamInfo {
-        uint256 streamId;
-        ISablierV2Lockup sablierV2Lockup;
-    }
-    struct TriggerStartArgs {
-        address currentWearer;
-        IHats userHatProtocol;
-        uint256 userHatId;
-        address nominatedWearer;
-    }
-
+contract DecentAutonomousAdmin is
+    IDecentAutonomousAdmin,
+    ERC165,
+    FactoryFriendly
+{
     // //////////////////////////////////////////////////////////////
     //                         initializer
     // //////////////////////////////////////////////////////////////
@@ -54,6 +45,14 @@ contract DecentAutonomousAdmin is FactoryFriendly {
         );
         // This will mint the hat to the nominated wearer
         args.userHatProtocol.mintHat(args.userHatId, args.nominatedWearer);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IDecentAutonomousAdmin).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     // //////////////////////////////////////////////////////////////
