@@ -49,7 +49,7 @@ contract DecentHats_0_1_0 {
             0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072;
     }
 
-    function updateKeyValuePairs(
+    function declareSafeHatTree(
         address _keyValuePairs,
         uint256 topHatId
     ) internal {
@@ -195,6 +195,29 @@ contract DecentHats_0_1_0 {
         }
     }
 
+    function createRoleHat(
+        IHats hatsProtocol,
+        uint256 adminHatId,
+        Hat calldata hat,
+        uint256 topHatId,
+        address topHatAccount,
+        IERC6551Registry registry,
+        address hatsAccountImplementation,
+        bytes32 salt
+    ) public returns (uint256 hatId, address accountAddress) {
+        (hatId, accountAddress) = createHatAndAccountAndMintAndStreams(
+            hatsProtocol,
+            adminHatId,
+            hat,
+            topHatAccount,
+            registry,
+            hatsAccountImplementation,
+            salt
+        );
+
+        hatsProtocol.transferHat(topHatId, address(this), msg.sender);
+    }
+
     function createAndDeclareTree(CreateTreeParams calldata params) public {
         bytes32 salt = getSalt();
 
@@ -207,7 +230,7 @@ contract DecentHats_0_1_0 {
             salt
         );
 
-        updateKeyValuePairs(params.keyValuePairs, topHatId);
+        declareSafeHatTree(params.keyValuePairs, topHatId);
 
         (uint256 adminHatId, ) = createHatAndAccountAndMintAndStreams(
             params.hatsProtocol,
