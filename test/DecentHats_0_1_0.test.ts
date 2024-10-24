@@ -76,7 +76,7 @@ describe('DecentHats_0_1_0', () => {
         hre.ethers.ZeroAddress,
         0,
         hre.ethers.ZeroAddress,
-      ],
+      ]
     );
 
     const saltNum = BigInt(`0x${Buffer.from(hre.ethers.randomBytes(32)).toString('hex')}`);
@@ -85,14 +85,14 @@ describe('DecentHats_0_1_0', () => {
       createGnosisSetupCalldata,
       saltNum,
       gnosisSafeL2SingletonAddress,
-      gnosisSafeProxyFactory,
+      gnosisSafeProxyFactory
     );
     gnosisSafeAddress = predictedGnosisSafeAddress;
 
     await gnosisSafeProxyFactory.createProxyWithNonce(
       gnosisSafeL2SingletonAddress,
       createGnosisSetupCalldata,
-      saltNum,
+      saltNum
     );
 
     gnosisSafe = GnosisSafeL2__factory.connect(predictedGnosisSafeAddress, deployer);
@@ -116,7 +116,7 @@ describe('DecentHats_0_1_0', () => {
         to: gnosisSafeAddress,
         transactionData: GnosisSafeL2__factory.createInterface().encodeFunctionData(
           'enableModule',
-          [decentHatsAddress],
+          [decentHatsAddress]
         ),
         signers: [dao],
       });
@@ -178,7 +178,7 @@ describe('DecentHats_0_1_0', () => {
                   },
                 ],
               },
-            ],
+            ]
           ),
           signers: [dao],
         });
@@ -227,7 +227,7 @@ describe('DecentHats_0_1_0', () => {
                   },
                   hats: [],
                 },
-              ],
+              ]
             ),
             signers: [dao],
           });
@@ -259,7 +259,7 @@ describe('DecentHats_0_1_0', () => {
               i,
               erc6551Registry,
               mockHatsAccountImplementationAddress,
-              mockHatsAddress,
+              mockHatsAddress
             );
 
             expect(await topHatAccount.tokenId()).eq(i);
@@ -331,7 +331,7 @@ describe('DecentHats_0_1_0', () => {
                   },
                 ],
               },
-            ],
+            ]
           ),
           signers: [dao],
         });
@@ -355,7 +355,7 @@ describe('DecentHats_0_1_0', () => {
 
       it('Creates a Sablier stream for the hat with stream parameters', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
         expect(streamCreatedEvents.length).to.equal(1);
 
@@ -367,14 +367,14 @@ describe('DecentHats_0_1_0', () => {
 
       it('Does not create a Sablier stream for hats without stream parameters', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
         expect(streamCreatedEvents.length).to.equal(1); // Only one stream should be created
       });
 
       it('Creates a Sablier stream with correct timestamps', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
         expect(streamCreatedEvents.length).to.equal(1);
 
@@ -453,7 +453,7 @@ describe('DecentHats_0_1_0', () => {
                   },
                 ],
               },
-            ],
+            ]
           ),
           signers: [dao],
         });
@@ -461,7 +461,7 @@ describe('DecentHats_0_1_0', () => {
 
       it('Creates multiple Sablier streams for a single hat', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
         expect(streamCreatedEvents.length).to.equal(2);
 
@@ -478,7 +478,7 @@ describe('DecentHats_0_1_0', () => {
 
       it('Creates streams with correct parameters', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
 
         const stream1 = await mockSablier.getStream(streamCreatedEvents[0].args.streamId);
@@ -494,7 +494,7 @@ describe('DecentHats_0_1_0', () => {
 
       it('Creates streams with correct timestamps', async () => {
         const streamCreatedEvents = await mockSablier.queryFilter(
-          mockSablier.filters.StreamCreated(),
+          mockSablier.filters.StreamCreated()
         );
 
         const stream1 = await mockSablier.getStream(streamCreatedEvents[0].args.streamId);
@@ -504,6 +504,105 @@ describe('DecentHats_0_1_0', () => {
         const stream2 = await mockSablier.getStream(streamCreatedEvents[1].args.streamId);
         expect(stream2.startTime).to.equal(currentBlockTimestamp);
         expect(stream2.endTime).to.equal(currentBlockTimestamp + 1296000);
+      });
+    });
+
+    describe('Creating a new hat on existing Tree', () => {
+      let createHatAndAccountAndMintAndStreamsTx: ethers.ContractTransactionResponse;
+
+      beforeEach(async () => {
+        await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentHatsAddress,
+          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+            'createAndDeclareTree',
+            [
+              {
+                hatsProtocol: mockHatsAddress,
+                hatsAccountImplementation: mockHatsAccountImplementationAddress,
+                registry: await erc6551Registry.getAddress(),
+                keyValuePairs: await keyValuePairs.getAddress(),
+                topHatDetails: '',
+                topHatImageURI: '',
+                adminHat: {
+                  maxSupply: 1,
+                  details: '',
+                  imageURI: '',
+                  isMutable: false,
+                  wearer: ethers.ZeroAddress,
+                  sablierParams: [],
+                },
+                hats: [
+                  {
+                    maxSupply: 1,
+                    details: '',
+                    imageURI: '',
+                    isMutable: false,
+                    wearer: ethers.ZeroAddress,
+                    sablierParams: [],
+                  },
+                ],
+              },
+            ]
+          ),
+          signers: [dao],
+        });
+
+        const currentBlockTimestamp = (await hre.ethers.provider.getBlock('latest'))!.timestamp;
+
+        createHatAndAccountAndMintAndStreamsTx = await executeSafeTransaction({
+          safe: gnosisSafe,
+          to: decentHatsAddress,
+          transactionData: DecentHats_0_1_0__factory.createInterface().encodeFunctionData(
+            'createRoleHat',
+            [
+              mockHatsAddress,
+              1,
+              {
+                maxSupply: 1,
+                details: '',
+                imageURI: '',
+                isMutable: true,
+                wearer: '0xdce7ca0555101f97451926944f5ae3b7adb2f5ae',
+                sablierParams: [
+                  {
+                    sablier: mockSablierAddress,
+                    sender: gnosisSafeAddress,
+                    totalAmount: ethers.parseEther('100'),
+                    asset: mockERC20Address,
+                    cancelable: true,
+                    transferable: false,
+                    timestamps: {
+                      start: currentBlockTimestamp,
+                      cliff: currentBlockTimestamp + 86400, // 1 day cliff
+                      end: currentBlockTimestamp + 2592000, // 30 days from now
+                    },
+                    broker: { account: ethers.ZeroAddress, fee: 0 },
+                  },
+                ],
+              },
+              0,
+              '0xdce7ca0555101f97451926944f5ae3b7adb2f5ae',
+              await erc6551Registry.getAddress(),
+              mockHatsAccountImplementationAddress,
+              '0x5d0e6ce4fd951366cc55da93f6e79d8b81483109d79676a04bcc2bed6a4b5072',
+            ]
+          ),
+          signers: [dao],
+        });
+      });
+
+      it('Emits an ExecutionSuccess event', async () => {
+        await expect(createHatAndAccountAndMintAndStreamsTx).to.emit(
+          gnosisSafe,
+          'ExecutionSuccess'
+        );
+      });
+
+      it('Emits an ExecutionFromModuleSuccess event', async () => {
+        await expect(createHatAndAccountAndMintAndStreamsTx)
+          .to.emit(gnosisSafe, 'ExecutionFromModuleSuccess')
+          .withArgs(decentHatsAddress);
       });
     });
   });
