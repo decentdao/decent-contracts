@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {DecentHatsModuleUtils} from "./DecentHatsModuleUtils.sol";
-import {IERC6551Registry} from "../interfaces/erc6551/IERC6551Registry.sol";
+import {IERC6551Registry} from "../interfaces/ERC6551/IERC6551Registry.sol";
 import {IHats} from "../interfaces/hats/IHats.sol";
 import {IHatsModuleFactory} from "../interfaces/hats/IHatsModuleFactory.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";

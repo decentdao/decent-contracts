@@ -6,15 +6,15 @@ import {IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.s
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {UserOperationLib, PackedUserOperation} from "@account-abstraction/contracts/core/UserOperationLib.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * Helper class for creating a paymaster.
  * provides helper methods for staking.
  * Validates that the postOp is called only by the entryPoint.
  */
-abstract contract BasePaymasterV1 is IPaymaster, IVersion, OwnableUpgradeable {
+abstract contract BasePaymasterV1 is IPaymaster, IVersion {
     IEntryPoint public entryPoint;
+    address public owner;
 
     uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET =
         UserOperationLib.PAYMASTER_VALIDATION_GAS_OFFSET;
@@ -26,9 +26,9 @@ abstract contract BasePaymasterV1 is IPaymaster, IVersion, OwnableUpgradeable {
     function __BasePaymaster_init(
         address _owner,
         IEntryPoint _entryPoint
-    ) internal onlyInitializing {
-        __Ownable_init(_owner);
+    ) internal {
         _validateEntryPointInterface(_entryPoint);
+        owner = _owner;
         entryPoint = _entryPoint;
     }
 
@@ -128,7 +128,7 @@ abstract contract BasePaymasterV1 is IPaymaster, IVersion, OwnableUpgradeable {
      * This method can also carry eth value to add to the current stake.
      * @param unstakeDelaySec - The unstake delay for this paymaster. Can only be increased.
      */
-    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
+    function addStake(uint32 unstakeDelaySec) external payable {
         entryPoint.addStake{value: msg.value}(unstakeDelaySec);
     }
 
@@ -161,6 +161,18 @@ abstract contract BasePaymasterV1 is IPaymaster, IVersion, OwnableUpgradeable {
      */
     function _requireFromEntryPoint() internal virtual {
         require(msg.sender == address(entryPoint), "Sender not EntryPoint");
+    }
+
+    modifier onlyOwner() {
+        _onlyOwner();
+        _;
+    }
+
+    function _onlyOwner() internal view {
+        require(
+            msg.sender == owner || msg.sender == address(this),
+            "only owner"
+        );
     }
 
     /// @inheritdoc IVersion

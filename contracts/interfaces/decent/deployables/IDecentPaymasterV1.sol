@@ -12,6 +12,4 @@ interface IDecentPaymasterV1 {
         address strategy,
         bytes4 selector
     ) external view returns (bool);
-
-    function setUp(bytes memory initializeParams) external;
 }

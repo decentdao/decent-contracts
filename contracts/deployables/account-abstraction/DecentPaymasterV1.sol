@@ -6,8 +6,16 @@ import {IDecentPaymasterV1} from "../../interfaces/decent/deployables/IDecentPay
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-contract DecentPaymasterV1 is IDecentPaymasterV1, BasePaymasterV1, ERC165 {
+contract DecentPaymasterV1 is
+    IDecentPaymasterV1,
+    BasePaymasterV1,
+    ERC165,
+    UUPSUpgradeable,
+    Initializable
+{
     // Mapping: strategy address => function selector => is approved
     mapping(address => mapping(bytes4 => bool)) public approvedFunctions;
 
@@ -22,17 +30,15 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, BasePaymasterV1, ERC165 {
         _disableInitializers();
     }
 
-    /**
-     * Initial setup of the DecentPaymaster instance.
-     * @param initializeParams encoded initialization parameters: `address _owner`,
-     * `address _entryPoint`
-     */
-    function setUp(bytes memory initializeParams) public initializer {
-        (address _owner, address _entryPoint) = abi.decode(
-            initializeParams,
-            (address, address)
-        );
-        __BasePaymaster_init(_owner, IEntryPoint(_entryPoint));
+    function initialize(
+        address owner,
+        address entryPoint
+    ) public virtual initializer {
+        _initialize(owner, entryPoint);
+    }
+
+    function _initialize(address owner, address entryPoint) internal virtual {
+        __BasePaymaster_init(owner, IEntryPoint(entryPoint));
     }
 
     /**
@@ -103,15 +109,22 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, BasePaymasterV1, ERC165 {
     /// @inheritdoc ERC165
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC165) returns (bool) {
+    ) public view override(ERC165) returns (bool) {
         return
             interfaceId == type(IPaymaster).interfaceId ||
             interfaceId == type(IDecentPaymasterV1).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal view override {
+        (newImplementation);
+        _onlyOwner();
+    }
+
     /// @inheritdoc IVersion
-    function getVersion() public pure virtual override returns (uint16) {
+    function getVersion() external pure override returns (uint16) {
         return 1;
     }
 }

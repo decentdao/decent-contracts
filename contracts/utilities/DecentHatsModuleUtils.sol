@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.28;
 
-import {IERC6551Registry} from "../interfaces/erc6551/IERC6551Registry.sol";
+import {IERC6551Registry} from "../interfaces/ERC6551/IERC6551Registry.sol";
 import {IHats} from "../interfaces/hats/IHats.sol";
 import {IHatsModuleFactory} from "../interfaces/hats/IHatsModuleFactory.sol";
 import {ISablierV2LockupLinear} from "../interfaces/sablier/ISablierV2LockupLinear.sol";
