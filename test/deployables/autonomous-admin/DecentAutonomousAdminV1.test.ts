@@ -1,8 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { ethers } from 'ethers';
-import hre from 'hardhat';
+import { ethers } from 'hardhat';
 import {
   DecentAutonomousAdminV1,
   DecentAutonomousAdminV1__factory,
@@ -12,7 +11,6 @@ import {
   MockHatsElectionsEligibility__factory,
 } from '../../../typechain-types';
 import { topHatIdToHatId } from '../../helpers';
-import { currentBlockTimestamp, setTime } from '../../time';
 
 describe('DecentAutonomousAdminHatV1', function () {
   // Signer accounts
@@ -34,7 +32,7 @@ describe('DecentAutonomousAdminHatV1', function () {
 
   beforeEach(async function () {
     // Get signers
-    [deployer, firstWearer, secondWearer, randomUser] = await hre.ethers.getSigners();
+    [deployer, firstWearer, secondWearer, randomUser] = await ethers.getSigners();
 
     // Deploy MockHatsAutoAdmin (Mock Hats Protocol)
     hatsProtocol = await new MockHats__factory(deployer).deploy();
@@ -66,7 +64,7 @@ describe('DecentAutonomousAdminHatV1', function () {
     hatsElectionModule = await new MockHatsElectionsEligibility__factory(deployer).deploy();
 
     // setup the first term
-    firstTermEnd = (await currentBlockTimestamp()) + 100;
+    firstTermEnd = (await time.latest()) + 100;
     await hatsElectionModule._setUp(
       ethers.AbiCoder.defaultAbiCoder().encode(['uint128'], [firstTermEnd]),
     );
@@ -107,7 +105,7 @@ describe('DecentAutonomousAdminHatV1', function () {
       describe('after the first term is over', function () {
         beforeEach(async () => {
           // Wait until the first term is over
-          await setTime(firstTermEnd + 1);
+          await time.setNextBlockTimestamp(firstTermEnd + 1);
         });
 
         describe('with a valid current wearer', function () {
@@ -153,7 +151,7 @@ describe('DecentAutonomousAdminHatV1', function () {
         await hatsElectionModule.elect(nextTermEnd, [await firstWearer.getAddress()]);
 
         // Wait until the first term is over
-        await setTime(firstTermEnd + 1);
+        await time.setNextBlockTimestamp(firstTermEnd + 1);
 
         // trigger the next term
         await decentAutonomousAdminInstance.triggerStartNextTerm({

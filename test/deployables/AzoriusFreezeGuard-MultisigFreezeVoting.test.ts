@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { mine, time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
-
+import { ethers } from 'hardhat';
 import {
   GnosisSafeProxyFactory,
   LinearERC20VotingV1,
@@ -18,7 +18,6 @@ import {
   GnosisSafeL2__factory,
   GnosisSafeL2,
 } from '../../typechain-types';
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -31,8 +30,6 @@ import {
   predictGnosisSafeAddress,
   calculateProxyAddress,
 } from '../helpers';
-
-import time from '../time';
 
 describe('Azorius Child DAO with Multisig parent', () => {
   // Deployed contracts
@@ -87,7 +84,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       childTokenHolder2,
       azoriusModuleOwner,
       freezeVotingOwner,
-    ] = await hre.ethers.getSigners();
+    ] = await ethers.getSigners();
 
     createParentGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -398,13 +395,13 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -478,13 +475,13 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -583,7 +580,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -600,7 +597,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -670,7 +667,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -683,7 +680,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       expect(await freezeVoting.isFrozen()).to.eq(false);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -759,7 +756,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(1, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -774,7 +771,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -803,7 +800,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // Increase time so that freeze period has ended
-      await time.advanceBlocks(200);
+      await mine(200);
 
       const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
         deployer.address,
@@ -830,13 +827,13 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(2)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(2)).to.eq(2);
@@ -933,7 +930,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -950,7 +947,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is ready to execute
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -1023,8 +1020,7 @@ describe('Azorius Child DAO with Multisig parent', () => {
       // One voter casts freeze vote
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const firstFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!
-        .number;
+      const firstFreezeProposalCreatedBlock = await time.latestBlock();
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         firstFreezeProposalCreatedBlock,
       );
@@ -1047,13 +1043,12 @@ describe('Azorius Child DAO with Multisig parent', () => {
       ).to.eq(false);
 
       // Increase time so freeze proposal has ended
-      await time.advanceBlocks(10);
+      await mine(10);
 
       // One voter casts freeze vote, this should create a new freeze proposal
       await freezeVoting.connect(parentMultisigOwner1).castFreezeVote();
 
-      const secondFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!
-        .number;
+      const secondFreezeProposalCreatedBlock = await time.latestBlock();
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         secondFreezeProposalCreatedBlock,
@@ -1106,12 +1101,12 @@ describe('Azorius Child DAO with Multisig parent', () => {
       ).to.eq(true);
 
       // Move time forward, freeze should still be active
-      await time.advanceBlocks(90);
+      await mine(90);
 
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Move time forward, freeze should end
-      await time.advanceBlocks(200);
+      await mine(200);
 
       expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(
         secondFreezeProposalCreatedBlock,

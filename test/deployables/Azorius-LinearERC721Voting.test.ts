@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -29,7 +30,6 @@ import {
   mockTransaction,
   mockRevertTransaction,
 } from '../helpers';
-import time from '../time';
 
 describe('Safe with Azorius module and linearERC721Voting', () => {
   const abiCoder = new ethers.AbiCoder();
@@ -82,7 +82,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
 
     // Get the signer accounts
     [deployer, gnosisSafeOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
-      await hre.ethers.getSigners();
+      await ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -363,7 +363,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Increase blocks so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Users vote in support of proposal
       await expect(
@@ -410,7 +410,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC721Voting.getAddress(), '0x', [await mockTransaction()], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -438,7 +438,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC721Voting.getAddress(), '0x', [await mockTransaction()], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -466,7 +466,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC721Voting.getAddress(), '0x', [await mockTransaction()], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -497,19 +497,19 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       // Users vote in support of proposal
       await linearERC721Voting.connect(tokenHolder2).vote(0, 1, holder2Tokens, holder2Ids);
       await linearERC721Voting.connect(tokenHolder3).vote(0, 1, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.true;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.true;
 
       // Proposal is timelocked
-      await expect(await azorius.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
     });
 
     it('A proposal is not passed if there are more No votes than Yes votes', async () => {
@@ -527,9 +527,9 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       await linearERC721Voting.connect(tokenHolder3).vote(0, 0, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       // Proposal is in the failed state
       expect(await azorius.proposalState(0)).to.eq(5);
@@ -547,15 +547,15 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       // User votes "Yes"
       await linearERC721Voting.connect(tokenHolder1).vote(0, 1, holder1Tokens, holder1Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.false;
 
       await expect(
         azorius.executeProposal(0, [await mockNFT1.getAddress()], [0], [mintNFTData], [0]),
@@ -600,7 +600,7 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
           [proposalTransaction],
           proposalMetadata,
         );
-      const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt!.logs[1].data;
       const topics = receipt!.logs[1].topics;
       const event = azorius.interface.decodeEventLog('ProposalCreated', data, topics);
@@ -654,13 +654,13 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       expect(await linearERC721Voting.hasVoted(0, await mockNFT2.getAddress(), 0)).to.eq(true);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -728,13 +728,13 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       await linearERC721Voting.connect(tokenHolder3).vote(0, 1, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -774,13 +774,13 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       await linearERC721Voting.connect(tokenHolder3).vote(0, 1, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -816,19 +816,19 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       await linearERC721Voting.connect(tokenHolder3).vote(0, 1, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
       // Increase time so that execution period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is expired
       expect(await azorius.proposalState(0)).to.eq(4);
@@ -854,12 +854,12 @@ describe('Safe with Azorius module and linearERC721Voting', () => {
       await linearERC721Voting.connect(tokenHolder3).vote(0, 1, holder3Tokens, holder3Ids);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC721Voting.isPassed(0)).to.be.true;
+      void expect(await linearERC721Voting.isPassed(0)).to.be.true;
 
       // Proposal is executed
-      await expect(await azorius.proposalState(0)).to.eq(3);
+      expect(await azorius.proposalState(0)).to.eq(3);
     });
 
     it('Only the owner can update the timelock period on Azorius', async () => {

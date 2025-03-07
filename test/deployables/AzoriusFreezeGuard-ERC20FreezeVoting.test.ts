@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { mine, time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
-
+import { ethers } from 'hardhat';
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -18,7 +18,6 @@ import {
   ModuleProxyFactory,
   GnosisSafeL2__factory,
 } from '../../typechain-types';
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -31,8 +30,6 @@ import {
   predictGnosisSafeAddress,
   calculateProxyAddress,
 } from '../helpers';
-
-import time from '../time';
 
 describe('Azorius Child DAO with Azorius Parent', () => {
   // Deployed contracts
@@ -81,7 +78,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
       childTokenHolder1,
       childTokenHolder2,
       mockParentDAO,
-    ] = await hre.ethers.getSigners();
+    ] = await ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -393,13 +390,13 @@ describe('Azorius Child DAO with Azorius Parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -476,10 +473,10 @@ describe('Azorius Child DAO with Azorius Parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -581,7 +578,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
       await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -598,7 +595,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
       expect(await freezeVoting.isFrozen()).to.eq(true);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposals are executable
       expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -669,7 +666,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     await linearERC20Voting.connect(childTokenHolder2).vote(0, 1);
 
     // Increase time so that voting period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is timelocked
     expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -682,7 +679,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     expect(await freezeVoting.isFrozen()).to.eq(false);
 
     // Increase time so that timelock period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is ready to execute
     expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -757,7 +754,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     await linearERC20Voting.connect(childTokenHolder2).vote(1, 1);
 
     // Increase time so that voting period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is timelocked
     expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -772,7 +769,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     expect(await freezeVoting.isFrozen()).to.eq(true);
 
     // Increase time so that timelock period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is ready to execute
     expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -801,7 +798,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
     // Increase time so that freeze has ended
-    await time.advanceBlocks(100);
+    await mine(100);
 
     const tokenTransferData3 = childVotesERC20.interface.encodeFunctionData('transfer', [
       deployer.address,
@@ -828,13 +825,13 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
     // Increase time so that voting period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is timelocked
     expect(await azoriusModule.proposalState(2)).to.eq(1);
 
     // Increase time so that timelock period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is ready to execute
     expect(await azoriusModule.proposalState(2)).to.eq(2);
@@ -933,7 +930,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     await linearERC20Voting.connect(childTokenHolder2).vote(2, 1);
 
     // Increase time so that voting period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is timelocked
     expect(await azoriusModule.proposalState(0)).to.eq(1);
@@ -950,7 +947,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     expect(await freezeVoting.isFrozen()).to.eq(true);
 
     // Increase time so that timelock period has ended
-    await time.advanceBlocks(60);
+    await mine(60);
 
     // Proposal is executable
     expect(await azoriusModule.proposalState(0)).to.eq(2);
@@ -1020,7 +1017,7 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     // One voter casts freeze vote
     await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
 
-    const firstFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!.number;
+    const firstFreezeProposalCreatedBlock = await time.latestBlock();
     expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(firstFreezeProposalCreatedBlock);
 
     expect(await freezeVoting.freezeProposalVoteCount()).to.eq(100);
@@ -1041,12 +1038,12 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     ).to.eq(false);
 
     // Increase time so freeze proposal has ended
-    await time.advanceBlocks(10);
+    await mine(10);
 
     // One voter casts freeze vote, this should create a new freeze proposal
     await freezeVoting.connect(parentTokenHolder1).castFreezeVote();
 
-    const secondFreezeProposalCreatedBlock = (await hre.ethers.provider.getBlock('latest'))!.number;
+    const secondFreezeProposalCreatedBlock = await time.latestBlock();
 
     expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(secondFreezeProposalCreatedBlock);
 
@@ -1095,12 +1092,12 @@ describe('Azorius Child DAO with Azorius Parent', () => {
     ).to.eq(true);
 
     // Move time forward, freeze should still be active
-    await time.advanceBlocks(90);
+    await mine(90);
 
     expect(await freezeVoting.isFrozen()).to.eq(true);
 
     // Move time forward, freeze should end
-    await time.advanceBlocks(10);
+    await mine(10);
 
     expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(secondFreezeProposalCreatedBlock);
 

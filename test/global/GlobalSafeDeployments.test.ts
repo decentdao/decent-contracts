@@ -1,4 +1,4 @@
-import hre from 'hardhat';
+import { ethers } from 'hardhat';
 import {
   GnosisSafeProxyFactory,
   GnosisSafeProxyFactory__factory,
@@ -19,7 +19,7 @@ let multiSendCallOnly: MultiSendCallOnly;
 let mockContract: MockContract;
 
 beforeEach(async () => {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
 
   gnosisSafeProxyFactory = await new GnosisSafeProxyFactory__factory(deployer).deploy();
   moduleProxyFactory = await new ModuleProxyFactory__factory(deployer).deploy();

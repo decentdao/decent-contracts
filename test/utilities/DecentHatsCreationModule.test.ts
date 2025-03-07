@@ -1,9 +1,8 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { ethers } from 'ethers';
-import hre from 'hardhat';
-
+import type { ContractTransactionResponse } from 'ethers';
+import { ethers } from 'hardhat';
 import {
   GnosisSafeL2,
   GnosisSafeL2__factory,
@@ -28,7 +27,6 @@ import {
   ModuleProxyFactory,
   ModuleProxyFactory__factory,
 } from '../../typechain-types';
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -71,7 +69,7 @@ describe('DecentHatsCreationModule', () => {
   let decentAutonomousAdminMasterCopy: DecentAutonomousAdminV1;
   beforeEach(async () => {
     try {
-      const signers = await hre.ethers.getSigners();
+      const signers = await ethers.getSigners();
       const [deployer] = signers;
       [, dao] = signers;
 
@@ -106,15 +104,15 @@ describe('DecentHatsCreationModule', () => {
         [
           [dao.address],
           1,
-          hre.ethers.ZeroAddress,
-          hre.ethers.ZeroHash,
-          hre.ethers.ZeroAddress,
-          hre.ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          ethers.ZeroHash,
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
           0,
-          hre.ethers.ZeroAddress,
+          ethers.ZeroAddress,
         ],
       );
-      const saltNum = BigInt(`0x${Buffer.from(hre.ethers.randomBytes(32)).toString('hex')}`);
+      const saltNum = BigInt(`0x${Buffer.from(ethers.randomBytes(32)).toString('hex')}`);
 
       const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
         createGnosisSetupCalldata,
@@ -136,7 +134,7 @@ describe('DecentHatsCreationModule', () => {
       mockSablier = await new MockSablierV2LockupLinear__factory(deployer).deploy();
       mockSablierAddress = await mockSablier.getAddress();
 
-      mockERC20 = await new MockERC20__factory(deployer).deploy('MockERC20', 'MCK');
+      mockERC20 = await new MockERC20__factory(deployer).deploy();
       mockERC20Address = await mockERC20.getAddress();
 
       await mockERC20.mint(gnosisSafeAddress, ethers.parseEther('1000000'));
@@ -146,7 +144,7 @@ describe('DecentHatsCreationModule', () => {
   });
 
   describe('DecentHats as a Module', () => {
-    let enableModuleTx: ethers.ContractTransactionResponse;
+    let enableModuleTx: ContractTransactionResponse;
 
     beforeEach(async () => {
       enableModuleTx = await executeSafeTransaction({
@@ -171,7 +169,7 @@ describe('DecentHatsCreationModule', () => {
     });
 
     describe('Creating a new Top Hat and Tree', () => {
-      let createAndDeclareTreeTx1: ethers.ContractTransactionResponse;
+      let createAndDeclareTreeTx1: ContractTransactionResponse;
 
       let topHatId: bigint;
       let adminHatId: bigint;
@@ -261,7 +259,7 @@ describe('DecentHatsCreationModule', () => {
       });
 
       describe('Multiple calls', () => {
-        let createAndDeclareTreeTx2: ethers.ContractTransactionResponse;
+        let createAndDeclareTreeTx2: ContractTransactionResponse;
         let newTopHatId: bigint;
 
         beforeEach(async () => {
@@ -342,7 +340,7 @@ describe('DecentHatsCreationModule', () => {
     });
 
     describe('Creating a new Top Hat and Tree with Termed Roles', () => {
-      let createAndDeclareTreeTx: ethers.ContractTransactionResponse;
+      let createAndDeclareTreeTx: ContractTransactionResponse;
       let topHatId: bigint;
 
       beforeEach(async () => {
@@ -418,13 +416,13 @@ describe('DecentHatsCreationModule', () => {
     });
 
     describe('Creating a new Top Hat and Tree with Sablier Streams', () => {
-      let createAndDeclareTreeTx: ethers.ContractTransactionResponse;
+      let createAndDeclareTreeTx: ContractTransactionResponse;
       let currentBlockTimestamp: number;
       let topHatId: bigint;
 
       beforeEach(async () => {
         topHatId = topHatIdToHatId((await mockHats.lastTopHatId()) + 1n);
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock('latest'))!.timestamp;
+        currentBlockTimestamp = await time.latest();
 
         createAndDeclareTreeTx = await executeSafeTransaction({
           safe: gnosisSafe,
@@ -547,7 +545,7 @@ describe('DecentHatsCreationModule', () => {
       let currentBlockTimestamp: number;
 
       beforeEach(async () => {
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock('latest'))!.timestamp;
+        currentBlockTimestamp = await time.latest();
 
         await executeSafeTransaction({
           safe: gnosisSafe,

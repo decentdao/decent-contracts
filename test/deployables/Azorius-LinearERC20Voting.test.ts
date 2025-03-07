@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
-
+import { ethers } from 'hardhat';
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -16,7 +16,6 @@ import {
   ModuleProxyFactory,
   GnosisSafeL2__factory,
 } from '../../typechain-types';
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -29,7 +28,6 @@ import {
   predictGnosisSafeAddress,
   calculateProxyAddress,
 } from '../helpers';
-import time from '../time';
 
 describe('Safe with Azorius module and linearERC20Voting', () => {
   // Deployed contracts
@@ -74,7 +72,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       tokenHolder3,
       mockStrategy1,
       mockStrategy2,
-    ] = await hre.ethers.getSigners();
+    ] = await ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase
@@ -426,7 +424,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       expect(await azorius.proposalState(0)).to.eq(0);
 
       // Increase blocks so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Users vote in support of proposal
       await expect(
@@ -480,7 +478,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC20Voting.getAddress(), '0x', [proposalTransaction], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -521,7 +519,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC20Voting.getAddress(), '0x', [proposalTransaction], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -562,7 +560,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
         .connect(tokenHolder2)
         .submitProposal(await linearERC20Voting.getAddress(), '0x', [proposalTransaction], '');
 
-      await hre.network.provider.send('evm_mine');
+      await mine();
 
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
@@ -606,19 +604,19 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote in support of proposal
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1);
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.true;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.true;
 
       // Proposal is timelocked
-      await expect(await azorius.proposalState(0)).to.eq(1);
+      expect(await azorius.proposalState(0)).to.eq(1);
     });
 
     it('A proposal is not passed if there are more No votes than Yes votes', async () => {
@@ -642,16 +640,16 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote against
       await linearERC20Voting.connect(tokenHolder2).vote(0, 0);
       await linearERC20Voting.connect(tokenHolder3).vote(0, 0);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Proposal is in the failed state
       expect(await azorius.proposalState(0)).to.eq(5);
@@ -682,15 +680,15 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // User votes "Yes"
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       await expect(
         azorius.executeProposal(0, [await votesERC20.getAddress()], [0], [tokenTransferData], [0]),
@@ -721,13 +719,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote "Yes"
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1);
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       await expect(
         azorius.executeProposal(0, [await votesERC20.getAddress()], [0], [tokenTransferData], [0]),
@@ -761,7 +759,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
           [proposalTransaction],
           proposalMetadata,
         );
-      const receipt = await hre.ethers.provider.getTransactionReceipt(tx.hash);
+      const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
       const data = receipt!.logs[1].data;
       const topics = receipt!.logs[1].topics;
       const event = azorius.interface.decodeEventLog('ProposalCreated', data, topics);
@@ -832,13 +830,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(true);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -925,13 +923,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -985,13 +983,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1037,19 +1035,19 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
 
       // Increase time so that execution period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is expired
       expect(await azorius.proposalState(0)).to.eq(4);
@@ -1068,19 +1066,19 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       // Proposal is active
       expect(await azorius.proposalState(0)).to.eq(0);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.false;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.false;
 
       // Users vote in support of proposal
       await linearERC20Voting.connect(tokenHolder2).vote(0, 1);
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
-      await expect(await linearERC20Voting.isPassed(0)).to.be.true;
+      void expect(await linearERC20Voting.isPassed(0)).to.be.true;
 
       // Proposal is executed
-      await expect(await azorius.proposalState(0)).to.eq(3);
+      expect(await azorius.proposalState(0)).to.eq(3);
     });
 
     it('Only the owner can update the timelock period on Azorius', async () => {
@@ -1263,38 +1261,9 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
     });
 
     it('Only a valid proposer can submit proposals', async () => {
-      const abiCoder = new ethers.AbiCoder();
-
       // Deploy Mock Voting Strategy
-      const mockVotingStrategyMastercopy = await new MockVotingStrategy__factory(deployer).deploy();
-
-      const mockVotingStrategySetupCalldata =
-        // eslint-disable-next-line camelcase
-        MockVotingStrategy__factory.createInterface().encodeFunctionData('setUp', [
-          abiCoder.encode(
-            ['address'],
-            [
-              tokenHolder1.address, // tokenHolder1 is the only valid proposer
-            ],
-          ),
-        ]);
-
-      await moduleProxyFactory.deployModule(
-        await mockVotingStrategyMastercopy.getAddress(),
-        mockVotingStrategySetupCalldata,
-        '10031021',
-      );
-
-      const predictedMockVotingStrategyAddress = await calculateProxyAddress(
-        moduleProxyFactory,
-        await mockVotingStrategyMastercopy.getAddress(),
-        mockVotingStrategySetupCalldata,
-        '10031021',
-      );
-
-      mockVotingStrategy = MockVotingStrategy__factory.connect(
-        predictedMockVotingStrategyAddress,
-        deployer,
+      mockVotingStrategy = await new MockVotingStrategy__factory(deployer).deploy(
+        tokenHolder1.address,
       );
 
       // Enable the Mock Voting strategy on Azorius
@@ -1389,13 +1358,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(true);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1467,13 +1436,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(true);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1544,13 +1513,13 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       expect(await linearERC20Voting.hasVoted(0, tokenHolder3.address)).to.eq(true);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is timelocked
       expect(await azorius.proposalState(0)).to.eq(1);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1598,10 +1567,10 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(0, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Increase time so that timelock period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Proposal is executable
       expect(await azorius.proposalState(0)).to.eq(2);
@@ -1676,7 +1645,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(0, 2);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // No totes => 0
       // Yes votes => 300
@@ -1695,7 +1664,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(1, 2);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // No totes => 0
       // Yes votes => 300
@@ -1715,7 +1684,7 @@ describe('Safe with Azorius module and linearERC20Voting', () => {
       await linearERC20Voting.connect(tokenHolder3).vote(2, 1);
 
       // Increase time so that voting period has ended
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // No totes => 300
       // Yes votes => 300

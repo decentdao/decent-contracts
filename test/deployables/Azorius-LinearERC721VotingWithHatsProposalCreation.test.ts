@@ -1,9 +1,6 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { ethers } from 'ethers';
-import hre from 'hardhat';
-
+import { ethers } from 'hardhat';
 import {
   GnosisSafe,
   GnosisSafeProxyFactory,
@@ -56,7 +53,7 @@ describe('LinearERC721VotingWithHatsProposalCreation', () => {
 
     const abiCoder = new ethers.AbiCoder();
 
-    [deployer, gnosisSafeOwner] = await hre.ethers.getSigners();
+    [deployer, gnosisSafeOwner] = await ethers.getSigners();
 
     createGnosisSetupCalldata =
       // eslint-disable-next-line camelcase

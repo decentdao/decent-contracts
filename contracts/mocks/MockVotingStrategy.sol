@@ -1,46 +1,46 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.28;
 
-import {BaseStrategyV1} from "../deployables/strategies/BaseStrategyV1.sol";
+import {IBaseStrategyV1} from "../interfaces/decent/deployables/IBaseStrategyV1.sol";
 
-/**
- * A mock [BaseStrategy](../BaseStrategy.md) used only for testing purposes.
- * Not intended for actual on-chain use.
- */
-contract MockVotingStrategy is BaseStrategyV1 {
+contract MockVotingStrategy is IBaseStrategyV1 {
     address public proposer;
+    mapping(uint32 => bool) private _isPassed;
+    mapping(uint32 => uint32) private _votingEndBlock;
 
-    /**
-     * Sets up the contract with its initial parameters.
-     *
-     * @param initializeParams encoded initialization parameters
-     */
-    function setUp(bytes memory initializeParams) public override initializer {
-        address _proposer = abi.decode(initializeParams, (address));
+    constructor(address _proposer) {
         proposer = _proposer;
     }
 
-    /** @inheritdoc BaseStrategyV1*/
+    // required by IBaseStrategyV1
+
+    function setAzorius(address _azoriusModule) external override {}
+
     function initializeProposal(bytes memory _data) external override {}
 
-    /** @inheritdoc BaseStrategyV1*/
-    function isPassed(uint32) external pure override returns (bool) {
-        return false;
+    function isPassed(uint32 proposalId) external view override returns (bool) {
+        return _isPassed[proposalId];
     }
 
-    /** @inheritdoc BaseStrategyV1*/
     function isProposer(
         address _proposer
     ) external view override returns (bool) {
         return _proposer == proposer;
     }
 
-    /** @inheritdoc BaseStrategyV1*/
-    function votingEndBlock(uint32) external pure override returns (uint32) {
-        return 0;
+    function votingEndBlock(
+        uint32 proposalId
+    ) external view override returns (uint32) {
+        return _votingEndBlock[proposalId];
     }
 
-    function getVersion() external pure override returns (uint16) {
-        return 1;
+    // setters, for testing
+
+    function setVotingEndBlock(uint32 proposalId, uint32 endBlock) external {
+        _votingEndBlock[proposalId] = endBlock;
+    }
+
+    function setIsPassed(uint32 proposalId, bool passed) external {
+        _isPassed[proposalId] = passed;
     }
 }

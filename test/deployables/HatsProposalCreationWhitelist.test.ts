@@ -1,9 +1,6 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { ethers } from 'ethers';
-import hre from 'hardhat';
-
+import { ethers } from 'hardhat';
 import {
   MockHatsProposalCreationWhitelist,
   MockHatsProposalCreationWhitelist__factory,
@@ -25,7 +22,7 @@ describe('HatsProposalCreationWhitelist', () => {
   let nonProposerHatId: bigint;
 
   beforeEach(async () => {
-    [deployer, owner, hatWearer1, hatWearer2] = await hre.ethers.getSigners();
+    [deployer, owner, hatWearer1, hatWearer2] = await ethers.getSigners();
 
     // Deploy Hats mock contract
     hatsProtocol = await new MockHats__factory(deployer).deploy();

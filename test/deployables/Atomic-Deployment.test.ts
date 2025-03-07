@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import {
   AzoriusV1__factory,
   FractalModuleV1,
@@ -51,7 +51,7 @@ describe('Atomic Gnosis Safe Deployment', () => {
   let owner2: SignerWithAddress;
   let owner3: SignerWithAddress;
 
-  const abiCoder = new hre.ethers.AbiCoder(); // encode data
+  const abiCoder = new ethers.AbiCoder(); // encode data
   let createGnosisSetupCalldata: string;
   let freezeGuardFactoryInit: string;
   let setModuleCalldata: string;
@@ -67,7 +67,7 @@ describe('Atomic Gnosis Safe Deployment', () => {
     multiSendCallOnly = getMultiSendCallOnly();
     gnosisSafeL2Singleton = getGnosisSafeL2Singleton();
 
-    [deployer, owner1, owner2, owner3] = await hre.ethers.getSigners();
+    [deployer, owner1, owner2, owner3] = await ethers.getSigners();
 
     /// ////////////////// GNOSIS //////////////////
     // SETUP GnosisSafe

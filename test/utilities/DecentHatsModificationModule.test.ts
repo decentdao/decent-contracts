@@ -1,8 +1,8 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { ethers } from 'ethers';
-import hre from 'hardhat';
+import type { ContractTransactionResponse } from 'ethers';
+import { ethers } from 'hardhat';
 import {
   GnosisSafeL2,
   GnosisSafeL2__factory,
@@ -29,7 +29,6 @@ import {
   MockHatsElectionsEligibility__factory,
   DecentHatsCreationModule,
 } from '../../typechain-types';
-
 import {
   getGnosisSafeL2Singleton,
   getGnosisSafeProxyFactory,
@@ -75,7 +74,7 @@ describe('DecentHatsModificationModule', () => {
   let decentAutonomousAdminMasterCopy: DecentAutonomousAdminV1;
 
   beforeEach(async () => {
-    const signers = await hre.ethers.getSigners();
+    const signers = await ethers.getSigners();
     const [deployer] = signers;
     [, safe] = signers;
 
@@ -111,16 +110,16 @@ describe('DecentHatsModificationModule', () => {
       [
         [safe.address],
         1,
-        hre.ethers.ZeroAddress,
-        hre.ethers.ZeroHash,
-        hre.ethers.ZeroAddress,
-        hre.ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        ethers.ZeroHash,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
         0,
-        hre.ethers.ZeroAddress,
+        ethers.ZeroAddress,
       ],
     );
 
-    const saltNum = BigInt(`0x${Buffer.from(hre.ethers.randomBytes(32)).toString('hex')}`);
+    const saltNum = BigInt(`0x${Buffer.from(ethers.randomBytes(32)).toString('hex')}`);
 
     const predictedGnosisSafeAddress = await predictGnosisSafeAddress(
       createGnosisSetupCalldata,
@@ -142,14 +141,14 @@ describe('DecentHatsModificationModule', () => {
     mockSablier = await new MockSablierV2LockupLinear__factory(deployer).deploy();
     mockSablierAddress = await mockSablier.getAddress();
 
-    mockERC20 = await new MockERC20__factory(deployer).deploy('MockERC20', 'MCK');
+    mockERC20 = await new MockERC20__factory(deployer).deploy();
     mockERC20Address = await mockERC20.getAddress();
 
     await mockERC20.mint(gnosisSafeAddress, ethers.parseEther('1000000'));
   });
 
   describe('DecentHatsModificationModule', () => {
-    let enableDecentHatsModificationModuleTx: ethers.ContractTransactionResponse;
+    let enableDecentHatsModificationModuleTx: ContractTransactionResponse;
 
     beforeEach(async () => {
       // Create a tree for the Safe
@@ -231,7 +230,7 @@ describe('DecentHatsModificationModule', () => {
       };
 
       beforeEach(async () => {
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock('latest'))!.timestamp;
+        currentBlockTimestamp = await time.latest();
         topHatId = topHatIdToHatId(await mockHats.lastTopHatId());
         adminHatId = await mockHats.getNextId(topHatId);
 
@@ -332,7 +331,7 @@ describe('DecentHatsModificationModule', () => {
       };
 
       beforeEach(async () => {
-        currentBlockTimestamp = (await hre.ethers.provider.getBlock('latest'))!.timestamp;
+        currentBlockTimestamp = await time.latest();
         topHatId = topHatIdToHatId(await mockHats.lastTopHatId());
         adminHatId = await mockHats.getNextId(topHatId);
         newHatId = await mockHats.getNextId(adminHatId);

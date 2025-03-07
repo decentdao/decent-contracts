@@ -3,12 +3,12 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   DecentPaymasterV1,
-  MockEntryPoint,
-  ModuleProxyFactory,
-  MockEntryPoint__factory,
+  DecentPaymasterV1__factory,
   IPaymaster__factory,
   IDecentPaymasterV1__factory,
-  DecentPaymasterV1__factory,
+  ModuleProxyFactory,
+  MockEntryPoint,
+  MockEntryPoint__factory,
 } from '../../../typechain-types';
 import { getModuleProxyFactory } from '../../global/GlobalSafeDeployments.test';
 import { calculateProxyAddress } from '../../helpers';

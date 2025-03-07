@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { mine, time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import {
   ERC721FreezeVotingV1,
   ERC721FreezeVotingV1__factory,
@@ -28,7 +29,6 @@ import {
   predictGnosisSafeAddress,
   calculateProxyAddress,
 } from '../helpers';
-import time from '../time';
 
 describe('Child Multisig DAO with Azorius Parent', () => {
   // Deployed contracts
@@ -67,7 +67,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
 
   beforeEach(async () => {
     [deployer, owner1, owner2, owner3, tokenVetoer1, tokenVetoer2, freezeGuardOwner] =
-      await hre.ethers.getSigners();
+      await ethers.getSigners();
 
     const gnosisSafeProxyFactory = getGnosisSafeProxyFactory();
     const moduleProxyFactory = getModuleProxyFactory();
@@ -321,8 +321,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
         ['castFreezeVote(address[],uint256[])']([await mockNFT.getAddress()], vetoer1Ids);
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      const latestBlock = await hre.ethers.provider.getBlock('latest');
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(latestBlock!.number);
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(await time.latestBlock());
 
       await freezeVoting
         .connect(tokenVetoer2)
@@ -360,16 +359,14 @@ describe('Child Multisig DAO with Azorius Parent', () => {
         tx.nonce,
       );
 
-      const latestBlock = await hre.ethers.provider.getBlock('latest');
-
       const signaturesHash = ethers.solidityPackedKeccak256(['bytes'], [signatureBytes]);
 
       expect(await freezeGuard.getTransactionTimelockedBlock(signaturesHash)).to.eq(
-        latestBlock!.number,
+        await time.latestBlock(),
       );
 
       // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
+      await mine(60);
 
       await gnosisSafe.execTransaction(
         tx.to,
@@ -527,7 +524,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
+      await mine(60);
 
       await expect(
         gnosisSafe.execTransaction(
@@ -555,18 +552,16 @@ describe('Child Multisig DAO with Azorius Parent', () => {
         ['castFreezeVote(address[],uint256[])']([await mockNFT.getAddress()], vetoer1Ids);
       expect(await freezeVoting.isFrozen()).to.eq(false);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      let latestBlock = await hre.ethers.provider.getBlock('latest');
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(latestBlock!.number);
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(await time.latestBlock());
 
       // Move time forward to elapse freeze proposal period
-      await time.advanceBlocks(10);
+      await mine(10);
 
       await freezeVoting
         .connect(tokenVetoer1)
         ['castFreezeVote(address[],uint256[])']([await mockNFT.getAddress()], vetoer1Ids);
       expect(await freezeVoting.freezeProposalVoteCount()).to.eq(500);
-      latestBlock = await hre.ethers.provider.getBlock('latest');
-      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(latestBlock!.number);
+      expect(await freezeVoting.freezeProposalCreatedBlock()).to.eq(await time.latestBlock());
       expect(await freezeVoting.isFrozen()).to.eq(false);
     });
 
@@ -625,7 +620,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
+      await mine(60);
 
       await expect(
         gnosisSafe.execTransaction(
@@ -643,7 +638,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
       ).to.be.revertedWithCustomError(freezeGuard, 'DAOFrozen()');
 
       // Move time forward to elapse freeze period
-      await time.advanceBlocks(140);
+      await mine(140);
 
       // Check that the DAO has been unFrozen
       expect(await freezeVoting.isFrozen()).to.eq(false);
@@ -708,7 +703,7 @@ describe('Child Multisig DAO with Azorius Parent', () => {
       );
 
       // Move time forward to elapse timelock period
-      await time.advanceBlocks(60);
+      await mine(60);
 
       // Check that the DAO has been unFrozen
       await expect(
