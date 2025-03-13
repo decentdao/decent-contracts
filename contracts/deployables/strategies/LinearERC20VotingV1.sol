@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Version} from "../Version.sol";
+import {IERC20VotingWeightV1} from "../../interfaces/decent/deployables/IERC20VotingWeightV1.sol";
 import {BaseStrategyV1} from "./BaseStrategyV1.sol";
 import {BaseQuorumPercentV1} from "./BaseQuorumPercentV1.sol";
 import {BaseVotingBasisPercentV1} from "./BaseVotingBasisPercentV1.sol";
@@ -18,7 +19,8 @@ contract LinearERC20VotingV1 is
     BaseQuorumPercentV1,
     BaseVotingBasisPercentV1,
     ERC4337VoterSupportV1,
-    Version
+    Version,
+    IERC20VotingWeightV1
 {
     uint16 private constant VERSION = 1;
 
@@ -241,17 +243,18 @@ contract LinearERC20VotingV1 is
             );
     }
 
-    /**
-     * Calculates the voting weight an address has for a specific Proposal.
-     *
-     * @param _voter address of the voter
-     * @param _proposalId id of the Proposal
-     * @return uint256 the address' voting weight
-     */
+    /** @inheritdoc IERC20VotingWeightV1*/
+    function getCurrentVotingWeight(
+        address _voter
+    ) external view override returns (uint256) {
+        return governanceToken.getVotes(_voter);
+    }
+
+    /** @inheritdoc IERC20VotingWeightV1*/
     function getVotingWeight(
         address _voter,
         uint32 _proposalId
-    ) public view virtual returns (uint256) {
+    ) public view override returns (uint256) {
         return
             governanceToken.getPastVotes(
                 _voter,
