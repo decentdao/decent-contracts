@@ -83,7 +83,8 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
         bytes calldata callData = userOp.callData;
 
         // Require minimum length for selector and target address
-        if (callData.length < 24) {
+        if (callData.length < 36) {
+            // should be at least a selector + address
             revert InvalidCallDataLength();
         }
 
@@ -91,7 +92,7 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
         bytes4 selector = bytes4(callData[:4]);
         address target;
         assembly {
-            target := shr(96, calldataload(add(callData.offset, 4)))
+            target := calldataload(add(callData.offset, 4))
         }
 
         // Verify the function is approved for this strategy
