@@ -94,6 +94,17 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
         assembly {
             target := calldataload(add(callData.offset, 4))
         }
+        /*
+        Alternative - not sure which way is more gas efficient
+        callData.offset is needed if we use calldataload
+        bytes4 selector;
+        address target;
+        assembly {
+            selector := calldataload(callData.offset)
+            target := calldataload(add(callData.offset, 4))
+        }
+        
+        */
 
         // Verify the function is approved for this strategy
         if (!isFunctionApproved(target, selector)) {
