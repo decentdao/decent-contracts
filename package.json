@@ -30,6 +30,7 @@
     "url": "https://github.com/decentdao/fractal-contracts/issues"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.7.0",
     "@gnosis.pm/zodiac": "^1.1.4",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
