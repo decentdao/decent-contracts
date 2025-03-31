@@ -1,6 +1,6 @@
 {
   "name": "@fractal-framework/fractal-contracts",
-  "version": "1.4.2",
+  "version": "1.5.0-rc.2",
   "files": [
     "publish",
     "contracts",
