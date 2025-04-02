@@ -16,14 +16,18 @@ contract DecentPaymasterV1 is
 {
     uint16 private constant VERSION = 1;
 
-    // Mapping: strategy address => function selector => is approved
+    // Mapping: contract address => function selector => is approved
     mapping(address => mapping(bytes4 => bool)) private _approvedFunctions;
 
-    event FunctionApproved(address strategy, bytes4 selector, bool approved);
+    event FunctionApproved(
+        address contractAddress,
+        bytes4 selector,
+        bool approved
+    );
 
-    error UnauthorizedStrategy();
+    error UnauthorizedFunction();
     error InvalidCallDataLength();
-    error ZeroAddressStrategy();
+    error ZeroAddressContract();
     error InvalidArrayLength();
 
     constructor() {
@@ -68,7 +72,7 @@ contract DecentPaymasterV1 is
         bytes4[] calldata selectors,
         bool[] calldata approved
     ) external onlyOwner {
-        if (contractAddress == address(0)) revert ZeroAddressStrategy();
+        if (contractAddress == address(0)) revert ZeroAddressContract();
         if (selectors.length != approved.length) revert InvalidArrayLength();
         for (uint256 i = 0; i < selectors.length; i++) {
             _approvedFunctions[contractAddress][selectors[i]] = approved[i];
@@ -102,21 +106,32 @@ contract DecentPaymasterV1 is
     {
         bytes calldata callData = userOp.callData;
 
-        // Require minimum length for selector and target address
-        if (callData.length < 24) {
+        // Verify we have at least 4 bytes for the selector
+        if (callData.length < 4) {
             revert InvalidCallDataLength();
         }
 
-        // Extract function selector and target address
-        bytes4 selector = bytes4(callData[:4]);
-        address target;
-        assembly {
-            target := shr(96, calldataload(add(callData.offset, 4)))
+        // Extract and verify the LightSmartAccount's "execute" function selector
+        // 0xb61d27f6 = bytes4(keccak256("execute(address,uint256,bytes)"))
+        if (bytes4(callData) != 0xb61d27f6) {
+            revert UnauthorizedFunction();
         }
 
-        // Verify the function is approved for this strategy
+        // Decode the "execute" function parameters
+        (address target, , bytes memory innerCallData) = abi.decode(
+            callData[4:],
+            (address, uint256, bytes)
+        );
+
+        // Extract the actual function selector from the innerCallData
+        if (innerCallData.length < 4) {
+            revert InvalidCallDataLength();
+        }
+        bytes4 selector = bytes4(innerCallData);
+
+        // Verify the function is approved for this target
         if (!isFunctionWhitelisted(target, selector)) {
-            revert UnauthorizedStrategy();
+            revert UnauthorizedFunction();
         }
 
         return (abi.encode(), 0);
