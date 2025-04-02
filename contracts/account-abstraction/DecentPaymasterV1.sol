@@ -6,14 +6,8 @@ import {IDecentPaymasterV1} from "../interfaces/account-abstraction/IDecentPayma
 import {Version} from "../Version.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract DecentPaymasterV1 is
-    IDecentPaymasterV1,
-    Version,
-    BasePaymasterV1,
-    UUPSUpgradeable
-{
+contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
     uint16 private constant VERSION = 1;
 
     // Mapping: contract address => function selector => is approved
@@ -38,27 +32,15 @@ contract DecentPaymasterV1 is
      * Initialize function for the proxy deployment. This standardizes the initialization
      * to better work with ProxyFactory.
      *
-     * @param _owner Address that will own the proxy and be able to upgrade it
-     * @param _entryPoint The EntryPoint address this paymaster will work with
+     * @param data The data to initialize the contract with
+     * @dev The data is encoded as (address, address)
      */
-    function initialize(
-        address _owner,
-        address _entryPoint
-    ) public initializer {
+    function initialize(bytes calldata data) public initializer {
+        (address _owner, address _entryPoint) = abi.decode(
+            data,
+            (address, address)
+        );
         __BasePaymaster_init(_owner, IEntryPoint(_entryPoint));
-        __UUPSUpgradeable_init();
-    }
-
-    /**
-     * @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract.
-     * Called by {upgradeTo} and {upgradeToAndCall}.
-     *
-     * Reverts if the sender is not the owner of the contract.
-     */
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal virtual override onlyOwner {
-        // Authorization is handled by the onlyOwner modifier
     }
 
     /**
