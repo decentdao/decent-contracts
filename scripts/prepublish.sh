@@ -21,7 +21,7 @@ rm temp_addresses.json temp_flat_addresses.json addresses.json
 
 
 # Step 1: Extract `abi` values directly under each contract key
-jq '."1"[0].contracts | to_entries | map({key: .key, value: .value.abi}) | from_entries' deployments.json > abis.json
+jq '."11155111"[0].contracts | to_entries | map({key: .key, value: .value.abi}) | from_entries' deployments.json > abis.json
 # Step 2: Wrap the JSON content in TypeScript format and append "as const;"
 echo "export default $(cat abis.json) as const;" > publish/abis.ts
 # Step 3: Cleanup
