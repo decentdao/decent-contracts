@@ -2,7 +2,6 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ERC1967Proxy__factory,
   IERC165__factory,
   IERC721VotingStrategy__factory,
   IHatsProposalCreationWhitelistV1__factory,
@@ -14,6 +13,8 @@ import {
   MockHats2,
   MockHats2__factory,
 } from '../typechain-types';
+import { getModuleProxyFactory } from './GlobalSafeDeployments.test';
+import { calculateProxyAddress } from './helpers';
 import { runHatsProposerTests } from './helpers/hatsProposerTests';
 import { calculateInterfaceId } from './helpers/utils';
 
@@ -81,15 +82,26 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
       ),
     ]);
 
+    const moduleProxyFactory = getModuleProxyFactory();
+    const salt = ethers.keccak256(ethers.randomBytes(32));
+
     // Deploy the proxy with owner as the deployer
-    const proxy = await new ERC1967Proxy__factory(strategyOwner).deploy(
+    await moduleProxyFactory.deployModule(
       await implementation.getAddress(),
       initializeCalldata,
+      salt,
+    );
+
+    const predictedAddress = await calculateProxyAddress(
+      moduleProxyFactory,
+      await implementation.getAddress(),
+      initializeCalldata,
+      salt,
     );
 
     // Connect the proxy to the contract owner
     return LinearERC721VotingWithHatsProposalCreationV1__factory.connect(
-      await proxy.getAddress(),
+      predictedAddress,
       strategyOwner,
     );
   }

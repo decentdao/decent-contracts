@@ -4,7 +4,6 @@ import { ethers } from 'hardhat';
 import {
   DecentPaymasterV1,
   DecentPaymasterV1__factory,
-  ERC1967Proxy__factory,
   IDecentPaymasterV1__factory,
   IERC165__factory,
   IPaymaster__factory,
@@ -16,8 +15,9 @@ import {
   MockLightSmartAccount,
   MockLightSmartAccount__factory,
 } from '../../typechain-types';
+import { getModuleProxyFactory } from '../GlobalSafeDeployments.test';
+import { calculateProxyAddress } from '../helpers';
 import { calculateInterfaceId } from '../helpers/utils';
-import { runUUPSUpgradeabilityTests } from '../helpers/uupsUpgradeabilityTests';
 
 interface PackedUserOperation {
   sender: string;
@@ -31,42 +31,47 @@ interface PackedUserOperation {
   signature: string;
 }
 
-// Helper function for deploying DecentPaymasterV1 instances using ERC1967Proxy
+// Helper function for deploying DecentPaymasterV1 instances
 async function deployDecentPaymasterProxy(
-  proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: DecentPaymasterV1,
   owner: SignerWithAddress,
   entryPoint: string,
 ): Promise<DecentPaymasterV1> {
-  // Encode initialization parameters
-  const initializeParams = ethers.AbiCoder.defaultAbiCoder().encode(
-    ['address', 'address'],
-    [owner.address, entryPoint],
+  const initializeCalldata = implementation.interface.encodeFunctionData('initialize', [
+    ethers.AbiCoder.defaultAbiCoder().encode(['address', 'address'], [owner.address, entryPoint]),
+  ]);
+
+  const moduleProxyFactory = getModuleProxyFactory();
+  const salt = ethers.keccak256(ethers.randomBytes(32));
+
+  // Deploy the proxy with owner as the deployer
+  await moduleProxyFactory.deployModule(
+    await implementation.getAddress(),
+    initializeCalldata,
+    salt,
   );
 
-  // Create full initialization data with function selector
-  const fullInitData =
-    DecentPaymasterV1__factory.createInterface().getFunction('initialize').selector +
-    initializeParams.slice(2);
-
-  // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const predictedAddress = await calculateProxyAddress(
+    moduleProxyFactory,
+    await implementation.getAddress(),
+    initializeCalldata,
+    salt,
+  );
 
   // Return a contract instance connected to the proxy
-  return DecentPaymasterV1__factory.connect(await proxy.getAddress(), owner);
+  return DecentPaymasterV1__factory.connect(predictedAddress, owner);
 }
 
 describe('DecentPaymasterV1', function () {
   // contracts
   let decentPaymaster: DecentPaymasterV1;
-  let masterCopy: string;
+  let masterCopy: DecentPaymasterV1;
   let entryPoint: MockEntryPoint;
   let mockLightSmartAccount: MockLightSmartAccount;
   let mockTarget: MockGaslessTarget;
 
   // signers
   let owner: SignerWithAddress;
-  let proxyDeployer: SignerWithAddress;
   let nonOwner: SignerWithAddress;
 
   // test data
@@ -75,7 +80,7 @@ describe('DecentPaymasterV1', function () {
 
   beforeEach(async function () {
     // Get signers
-    [proxyDeployer, owner, nonOwner] = await ethers.getSigners();
+    [owner, nonOwner] = await ethers.getSigners();
 
     // Deploy mock EntryPoint
     entryPoint = await new MockEntryPoint__factory(owner).deploy();
@@ -90,11 +95,10 @@ describe('DecentPaymasterV1', function () {
     FOO_SELECTOR = mockTarget.interface.getFunction('foo').selector;
 
     // Deploy DecentPaymaster implementation
-    masterCopy = await (await new DecentPaymasterV1__factory(owner).deploy()).getAddress();
+    masterCopy = await new DecentPaymasterV1__factory(owner).deploy();
 
     // Deploy DecentPaymaster proxy
     decentPaymaster = await deployDecentPaymasterProxy(
-      proxyDeployer,
       masterCopy,
       owner,
       await entryPoint.getAddress(),
@@ -136,7 +140,12 @@ describe('DecentPaymasterV1', function () {
 
     it('Should not allow reinitialization', async function () {
       await expect(
-        decentPaymaster.initialize(owner.address, await entryPoint.getAddress()),
+        decentPaymaster.initialize(
+          ethers.AbiCoder.defaultAbiCoder().encode(
+            ['address', 'address'],
+            [owner.address, await entryPoint.getAddress()],
+          ),
+        ),
       ).to.be.revertedWith('Initializable: contract is already initialized');
     });
 
@@ -489,19 +498,6 @@ describe('DecentPaymasterV1', function () {
   describe('Version', () => {
     it('should return the correct version number', async () => {
       expect(await decentPaymaster.getVersion()).to.equal(1);
-    });
-  });
-
-  describe('UUPS Upgradeability', function () {
-    // Run UUPS upgradeability tests
-    runUUPSUpgradeabilityTests({
-      getContract: () => decentPaymaster,
-      createNewImplementation: async () => {
-        const newImplementation = await new DecentPaymasterV1__factory(owner).deploy();
-        return newImplementation;
-      },
-      owner: () => owner,
-      nonOwner: () => nonOwner,
     });
   });
 });
