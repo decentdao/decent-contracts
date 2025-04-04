@@ -2,10 +2,14 @@
 pragma solidity ^0.8.28;
 
 interface IDecentPaymasterV1 {
-    function whitelistFunctions(
+    function whitelistFunction(
         address contractAddress,
-        bytes4[] calldata selectors,
-        bool[] calldata approved
+        bytes4 selector
+    ) external;
+
+    function unwhitelistFunction(
+        address contractAddress,
+        bytes4 selector
     ) external;
 
     function isFunctionWhitelisted(

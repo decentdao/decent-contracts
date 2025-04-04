@@ -155,102 +155,51 @@ describe('DecentPaymasterV1', function () {
     });
   });
 
-  describe('Function Approval', function () {
-    it('Should allow owner to approve functions', async function () {
-      const selectors = [FOO_SELECTOR];
-      const approved = [true];
+  describe('Function Whitelisting', function () {
+    it('Should allow owner to whitelist functions', async function () {
+      await expect(decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR))
+        .to.emit(decentPaymaster, 'FunctionWhitelisted')
+        .withArgs(await mockTarget.getAddress(), FOO_SELECTOR);
 
-      await expect(
-        decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, approved),
-      )
-        .to.emit(decentPaymaster, 'FunctionApproved')
-        .withArgs(await mockTarget.getAddress(), FOO_SELECTOR, true);
-
-      const isApproved = await decentPaymaster.isFunctionWhitelisted(
+      const isWhitelisted = await decentPaymaster.isFunctionWhitelisted(
         await mockTarget.getAddress(),
         FOO_SELECTOR,
       );
-      void expect(isApproved).to.be.true;
+      void expect(isWhitelisted).to.be.true;
     });
 
-    it('Should allow owner to revoke function approval', async function () {
-      const selectors = [FOO_SELECTOR];
-      const approved = [true];
-
-      await decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, approved);
-
-      await decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, [false]);
-      const isApproved = await decentPaymaster.isFunctionWhitelisted(
+    it('Should allow owner to revoke function whitelisting', async function () {
+      await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
+      const isWhitelistedFirst = await decentPaymaster.isFunctionWhitelisted(
         await mockTarget.getAddress(),
         FOO_SELECTOR,
       );
-      void expect(isApproved).to.be.false;
+      void expect(isWhitelistedFirst).to.be.true;
+
+      await expect(decentPaymaster.unwhitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR))
+        .to.emit(decentPaymaster, 'FunctionUnwhitelisted')
+        .withArgs(await mockTarget.getAddress(), FOO_SELECTOR);
+
+      const isWhitelistedLast = await decentPaymaster.isFunctionWhitelisted(
+        await mockTarget.getAddress(),
+        FOO_SELECTOR,
+      );
+      void expect(isWhitelistedLast).to.be.false;
     });
 
-    it('Should revert when non-owner tries to set approval', async function () {
-      const selectors = [FOO_SELECTOR];
-      const approved = [true];
-
+    it('Should revert when non-owner tries to whitelist function', async function () {
       await expect(
         decentPaymaster
           .connect(nonOwner)
-          .whitelistFunctions(await mockTarget.getAddress(), selectors, approved),
+          .whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR),
       ).to.be.revertedWith('Ownable: caller is not the owner');
-    });
-
-    it('Should revert when arrays have different lengths', async function () {
-      const selectors = [FOO_SELECTOR];
-      const approved: boolean[] = [];
-
-      await expect(
-        decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, approved),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'InvalidArrayLength');
-    });
-
-    it('Should approve multiple functions in a single call', async function () {
-      const selectors = [
-        mockTarget.interface.getFunction('foo').selector,
-        mockTarget.interface.getFunction('bar').selector,
-      ];
-      const approved = [true, true];
-
-      await decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, approved);
-
-      for (const selector of selectors) {
-        const isApproved = await decentPaymaster.isFunctionWhitelisted(
-          await mockTarget.getAddress(),
-          selector,
-        );
-        void expect(isApproved).to.be.true;
-      }
-    });
-
-    it('Should handle empty arrays', async function () {
-      const selectors: string[] = [];
-      const approved: boolean[] = [];
-
-      await decentPaymaster.whitelistFunctions(await mockTarget.getAddress(), selectors, approved);
-      // Should not revert and should not modify any state
-    });
-
-    it('Should revert when using zero address as strategy', async function () {
-      const selectors = [FOO_SELECTOR];
-      const approved = [true];
-
-      await expect(
-        decentPaymaster.whitelistFunctions(ethers.ZeroAddress, selectors, approved),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'ZeroAddressContract');
     });
   });
 
   describe('Validation', function () {
     beforeEach(async function () {
-      // Approve the foo function on the mock target
-      await decentPaymaster.whitelistFunctions(
-        await mockTarget.getAddress(),
-        [FOO_SELECTOR],
-        [true],
-      );
+      // Whitelist the foo function on the mock target
+      await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
 
       // Fund the impersonated signer
       const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
@@ -260,7 +209,7 @@ describe('DecentPaymasterV1', function () {
       });
     });
 
-    it('Should validate approved function calls', async function () {
+    it('Should validate whitelisted function calls', async function () {
       const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
       const result = await decentPaymaster
         .connect(entryPointSigner)
@@ -351,7 +300,7 @@ describe('DecentPaymasterV1', function () {
       const randomAddress = ethers.Wallet.createRandom().address;
 
       // First whitelist the function for the random address
-      await decentPaymaster.whitelistFunctions(randomAddress, [FOO_SELECTOR], [true]);
+      await decentPaymaster.whitelistFunction(randomAddress, FOO_SELECTOR);
 
       // Create inner calldata
       const innerCalldata = mockTarget.interface.encodeFunctionData('foo', [
