@@ -9,7 +9,6 @@ import {
   LinearERC721VotingV1__factory,
   MockERC721,
   MockERC721__factory,
-  MockLightAccount__factory,
 } from '../typechain-types';
 import { getModuleProxyFactory } from './GlobalSafeDeployments.test';
 import { calculateProxyAddress } from './helpers';
@@ -971,8 +970,8 @@ describe('LinearERC721VotingV1', () => {
 
     it('should revert when trying to initialize with an invalid ERC721 token', async () => {
       // We need to deploy a contract that doesn't implement the ERC721 interface
-      // For this test, we can use the MockOwnership contract which doesn't support the ERC721 interface
-      const mockNonERC721 = await new MockLightAccount__factory(deployer).deploy(deployer.address);
+      // For this test, we can use the LinearERC721VotingV1 contract itself, which doesn't support the ERC721 interface
+      const mockNonERC721 = await new LinearERC721VotingV1__factory(deployer).deploy();
 
       const tokenAddresses = [await mockNonERC721.getAddress()];
       const tokenWeights = [TOKEN1_WEIGHT];
@@ -1031,28 +1030,6 @@ describe('LinearERC721VotingV1', () => {
       await expect(linearERC721Voting.connect(nonOwner).initializeProposal(initializeData))
         .to.emit(linearERC721Voting, 'ProposalInitialized')
         .withArgs(proposalId, expectedEndBlock);
-    });
-  });
-
-  describe('Smart Account Support', () => {
-    it('should recognize that contracts integrate with ERC4337VoterSupport', async () => {
-      // This is a simplified test to verify the ERC4337VoterSupport integration exists
-      // In a real scenario, we'd test the full smart contract account voting flow
-
-      // Since properly testing this requires complex test infrastructure to impersonate contracts,
-      // we'll simply verify that the _voter function is inherited from ERC4337VoterSupportV1
-
-      // Deploy a mock contract with ownership
-      const mockLightAccount = await new MockLightAccount__factory(deployer).deploy(
-        tokenHolder1.address,
-      );
-
-      // Verify the owner is set correctly
-      expect(await mockLightAccount.owner()).to.equal(tokenHolder1.address);
-
-      // We're verifying that the contract inherits ERC4337VoterSupportV1
-      // This is mostly a conceptual test - in production this would allow contract wallets
-      // to vote as their owners
     });
   });
 

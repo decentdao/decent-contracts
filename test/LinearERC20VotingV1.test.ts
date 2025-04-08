@@ -9,8 +9,6 @@ import {
   LinearERC20VotingV1__factory,
   MockERC20Votes,
   MockERC20Votes__factory,
-  MockLightAccount,
-  MockLightAccount__factory,
 } from '../typechain-types';
 import { getModuleProxyFactory } from './GlobalSafeDeployments.test';
 import { calculateProxyAddress } from './helpers';
@@ -30,7 +28,6 @@ describe('LinearERC20VotingV1', () => {
   let linearERC20VotingImplementation: LinearERC20VotingV1;
   let linearERC20Voting: LinearERC20VotingV1;
   let mockToken: MockERC20Votes;
-  let mockLightAccount: MockLightAccount;
 
   // Constants
   const VOTING_PERIOD = 100; // blocks
@@ -97,9 +94,6 @@ describe('LinearERC20VotingV1', () => {
 
     // Deploy MockERC20Votes token
     mockToken = await new MockERC20Votes__factory(deployer).deploy();
-
-    // Deploy MockLightAccount contract
-    mockLightAccount = await new MockLightAccount__factory(deployer).deploy(tokenHolder1.address);
 
     // Mint tokens to token holders
     await mockToken.mint(tokenHolder1.address, 1000);
@@ -526,42 +520,6 @@ describe('LinearERC20VotingV1', () => {
       await mockToken.mint(tokenHolder1.address, 2000);
       const votingSupplyAfterMint = await linearERC20Voting.getProposalVotingSupply(proposalId);
       expect(votingSupplyAfterMint).to.equal(3000);
-    });
-  });
-
-  describe('Smart Account Support', () => {
-    const proposalId = 2;
-
-    beforeEach(async () => {
-      // Setup with tokens for the test
-      await mockToken.mint(await mockLightAccount.getAddress(), 1000);
-
-      // Delegate tokens to the mock contract
-      await mockToken.connect(deployer).delegate(await mockLightAccount.getAddress());
-
-      // Initialize the proposal
-      const initializeData = ethers.AbiCoder.defaultAbiCoder().encode(['uint32'], [proposalId]);
-      await linearERC20Voting.connect(nonOwner).initializeProposal(initializeData);
-    });
-
-    it('should correctly identify voter when using smart account', async () => {
-      // The MockLightAccount contract has owner() set to tokenHolder1.address in the beforeEach
-
-      // We need to test that ERC4337VoterSupport correctly resolves the owner of the contract
-      // But we can't directly call from the contract's address, so we need to verify indirectly
-
-      // Vote from tokenHolder1 (which is the owner of mockOwnership)
-      await linearERC20Voting.connect(tokenHolder1).vote(proposalId, VoteType.YES);
-
-      // Check votes were attributed correctly
-      const [, yesVotes, , , ,] = await linearERC20Voting.getProposalVotes(proposalId);
-      expect(yesVotes).to.equal(1000);
-
-      // Check that tokenHolder1 is marked as having voted
-      void expect(await linearERC20Voting.hasVoted(proposalId, tokenHolder1.address)).to.be.true;
-
-      // The test for ERC4337VoterSupport is more limited without advanced mocking
-      // But we can verify that the _voter function works by setting up additional tests in ERC4337VoterSupportV1.test.ts
     });
   });
 
