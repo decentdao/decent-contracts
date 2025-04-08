@@ -11,8 +11,8 @@ import {HatsProposalCreationWhitelistV1} from "./HatsProposalCreationWhitelistV1
  * restricted to users wearing whitelisted Hats.
  */
 contract LinearERC20VotingWithHatsProposalCreationV1 is
-    HatsProposalCreationWhitelistV1,
-    LinearERC20VotingV1
+    LinearERC20VotingV1,
+    HatsProposalCreationWhitelistV1
 {
     uint16 private constant VERSION = 1;
 
@@ -29,14 +29,11 @@ contract LinearERC20VotingWithHatsProposalCreationV1 is
      * @param initializeParams encoded initialization parameters: `address _owner`,
      * `address _governanceToken`, `address _azoriusModule`, `uint32 _votingPeriod`,
      * `uint256 _quorumNumerator`, `uint256 _basisNumerator`, `address _hatsContract`,
-     * `uint256[] _initialWhitelistedHats`
+     * `uint256[] _initialWhitelistedHats`, `address _lightAccountFactory`
      */
     function setUp(
         bytes memory initializeParams
-    )
-        public
-        override(HatsProposalCreationWhitelistV1, LinearERC20VotingExtensible)
-    {
+    ) public override(LinearERC20VotingV1, HatsProposalCreationWhitelistV1) {
         (
             address _owner,
             address _governanceToken,
@@ -45,7 +42,8 @@ contract LinearERC20VotingWithHatsProposalCreationV1 is
             uint256 _quorumNumerator,
             uint256 _basisNumerator,
             address _hatsContract,
-            uint256[] memory _initialWhitelistedHats
+            uint256[] memory _initialWhitelistedHats,
+            address _lightAccountFactory
         ) = abi.decode(
                 initializeParams,
                 (
@@ -56,11 +54,12 @@ contract LinearERC20VotingWithHatsProposalCreationV1 is
                     uint256,
                     uint256,
                     address,
-                    uint256[]
+                    uint256[],
+                    address
                 )
             );
 
-        LinearERC20VotingExtensible.setUp(
+        LinearERC20VotingV1.setUp(
             abi.encode(
                 _owner,
                 _governanceToken,
@@ -68,7 +67,8 @@ contract LinearERC20VotingWithHatsProposalCreationV1 is
                 _votingPeriod,
                 0, // requiredProposerWeight is zero because we only care about the hat check
                 _quorumNumerator,
-                _basisNumerator
+                _basisNumerator,
+                _lightAccountFactory
             )
         );
 

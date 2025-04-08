@@ -28,6 +28,52 @@ contract LinearERC20VotingV1 is
     }
 
     /**
+     * Sets up the contract with its initial parameters.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address _governanceToken`, `address _azoriusModule`, `uint32 _votingPeriod`,
+     * `uint256 _quorumNumerator`, `uint256 _basisNumerator`, `address _lightAccountFactory`
+     */
+    function setUp(bytes memory initializeParams) public virtual override {
+        (
+            address _owner,
+            IVotes _governanceToken,
+            address _azoriusModule,
+            uint32 _votingPeriod,
+            uint256 _requiredProposerWeight,
+            uint256 _quorumNumerator,
+            uint256 _basisNumerator,
+            address _lightAccountFactory
+        ) = abi.decode(
+                initializeParams,
+                (
+                    address,
+                    IVotes,
+                    address,
+                    uint32,
+                    uint256,
+                    uint256,
+                    uint256,
+                    address
+                )
+            );
+
+        LinearERC20VotingExtensible.setUp(
+            abi.encode(
+                _owner,
+                _governanceToken,
+                _azoriusModule,
+                _votingPeriod,
+                _requiredProposerWeight,
+                _quorumNumerator,
+                _basisNumerator
+            )
+        );
+
+        __ERC4337VoterSupportV1_init(_lightAccountFactory);
+    }
+
+    /**
      * Casts votes for a Proposal, equal to the caller's token delegation.
      *
      * @param _proposalId id of the Proposal to vote on

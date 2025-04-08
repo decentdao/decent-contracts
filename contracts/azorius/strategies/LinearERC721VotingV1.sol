@@ -34,6 +34,56 @@ contract LinearERC721VotingV1 is
     }
 
     /**
+     * Sets up the contract with its initial parameters.
+     *
+     * @param initializeParams encoded initialization parameters: `address _owner`,
+     * `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`,
+     * `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _basisNumerator`,
+     * `address _lightAccountFactory`
+     */
+    function setUp(bytes memory initializeParams) public virtual override {
+        (
+            address _owner,
+            address[] memory _tokens,
+            uint256[] memory _weights,
+            address _azoriusModule,
+            uint32 _votingPeriod,
+            uint256 _quorumThreshold,
+            uint256 _proposerThreshold,
+            uint256 _basisNumerator,
+            address _lightAccountFactory
+        ) = abi.decode(
+                initializeParams,
+                (
+                    address,
+                    address[],
+                    uint256[],
+                    address,
+                    uint32,
+                    uint256,
+                    uint256,
+                    uint256,
+                    address
+                )
+            );
+
+        LinearERC721VotingExtensible.setUp(
+            abi.encode(
+                _owner,
+                _tokens,
+                _weights,
+                _azoriusModule,
+                _votingPeriod,
+                _quorumThreshold,
+                _proposerThreshold,
+                _basisNumerator
+            )
+        );
+
+        __ERC4337VoterSupportV1_init(_lightAccountFactory);
+    }
+
+    /**
      * Submits a vote on an existing Proposal.
      *
      * @param _proposalId id of the Proposal to vote on
