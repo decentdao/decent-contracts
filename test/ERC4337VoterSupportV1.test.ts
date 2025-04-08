@@ -4,8 +4,8 @@ import { ethers } from 'hardhat';
 import {
   ConcreteERC4337VoterSupportV1,
   ConcreteERC4337VoterSupportV1__factory,
-  MockOwnership,
-  MockOwnership__factory,
+  MockLightAccount,
+  MockLightAccount__factory,
 } from '../typechain-types';
 
 describe('ERC4337VoterSupportV1', () => {
@@ -16,7 +16,7 @@ describe('ERC4337VoterSupportV1', () => {
 
   // Contracts
   let concreteERC4337VoterSupport: ConcreteERC4337VoterSupportV1;
-  let mockOwnership: MockOwnership;
+  let mockLightAccount: MockLightAccount;
 
   beforeEach(async () => {
     [deployer, owner, user] = await ethers.getSigners();
@@ -27,22 +27,22 @@ describe('ERC4337VoterSupportV1', () => {
     ).deploy();
 
     // Deploy a mock ownership contract with the owner address
-    mockOwnership = await new MockOwnership__factory(deployer).deploy(owner.address);
+    mockLightAccount = await new MockLightAccount__factory(deployer).deploy(owner.address);
   });
 
   describe('voter', () => {
     describe('when the msgSender is a smart account', () => {
       it('should return the owner of the smart account', async () => {
         // Test with our mock ownership contract
-        const voter = await concreteERC4337VoterSupport.voter(await mockOwnership.getAddress());
+        const voter = await concreteERC4337VoterSupport.voter(await mockLightAccount.getAddress());
         expect(voter).to.equal(owner.address);
       });
 
       it('should return address(0) when smart account owner is zero address', async () => {
         // Set the owner to the zero address
-        await mockOwnership.setOwner(ethers.ZeroAddress);
+        await mockLightAccount.setOwner(ethers.ZeroAddress);
 
-        const voter = await concreteERC4337VoterSupport.voter(await mockOwnership.getAddress());
+        const voter = await concreteERC4337VoterSupport.voter(await mockLightAccount.getAddress());
         expect(voter).to.equal(ethers.ZeroAddress);
       });
     });
