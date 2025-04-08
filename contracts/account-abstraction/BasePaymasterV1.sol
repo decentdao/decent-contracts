@@ -22,7 +22,7 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
     uint256 internal constant PAYMASTER_DATA_OFFSET =
         UserOperationLib.PAYMASTER_DATA_OFFSET;
 
-    function __BasePaymaster_init(
+    function __BasePaymasterV1_init(
         address _owner,
         IEntryPoint _entryPoint
     ) internal onlyInitializing {

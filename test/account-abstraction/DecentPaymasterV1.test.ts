@@ -14,6 +14,8 @@ import {
   MockGaslessTarget__factory,
   MockLightAccount,
   MockLightAccount__factory,
+  MockLightAccountFactory,
+  MockLightAccountFactory__factory,
 } from '../../typechain-types';
 import { getModuleProxyFactory } from '../GlobalSafeDeployments.test';
 import { calculateProxyAddress } from '../helpers';
@@ -36,9 +38,13 @@ async function deployDecentPaymasterProxy(
   implementation: DecentPaymasterV1,
   owner: SignerWithAddress,
   entryPoint: string,
+  lightAccountFactory: string,
 ): Promise<DecentPaymasterV1> {
   const initializeCalldata = implementation.interface.encodeFunctionData('initialize', [
-    ethers.AbiCoder.defaultAbiCoder().encode(['address', 'address'], [owner.address, entryPoint]),
+    ethers.AbiCoder.defaultAbiCoder().encode(
+      ['address', 'address', 'address'],
+      [owner.address, entryPoint, lightAccountFactory],
+    ),
   ]);
 
   const moduleProxyFactory = getModuleProxyFactory();
@@ -69,6 +75,8 @@ describe('DecentPaymasterV1', function () {
   let entryPoint: MockEntryPoint;
   let mockLightAccount: MockLightAccount;
   let mockTarget: MockGaslessTarget;
+  let mockLightAccountFactory: MockLightAccountFactory;
+  let mockLightAccountFactoryAddress: string;
 
   // signers
   let owner: SignerWithAddress;
@@ -91,6 +99,17 @@ describe('DecentPaymasterV1', function () {
     // Deploy MockGaslessTarget
     mockTarget = await new MockGaslessTarget__factory(owner).deploy();
 
+    // Deploy MockLightAccountFactory
+    mockLightAccountFactory = await new MockLightAccountFactory__factory(owner).deploy();
+    mockLightAccountFactoryAddress = mockLightAccountFactory.target.toString();
+
+    // Set up the mock light account factory to return our mock account
+    await mockLightAccountFactory.setAccountAddress(
+      await mockLightAccount.owner(),
+      0n,
+      await mockLightAccount.getAddress(),
+    );
+
     // Get the foo function selector
     FOO_SELECTOR = mockTarget.interface.getFunction('foo').selector;
 
@@ -102,6 +121,7 @@ describe('DecentPaymasterV1', function () {
       masterCopy,
       owner,
       await entryPoint.getAddress(),
+      mockLightAccountFactoryAddress,
     );
 
     // Create mock UserOperation with properly encoded calldata
@@ -138,12 +158,16 @@ describe('DecentPaymasterV1', function () {
       expect(await decentPaymaster.owner()).to.equal(owner.address);
     });
 
+    it('Should set the light account factory', async function () {
+      expect(await decentPaymaster.lightAccountFactory()).to.equal(mockLightAccountFactoryAddress);
+    });
+
     it('Should not allow reinitialization', async function () {
       await expect(
         decentPaymaster.initialize(
           ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'address'],
-            [owner.address, await entryPoint.getAddress()],
+            ['address', 'address', 'address'],
+            [owner.address, await entryPoint.getAddress(), mockLightAccountFactoryAddress],
           ),
         ),
       ).to.be.revertedWith('Initializable: contract is already initialized');
@@ -200,16 +224,9 @@ describe('DecentPaymasterV1', function () {
     beforeEach(async function () {
       // Whitelist the foo function on the mock target
       await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
-
-      // Fund the impersonated signer
-      const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
-      await owner.sendTransaction({
-        to: await entryPointSigner.getAddress(),
-        value: ethers.parseEther('1'),
-      });
     });
 
-    it('Should validate whitelisted function calls', async function () {
+    it('Should validate whitelisted function calls from valid light accounts', async function () {
       const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
       const result = await decentPaymaster
         .connect(entryPointSigner)
