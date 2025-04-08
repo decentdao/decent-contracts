@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IDecentPaymasterV1} from "../interfaces/account-abstraction/IDecentPaymasterV1.sol";
 import {BasePaymasterV1} from "./BasePaymasterV1.sol";
-import {SmartAccountVerificationV1} from "./SmartAccountVerificationV1.sol";
+import {SmartAccountValidationV1} from "./SmartAccountValidationV1.sol";
 import {Version} from "../Version.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
@@ -13,7 +13,7 @@ contract DecentPaymasterV1 is
     IDecentPaymasterV1,
     Version,
     BasePaymasterV1,
-    SmartAccountVerificationV1
+    SmartAccountValidationV1
 {
     uint16 private constant VERSION = 1;
 
@@ -43,7 +43,7 @@ contract DecentPaymasterV1 is
             address _lightAccountFactory
         ) = abi.decode(data, (address, address, address));
         __BasePaymasterV1_init(_owner, IEntryPoint(_entryPoint));
-        __SmartAccountVerificationV1_init(_lightAccountFactory);
+        __SmartAccountValidationV1_init(_lightAccountFactory);
     }
 
     /**
@@ -96,9 +96,9 @@ contract DecentPaymasterV1 is
         override
         returns (bytes memory context, uint256 validationData)
     {
-        (address target, bytes4 selector) = verifyUserOp(userOp);
+        (address target, bytes4 selector) = validateUserOp(userOp);
 
-        // Verify the function is whitelistd for this target
+        // Validate the function is whitelistd for this target
         if (!isFunctionWhitelisted(target, selector)) {
             revert NotWhitelistedFunction(target, selector);
         }

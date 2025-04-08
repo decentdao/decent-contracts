@@ -6,7 +6,7 @@ import {ILightAccountFactory} from "../interfaces/ILightAccountFactory.sol";
 import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-abstract contract SmartAccountVerificationV1 is Initializable {
+abstract contract SmartAccountValidationV1 is Initializable {
     ILightAccountFactory public lightAccountFactory;
 
     error InvalidSmartAccount();
@@ -18,13 +18,13 @@ abstract contract SmartAccountVerificationV1 is Initializable {
         _disableInitializers();
     }
 
-    function __SmartAccountVerificationV1_init(
+    function __SmartAccountValidationV1_init(
         address _lightAccountFactory
     ) internal {
         lightAccountFactory = ILightAccountFactory(_lightAccountFactory);
     }
 
-    function verifySmartAccount(
+    function validateSmartAccount(
         address smartAccount
     ) internal view virtual returns (bool) {
         // First check if the address has code (is a contract)
@@ -58,10 +58,10 @@ abstract contract SmartAccountVerificationV1 is Initializable {
         }
     }
 
-    function verifyUserOp(
+    function validateUserOp(
         PackedUserOperation calldata userOp
     ) internal view virtual returns (address, bytes4) {
-        if (!verifySmartAccount(userOp.sender)) {
+        if (!validateSmartAccount(userOp.sender)) {
             revert InvalidSmartAccount();
         }
 
@@ -74,12 +74,12 @@ abstract contract SmartAccountVerificationV1 is Initializable {
         // any arbitrary logic (aka logic which does not execute the whitelisted function
         // encoded in the UserOp).
 
-        // Verify we have at least 4 bytes for the selector
+        // Validate that we have at least 4 bytes for the selector
         if (userOp.callData.length < 4) {
             revert InvalidUserOpCallDataLength();
         }
 
-        // Extract and verify the LightAccount's "execute" function selector
+        // Extract and validate the LightAccount's "execute" function selector
         // 0xb61d27f6 = bytes4(keccak256("execute(address,uint256,bytes)"))
         if (bytes4(userOp.callData) != 0xb61d27f6) {
             revert InvalidCallData();

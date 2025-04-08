@@ -2,8 +2,8 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ConcreteSmartAccountVerification,
-  ConcreteSmartAccountVerification__factory,
+  ConcreteSmartAccountValidation,
+  ConcreteSmartAccountValidation__factory,
   MockGaslessTarget,
   MockGaslessTarget__factory,
   MockInvalidLightAccount,
@@ -28,13 +28,13 @@ interface PackedUserOperation {
   signature: string;
 }
 
-async function deploySmartAccountVerification(
+async function deploySmartAccountValidation(
   deployer: SignerWithAddress,
-  implementation: ConcreteSmartAccountVerification,
+  implementation: ConcreteSmartAccountValidation,
   mockLightAccountFactoryAddress: string,
 ) {
   const initializeCalldata =
-    ConcreteSmartAccountVerification__factory.createInterface().encodeFunctionData('initialize', [
+    ConcreteSmartAccountValidation__factory.createInterface().encodeFunctionData('initialize', [
       mockLightAccountFactoryAddress,
     ]);
 
@@ -47,22 +47,22 @@ async function deploySmartAccountVerification(
     salt,
   );
 
-  const predictedSmartAccountVerificationAddress = await calculateProxyAddress(
+  const predictedSmartAccountValidationAddress = await calculateProxyAddress(
     moduleProxyFactory,
     await implementation.getAddress(),
     initializeCalldata,
     salt,
   );
 
-  return ConcreteSmartAccountVerification__factory.connect(
-    predictedSmartAccountVerificationAddress,
+  return ConcreteSmartAccountValidation__factory.connect(
+    predictedSmartAccountValidationAddress,
     deployer,
   );
 }
 
-describe('LightAccountVerificationV1', function () {
+describe('SmartAccountValidationV1', function () {
   // contracts
-  let concreteVerification: ConcreteSmartAccountVerification;
+  let concreteSmartAccountValidation: ConcreteSmartAccountValidation;
   let mockLightAccount: MockLightAccount;
   let mockInvalidLightAccount: MockInvalidLightAccount;
   let mockLightAccountFactory: MockLightAccountFactory;
@@ -84,22 +84,22 @@ describe('LightAccountVerificationV1', function () {
     // Deploy MockLightAccountFactory
     mockLightAccountFactory = await new MockLightAccountFactory__factory(deployer).deploy();
 
-    // Deploy MockLightAccountVerification
-    const concreteVerificationImplementation = await new ConcreteSmartAccountVerification__factory(
+    // Deploy ConcreteSmartAccountValidation
+    const concreteValidationImplementation = await new ConcreteSmartAccountValidation__factory(
       deployer,
     ).deploy();
 
-    concreteVerification = await deploySmartAccountVerification(
+    concreteSmartAccountValidation = await deploySmartAccountValidation(
       deployer,
-      concreteVerificationImplementation,
+      concreteValidationImplementation,
       mockLightAccountFactory.target.toString(),
     );
   });
 
-  describe('verifySmartAccount', function () {
+  describe('validateSmartAccount', function () {
     describe('valid smart accounts', function () {
-      it('should verify valid smart accounts', async function () {
-        // set up the mock factory contract to return the correct address to `verifySmartAccount`
+      it('should validate valid smart accounts', async function () {
+        // set up the mock factory contract to return the correct address to `validateSmartAccount`
         await mockLightAccountFactory.setAccountAddress(
           await mockLightAccount.owner(),
           0n,
@@ -107,7 +107,9 @@ describe('LightAccountVerificationV1', function () {
         );
 
         void expect(
-          await concreteVerification.verifySmartAccountPublic(await mockLightAccount.getAddress()),
+          await concreteSmartAccountValidation.validateSmartAccountPublic(
+            await mockLightAccount.getAddress(),
+          ),
         ).to.be.true;
       });
     });
@@ -118,8 +120,9 @@ describe('LightAccountVerificationV1', function () {
           const randomAddress = ethers.Wallet.createRandom().address;
 
           // Should return false since the address won't have the owner() function
-          void expect(await concreteVerification.verifySmartAccountPublic(randomAddress)).to.be
-            .false;
+          void expect(
+            await concreteSmartAccountValidation.validateSmartAccountPublic(randomAddress),
+          ).to.be.false;
         });
       });
 
@@ -127,18 +130,18 @@ describe('LightAccountVerificationV1', function () {
         it('should return false for invalid light accounts that do implement the ILightAccount interface (owner())', async function () {
           // not calling "setAccountAddress", so the LightAccountFactory will always
           // return the zero address when calling `getAddress` for a given owner and salt
-          // (which is implemented in the LightAccountVerification verifySmartAccount function).
+          // (which is implemented in the SmartAccountValidation validateSmartAccount function).
           void expect(
-            await concreteVerification.verifySmartAccountPublic(
+            await concreteSmartAccountValidation.validateSmartAccountPublic(
               await mockLightAccount.getAddress(),
             ),
           ).to.be.false;
         });
 
         it('should return false for invalid light accounts that do not implement the ILightAccount interface (owner())', async function () {
-          // Hits the "catch" block in the `verifySmartAccount` function
+          // Hits the "catch" block in the `validateSmartAccount` function
           void expect(
-            await concreteVerification.verifySmartAccountPublic(
+            await concreteSmartAccountValidation.validateSmartAccountPublic(
               await mockInvalidLightAccount.getAddress(),
             ),
           ).to.be.false;
@@ -147,7 +150,7 @@ describe('LightAccountVerificationV1', function () {
     });
   });
 
-  describe('verifySmartAccountAndCallData', function () {
+  describe('validateUserOp', function () {
     let mockUserOp: PackedUserOperation;
     let mockTarget: MockGaslessTarget;
     let FOO_SELECTOR: string;
@@ -192,18 +195,19 @@ describe('LightAccountVerificationV1', function () {
         await mockLightAccount.getAddress(),
       );
 
-      const [target, selector] = await concreteVerification.verifyUserOpPublic(mockUserOp);
+      const [target, selector] =
+        await concreteSmartAccountValidation.validateUserOpPublic(mockUserOp);
       expect(target).to.equal(await mockTarget.getAddress());
       expect(selector).to.equal(FOO_SELECTOR);
     });
 
     it('should revert with InvalidSmartAccount when sender is not a valid light account', async function () {
       // Not setting up the mock factory to return the correct address
-      // This will make verifySmartAccount return false, triggering InvalidSmartAccount
+      // This will make validateSmartAccount return false, triggering InvalidSmartAccount
 
       await expect(
-        concreteVerification.verifyUserOpPublic(mockUserOp),
-      ).to.be.revertedWithCustomError(concreteVerification, 'InvalidSmartAccount');
+        concreteSmartAccountValidation.validateUserOpPublic(mockUserOp),
+      ).to.be.revertedWithCustomError(concreteSmartAccountValidation, 'InvalidSmartAccount');
     });
 
     it('should revert on invalid calldata length', async function () {
@@ -218,8 +222,11 @@ describe('LightAccountVerificationV1', function () {
       const invalidUserOp = { ...mockUserOp, callData: invalidCallData };
 
       await expect(
-        concreteVerification.verifyUserOpPublic(invalidUserOp),
-      ).to.be.revertedWithCustomError(concreteVerification, 'InvalidUserOpCallDataLength');
+        concreteSmartAccountValidation.validateUserOpPublic(invalidUserOp),
+      ).to.be.revertedWithCustomError(
+        concreteSmartAccountValidation,
+        'InvalidUserOpCallDataLength',
+      );
     });
 
     it('should revert on unauthorized function calls', async function () {
@@ -239,8 +246,8 @@ describe('LightAccountVerificationV1', function () {
       const unauthorizedUserOp = { ...mockUserOp, callData: unauthorizedCallData };
 
       await expect(
-        concreteVerification.verifyUserOpPublic(unauthorizedUserOp),
-      ).to.be.revertedWithCustomError(concreteVerification, 'InvalidCallData');
+        concreteSmartAccountValidation.validateUserOpPublic(unauthorizedUserOp),
+      ).to.be.revertedWithCustomError(concreteSmartAccountValidation, 'InvalidCallData');
     });
 
     it('should revert with InvalidInnerCallDataLength when inner calldata is too short', async function () {
@@ -260,10 +267,9 @@ describe('LightAccountVerificationV1', function () {
 
       const userOp = { ...mockUserOp, callData: executeCalldata };
 
-      await expect(concreteVerification.verifyUserOpPublic(userOp)).to.be.revertedWithCustomError(
-        concreteVerification,
-        'InvalidInnerCallDataLength',
-      );
+      await expect(
+        concreteSmartAccountValidation.validateUserOpPublic(userOp),
+      ).to.be.revertedWithCustomError(concreteSmartAccountValidation, 'InvalidInnerCallDataLength');
     });
   });
 });
