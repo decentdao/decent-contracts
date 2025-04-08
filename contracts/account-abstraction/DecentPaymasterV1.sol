@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.28;
 
-import {BasePaymasterV1, IEntryPoint} from "./BasePaymasterV1.sol";
 import {IDecentPaymasterV1} from "../interfaces/account-abstraction/IDecentPaymasterV1.sol";
+import {BasePaymasterV1} from "./BasePaymasterV1.sol";
+import {SmartAccountVerificationV1} from "./SmartAccountVerificationV1.sol";
 import {Version} from "../Version.sol";
+import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
+contract DecentPaymasterV1 is
+    IDecentPaymasterV1,
+    Version,
+    BasePaymasterV1,
+    SmartAccountVerificationV1
+{
     uint16 private constant VERSION = 1;
 
     // Mapping: contract address => function selector => is whitelisted
@@ -16,6 +23,7 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
     event FunctionWhitelisted(address contractAddress, bytes4 selector);
     event FunctionUnwhitelisted(address contractAddress, bytes4 selector);
 
+    error InvalidSmartAccount();
     error UnauthorizedFunction();
     error InvalidCallDataLength();
 
@@ -28,14 +36,16 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
      * to better work with ProxyFactory.
      *
      * @param data The data to initialize the contract with
-     * @dev The data is encoded as (address, address)
+     * @dev The data is encoded as (address, address, address)
      */
     function initialize(bytes calldata data) public initializer {
-        (address _owner, address _entryPoint) = abi.decode(
-            data,
-            (address, address)
-        );
-        __BasePaymaster_init(_owner, IEntryPoint(_entryPoint));
+        (
+            address _owner,
+            address _entryPoint,
+            address _lightAccountFactory
+        ) = abi.decode(data, (address, address, address));
+        __BasePaymasterV1_init(_owner, IEntryPoint(_entryPoint));
+        __SmartAccountVerificationV1_init(_lightAccountFactory);
     }
 
     /**
@@ -88,14 +98,26 @@ contract DecentPaymasterV1 is IDecentPaymasterV1, Version, BasePaymasterV1 {
         override
         returns (bytes memory context, uint256 validationData)
     {
-        bytes calldata callData = userOp.callData;
+        if (!verifySmartAccount(userOp.sender)) {
+            revert InvalidSmartAccount();
+        }
 
+        // If we're here, we've confirmed that the sender is an actual instance of a LightAccount,
+        // and so therefore its "execute" function behaves as expected.
+        //
+        // This prevents a potential exploit where a user crafts a malicious UserOp
+        // which targets a contract that is expected to be a LightAccount, but is not,
+        // and allows the implementation of that contract's "execute" function to perform
+        // any arbitrary logic (aka logic which does not execute the whitelisted function
+        // encoded in the UserOp).
+
+        bytes calldata callData = userOp.callData;
         // Verify we have at least 4 bytes for the selector
         if (callData.length < 4) {
             revert InvalidCallDataLength();
         }
 
-        // Extract and verify the LightSmartAccount's "execute" function selector
+        // Extract and verify the LightAccount's "execute" function selector
         // 0xb61d27f6 = bytes4(keccak256("execute(address,uint256,bytes)"))
         if (bytes4(callData) != 0xb61d27f6) {
             revert UnauthorizedFunction();
