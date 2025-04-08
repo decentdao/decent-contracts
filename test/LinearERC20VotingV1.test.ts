@@ -9,8 +9,8 @@ import {
   LinearERC20VotingV1__factory,
   MockERC20Votes,
   MockERC20Votes__factory,
-  MockOwnership,
-  MockOwnership__factory,
+  MockLightAccount,
+  MockLightAccount__factory,
 } from '../typechain-types';
 import { getModuleProxyFactory } from './GlobalSafeDeployments.test';
 import { calculateProxyAddress } from './helpers';
@@ -30,7 +30,7 @@ describe('LinearERC20VotingV1', () => {
   let linearERC20VotingImplementation: LinearERC20VotingV1;
   let linearERC20Voting: LinearERC20VotingV1;
   let mockToken: MockERC20Votes;
-  let mockOwnership: MockOwnership;
+  let mockLightAccount: MockLightAccount;
 
   // Constants
   const VOTING_PERIOD = 100; // blocks
@@ -98,8 +98,8 @@ describe('LinearERC20VotingV1', () => {
     // Deploy MockERC20Votes token
     mockToken = await new MockERC20Votes__factory(deployer).deploy();
 
-    // Deploy MockOwnership contract
-    mockOwnership = await new MockOwnership__factory(deployer).deploy(tokenHolder1.address);
+    // Deploy MockLightAccount contract
+    mockLightAccount = await new MockLightAccount__factory(deployer).deploy(tokenHolder1.address);
 
     // Mint tokens to token holders
     await mockToken.mint(tokenHolder1.address, 1000);
@@ -534,10 +534,10 @@ describe('LinearERC20VotingV1', () => {
 
     beforeEach(async () => {
       // Setup with tokens for the test
-      await mockToken.mint(await mockOwnership.getAddress(), 1000);
+      await mockToken.mint(await mockLightAccount.getAddress(), 1000);
 
       // Delegate tokens to the mock contract
-      await mockToken.connect(deployer).delegate(await mockOwnership.getAddress());
+      await mockToken.connect(deployer).delegate(await mockLightAccount.getAddress());
 
       // Initialize the proposal
       const initializeData = ethers.AbiCoder.defaultAbiCoder().encode(['uint32'], [proposalId]);
@@ -545,7 +545,7 @@ describe('LinearERC20VotingV1', () => {
     });
 
     it('should correctly identify voter when using smart account', async () => {
-      // The MockOwnership contract has owner() set to tokenHolder1.address in the beforeEach
+      // The MockLightAccount contract has owner() set to tokenHolder1.address in the beforeEach
 
       // We need to test that ERC4337VoterSupport correctly resolves the owner of the contract
       // But we can't directly call from the contract's address, so we need to verify indirectly

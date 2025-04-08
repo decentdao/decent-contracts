@@ -12,8 +12,8 @@ import {
   MockEntryPoint__factory,
   MockGaslessTarget,
   MockGaslessTarget__factory,
-  MockLightSmartAccount,
-  MockLightSmartAccount__factory,
+  MockLightAccount,
+  MockLightAccount__factory,
 } from '../../typechain-types';
 import { getModuleProxyFactory } from '../GlobalSafeDeployments.test';
 import { calculateProxyAddress } from '../helpers';
@@ -67,7 +67,7 @@ describe('DecentPaymasterV1', function () {
   let decentPaymaster: DecentPaymasterV1;
   let masterCopy: DecentPaymasterV1;
   let entryPoint: MockEntryPoint;
-  let mockLightSmartAccount: MockLightSmartAccount;
+  let mockLightAccount: MockLightAccount;
   let mockTarget: MockGaslessTarget;
 
   // signers
@@ -85,8 +85,8 @@ describe('DecentPaymasterV1', function () {
     // Deploy mock EntryPoint
     entryPoint = await new MockEntryPoint__factory(owner).deploy();
 
-    // Deploy MockLightSmartAccount
-    mockLightSmartAccount = await new MockLightSmartAccount__factory(owner).deploy();
+    // Deploy MockLightAccount
+    mockLightAccount = await new MockLightAccount__factory(owner).deploy(owner.address);
 
     // Deploy MockGaslessTarget
     mockTarget = await new MockGaslessTarget__factory(owner).deploy();
@@ -110,14 +110,14 @@ describe('DecentPaymasterV1', function () {
       1, // uint8 someFlag
     ]);
 
-    const executeCalldata = mockLightSmartAccount.interface.encodeFunctionData('execute', [
+    const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
       await mockTarget.getAddress(),
       0n, // value
       innerCalldata,
     ]);
 
     mockUserOp = {
-      sender: await mockLightSmartAccount.getAddress(),
+      sender: await mockLightAccount.getAddress(),
       nonce: 0n,
       initCode: '0x',
       callData: executeCalldata,
@@ -254,7 +254,7 @@ describe('DecentPaymasterV1', function () {
       ]);
 
       // Create the execute calldata
-      const executeCalldata = mockLightSmartAccount.interface.encodeFunctionData('execute', [
+      const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
         await mockTarget.getAddress(),
         0n, // value
         innerCalldata,
@@ -279,7 +279,7 @@ describe('DecentPaymasterV1', function () {
       ]);
 
       // Create the execute calldata
-      const executeCalldata = mockLightSmartAccount.interface.encodeFunctionData('execute', [
+      const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
         await mockTarget.getAddress(),
         0n, // value
         innerCalldata,
@@ -309,7 +309,7 @@ describe('DecentPaymasterV1', function () {
       ]);
 
       // Create the execute calldata but use the random address as target
-      const executeCalldata = mockLightSmartAccount.interface.encodeFunctionData('execute', [
+      const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
         randomAddress,
         0n, // value
         innerCalldata,
