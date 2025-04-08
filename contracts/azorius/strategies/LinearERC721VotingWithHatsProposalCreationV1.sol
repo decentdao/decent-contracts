@@ -11,8 +11,8 @@ import {HatsProposalCreationWhitelistV1} from "./HatsProposalCreationWhitelistV1
  * restricted to users wearing whitelisted Hats.
  */
 contract LinearERC721VotingWithHatsProposalCreationV1 is
-    HatsProposalCreationWhitelistV1,
-    LinearERC721VotingV1
+    LinearERC721VotingV1,
+    HatsProposalCreationWhitelistV1
 {
     uint16 private constant VERSION = 1;
 
@@ -29,14 +29,11 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
      * @param initializeParams encoded initialization parameters: `address _owner`,
      * `address[] memory _tokens`, `uint256[] memory _weights`, `address _azoriusModule`,
      * `uint32 _votingPeriod`, `uint256 _quorumThreshold`, `uint256 _basisNumerator`,
-     * `address _hatsContract`, `uint256[] _initialWhitelistedHats`
+     * `address _hatsContract`, `uint256[] _initialWhitelistedHats`, `address _lightAccountFactory`
      */
     function setUp(
         bytes memory initializeParams
-    )
-        public
-        override(HatsProposalCreationWhitelistV1, LinearERC721VotingExtensible)
-    {
+    ) public override(LinearERC721VotingV1, HatsProposalCreationWhitelistV1) {
         (
             address _owner,
             address[] memory _tokens,
@@ -46,7 +43,8 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
             uint256 _quorumThreshold,
             uint256 _basisNumerator,
             address _hatsContract,
-            uint256[] memory _initialWhitelistedHats
+            uint256[] memory _initialWhitelistedHats,
+            address _lightAccountFactory
         ) = abi.decode(
                 initializeParams,
                 (
@@ -58,11 +56,12 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
                     uint256,
                     uint256,
                     address,
-                    uint256[]
+                    uint256[],
+                    address
                 )
             );
 
-        LinearERC721VotingExtensible.setUp(
+        LinearERC721VotingV1.setUp(
             abi.encode(
                 _owner,
                 _tokens,
@@ -71,7 +70,8 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
                 _votingPeriod,
                 _quorumThreshold,
                 0, // _proposerThreshold is zero because we only care about the hat check
-                _basisNumerator
+                _basisNumerator,
+                _lightAccountFactory
             )
         );
 

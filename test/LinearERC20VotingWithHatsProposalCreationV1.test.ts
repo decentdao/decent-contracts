@@ -26,6 +26,7 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
   let tokenHolder1: SignerWithAddress;
   let hatWearer: SignerWithAddress;
   let nonHatWearer: SignerWithAddress;
+  let lightAccountFactory: SignerWithAddress;
 
   // Contracts
   let linearERC20VotingWithHatsProposalCreationImplementation: LinearERC20VotingWithHatsProposalCreationV1;
@@ -66,6 +67,7 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
               'uint256',
               'address',
               'uint256[]',
+              'address',
             ],
             [
               strategyOwner.address,
@@ -76,6 +78,7 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
               BASIS_NUMERATOR,
               await hatsContract.getAddress(),
               initialWhitelistedHats,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -107,7 +110,8 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
   }
 
   beforeEach(async () => {
-    [deployer, owner, nonOwner, tokenHolder1, hatWearer, nonHatWearer] = await ethers.getSigners();
+    [deployer, owner, nonOwner, tokenHolder1, hatWearer, nonHatWearer, lightAccountFactory] =
+      await ethers.getSigners();
 
     // Use nonOwner address as a mock azorius address for testing
     azoriusAddress = await nonOwner.getAddress();
@@ -161,6 +165,11 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
         expect(whitelistedHats.length).to.equal(2);
         expect(whitelistedHats[0]).to.equal(proposerHatId1);
         expect(whitelistedHats[1]).to.equal(proposerHatId2);
+
+        // Check LightAccountFactory address
+        expect(await linearERC20VotingWithHatsProposalCreation.lightAccountFactory()).to.equal(
+          lightAccountFactory.address,
+        );
       });
 
       it('should not allow reinitialization', async () => {
@@ -179,6 +188,7 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
                   'uint256',
                   'address',
                   'uint256[]',
+                  'address',
                 ],
                 [
                   owner.address,
@@ -189,6 +199,7 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
                   BASIS_NUMERATOR,
                   await mockHats.getAddress(),
                   [proposerHatId1, proposerHatId2],
+                  lightAccountFactory.address,
                 ],
               ),
             ],

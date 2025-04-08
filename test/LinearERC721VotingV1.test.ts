@@ -23,6 +23,7 @@ describe('LinearERC721VotingV1', () => {
   let tokenHolder1: SignerWithAddress;
   let tokenHolder2: SignerWithAddress;
   let tokenHolder3: SignerWithAddress;
+  let lightAccountFactory: SignerWithAddress;
 
   // Contracts
   let linearERC721VotingImplementation: LinearERC721VotingV1;
@@ -72,6 +73,7 @@ describe('LinearERC721VotingV1', () => {
             'uint256',
             'uint256',
             'uint256',
+            'address',
           ],
           [
             strategyOwner.address,
@@ -82,6 +84,7 @@ describe('LinearERC721VotingV1', () => {
             QUORUM_THRESHOLD,
             PROPOSER_THRESHOLD,
             BASIS_NUMERATOR,
+            lightAccountFactory.address,
           ],
         ),
       ],
@@ -122,7 +125,7 @@ describe('LinearERC721VotingV1', () => {
   }
 
   beforeEach(async () => {
-    [deployer, owner, nonOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
+    [deployer, owner, nonOwner, tokenHolder1, tokenHolder2, tokenHolder3, lightAccountFactory] =
       await ethers.getSigners();
 
     // Use nonOwner address as a mock azorius address for testing
@@ -170,6 +173,7 @@ describe('LinearERC721VotingV1', () => {
       expect(await linearERC721Voting.quorumThreshold()).to.equal(QUORUM_THRESHOLD);
       expect(await linearERC721Voting.proposerThreshold()).to.equal(PROPOSER_THRESHOLD);
       expect(await linearERC721Voting.basisNumerator()).to.equal(BASIS_NUMERATOR);
+      expect(await linearERC721Voting.lightAccountFactory()).to.equal(lightAccountFactory.address);
     });
 
     it('should not allow reinitialization', async () => {
@@ -189,6 +193,7 @@ describe('LinearERC721VotingV1', () => {
               'uint256',
               'uint256',
               'uint256',
+              'address',
             ],
             [
               owner.address,
@@ -199,6 +204,7 @@ describe('LinearERC721VotingV1', () => {
               QUORUM_THRESHOLD,
               PROPOSER_THRESHOLD,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -226,6 +232,7 @@ describe('LinearERC721VotingV1', () => {
               'uint256',
               'uint256',
               'uint256',
+              'address',
             ],
             [
               owner.address,
@@ -236,6 +243,7 @@ describe('LinearERC721VotingV1', () => {
               QUORUM_THRESHOLD,
               PROPOSER_THRESHOLD,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -271,6 +279,7 @@ describe('LinearERC721VotingV1', () => {
               'uint256',
               'uint256',
               'uint256',
+              'address',
             ],
             [
               owner.address,
@@ -281,6 +290,7 @@ describe('LinearERC721VotingV1', () => {
               QUORUM_THRESHOLD,
               PROPOSER_THRESHOLD,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -316,6 +326,7 @@ describe('LinearERC721VotingV1', () => {
               'uint256',
               'uint256',
               'uint256',
+              'address',
             ],
             [
               owner.address,
@@ -326,6 +337,7 @@ describe('LinearERC721VotingV1', () => {
               QUORUM_THRESHOLD,
               PROPOSER_THRESHOLD,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -990,6 +1002,7 @@ describe('LinearERC721VotingV1', () => {
               'uint256',
               'uint256',
               'uint256',
+              'address',
             ],
             [
               owner.address,
@@ -1000,6 +1013,7 @@ describe('LinearERC721VotingV1', () => {
               QUORUM_THRESHOLD,
               PROPOSER_THRESHOLD,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],

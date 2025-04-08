@@ -23,6 +23,7 @@ describe('LinearERC20VotingV1', () => {
   let tokenHolder1: SignerWithAddress;
   let tokenHolder2: SignerWithAddress;
   let tokenHolder3: SignerWithAddress;
+  let lightAccountFactory: SignerWithAddress;
 
   // Contracts
   let linearERC20VotingImplementation: LinearERC20VotingV1;
@@ -52,7 +53,7 @@ describe('LinearERC20VotingV1', () => {
       'setUp',
       [
         ethers.AbiCoder.defaultAbiCoder().encode(
-          ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256'],
+          ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256', 'address'],
           [
             strategyOwner.address,
             governanceToken,
@@ -61,6 +62,7 @@ describe('LinearERC20VotingV1', () => {
             REQUIRED_PROPOSER_WEIGHT,
             QUORUM_NUMERATOR,
             BASIS_NUMERATOR,
+            lightAccountFactory.address,
           ],
         ),
       ],
@@ -86,7 +88,7 @@ describe('LinearERC20VotingV1', () => {
   }
 
   beforeEach(async () => {
-    [deployer, owner, nonOwner, tokenHolder1, tokenHolder2, tokenHolder3] =
+    [deployer, owner, nonOwner, tokenHolder1, tokenHolder2, tokenHolder3, lightAccountFactory] =
       await ethers.getSigners();
 
     // Use nonOwner address as a mock azorius address for testing
@@ -120,6 +122,7 @@ describe('LinearERC20VotingV1', () => {
       expect(await linearERC20Voting.requiredProposerWeight()).to.equal(REQUIRED_PROPOSER_WEIGHT);
       expect(await linearERC20Voting.quorumNumerator()).to.equal(QUORUM_NUMERATOR);
       expect(await linearERC20Voting.basisNumerator()).to.equal(BASIS_NUMERATOR);
+      expect(await linearERC20Voting.lightAccountFactory()).to.equal(lightAccountFactory.address);
     });
 
     it('should not allow reinitialization', async () => {
@@ -128,7 +131,7 @@ describe('LinearERC20VotingV1', () => {
         'setUp',
         [
           ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256'],
+            ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256', 'address'],
             [
               owner.address,
               await mockToken.getAddress(),
@@ -137,6 +140,7 @@ describe('LinearERC20VotingV1', () => {
               REQUIRED_PROPOSER_WEIGHT,
               QUORUM_NUMERATOR,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
@@ -151,7 +155,7 @@ describe('LinearERC20VotingV1', () => {
         'setUp',
         [
           ethers.AbiCoder.defaultAbiCoder().encode(
-            ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256'],
+            ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256', 'address'],
             [
               owner.address,
               ethers.ZeroAddress,
@@ -160,6 +164,7 @@ describe('LinearERC20VotingV1', () => {
               REQUIRED_PROPOSER_WEIGHT,
               QUORUM_NUMERATOR,
               BASIS_NUMERATOR,
+              lightAccountFactory.address,
             ],
           ),
         ],
