@@ -23,9 +23,7 @@ contract DecentPaymasterV1 is
     event FunctionWhitelisted(address contractAddress, bytes4 selector);
     event FunctionUnwhitelisted(address contractAddress, bytes4 selector);
 
-    error InvalidSmartAccount();
-    error UnauthorizedFunction();
-    error InvalidCallDataLength();
+    error NotWhitelistedFunction(address target, bytes4 selector);
 
     constructor() {
         _disableInitializers();
@@ -98,46 +96,11 @@ contract DecentPaymasterV1 is
         override
         returns (bytes memory context, uint256 validationData)
     {
-        if (!verifySmartAccount(userOp.sender)) {
-            revert InvalidSmartAccount();
-        }
-
-        // If we're here, we've confirmed that the sender is an actual instance of a LightAccount,
-        // and so therefore its "execute" function behaves as expected.
-        //
-        // This prevents a potential exploit where a user crafts a malicious UserOp
-        // which targets a contract that is expected to be a LightAccount, but is not,
-        // and allows the implementation of that contract's "execute" function to perform
-        // any arbitrary logic (aka logic which does not execute the whitelisted function
-        // encoded in the UserOp).
-
-        bytes calldata callData = userOp.callData;
-        // Verify we have at least 4 bytes for the selector
-        if (callData.length < 4) {
-            revert InvalidCallDataLength();
-        }
-
-        // Extract and verify the LightAccount's "execute" function selector
-        // 0xb61d27f6 = bytes4(keccak256("execute(address,uint256,bytes)"))
-        if (bytes4(callData) != 0xb61d27f6) {
-            revert UnauthorizedFunction();
-        }
-
-        // Decode the "execute" function parameters
-        (address target, , bytes memory innerCallData) = abi.decode(
-            callData[4:],
-            (address, uint256, bytes)
-        );
-
-        // Extract the actual function selector from the innerCallData
-        if (innerCallData.length < 4) {
-            revert InvalidCallDataLength();
-        }
-        bytes4 selector = bytes4(innerCallData);
+        (address target, bytes4 selector) = verifyUserOp(userOp);
 
         // Verify the function is whitelistd for this target
         if (!isFunctionWhitelisted(target, selector)) {
-            revert UnauthorizedFunction();
+            revert NotWhitelistedFunction(target, selector);
         }
 
         return (abi.encode(), 0);
