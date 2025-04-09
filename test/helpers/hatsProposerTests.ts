@@ -11,7 +11,7 @@ import { MockHats2 } from '../../typechain-types';
  * Interface for any contract that implements the isProposer and whitelistHat methods
  */
 interface HatsProposerTester {
-  isProposer(address: string): Promise<boolean>;
+  isWearingWhitelistedHat(address: string): Promise<boolean>;
   whitelistHat(hatId: bigint): Promise<any>;
   connect(signer: SignerWithAddress): HatsProposerTester;
 }
@@ -48,7 +48,9 @@ export function runHatsProposerTests(params: HatsProposerTestParams): void {
 
   it('should return true for an address wearing a whitelisted hat', async () => {
     // hatWearer has proposerHatId, which is whitelisted
-    const isHatWearerProposer = await params.getContract().isProposer(params.hatWearer().address);
+    const isHatWearerProposer = await params
+      .getContract()
+      .isWearingWhitelistedHat(params.hatWearer().address);
     void expect(isHatWearerProposer).to.be.true;
   });
 
@@ -56,7 +58,7 @@ export function runHatsProposerTests(params: HatsProposerTestParams): void {
     // nonHatWearer has nonProposerHatId, which is not whitelisted
     const isNonHatWearerProposer = await params
       .getContract()
-      .isProposer(params.nonHatWearer().address);
+      .isWearingWhitelistedHat(params.nonHatWearer().address);
     void expect(isNonHatWearerProposer).to.be.false;
   });
 
@@ -64,7 +66,7 @@ export function runHatsProposerTests(params: HatsProposerTestParams): void {
     // tokenHolder has no hats at all, but has tokens/NFTs
     const isTokenHolderProposer = await params
       .getContract()
-      .isProposer(params.tokenHolder().address);
+      .isWearingWhitelistedHat(params.tokenHolder().address);
     void expect(isTokenHolderProposer).to.be.false;
   });
 
@@ -72,7 +74,7 @@ export function runHatsProposerTests(params: HatsProposerTestParams): void {
     // First verify nonHatWearer is not a proposer initially
     const isNonHatWearerProposerBefore = await params
       .getContract()
-      .isProposer(params.nonHatWearer().address);
+      .isWearingWhitelistedHat(params.nonHatWearer().address);
     void expect(isNonHatWearerProposerBefore).to.be.false;
 
     // Adding nonProposerHatId to the whitelist
@@ -81,7 +83,7 @@ export function runHatsProposerTests(params: HatsProposerTestParams): void {
     // Now nonHatWearer should be a proposer
     const isNonHatWearerProposerAfterWhitelist = await params
       .getContract()
-      .isProposer(params.nonHatWearer().address);
+      .isWearingWhitelistedHat(params.nonHatWearer().address);
     void expect(isNonHatWearerProposerAfterWhitelist).to.be.true;
   });
 }

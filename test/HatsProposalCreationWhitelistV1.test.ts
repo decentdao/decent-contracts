@@ -239,7 +239,7 @@ describe('HatsProposalCreationWhitelistV1', () => {
     });
   });
 
-  describe('isProposer override', () => {
+  describe('isWearingWhitelistedHat override', () => {
     runHatsProposerTests({
       getMockHats: () => mockHats,
       getContract: () => concreteHatsProposalCreationWhitelist,
