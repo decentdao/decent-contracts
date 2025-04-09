@@ -80,17 +80,10 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
         );
     }
 
-    /** @inheritdoc HatsProposalCreationWhitelistV1*/
     function isProposer(
         address _address
-    )
-        public
-        view
-        virtual
-        override(HatsProposalCreationWhitelistV1, LinearERC721VotingExtensible)
-        returns (bool)
-    {
-        return HatsProposalCreationWhitelistV1.isProposer(_address);
+    ) public view virtual override returns (bool) {
+        return isWearingWhitelistedHat(_address);
     }
 
     /**

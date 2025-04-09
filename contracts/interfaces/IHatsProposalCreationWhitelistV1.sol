@@ -58,11 +58,13 @@ interface IHatsProposalCreationWhitelistV1 {
     function unwhitelistHat(uint256 _hatId) external;
 
     /**
-     * @dev Checks if an address is authorized to create proposals.
-     * @param _address The address to check for proposal creation authorization.
+     * @dev Checks if an address is wearing any of the whitelisted Hats.
+     * @param _address The address to check for wearing whitelisted Hats.
      * @return Returns true if the address is wearing any of the whitelisted Hats, false otherwise.
      */
-    function isProposer(address _address) external view returns (bool);
+    function isWearingWhitelistedHat(
+        address _address
+    ) external view returns (bool);
 
     /**
      * @dev Returns the IDs of all whitelisted Hats.

@@ -81,14 +81,13 @@ abstract contract HatsProposalCreationWhitelistV1 is
     }
 
     /**
-     * @dev Checks if an address is authorized to create proposals.
-     * @param _address The address to check for proposal creation authorization.
+     * @dev Checks if an address is wearing any of the whitelisted Hats.
+     * @param _address The address to check for wearing whitelisted Hats.
      * @return bool Returns true if the address is wearing any of the whitelisted Hats, false otherwise.
-     * @notice This function overrides the isProposer function from the parent contract.
-     * It iterates through all whitelisted Hat IDs and checks if the given address
-     * is wearing any of them using the Hats Protocol.
      */
-    function isProposer(address _address) public view virtual returns (bool) {
+    function isWearingWhitelistedHat(
+        address _address
+    ) public view virtual returns (bool) {
         for (uint256 i = 0; i < whitelistedHatIds.length; i++) {
             if (hatsContract.isWearerOfHat(_address, whitelistedHatIds[i])) {
                 return true;
