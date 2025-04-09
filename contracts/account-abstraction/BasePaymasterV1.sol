@@ -1,18 +1,21 @@
-// SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.28;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.23;
 
-import {IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
-import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {UserOperationLib, PackedUserOperation} from "@account-abstraction/contracts/core/UserOperationLib.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+/* solhint-disable reason-string */
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@account-abstraction/contracts/interfaces/IPaymaster.sol";
+import "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import "@account-abstraction/contracts/core/UserOperationLib.sol";
 
 /**
  * Helper class for creating a paymaster.
  * provides helper methods for staking.
  * Validates that the postOp is called only by the entryPoint.
  */
-abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
+abstract contract BasePaymasterV1 is IPaymaster, Ownable, Initializable {
     IEntryPoint public entryPoint;
 
     uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET =
@@ -22,11 +25,14 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
     uint256 internal constant PAYMASTER_DATA_OFFSET =
         UserOperationLib.PAYMASTER_DATA_OFFSET;
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function __BasePaymasterV1_init(
         address _owner,
         IEntryPoint _entryPoint
     ) internal onlyInitializing {
-        __Ownable_init();
         _transferOwnership(_owner);
         _validateEntryPointInterface(_entryPoint);
         entryPoint = _entryPoint;
