@@ -2,13 +2,13 @@
 pragma solidity ^0.8.19;
 
 import {ILightAccount} from "../../interfaces/ILightAccount.sol";
-import {SmartAccountVerificationV1} from "../../account-abstraction/SmartAccountVerificationV1.sol";
+import {SmartAccountValidationV1} from "../../account-abstraction/SmartAccountValidationV1.sol";
 
 /**
  * Functionality to support ERC4337 (Account Abstraction) by properly identifying the voter
  * when a contract account is used to interact with the voting system.
  */
-abstract contract ERC4337VoterSupportV1 is SmartAccountVerificationV1 {
+abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
     constructor() {
         _disableInitializers();
     }
@@ -16,7 +16,7 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountVerificationV1 {
     function __ERC4337VoterSupportV1_init(
         address _lightAccountFactory
     ) internal {
-        __SmartAccountVerificationV1_init(_lightAccountFactory);
+        __SmartAccountValidationV1_init(_lightAccountFactory);
     }
 
     /**
@@ -27,11 +27,11 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountVerificationV1 {
     function _voter(
         address _msgSender
     ) internal view virtual returns (address) {
-        if (!verifySmartAccount(_msgSender)) {
+        if (!validateSmartAccount(_msgSender)) {
             return _msgSender;
         }
 
-        // This call is safe, because `verifySmartAccount` ensures that the address implements
+        // This call is safe, because `validateSmartAccount` ensures that the address implements
         // the `ILightAccount` interface, and so calling `owner()` will not revert.
         return ILightAccount(_msgSender).owner();
     }
