@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {SmartAccountVerificationV1} from "../account-abstraction/SmartAccountVerificationV1.sol";
+import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 
 contract ConcreteSmartAccountVerification is SmartAccountVerificationV1 {
     function initialize(address _lightAccountFactory) public initializer {
@@ -12,5 +13,11 @@ contract ConcreteSmartAccountVerification is SmartAccountVerificationV1 {
         address smartAccount
     ) public view returns (bool) {
         return verifySmartAccount(smartAccount);
+    }
+
+    function verifyUserOpPublic(
+        PackedUserOperation calldata userOp
+    ) public view returns (address, bytes4) {
+        return verifyUserOp(userOp);
     }
 }

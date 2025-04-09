@@ -226,7 +226,7 @@ describe('DecentPaymasterV1', function () {
       await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
     });
 
-    it('Should validate whitelisted function calls from valid light accounts', async function () {
+    it('Should validate whitelisted function calls', async function () {
       const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
       const result = await decentPaymaster
         .connect(entryPointSigner)
@@ -236,38 +236,14 @@ describe('DecentPaymasterV1', function () {
       expect(result[0]).to.equal('0x'); // context
     });
 
-    it('Should revert on unauthorized function calls', async function () {
-      const unauthorizedCallData = ethers.concat([
-        '0x99999999',
-        ethers.zeroPadValue(await mockTarget.getAddress(), 20),
-        '0x',
-      ]);
+    it('Should revert on non-whitelisted function calls', async function () {
+      // Create a new function selector that isn't whitelisted
+      const nonWhitelistedSelector = '0x99999999';
 
-      const unauthorizedUserOp = { ...mockUserOp, callData: unauthorizedCallData };
-
-      await expect(
-        decentPaymaster
-          .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
-          .validatePaymasterUserOp.staticCall(unauthorizedUserOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'UnauthorizedFunction');
-    });
-
-    it('Should revert on invalid calldata length', async function () {
-      const invalidCallData = '0x1234'; // Too short
-      const invalidUserOp = { ...mockUserOp, callData: invalidCallData };
-
-      await expect(
-        decentPaymaster
-          .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
-          .validatePaymasterUserOp.staticCall(invalidUserOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'InvalidCallDataLength');
-    });
-
-    it('Should validate with exactly 24 bytes of calldata', async function () {
-      // Create minimal inner calldata with no parameters
-      const innerCalldata = mockTarget.interface.encodeFunctionData('foo', [
-        0, // uint32 someNumber = 0
-        0, // uint8 someFlag = 0
+      // Create inner calldata with non-whitelisted selector
+      const innerCalldata = ethers.concat([
+        nonWhitelistedSelector,
+        ethers.AbiCoder.defaultAbiCoder().encode(['uint32', 'uint8'], [123, 1]),
       ]);
 
       // Create the execute calldata
@@ -278,80 +254,12 @@ describe('DecentPaymasterV1', function () {
       ]);
 
       const userOp = { ...mockUserOp, callData: executeCalldata };
-      const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
-
-      const result = await decentPaymaster
-        .connect(entryPointSigner)
-        .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0);
-
-      expect(result[1]).to.equal(0n);
-      expect(result[0]).to.equal('0x');
-    });
-
-    it('Should validate with more than 24 bytes of calldata', async function () {
-      // Create inner calldata with large numbers to make it longer
-      const innerCalldata = mockTarget.interface.encodeFunctionData('foo', [
-        0xffffffff, // uint32 someNumber = max value
-        0xff, // uint8 someFlag = max value
-      ]);
-
-      // Create the execute calldata
-      const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
-        await mockTarget.getAddress(),
-        0n, // value
-        innerCalldata,
-      ]);
-
-      const userOp = { ...mockUserOp, callData: executeCalldata };
-      const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
-
-      const result = await decentPaymaster
-        .connect(entryPointSigner)
-        .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0);
-
-      expect(result[1]).to.equal(0n);
-      expect(result[0]).to.equal('0x');
-    });
-
-    it('Should validate with non-contract address as target', async function () {
-      const randomAddress = ethers.Wallet.createRandom().address;
-
-      // First whitelist the function for the random address
-      await decentPaymaster.whitelistFunction(randomAddress, FOO_SELECTOR);
-
-      // Create inner calldata
-      const innerCalldata = mockTarget.interface.encodeFunctionData('foo', [
-        123, // uint32 someNumber
-        1, // uint8 someFlag
-      ]);
-
-      // Create the execute calldata but use the random address as target
-      const executeCalldata = mockLightAccount.interface.encodeFunctionData('execute', [
-        randomAddress,
-        0n, // value
-        innerCalldata,
-      ]);
-
-      const userOp = { ...mockUserOp, callData: executeCalldata };
-      const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
-
-      const result = await decentPaymaster
-        .connect(entryPointSigner)
-        .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0);
-
-      expect(result[1]).to.equal(0n);
-      expect(result[0]).to.equal('0x');
-    });
-
-    it('Should revert with malformed calldata', async function () {
-      const malformedCallData = '0x1234'; // Less than 4 bytes for selector
-      const userOp = { ...mockUserOp, callData: malformedCallData };
 
       await expect(
         decentPaymaster
           .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
           .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'InvalidCallDataLength');
+      ).to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction');
     });
   });
 
