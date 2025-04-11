@@ -78,12 +78,12 @@ contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
         _mint(to, amount);
     }
 
-    function _beforeTokenTransfer(
+    function _transfer(
         address from,
         address to,
         uint256 amount
     ) internal virtual override isTransferable(from) {
-        super._beforeTokenTransfer(from, to, amount);
+        super._transfer(from, to, amount);
     }
 
     function getVersion() public view virtual override returns (uint16) {
