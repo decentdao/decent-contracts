@@ -6,6 +6,7 @@ import {
   IERC165__factory,
   IERC20Upgradeable__factory,
   ILockableV1__factory,
+  IMintableV1__factory,
   IVersion__factory,
   VotesERC20LockableV1,
   VotesERC20LockableV1__factory,
@@ -734,6 +735,7 @@ describe('VotesERC20Lockable', () => {
     let iVersionInterfaceId: string;
     let iERC165InterfaceId: string;
     let iLockableV1InterfaceId: string;
+    let iMintableV1InterfaceId: string;
     let iERC20UpgradeableInterfaceId: string;
 
     beforeEach(async function () {
@@ -758,6 +760,9 @@ describe('VotesERC20Lockable', () => {
       const ILockableV1Interface = ILockableV1__factory.createInterface();
       iLockableV1InterfaceId = calculateInterfaceId(ILockableV1Interface);
 
+      const IMintableV1Interface = IMintableV1__factory.createInterface();
+      iMintableV1InterfaceId = calculateInterfaceId(IMintableV1Interface);
+
       const IERC20UpgradeableInterface = IERC20Upgradeable__factory.createInterface();
       iERC20UpgradeableInterfaceId = calculateInterfaceId(IERC20UpgradeableInterface);
     });
@@ -774,6 +779,11 @@ describe('VotesERC20Lockable', () => {
 
     it('Should support ILockableV1 interface', async function () {
       const supported = await proxy.supportsInterface(iLockableV1InterfaceId);
+      void expect(supported).to.be.true;
+    });
+
+    it('Should support IMintableV1 interface', async function () {
+      const supported = await proxy.supportsInterface(iMintableV1InterfaceId);
       void expect(supported).to.be.true;
     });
 

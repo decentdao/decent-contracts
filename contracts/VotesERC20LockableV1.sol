@@ -2,14 +2,12 @@
 pragma solidity ^0.8.19;
 
 import {ILockableV1} from "./interfaces/ILockableV1.sol";
+import {IMintableV1} from "./interfaces/IMintableV1.sol";
 import {VotesERC20} from "./VotesERC20.sol";
 import {Version} from "./Version.sol";
 import {ERC165Storage} from "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-/**
- * An implementation of the Open Zeppelin `IVotes` voting token standard.
- */
-contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
+contract VotesERC20LockableV1 is ILockableV1, IMintableV1, VotesERC20, Version {
     uint16 private constant VERSION = 1;
 
     bool public locked;
@@ -98,6 +96,7 @@ contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
     ) public view virtual override(ERC165Storage, Version) returns (bool) {
         return
             interfaceId == type(ILockableV1).interfaceId ||
+            interfaceId == type(IMintableV1).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }
