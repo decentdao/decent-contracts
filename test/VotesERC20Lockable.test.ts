@@ -50,7 +50,7 @@ async function deployVotesERC20Lockable(
   return VotesERC20LockableV1__factory.connect(proxyAddress, deployer);
 }
 
-describe.only('VotesERC20Lockable', () => {
+describe('VotesERC20Lockable', () => {
   let implementation: VotesERC20LockableV1;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
