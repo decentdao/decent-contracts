@@ -2,11 +2,13 @@
 pragma solidity =0.8.19;
 
 import {VotesERC20} from "./VotesERC20.sol";
+import {ILockable} from "./interfaces/ILockable.sol";
+import {ERC165Storage} from "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
 /**
  * An implementation of the Open Zeppelin `IVotes` voting token standard.
  */
-contract VotesERC20Lockable is VotesERC20 {
+contract VotesERC20Lockable is VotesERC20, ILockable {
     bool public locked;
     mapping(address => bool) public whitelisted;
 
@@ -43,7 +45,7 @@ contract VotesERC20Lockable is VotesERC20 {
         locked = _locked;
     }
 
-    function lock(bool _locked) external onlyOwner {
+    function lock(bool _locked) external override onlyOwner {
         if (_locked) {
             require(!locked, "Token is already locked");
         } else {
@@ -53,7 +55,10 @@ contract VotesERC20Lockable is VotesERC20 {
         emit Locked(_locked);
     }
 
-    function whitelist(address account, bool isWhitelisted) external onlyOwner {
+    function whitelist(
+        address account,
+        bool isWhitelisted
+    ) external override onlyOwner {
         bool currentlyWhitelisted = whitelisted[account];
         whitelisted[account] = isWhitelisted;
         if (currentlyWhitelisted != isWhitelisted) {
@@ -75,5 +80,13 @@ contract VotesERC20Lockable is VotesERC20 {
         uint256 amount
     ) internal virtual override isTransferable(from) {
         super._transfer(from, to, amount);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return
+            interfaceId == type(ILockable).interfaceId ||
+            ERC165Storage.supportsInterface(interfaceId);
     }
 }
