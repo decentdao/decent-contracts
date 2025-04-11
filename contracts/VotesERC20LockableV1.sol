@@ -24,7 +24,10 @@ contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
 
     modifier isTransferable(address from) {
         require(
-            !locked || from == owner() || whitelisted[from],
+            !locked ||
+                from == owner() ||
+                whitelisted[from] ||
+                from == address(0), // for minting when locked,
             "VotesERC20LockableV1: Token is locked"
         );
         _;
