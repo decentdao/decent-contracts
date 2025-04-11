@@ -127,9 +127,8 @@ describe('LinearERC20VotingV1', () => {
 
     it('should not allow reinitialization', async () => {
       // Attempt to reinitialize - should revert
-      const initializeCalldata = LinearERC20VotingV1__factory.createInterface().encodeFunctionData(
-        'setUp',
-        [
+      await expect(
+        linearERC20Voting.setUp(
           ethers.AbiCoder.defaultAbiCoder().encode(
             ['address', 'address', 'address', 'uint32', 'uint256', 'uint256', 'uint256', 'address'],
             [
@@ -143,10 +142,8 @@ describe('LinearERC20VotingV1', () => {
               lightAccountFactory.address,
             ],
           ),
-        ],
-      );
-
-      await expect(linearERC20Voting.setUp(initializeCalldata)).to.be.reverted;
+        ),
+      ).to.be.revertedWith('Initializable: contract is already initialized');
     });
 
     it('should revert when initializing with zero token address', async () => {
