@@ -24,7 +24,10 @@ contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
 
     modifier isTransferable(address from) {
         require(
-            !locked || from == owner() || whitelisted[from],
+            !locked ||
+                from == owner() ||
+                whitelisted[from] ||
+                from == address(0), // for minting when locked,
             "VotesERC20LockableV1: Token is locked"
         );
         _;
@@ -78,12 +81,12 @@ contract VotesERC20LockableV1 is ILockableV1, VotesERC20, Version {
         _mint(to, amount);
     }
 
-    function _transfer(
+    function _beforeTokenTransfer(
         address from,
         address to,
         uint256 amount
     ) internal virtual override isTransferable(from) {
-        super._transfer(from, to, amount);
+        super._beforeTokenTransfer(from, to, amount);
     }
 
     function getVersion() public view virtual override returns (uint16) {

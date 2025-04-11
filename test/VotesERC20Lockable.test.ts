@@ -612,112 +612,105 @@ describe.only('VotesERC20Lockable', () => {
   describe('Minting Tokens', () => {
     let tokenHolderAddresses: string[];
     let tokenHolderAmounts: bigint[];
+    let proxy: VotesERC20LockableV1;
 
     beforeEach(async () => {
       tokenHolderAddresses = [tokenHolder.address, owner.address];
       tokenHolderAmounts = [ethers.parseEther('100'), ethers.parseEther('100')];
     });
 
-    describe('Mint function', () => {
-      let proxy: VotesERC20LockableV1;
+    describe('when token is locked', () => {
+      const locked = true;
 
-      describe('when token is locked', () => {
-        const locked = true;
+      beforeEach(async () => {
+        proxy = await deployVotesERC20Lockable(
+          deployer,
+          implementation,
+          owner,
+          locked,
+          'Test',
+          'TEST',
+          tokenHolderAddresses,
+          tokenHolderAmounts,
+        );
+      });
 
+      describe('when caller is owner', () => {
         beforeEach(async () => {
-          proxy = await deployVotesERC20Lockable(
-            deployer,
-            implementation,
-            owner,
-            locked,
-            'Test',
-            'TEST',
-            tokenHolderAddresses,
-            tokenHolderAmounts,
-          );
+          await proxy.connect(owner).mint(owner.address, ethers.parseEther('1'));
         });
 
-        describe('when caller is owner', () => {
-          beforeEach(async () => {
-            await proxy.connect(owner).mint(owner.address, ethers.parseEther('1'));
-          });
-
-          it('should mint tokens', async () => {
-            expect(await proxy.balanceOf(owner.address)).to.equal(ethers.parseEther('101'));
-          });
-        });
-
-        describe('when caller is whitelisted', () => {
-          beforeEach(async () => {
-            await proxy.connect(owner).whitelist(tokenHolder.address, true);
-            await proxy
-              .connect(tokenHolder)
-              .transfer(tokenRecipient.address, ethers.parseEther('1'));
-          });
-
-          it('should revert', async () => {
-            await expect(
-              proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-          });
-        });
-
-        describe('when caller is not owner or whitelisted', () => {
-          it('should revert', async () => {
-            await expect(
-              proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-          });
+        it('should mint tokens', async () => {
+          expect(await proxy.balanceOf(owner.address)).to.equal(ethers.parseEther('101'));
         });
       });
 
-      describe('when token is not locked', () => {
-        const locked = false;
-
+      describe('when caller is whitelisted', () => {
         beforeEach(async () => {
-          proxy = await deployVotesERC20Lockable(
-            deployer,
-            implementation,
-            owner,
-            locked,
-            'Test',
-            'TEST',
-            tokenHolderAddresses,
-            tokenHolderAmounts,
-          );
+          await proxy.connect(owner).whitelist(tokenHolder.address, true);
+          await proxy.connect(tokenHolder).transfer(tokenRecipient.address, ethers.parseEther('1'));
         });
 
-        describe('when caller is owner', () => {
-          beforeEach(async () => {
-            await proxy.connect(owner).mint(owner.address, ethers.parseEther('1'));
-          });
+        it('should revert', async () => {
+          await expect(
+            proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
+          ).to.be.revertedWith('Ownable: caller is not the owner');
+        });
+      });
 
-          it('should mint tokens', async () => {
-            expect(await proxy.balanceOf(owner.address)).to.equal(ethers.parseEther('101'));
-          });
+      describe('when caller is not owner or whitelisted', () => {
+        it('should revert', async () => {
+          await expect(
+            proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
+          ).to.be.revertedWith('Ownable: caller is not the owner');
+        });
+      });
+    });
+
+    describe('when token is not locked', () => {
+      const locked = false;
+
+      beforeEach(async () => {
+        proxy = await deployVotesERC20Lockable(
+          deployer,
+          implementation,
+          owner,
+          locked,
+          'Test',
+          'TEST',
+          tokenHolderAddresses,
+          tokenHolderAmounts,
+        );
+      });
+
+      describe('when caller is owner', () => {
+        beforeEach(async () => {
+          await proxy.connect(owner).mint(owner.address, ethers.parseEther('1'));
         });
 
-        describe('when caller is whitelisted', () => {
-          beforeEach(async () => {
-            await proxy.connect(owner).whitelist(tokenHolder.address, true);
-            await proxy
-              .connect(tokenHolder)
-              .transfer(tokenRecipient.address, ethers.parseEther('1'));
-          });
+        it('should mint tokens', async () => {
+          expect(await proxy.balanceOf(owner.address)).to.equal(ethers.parseEther('101'));
+        });
+      });
 
-          it('should revert', async () => {
-            await expect(
-              proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-          });
+      describe('when caller is whitelisted', () => {
+        beforeEach(async () => {
+          await proxy.connect(owner).whitelist(tokenHolder.address, true);
+          await proxy.connect(tokenHolder).transfer(tokenRecipient.address, ethers.parseEther('1'));
         });
 
-        describe('when caller is not owner or whitelisted', () => {
-          it('should revert', async () => {
-            await expect(
-              proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-          });
+        it('should revert', async () => {
+          await expect(
+            proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
+          ).to.be.revertedWith('Ownable: caller is not the owner');
+        });
+      });
+
+      describe('when caller is not owner or whitelisted', () => {
+        it('should revert', async () => {
+          await expect(
+            proxy.connect(tokenHolder).mint(tokenHolder.address, ethers.parseEther('1')),
+          ).to.be.revertedWith('Ownable: caller is not the owner');
         });
       });
     });
