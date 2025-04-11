@@ -180,9 +180,9 @@ describe('LinearERC721VotingV1', () => {
       const tokenAddresses = [await mockNFT1.getAddress(), await mockNFT2.getAddress()];
       const tokenWeights = [TOKEN1_WEIGHT, TOKEN2_WEIGHT];
 
-      const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-        'setUp',
-        [
+      // Try to call initialize again - should revert
+      await expect(
+        linearERC721Voting.setUp(
           ethers.AbiCoder.defaultAbiCoder().encode(
             [
               'address',
@@ -207,11 +207,8 @@ describe('LinearERC721VotingV1', () => {
               lightAccountFactory.address,
             ],
           ),
-        ],
-      );
-
-      // Try to call initialize again - should revert
-      await expect(linearERC721Voting.setUp(initializeCalldata)).to.be.reverted;
+        ),
+      ).to.be.revertedWith('Initializable: contract is already initialized');
     });
 
     it('should revert when initializing with mismatched token arrays', async () => {

@@ -191,47 +191,37 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
         const nftAddresses = [await mockNFT1.getAddress(), await mockNFT2.getAddress()];
         const nftWeights = [1, 2];
 
-        // Create initialization data for a second attempt
-        const initializeCalldata =
-          linearERC721VotingWithHatsProposalCreationImplementation.interface.encodeFunctionData(
-            'setUp',
-            [
-              ethers.AbiCoder.defaultAbiCoder().encode(
-                [
-                  'address',
-                  'address[]',
-                  'uint256[]',
-                  'address',
-                  'uint32',
-                  'uint256',
-                  'uint256',
-                  'address',
-                  'uint256[]',
-                  'address',
-                ],
-                [
-                  owner.address,
-                  nftAddresses,
-                  nftWeights,
-                  azoriusAddress,
-                  VOTING_PERIOD,
-                  QUORUM_THRESHOLD,
-                  BASIS_NUMERATOR,
-                  await mockHats.getAddress(),
-                  [proposerHatId1, proposerHatId2],
-                  lightAccountFactory.address,
-                ],
-              ),
-            ],
-          );
-
         // Try to initialize directly through the proxy - should revert
         await expect(
-          owner.sendTransaction({
-            to: await linearERC721VotingWithHatsProposalCreation.getAddress(),
-            data: initializeCalldata,
-          }),
-        ).to.be.reverted;
+          linearERC721VotingWithHatsProposalCreation.setUp(
+            ethers.AbiCoder.defaultAbiCoder().encode(
+              [
+                'address',
+                'address[]',
+                'uint256[]',
+                'address',
+                'uint32',
+                'uint256',
+                'uint256',
+                'address',
+                'uint256[]',
+                'address',
+              ],
+              [
+                owner.address,
+                nftAddresses,
+                nftWeights,
+                azoriusAddress,
+                VOTING_PERIOD,
+                QUORUM_THRESHOLD,
+                BASIS_NUMERATOR,
+                await mockHats.getAddress(),
+                [proposerHatId1, proposerHatId2],
+                lightAccountFactory.address,
+              ],
+            ),
+          ),
+        ).to.be.revertedWith('Initializable: contract is already initialized');
       });
     });
 
