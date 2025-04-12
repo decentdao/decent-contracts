@@ -13,21 +13,20 @@ contract VotesERC20LockableV1 is ILockableV1, IMintableV1, VotesERC20, Version {
     bool public locked;
     mapping(address => bool) public whitelisted;
 
-    event Locked(bool locked);
-    event Whitelisted(address indexed account, bool isWhitelisted);
-
     constructor() {
         _disableInitializers();
     }
 
     modifier isTransferable(address from) {
-        require(
-            !locked ||
-                from == owner() ||
-                whitelisted[from] ||
-                from == address(0), // for minting when locked,
-            "VotesERC20LockableV1: Token is locked"
-        );
+        if (
+            locked &&
+            // overrides while locked
+            !(from == owner() || // owner can always transfer
+                whitelisted[from] || // whitelisted addresses can always transfer
+                from == address(0)) // can always mint when locked
+        ) {
+            revert IsLocked();
+        }
         _;
     }
 
@@ -58,10 +57,8 @@ contract VotesERC20LockableV1 is ILockableV1, IMintableV1, VotesERC20, Version {
     }
 
     function lock(bool _locked) external onlyOwner {
-        if (_locked) {
-            require(!locked, "VotesERC20LockableV1: Token is already locked");
-        } else {
-            require(locked, "VotesERC20LockableV1: Token is not locked");
+        if (_locked == locked) {
+            revert CannotSwitchLockState(_locked);
         }
         locked = _locked;
         emit Locked(_locked);

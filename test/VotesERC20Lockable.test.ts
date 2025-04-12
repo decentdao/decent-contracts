@@ -172,8 +172,9 @@ describe('VotesERC20Lockable', () => {
 
       describe('Trying to lock should fail', () => {
         it('should revert', async () => {
-          await expect(proxy.connect(owner).lock(true)).to.be.revertedWith(
-            'VotesERC20LockableV1: Token is already locked',
+          await expect(proxy.connect(owner).lock(true)).to.be.revertedWithCustomError(
+            proxy,
+            'CannotSwitchLockState(bool true)',
           );
         });
       });
@@ -222,8 +223,9 @@ describe('VotesERC20Lockable', () => {
 
       describe('Trying to unlock should fail', () => {
         it('should revert', async () => {
-          await expect(proxy.connect(owner).lock(false)).to.be.revertedWith(
-            'VotesERC20LockableV1: Token is not locked',
+          await expect(proxy.connect(owner).lock(false)).to.be.revertedWithCustomError(
+            proxy,
+            'CannotSwitchLockState(bool false)',
           );
         });
       });
@@ -380,7 +382,7 @@ describe('VotesERC20Lockable', () => {
           it('should revert', async () => {
             await expect(
               proxy.connect(tokenHolder).transfer(tokenRecipient.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('VotesERC20LockableV1: Token is locked');
+            ).to.be.revertedWithCustomError(proxy, 'IsLocked');
           });
         });
       });
@@ -511,7 +513,7 @@ describe('VotesERC20Lockable', () => {
               proxy
                 .connect(spender)
                 .transferFrom(tokenHolder.address, tokenRecipient.address, ethers.parseEther('1')),
-            ).to.be.revertedWith('VotesERC20LockableV1: Token is locked');
+            ).to.be.revertedWithCustomError(proxy, 'IsLocked');
           });
         });
       });
