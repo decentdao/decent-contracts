@@ -174,44 +174,34 @@ describe('LinearERC20VotingWithHatsProposalCreationV1', () => {
 
       it('should not allow reinitialization', async () => {
         // Deploy a new implementation to initialize again with the same params
-        const initializeCalldata =
-          linearERC20VotingWithHatsProposalCreationImplementation.interface.encodeFunctionData(
-            'setUp',
-            [
-              ethers.AbiCoder.defaultAbiCoder().encode(
-                [
-                  'address',
-                  'address',
-                  'address',
-                  'uint32',
-                  'uint256',
-                  'uint256',
-                  'address',
-                  'uint256[]',
-                  'address',
-                ],
-                [
-                  owner.address,
-                  await mockToken.getAddress(),
-                  azoriusAddress,
-                  VOTING_PERIOD,
-                  QUORUM_NUMERATOR,
-                  BASIS_NUMERATOR,
-                  await mockHats.getAddress(),
-                  [proposerHatId1, proposerHatId2],
-                  lightAccountFactory.address,
-                ],
-              ),
-            ],
-          );
-
-        // Try to initialize directly through the proxy - should revert
         await expect(
-          owner.sendTransaction({
-            to: await linearERC20VotingWithHatsProposalCreation.getAddress(),
-            data: initializeCalldata,
-          }),
-        ).to.be.reverted;
+          linearERC20VotingWithHatsProposalCreation.setUp(
+            ethers.AbiCoder.defaultAbiCoder().encode(
+              [
+                'address',
+                'address',
+                'address',
+                'uint32',
+                'uint256',
+                'uint256',
+                'address',
+                'uint256[]',
+                'address',
+              ],
+              [
+                owner.address,
+                await mockToken.getAddress(),
+                azoriusAddress,
+                VOTING_PERIOD,
+                QUORUM_NUMERATOR,
+                BASIS_NUMERATOR,
+                await mockHats.getAddress(),
+                [proposerHatId1, proposerHatId2],
+                lightAccountFactory.address,
+              ],
+            ),
+          ),
+        ).to.be.revertedWith('Initializable: contract is already initialized');
       });
     });
 
