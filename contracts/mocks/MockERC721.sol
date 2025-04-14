@@ -12,6 +12,10 @@ contract MockERC721 is ERC721 {
         _mint(_owner, tokenIds++);
     }
 
+    function mintToken(address to, uint256 tokenId) external {
+        _mint(to, tokenId);
+    }
+
     // Added getter for current token ID for testing
     function getCurrentTokenId() external view returns (uint256) {
         return tokenIds;
