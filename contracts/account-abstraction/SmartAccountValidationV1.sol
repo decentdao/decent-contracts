@@ -26,7 +26,7 @@ abstract contract SmartAccountValidationV1 is Initializable {
 
     function validateSmartAccount(
         address smartAccount
-    ) internal view virtual returns (bool, address) {
+    ) internal view virtual returns (bool) {
         // First check if the address has code (is a contract)
         uint256 size;
         assembly {
@@ -35,7 +35,7 @@ abstract contract SmartAccountValidationV1 is Initializable {
 
         // If it's an EOA (no code), it's not a `LightAccount`
         if (size == 0) {
-            return (false, address(0));
+            return false;
         }
 
         try ILightAccount(smartAccount).owner() returns (
@@ -50,21 +50,18 @@ abstract contract SmartAccountValidationV1 is Initializable {
             // If the given `smartAccount` address is the same as the derived
             // `lightAccountAddress`, then we know that the `smartAccount`
             // was created by the `LightAccountFactory` and therefore can be trusted.
-            return (lightAccountAddress == smartAccount, lightAccountOwner);
+            return lightAccountAddress == smartAccount;
         } catch {
             // `smartAccount` does not implement `owner()`
             // so it's definitely not a `LightAccount`
-            return (false, address(0));
+            return false;
         }
     }
 
     function validateUserOp(
         PackedUserOperation calldata userOp
-    ) internal view virtual returns (address, address, bytes4) {
-        (bool isValid, address lightAccountOwner) = validateSmartAccount(
-            userOp.sender
-        );
-        if (!isValid) {
+    ) internal view virtual returns (address, bytes4) {
+        if (!validateSmartAccount(userOp.sender)) {
             revert InvalidSmartAccount();
         }
 
@@ -99,6 +96,6 @@ abstract contract SmartAccountValidationV1 is Initializable {
             revert InvalidInnerCallDataLength();
         }
 
-        return (lightAccountOwner, target, bytes4(innerCallData));
+        return (target, bytes4(innerCallData));
     }
 }

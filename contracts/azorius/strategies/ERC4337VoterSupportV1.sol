@@ -27,13 +27,12 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
     function _voter(
         address _msgSender
     ) internal view virtual returns (address) {
-        (bool isValid, address lightAccountOwner) = validateSmartAccount(
-            _msgSender
-        );
-        if (!isValid) {
+        if (!validateSmartAccount(_msgSender)) {
             return _msgSender;
         }
 
-        return lightAccountOwner;
+        // This call is safe, because `validateSmartAccount` ensures that the address implements
+        // the `ILightAccount` interface, and so calling `owner()` will not revert.
+        return ILightAccount(_msgSender).owner();
     }
 }

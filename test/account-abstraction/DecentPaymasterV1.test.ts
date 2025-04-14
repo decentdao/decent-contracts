@@ -16,8 +16,6 @@ import {
   MockLightAccount__factory,
   MockLightAccountFactory,
   MockLightAccountFactory__factory,
-  MockValidator,
-  MockValidator__factory,
 } from '../../typechain-types';
 import { getModuleProxyFactory } from '../GlobalSafeDeployments.test';
 import { calculateProxyAddress } from '../helpers';
@@ -78,7 +76,6 @@ describe('DecentPaymasterV1', function () {
   let mockLightAccount: MockLightAccount;
   let mockTarget: MockGaslessTarget;
   let mockLightAccountFactory: MockLightAccountFactory;
-  let mockValidator: MockValidator;
   let mockLightAccountFactoryAddress: string;
 
   // signers
@@ -101,9 +98,6 @@ describe('DecentPaymasterV1', function () {
 
     // Deploy MockGaslessTarget
     mockTarget = await new MockGaslessTarget__factory(owner).deploy();
-
-    // Deploy MockValidator
-    mockValidator = await new MockValidator__factory(owner).deploy();
 
     // Deploy MockLightAccountFactory
     mockLightAccountFactory = await new MockLightAccountFactory__factory(owner).deploy();
@@ -181,84 +175,58 @@ describe('DecentPaymasterV1', function () {
 
     it('Should have a version', async function () {
       const version = await decentPaymaster.getVersion();
-      expect(version).to.equal(1);
+      void expect(version).to.equal(1);
     });
   });
 
-  describe('Validator Management', function () {
-    it('Should allow owner to set validator for target', async function () {
-      await expect(
-        decentPaymaster.setFunctionValidator(
-          await mockTarget.getAddress(),
-          FOO_SELECTOR,
-          await mockValidator.getAddress(),
-        ),
-      )
-        .to.emit(decentPaymaster, 'FunctionValidatorSet')
-        .withArgs(await mockTarget.getAddress(), FOO_SELECTOR, await mockValidator.getAddress());
-
-      void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.true;
-    });
-
-    it('Should allow owner to remove validator for target', async function () {
-      await decentPaymaster.setFunctionValidator(
-        await mockTarget.getAddress(),
-        FOO_SELECTOR,
-        await mockValidator.getAddress(),
-      );
-      void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.true;
-
-      await expect(
-        decentPaymaster.removeFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      )
-        .to.emit(decentPaymaster, 'FunctionValidatorRemoved')
+  describe('Function Whitelisting', function () {
+    it('Should allow owner to whitelist functions', async function () {
+      await expect(decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR))
+        .to.emit(decentPaymaster, 'FunctionWhitelisted')
         .withArgs(await mockTarget.getAddress(), FOO_SELECTOR);
 
-      void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.false;
+      const isWhitelisted = await decentPaymaster.isFunctionWhitelisted(
+        await mockTarget.getAddress(),
+        FOO_SELECTOR,
+      );
+      void expect(isWhitelisted).to.be.true;
     });
 
-    it('Should revert when non-owner tries to set validator', async function () {
+    it('Should allow owner to revoke function whitelisting', async function () {
+      await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
+      const isWhitelistedFirst = await decentPaymaster.isFunctionWhitelisted(
+        await mockTarget.getAddress(),
+        FOO_SELECTOR,
+      );
+      void expect(isWhitelistedFirst).to.be.true;
+
+      await expect(decentPaymaster.unwhitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR))
+        .to.emit(decentPaymaster, 'FunctionUnwhitelisted')
+        .withArgs(await mockTarget.getAddress(), FOO_SELECTOR);
+
+      const isWhitelistedLast = await decentPaymaster.isFunctionWhitelisted(
+        await mockTarget.getAddress(),
+        FOO_SELECTOR,
+      );
+      void expect(isWhitelistedLast).to.be.false;
+    });
+
+    it('Should revert when non-owner tries to whitelist function', async function () {
       await expect(
         decentPaymaster
           .connect(nonOwner)
-          .setFunctionValidator(
-            await mockTarget.getAddress(),
-            FOO_SELECTOR,
-            await mockValidator.getAddress(),
-          ),
+          .whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR),
       ).to.be.revertedWith('Ownable: caller is not the owner');
-    });
-
-    it('Should revert when setting invalid validator address', async function () {
-      await expect(
-        decentPaymaster.setFunctionValidator(
-          await mockTarget.getAddress(),
-          FOO_SELECTOR,
-          ethers.ZeroAddress,
-        ),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'InvalidValidator');
     });
   });
 
   describe('Validation', function () {
     beforeEach(async function () {
-      // Set up validator for mock target and FOO_SELECTOR
-      await decentPaymaster.setFunctionValidator(
-        await mockTarget.getAddress(),
-        FOO_SELECTOR,
-        await mockValidator.getAddress(),
-      );
-      // Configure validator to return true
-      await mockValidator.setShouldValidate(true);
+      // Whitelist the foo function on the mock target
+      await decentPaymaster.whitelistFunction(await mockTarget.getAddress(), FOO_SELECTOR);
     });
 
-    it('Should validate when validator approves', async function () {
+    it('Should validate whitelisted function calls', async function () {
       const entryPointSigner = await ethers.getImpersonatedSigner(await entryPoint.getAddress());
       const result = await decentPaymaster
         .connect(entryPointSigner)
@@ -268,36 +236,14 @@ describe('DecentPaymasterV1', function () {
       expect(result[0]).to.equal('0x'); // context
     });
 
-    it('Should revert when validator disapproves', async function () {
-      // Configure validator to return false
-      await mockValidator.setShouldValidate(false);
-
-      await expect(
-        decentPaymaster
-          .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
-          .validatePaymasterUserOp.staticCall(mockUserOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'ValidationFailed');
-    });
-
-    it('Should revert when no validator is set', async function () {
-      // Remove validator
-      await decentPaymaster.removeFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR);
-
-      await expect(
-        decentPaymaster
-          .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
-          .validatePaymasterUserOp.staticCall(mockUserOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction');
-    });
-
-    it('Should revert for non-whitelisted function selectors', async function () {
+    it('Should revert on non-whitelisted function calls', async function () {
       // Create a new function selector that isn't whitelisted
-      const nonWhitelistedSelector = mockTarget.interface.getFunction('bar').selector;
+      const nonWhitelistedSelector = '0x99999999';
 
       // Create inner calldata with non-whitelisted selector
-      const innerCalldata = mockTarget.interface.encodeFunctionData('bar', [
-        owner.address, // address someAddress
-        ethers.parseEther('1'), // uint256 someAmount
+      const innerCalldata = ethers.concat([
+        nonWhitelistedSelector,
+        ethers.AbiCoder.defaultAbiCoder().encode(['uint32', 'uint8'], [123, 1]),
       ]);
 
       // Create the execute calldata
@@ -313,9 +259,7 @@ describe('DecentPaymasterV1', function () {
         decentPaymaster
           .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
           .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0),
-      )
-        .to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction')
-        .withArgs(await mockTarget.getAddress(), nonWhitelistedSelector);
+      ).to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction');
     });
   });
 

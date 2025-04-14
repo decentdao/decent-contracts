@@ -2,18 +2,17 @@
 pragma solidity ^0.8.28;
 
 interface IDecentPaymasterV1 {
-    function setFunctionValidator(
-        address contractAddress,
-        bytes4 selector,
-        address validator
-    ) external;
-
-    function removeFunctionValidator(
+    function whitelistFunction(
         address contractAddress,
         bytes4 selector
     ) external;
 
-    function hasFunctionValidator(
+    function unwhitelistFunction(
+        address contractAddress,
+        bytes4 selector
+    ) external;
+
+    function isFunctionWhitelisted(
         address contractAddress,
         bytes4 selector
     ) external view returns (bool);

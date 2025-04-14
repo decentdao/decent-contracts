@@ -106,12 +106,11 @@ describe('SmartAccountValidationV1', function () {
           await mockLightAccount.getAddress(),
         );
 
-        const [isValid, lightAccountOwner] =
+        void expect(
           await concreteSmartAccountValidation.validateSmartAccountPublic(
             await mockLightAccount.getAddress(),
-          );
-        void expect(isValid).to.be.true;
-        expect(lightAccountOwner).to.equal(await mockLightAccount.owner());
+          ),
+        ).to.be.true;
       });
     });
 
@@ -121,10 +120,9 @@ describe('SmartAccountValidationV1', function () {
           const randomAddress = ethers.Wallet.createRandom().address;
 
           // Should return false since the address won't have the owner() function
-          const [isValid, lightAccountOwner] =
-            await concreteSmartAccountValidation.validateSmartAccountPublic(randomAddress);
-          void expect(isValid).to.be.false;
-          expect(lightAccountOwner).to.equal(ethers.ZeroAddress);
+          void expect(
+            await concreteSmartAccountValidation.validateSmartAccountPublic(randomAddress),
+          ).to.be.false;
         });
       });
 
@@ -133,22 +131,20 @@ describe('SmartAccountValidationV1', function () {
           // not calling "setAccountAddress", so the LightAccountFactory will always
           // return the zero address when calling `getAddress` for a given owner and salt
           // (which is implemented in the SmartAccountValidation validateSmartAccount function).
-          const [isValid, lightAccountOwner] =
+          void expect(
             await concreteSmartAccountValidation.validateSmartAccountPublic(
               await mockLightAccount.getAddress(),
-            );
-          void expect(isValid).to.be.false;
-          expect(lightAccountOwner).to.equal(await mockLightAccount.owner());
+            ),
+          ).to.be.false;
         });
 
         it('should return false for invalid light accounts that do not implement the ILightAccount interface (owner())', async function () {
           // Hits the "catch" block in the `validateSmartAccount` function
-          const [isValid, lightAccountOwner] =
+          void expect(
             await concreteSmartAccountValidation.validateSmartAccountPublic(
               await mockInvalidLightAccount.getAddress(),
-            );
-          void expect(isValid).to.be.false;
-          expect(lightAccountOwner).to.equal(ethers.ZeroAddress);
+            ),
+          ).to.be.false;
         });
       });
     });
@@ -199,9 +195,8 @@ describe('SmartAccountValidationV1', function () {
         await mockLightAccount.getAddress(),
       );
 
-      const [lightAccountOwner, target, selector] =
+      const [target, selector] =
         await concreteSmartAccountValidation.validateUserOpPublic(mockUserOp);
-      expect(lightAccountOwner).to.equal(await mockLightAccount.owner());
       expect(target).to.equal(await mockTarget.getAddress());
       expect(selector).to.equal(FOO_SELECTOR);
     });
