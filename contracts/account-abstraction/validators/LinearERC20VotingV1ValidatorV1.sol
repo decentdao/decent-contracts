@@ -15,6 +15,8 @@ interface ILinearERC20VotingV1 {
     ) external view returns (bool);
 
     function votingEndBlock(uint32 proposalId) external view returns (uint32);
+
+    function votingPeriodEnded(uint32 proposalId) external view returns (bool);
 }
 
 /**
@@ -65,7 +67,9 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
         }
 
         // Check if voting period has ended
-        if (block.number > endBlock) {
+        if (
+            ILinearERC20VotingV1(votingContract).votingPeriodEnded(proposalId)
+        ) {
             return false;
         }
 

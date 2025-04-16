@@ -9,6 +9,21 @@ import {SmartAccountValidationV1} from "../../account-abstraction/SmartAccountVa
  * when a contract account is used to interact with the voting system.
  */
 abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
+    /**
+     * @dev Tracks whether a proposal's voting period has been marked as ended.
+     * This flag is set to true when the first vote attempt occurs after the voting end block,
+     * triggering a VotingPeriodEnded event. Used to allow an at-most-once vote to not revert
+     * after the voting period has ended, and to give bundlers the ability to determine
+     * if a proposal voting period has ended without using the banned NUMBER opcode.
+     */
+    mapping(uint32 => bool) internal _votingPeriodEnded;
+
+    event VotingPeriodEnded(
+        uint32 indexed proposalId,
+        uint256 votingEndBlock,
+        uint256 currentBlock
+    );
+
     constructor() {
         _disableInitializers();
     }
@@ -35,5 +50,19 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
         }
 
         return lightAccountOwner;
+    }
+
+    /**
+     * @dev Tracks whether a proposal's voting period has been officially marked as ended.
+     * This flag is set to true when the first vote attempt occurs after the voting end block,
+     * triggering a VotingPeriodEnded event. Used to ensure the event is emitted exactly once
+     * per proposal, and only if a vote has been attempted after the voting end block.
+     * @param _proposalId The ID of the proposal to check.
+     * @return True if the voting period has ended and a vote has been attempted after the voting end block, false otherwise.
+     */
+    function votingPeriodEnded(
+        uint32 _proposalId
+    ) external view virtual returns (bool) {
+        return _votingPeriodEnded[_proposalId];
     }
 }

@@ -4,6 +4,8 @@ pragma solidity ^0.8.28;
 contract MockLinearERC721VotingV1 {
     // Mapping: proposalId => endBlock
     mapping(uint32 => uint32) public votingEndBlock;
+    // Mapping: proposalId => votingPeriodEnded
+    mapping(uint32 => bool) public votingPeriodEnded;
     // Mapping: proposalId => tokenAddress => tokenId => hasVoted
     mapping(uint32 => mapping(address => mapping(uint256 => bool)))
         public hasVoted;
@@ -21,6 +23,10 @@ contract MockLinearERC721VotingV1 {
 
     function setVotingEndBlock(uint32 proposalId, uint32 endBlock) external {
         votingEndBlock[proposalId] = endBlock;
+    }
+
+    function setVotingPeriodEnded(uint32 proposalId, bool ended) external {
+        votingPeriodEnded[proposalId] = ended;
     }
 
     function setHasVoted(

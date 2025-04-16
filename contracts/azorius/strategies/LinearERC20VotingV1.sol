@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import {Version} from "../../Version.sol";
 import {ERC4337VoterSupportV1} from "./ERC4337VoterSupportV1.sol";
+import {LinearERC20VotingExtensible} from "./LinearERC20VotingExtensible.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {LinearERC20VotingExtensible} from "./LinearERC20VotingExtensible.sol";
 
 /**
  * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that
@@ -90,6 +90,44 @@ contract LinearERC20VotingV1 is
             _voteType,
             getVotingWeight(voter, _proposalId)
         );
+    }
+
+    /** @inheritdoc LinearERC20VotingExtensible*/
+    function _vote(
+        uint32 _proposalId,
+        address _voter,
+        uint8 _voteType,
+        uint256 _weight
+    ) internal virtual override {
+        if (proposalVotes[_proposalId].votingEndBlock == 0)
+            revert InvalidProposal();
+        if (block.number > proposalVotes[_proposalId].votingEndBlock) {
+            if (!_votingPeriodEnded[_proposalId]) {
+                _votingPeriodEnded[_proposalId] = true;
+                emit VotingPeriodEnded(
+                    _proposalId,
+                    proposalVotes[_proposalId].votingEndBlock,
+                    block.number
+                );
+                return;
+            }
+            revert VotingEnded();
+        }
+        if (proposalVotes[_proposalId].hasVoted[_voter]) revert AlreadyVoted();
+
+        proposalVotes[_proposalId].hasVoted[_voter] = true;
+
+        if (_voteType == uint8(VoteType.NO)) {
+            proposalVotes[_proposalId].noVotes += _weight;
+        } else if (_voteType == uint8(VoteType.YES)) {
+            proposalVotes[_proposalId].yesVotes += _weight;
+        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
+            proposalVotes[_proposalId].abstainVotes += _weight;
+        } else {
+            revert InvalidVote();
+        }
+
+        emit Voted(_voter, _proposalId, _voteType, _weight);
     }
 
     function getVersion() public view virtual override returns (uint16) {

@@ -79,7 +79,7 @@ describe('LinearERC721VotingV1ValidatorV1', function () {
         _tokenIds,
       ]);
 
-      return { calldata, currentBlock };
+      return { calldata };
     }
 
     it('Should return false for incorrect function selector', async function () {
@@ -208,7 +208,7 @@ describe('LinearERC721VotingV1ValidatorV1', function () {
 
     it('Should return false if voting period has ended', async function () {
       // First verify the happy path works
-      const { calldata, currentBlock } = await setupVoteOperation(
+      const { calldata } = await setupVoteOperation(
         proposalId,
         voteTypes.YES,
         [await mockNFT1.getAddress()],
@@ -222,8 +222,8 @@ describe('LinearERC721VotingV1ValidatorV1', function () {
       );
       void expect(validResult).to.be.true;
 
-      // Now set end block to past
-      await mockERC721Strategy.setVotingEndBlock(proposalId, currentBlock - 1);
+      // Now set voting period ended
+      await mockERC721Strategy.setVotingPeriodEnded(proposalId, true);
 
       const invalidResult = await validator.validateOperation(
         ethers.ZeroAddress,

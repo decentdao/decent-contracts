@@ -54,7 +54,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
         _voteType,
       ]);
 
-      return { calldata, currentBlock };
+      return { calldata };
     }
 
     it('Should return false for incorrect function selector', async function () {
@@ -140,11 +140,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
 
     it('Should return false if voting period has ended', async function () {
       // First verify the happy path works
-      const { calldata, currentBlock } = await setupVoteOperation(
-        proposalId,
-        voteTypes.YES,
-        voter.address,
-      );
+      const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
       const validResult = await validator.validateOperation(
         ethers.ZeroAddress,
         voter.address,
@@ -153,8 +149,8 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       );
       void expect(validResult).to.be.true;
 
-      // Now set the end block to a past block
-      await mockERC20Strategy.setVotingEndBlock(proposalId, currentBlock - 1);
+      // Now set the voting period ended
+      await mockERC20Strategy.setVotingPeriodEnded(proposalId, true);
 
       const invalidResult = await validator.validateOperation(
         ethers.ZeroAddress,

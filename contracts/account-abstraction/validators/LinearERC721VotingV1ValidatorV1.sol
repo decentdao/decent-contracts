@@ -26,6 +26,8 @@ interface ILinearERC721VotingV1 {
     function getTokenWeight(
         address tokenAddress
     ) external view returns (uint256);
+
+    function votingPeriodEnded(uint32 proposalId) external view returns (bool);
 }
 
 /**
@@ -89,7 +91,9 @@ contract LinearERC721VotingV1ValidatorV1 is
         }
 
         // Check if voting period has ended
-        if (block.number > endBlock) {
+        if (
+            ILinearERC721VotingV1(votingContract).votingPeriodEnded(proposalId)
+        ) {
             return false;
         }
 
