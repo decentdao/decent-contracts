@@ -48,6 +48,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       const currentBlock = await ethers.provider.getBlockNumber();
       await mockERC20Strategy.setVotingEndBlock(_proposalId, currentBlock + 100);
       await mockERC20Strategy.setHasVoted(_proposalId, _voterAddress, false);
+      await mockERC20Strategy.setVotingWeight(_voterAddress, _proposalId, 1);
 
       const calldata = mockERC20Strategy.interface.encodeFunctionData('vote', [
         _proposalId,
@@ -174,6 +175,29 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
 
       // Now set hasVoted to true
       await mockERC20Strategy.setHasVoted(proposalId, voter.address, true);
+
+      const invalidResult = await validator.validateOperation(
+        ethers.ZeroAddress,
+        voter.address,
+        await mockERC20Strategy.getAddress(),
+        calldata,
+      );
+      void expect(invalidResult).to.be.false;
+    });
+
+    it('Should return false if user has zero voting weight', async function () {
+      // First verify the happy path works with non-zero weight
+      const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
+      const validResult = await validator.validateOperation(
+        ethers.ZeroAddress,
+        voter.address,
+        await mockERC20Strategy.getAddress(),
+        calldata,
+      );
+      void expect(validResult).to.be.true;
+
+      // Now set voting weight to zero
+      await mockERC20Strategy.setVotingWeight(voter.address, proposalId, 0);
 
       const invalidResult = await validator.validateOperation(
         ethers.ZeroAddress,

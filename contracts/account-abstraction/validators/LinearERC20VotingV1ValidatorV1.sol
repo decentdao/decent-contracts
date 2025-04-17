@@ -17,6 +17,11 @@ interface ILinearERC20VotingV1 {
     function votingEndBlock(uint32 proposalId) external view returns (uint32);
 
     function votingPeriodEnded(uint32 proposalId) external view returns (bool);
+
+    function getVotingWeight(
+        address _voter,
+        uint32 _proposalId
+    ) external view returns (uint256);
 }
 
 /**
@@ -79,6 +84,16 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
                 proposalId,
                 lightAccountOwner
             )
+        ) {
+            return false;
+        }
+
+        // confirm that user has voting weight
+        if (
+            ILinearERC20VotingV1(votingContract).getVotingWeight(
+                lightAccountOwner,
+                proposalId
+            ) == 0
         ) {
             return false;
         }

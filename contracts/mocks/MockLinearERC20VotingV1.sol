@@ -8,6 +8,8 @@ contract MockLinearERC20VotingV1 {
     mapping(uint32 => bool) public votingPeriodEnded;
     // Mapping: proposalId => voter => hasVoted
     mapping(uint32 => mapping(address => bool)) public hasVoted;
+    // Mapping: voter => proposalId => votingWeight
+    mapping(address => mapping(uint32 => uint256)) public getVotingWeight;
 
     function vote(uint32 proposalId, uint8 voteType) external {
         // Mock implementation - just for interface matching
@@ -27,5 +29,13 @@ contract MockLinearERC20VotingV1 {
         bool voted
     ) external {
         hasVoted[proposalId][account] = voted;
+    }
+
+    function setVotingWeight(
+        address _voter,
+        uint32 _proposalId,
+        uint256 _weight
+    ) external {
+        getVotingWeight[_voter][_proposalId] = _weight;
     }
 }
