@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.28;
 
+// Mirror the struct for getProposalVotes return values
+struct ProposalPeriod {
+    uint32 startBlock;
+    uint32 endBlock;
+}
+
 contract MockLinearERC20VotingV1 {
-    // Mapping: proposalId => endBlock
-    mapping(uint32 => uint32) public votingEndBlock;
+    // Mapping: proposalId => ProposalPeriod
+    mapping(uint32 => ProposalPeriod) public getProposalPeriod;
     // Mapping: proposalId => votingPeriodEnded
     mapping(uint32 => bool) public votingPeriodEnded;
     // Mapping: proposalId => voter => hasVoted
@@ -15,8 +21,11 @@ contract MockLinearERC20VotingV1 {
         // Mock implementation - just for interface matching
     }
 
-    function setVotingEndBlock(uint32 proposalId, uint32 endBlock) external {
-        votingEndBlock[proposalId] = endBlock;
+    function setProposalPeriod(
+        uint32 proposalId,
+        ProposalPeriod calldata data
+    ) external {
+        getProposalPeriod[proposalId] = data;
     }
 
     function setVotingPeriodEnded(uint32 proposalId, bool ended) external {

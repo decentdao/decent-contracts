@@ -46,7 +46,17 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       _voterAddress: string,
     ) {
       const currentBlock = await ethers.provider.getBlockNumber();
-      await mockERC20Strategy.setVotingEndBlock(_proposalId, currentBlock + 100);
+
+      const proposalPeriod = {
+        startBlock: currentBlock,
+        endBlock: currentBlock + 100,
+      };
+
+      // Set up proposal votes data with safe block numbers
+      await mockERC20Strategy.setProposalPeriod(_proposalId, proposalPeriod);
+
+      // Set up voting state
+      await mockERC20Strategy.setVotingPeriodEnded(_proposalId, false);
       await mockERC20Strategy.setHasVoted(_proposalId, _voterAddress, false);
       await mockERC20Strategy.setVotingWeight(_voterAddress, _proposalId, 1);
 
@@ -55,7 +65,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
         _voteType,
       ]);
 
-      return { calldata };
+      return { calldata, proposalPeriod };
     }
 
     it('Should return false for incorrect function selector', async function () {
@@ -128,7 +138,10 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       void expect(validResult).to.be.true;
 
       // Now set the proposal to non-existent (endBlock = 0)
-      await mockERC20Strategy.setVotingEndBlock(proposalId, 0);
+      await mockERC20Strategy.setProposalPeriod(proposalId, {
+        startBlock: 0,
+        endBlock: 0, // Zero end block indicates non-existent proposal
+      });
 
       const invalidResult = await validator.validateOperation(
         ethers.ZeroAddress,
@@ -217,6 +230,51 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
         calldata,
       );
       void expect(isValid).to.be.true;
+    });
+  });
+
+  describe('getProposalPeriod', function () {
+    it('Should return correct start and end blocks for existing proposal', async function () {
+      const currentBlock = await ethers.provider.getBlockNumber();
+      const expectedStart = currentBlock;
+      const expectedEnd = currentBlock + 100;
+
+      await mockERC20Strategy.setProposalPeriod(proposalId, {
+        startBlock: expectedStart,
+        endBlock: expectedEnd,
+      });
+
+      const [actualStart, actualEnd] = await mockERC20Strategy.getProposalPeriod(proposalId);
+      expect(actualStart).to.equal(expectedStart);
+      expect(actualEnd).to.equal(expectedEnd);
+    });
+
+    it('Should return zeros for non-existent proposal', async function () {
+      const [startBlock, endBlock] = await mockERC20Strategy.getProposalPeriod(999); // Using an unused proposal ID
+      expect(startBlock).to.equal(0);
+      expect(endBlock).to.equal(0);
+    });
+
+    it('Should return updated values after modifying proposal period', async function () {
+      // Set initial values
+      const currentBlock = await ethers.provider.getBlockNumber();
+      await mockERC20Strategy.setProposalPeriod(proposalId, {
+        startBlock: currentBlock,
+        endBlock: currentBlock + 100,
+      });
+
+      // Update to new values
+      const newStart = currentBlock + 50;
+      const newEnd = currentBlock + 150;
+      await mockERC20Strategy.setProposalPeriod(proposalId, {
+        startBlock: newStart,
+        endBlock: newEnd,
+      });
+
+      // Verify the update
+      const [startBlock, endBlock] = await mockERC20Strategy.getProposalPeriod(proposalId);
+      expect(startBlock).to.equal(newStart);
+      expect(endBlock).to.equal(newEnd);
     });
   });
 

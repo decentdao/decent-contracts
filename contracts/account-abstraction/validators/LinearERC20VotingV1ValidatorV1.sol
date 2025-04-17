@@ -14,7 +14,9 @@ interface ILinearERC20VotingV1 {
         address account
     ) external view returns (bool);
 
-    function votingEndBlock(uint32 proposalId) external view returns (uint32);
+    function getProposalPeriod(
+        uint32 proposalId
+    ) external view returns (uint32, uint32);
 
     function votingPeriodEnded(uint32 proposalId) external view returns (bool);
 
@@ -61,10 +63,9 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
             return false;
         }
 
-        // Get voting end block to determine if the proposal exists
-        uint256 endBlock = ILinearERC20VotingV1(votingContract).votingEndBlock(
-            proposalId
-        );
+        // get the proposal end block to determine if the proposal exists
+        (, uint32 endBlock) = ILinearERC20VotingV1(votingContract)
+            .getProposalPeriod(proposalId);
 
         // Check if proposal exists (will have non-zero endBlock if it exists)
         if (endBlock == 0) {

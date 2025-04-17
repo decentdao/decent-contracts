@@ -130,6 +130,15 @@ contract LinearERC20VotingV1 is
         emit Voted(_voter, _proposalId, _voteType, _weight);
     }
 
+    function getProposalPeriod(
+        uint32 _proposalId
+    ) public view virtual returns (uint32, uint32) {
+        return (
+            proposalVotes[_proposalId].votingStartBlock,
+            proposalVotes[_proposalId].votingEndBlock
+        );
+    }
+
     function getVersion() public view virtual override returns (uint16) {
         return VERSION;
     }
