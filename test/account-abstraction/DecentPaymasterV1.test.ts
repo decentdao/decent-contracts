@@ -198,8 +198,8 @@ describe('DecentPaymasterV1', function () {
         .withArgs(await mockTarget.getAddress(), FOO_SELECTOR, await mockValidator.getAddress());
 
       void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.true;
+        await decentPaymaster.getFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
+      ).to.be.equal(await mockValidator.getAddress());
     });
 
     it('Should allow owner to remove validator for target', async function () {
@@ -209,8 +209,8 @@ describe('DecentPaymasterV1', function () {
         await mockValidator.getAddress(),
       );
       void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.true;
+        await decentPaymaster.getFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
+      ).to.be.equal(await mockValidator.getAddress());
 
       await expect(
         decentPaymaster.removeFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
@@ -219,8 +219,8 @@ describe('DecentPaymasterV1', function () {
         .withArgs(await mockTarget.getAddress(), FOO_SELECTOR);
 
       void expect(
-        await decentPaymaster.hasFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
-      ).to.be.false;
+        await decentPaymaster.getFunctionValidator(await mockTarget.getAddress(), FOO_SELECTOR),
+      ).to.be.equal(ethers.ZeroAddress);
     });
 
     it('Should revert when non-owner tries to set validator', async function () {

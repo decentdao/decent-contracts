@@ -13,8 +13,8 @@ interface IDecentPaymasterV1 {
         bytes4 selector
     ) external;
 
-    function hasFunctionValidator(
+    function getFunctionValidator(
         address contractAddress,
         bytes4 selector
-    ) external view returns (bool);
+    ) external view returns (address);
 }

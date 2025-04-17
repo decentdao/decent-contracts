@@ -92,17 +92,18 @@ contract DecentPaymasterV1 is
         emit FunctionValidatorRemoved(target, selector);
     }
 
-    /**
-     * Check if a function has a validator
+    /*
+     * Get a function's validator
      * @param target The contract address
      * @param selector The function selector to check
-     * @return bool Whether the function has a validator
+     * @return address The validator address, or zero if no validator is set
      */
-    function hasFunctionValidator(
+
+    function getFunctionValidator(
         address target,
         bytes4 selector
-    ) public view returns (bool) {
-        return _functionValidators[target][selector] != address(0);
+    ) public view returns (address) {
+        return _functionValidators[target][selector];
     }
 
     /// @inheritdoc BasePaymasterV1
