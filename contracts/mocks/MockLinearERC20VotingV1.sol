@@ -7,6 +7,12 @@ struct ProposalPeriod {
     uint32 endBlock;
 }
 
+// Mirror the struct from IERC20Votes
+struct Checkpoint {
+    uint32 fromBlock;
+    uint224 votes;
+}
+
 contract MockLinearERC20VotingV1 {
     // Mapping: proposalId => ProposalPeriod
     mapping(uint32 => ProposalPeriod) public getProposalPeriod;
@@ -14,8 +20,13 @@ contract MockLinearERC20VotingV1 {
     mapping(uint32 => bool) public votingPeriodEnded;
     // Mapping: proposalId => voter => hasVoted
     mapping(uint32 => mapping(address => bool)) public hasVoted;
-    // Mapping: voter => proposalId => votingWeight
-    mapping(address => mapping(uint32 => uint256)) public getVotingWeight;
+    // governance token
+    address public governanceToken;
+
+    // Mapping: address => numCheckpoints
+    mapping(address => uint32) public numCheckpoints;
+    // Mapping: address => checkpointIndex => Checkpoint
+    mapping(address => Checkpoint[]) private _checkpoints;
 
     function vote(uint32 proposalId, uint8 voteType) external {
         // Mock implementation - just for interface matching
@@ -40,11 +51,32 @@ contract MockLinearERC20VotingV1 {
         hasVoted[proposalId][account] = voted;
     }
 
-    function setVotingWeight(
-        address _voter,
-        uint32 _proposalId,
-        uint256 _weight
+    function setGovernanceToken(address tokenAddress) external {
+        governanceToken = tokenAddress;
+    }
+
+    function checkpoints(
+        address account,
+        uint32 pos
+    ) public view virtual returns (Checkpoint memory) {
+        return _checkpoints[account][pos];
+    }
+
+    function setCheckpoints(
+        address account,
+        Checkpoint[] calldata checkpointsData
     ) external {
-        getVotingWeight[_voter][_proposalId] = _weight;
+        // Clear existing checkpoints
+        while (_checkpoints[account].length > 0) {
+            _checkpoints[account].pop();
+        }
+
+        // Add new checkpoints one by one
+        for (uint32 i = 0; i < checkpointsData.length; i++) {
+            _checkpoints[account].push(checkpointsData[i]);
+        }
+
+        // Update the checkpoint count
+        numCheckpoints[account] = uint32(checkpointsData.length);
     }
 }

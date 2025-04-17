@@ -20,10 +20,21 @@ interface ILinearERC20VotingV1 {
 
     function votingPeriodEnded(uint32 proposalId) external view returns (bool);
 
-    function getVotingWeight(
-        address _voter,
-        uint32 _proposalId
-    ) external view returns (uint256);
+    function governanceToken() external view returns (address);
+}
+
+struct Checkpoint {
+    uint32 fromBlock;
+    uint224 votes;
+}
+
+interface IERC20Votes {
+    function numCheckpoints(address account) external view returns (uint32);
+
+    function checkpoints(
+        address account,
+        uint32 pos
+    ) external view returns (Checkpoint memory);
 }
 
 /**
@@ -63,9 +74,10 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
             return false;
         }
 
-        // get the proposal end block to determine if the proposal exists
-        (, uint32 endBlock) = ILinearERC20VotingV1(votingContract)
-            .getProposalPeriod(proposalId);
+        // get the proposal start and end blocks to determine if the proposal exists
+        (uint32 startBlock, uint32 endBlock) = ILinearERC20VotingV1(
+            votingContract
+        ).getProposalPeriod(proposalId);
 
         // Check if proposal exists (will have non-zero endBlock if it exists)
         if (endBlock == 0) {
@@ -89,13 +101,44 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
             return false;
         }
 
-        // confirm that user has voting weight
-        if (
-            ILinearERC20VotingV1(votingContract).getVotingWeight(
+        // get the governance token
+        IERC20Votes governanceToken = IERC20Votes(
+            ILinearERC20VotingV1(votingContract).governanceToken()
+        );
+
+        // get the number of checkpoints for the voter
+        uint32 numCheckpoints = governanceToken.numCheckpoints(
+            lightAccountOwner
+        );
+
+        // if there are no checkpoints, user has no voting weight
+        if (numCheckpoints == 0) {
+            return false;
+        }
+
+        // Iterate backwards through checkpoints to find the relevant one for startBlock.
+        // This is potentially more efficient than binary search if startBlock is recent.
+        uint256 votingWeight = 0;
+        for (uint256 i = numCheckpoints; i > 0; i--) {
+            // Checkpoint indices are 0-based, loop index 'i' is 1-based count.
+            Checkpoint memory checkpoint = governanceToken.checkpoints(
                 lightAccountOwner,
-                proposalId
-            ) == 0
-        ) {
+                uint32(i - 1)
+            );
+
+            // If the checkpoint block is less than or equal to the proposal start block,
+            // we've found the relevant voting weight.
+            if (checkpoint.fromBlock <= startBlock) {
+                votingWeight = checkpoint.votes;
+                break; // Exit loop once the correct checkpoint is found
+            }
+        }
+        // If the loop completes without finding a checkpoint where fromBlock <= startBlock,
+        // it means all checkpoints are after startBlock, so the weight at startBlock was 0.
+        // votingWeight remains 0 in this case.
+
+        // Check if the user had any voting weight at the proposal start block
+        if (votingWeight == 0) {
             return false;
         }
 

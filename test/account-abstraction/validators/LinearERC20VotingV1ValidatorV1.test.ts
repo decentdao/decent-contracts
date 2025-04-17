@@ -37,6 +37,9 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
 
     // Deploy validator
     validator = await new LinearERC20VotingV1ValidatorV1__factory(owner).deploy();
+
+    // Set the mock contract as its own governance token (it implements the required interface)
+    await mockERC20Strategy.setGovernanceToken(await mockERC20Strategy.getAddress());
   });
 
   describe('validateOperation', function () {
@@ -58,7 +61,13 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       // Set up voting state
       await mockERC20Strategy.setVotingPeriodEnded(_proposalId, false);
       await mockERC20Strategy.setHasVoted(_proposalId, _voterAddress, false);
-      await mockERC20Strategy.setVotingWeight(_voterAddress, _proposalId, 1);
+
+      // Set up checkpoints for voting weight
+      const checkpoint = {
+        fromBlock: currentBlock - 1, // Checkpoint is one block before start
+        votes: 1n, // Non-zero voting weight
+      };
+      await mockERC20Strategy.setCheckpoints(_voterAddress, [checkpoint]);
 
       const calldata = mockERC20Strategy.interface.encodeFunctionData('vote', [
         _proposalId,
@@ -198,27 +207,345 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       void expect(invalidResult).to.be.false;
     });
 
-    it('Should return false if user has zero voting weight', async function () {
-      // First verify the happy path works with non-zero weight
-      const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
-      const validResult = await validator.validateOperation(
-        ethers.ZeroAddress,
-        voter.address,
-        await mockERC20Strategy.getAddress(),
-        calldata,
-      );
-      void expect(validResult).to.be.true;
+    describe('Checkpoint-based voting weight validation', function () {
+      describe('Zero voting weight cases', function () {
+        it('Should return false when user has no checkpoints', async function () {
+          // Get the vote operation setup but override the checkpoint setup
+          const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
 
-      // Now set voting weight to zero
-      await mockERC20Strategy.setVotingWeight(voter.address, proposalId, 0);
+          // Override the checkpoint setup to ensure zero checkpoints
+          await mockERC20Strategy.setCheckpoints(voter.address, []);
 
-      const invalidResult = await validator.validateOperation(
-        ethers.ZeroAddress,
-        voter.address,
-        await mockERC20Strategy.getAddress(),
-        calldata,
-      );
-      void expect(invalidResult).to.be.false;
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.false;
+        });
+
+        it('Should return false when all checkpoints are after proposal start block', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set checkpoints that are all after the proposal start block
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock + 1, // After proposal start
+              votes: 100n,
+            },
+            {
+              fromBlock: proposalPeriod.startBlock + 2, // Even later checkpoint
+              votes: 200n,
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.false;
+        });
+
+        it('Should return false when the relevant pre-proposal checkpoint has zero votes', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set a checkpoint before proposal start but with zero votes
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 1, // Just before proposal start
+              votes: 0n, // Zero voting weight
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.false;
+        });
+      });
+
+      describe('Single checkpoint scenarios', function () {
+        it('Should return true when single checkpoint is before proposal start', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set a single checkpoint before proposal start
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 1, // One block before proposal start
+              votes: 100n,
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+
+        it('Should return true when single checkpoint is exactly at proposal start', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set a single checkpoint exactly at proposal start block
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock, // Same as proposal start block
+              votes: 100n,
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+
+        it('Should return false when single checkpoint is after proposal start', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set a single checkpoint after proposal start block
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock + 1, // One block after proposal start
+              votes: 100n, // Non-zero votes to ensure failure is due to timing
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.false;
+        });
+      });
+
+      describe('Multiple checkpoint scenarios', function () {
+        it('Should use most recent checkpoint before proposal start when multiple exist', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set multiple checkpoints before proposal start with different vote amounts
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 3, // Oldest checkpoint
+              votes: 50n,
+            },
+            {
+              fromBlock: proposalPeriod.startBlock - 2, // Middle checkpoint
+              votes: 0n, // Zero votes - if this was used, validation would fail
+            },
+            {
+              fromBlock: proposalPeriod.startBlock - 1, // Most recent valid checkpoint
+              votes: 100n, // Non-zero votes - this should be used
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+
+        it('Should ignore checkpoints after proposal start', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set checkpoints both before and after proposal start
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 1, // Valid checkpoint before start
+              votes: 0n, // Zero votes - this should be used, causing validation to fail
+            },
+            {
+              fromBlock: proposalPeriod.startBlock + 1, // After proposal start
+              votes: 100n, // Non-zero votes - this should be ignored
+            },
+            {
+              fromBlock: proposalPeriod.startBlock + 2, // Even later checkpoint
+              votes: 200n, // Higher votes - should also be ignored
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.false;
+        });
+
+        it('Should handle checkpoints at exactly proposal start block when other checkpoints exist', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set checkpoints before, at, and after proposal start
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 2, // Earlier checkpoint
+              votes: 0n, // Should be ignored in favor of later checkpoint
+            },
+            {
+              fromBlock: proposalPeriod.startBlock, // Exactly at proposal start
+              votes: 100n, // This should be used for validation
+            },
+            {
+              fromBlock: proposalPeriod.startBlock + 1, // After start
+              votes: 0n, // Should be ignored
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+      });
+
+      describe('Edge cases', function () {
+        it('Should handle maximum uint224 voting weight', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set checkpoint with maximum uint224 value
+          const maxUint224 = 2n ** 224n - 1n;
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: proposalPeriod.startBlock - 1,
+              votes: maxUint224,
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+
+        it('Should handle proposal start at block 0', async function () {
+          const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
+
+          // Override proposal to start at block 0
+          await mockERC20Strategy.setProposalPeriod(proposalId, {
+            startBlock: 0,
+            endBlock: 100,
+          });
+
+          // Set checkpoint at block 0
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: 0,
+              votes: 100n,
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+
+        it('Should handle gaps between checkpoints', async function () {
+          const { calldata, proposalPeriod } = await setupVoteOperation(
+            proposalId,
+            voteTypes.YES,
+            voter.address,
+          );
+
+          // Set checkpoints with large gaps between them
+          await mockERC20Strategy.setCheckpoints(voter.address, [
+            {
+              fromBlock: 0, // Checkpoint at genesis
+              votes: 50n,
+            },
+            {
+              fromBlock: proposalPeriod.startBlock / 2, // Checkpoint halfway between genesis and proposal start
+              votes: 0n,
+            },
+            {
+              fromBlock: proposalPeriod.startBlock - 1, // Checkpoint just before proposal start
+              votes: 100n, // This should be used
+            },
+          ]);
+
+          const isValid = await validator.validateOperation(
+            ethers.ZeroAddress,
+            voter.address,
+            await mockERC20Strategy.getAddress(),
+            calldata,
+          );
+
+          void expect(isValid).to.be.true;
+        });
+      });
     });
 
     it('Should return true for valid vote operation', async function () {
