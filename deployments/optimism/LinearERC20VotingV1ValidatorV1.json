@@ -1,0 +1,140 @@
+{
+  "address": "0xe092963736a584Ad6B3629A0339b418B0A55B48c",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "VERSION",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getVersion",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "lightAccountOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "votingContract",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callData",
+          "type": "bytes"
+        }
+      ],
+      "name": "validateOperation",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x37bbcf920315813054e4767de07864b65c86b49196f605a87ed1c063b7d89869",
+  "receipt": {
+    "to": null,
+    "from": "0xb5Ca125166C1987A35EDD550E16846Fa1e1D9bB3",
+    "contractAddress": "0xe092963736a584Ad6B3629A0339b418B0A55B48c",
+    "transactionIndex": 21,
+    "gasUsed": "504133",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x3025723d9b6b08588e68cd6eec8e2607dcd6132e14cbfdfc30c79ac90f523628",
+    "transactionHash": "0x37bbcf920315813054e4767de07864b65c86b49196f605a87ed1c063b7d89869",
+    "logs": [],
+    "blockNumber": 134693682,
+    "cumulativeGasUsed": "6085170",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "402a67e06595e77085b5b2729c7fa191",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"VERSION\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getVersion\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"lightAccountOwner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"votingContract\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"}],\"name\":\"validateOperation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Validates vote operations for LinearERC20VotingV1 to ensure they will succeed\",\"kind\":\"dev\",\"methods\":{\"getVersion()\":{\"details\":\"Returns the version number of this contract implementation Inheriting contracts MUST override this function.\"},\"supportsInterface(bytes4)\":{\"details\":\"ERC165 interface support\"},\"validateOperation(address,address,address,bytes)\":{\"details\":\"Validates if a vote operation will succeed\",\"params\":{\"callData\":\"The encoded vote function call\",\"lightAccountOwner\":\"The account attempting to vote\",\"votingContract\":\"The address of the voting contract\"},\"returns\":{\"_0\":\"isValid True if the vote operation will succeed\"}}},\"title\":\"LinearERC20VotingV1ValidatorV1\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/account-abstraction/validators/LinearERC20VotingV1ValidatorV1.sol\":\"LinearERC20VotingV1ValidatorV1\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/introspection/ERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./IERC165.sol\\\";\\n\\n/**\\n * @dev Implementation of the {IERC165} interface.\\n *\\n * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check\\n * for the additional interface id that will be supported. For example:\\n *\\n * ```solidity\\n * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);\\n * }\\n * ```\\n *\\n * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.\\n */\\nabstract contract ERC165 is IERC165 {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IERC165).interfaceId;\\n    }\\n}\\n\",\"keccak256\":\"0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[EIP].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\"},\"contracts/Version.sol\":{\"content\":\"// SPDX-License-Identifier: AGPL-3.0\\npragma solidity ^0.8.19;\\n\\nimport {IVersion} from \\\"./interfaces/IVersion.sol\\\";\\nimport {ERC165} from \\\"@openzeppelin/contracts/utils/introspection/ERC165.sol\\\";\\n\\n/**\\n * @title Version\\n * @dev Abstract contract providing standardized contract identification\\n *\\n * Inheriting contracts MUST implement:\\n * - getVersion()\\n */\\nabstract contract Version is IVersion, ERC165 {\\n    /**\\n     * @dev Returns the version number of this contract implementation\\n     * Inheriting contracts MUST override this function.\\n     */\\n    function getVersion() public view virtual returns (uint16);\\n\\n    function supportsInterface(\\n        bytes4 interfaceId\\n    ) public view virtual override returns (bool) {\\n        return\\n            interfaceId == type(IVersion).interfaceId ||\\n            super.supportsInterface(interfaceId);\\n    }\\n}\\n\",\"keccak256\":\"0x55640a0bdf0e6bf70198ae10a91a148a53fe138d98ba8d80124dfeab2011bbcc\",\"license\":\"AGPL-3.0\"},\"contracts/account-abstraction/validators/LinearERC20VotingV1ValidatorV1.sol\":{\"content\":\"// SPDX-License-Identifier: AGPL-3.0\\npragma solidity ^0.8.28;\\n\\nimport {IFunctionValidator} from \\\"../../interfaces/account-abstraction/IFunctionValidator.sol\\\";\\nimport {Version} from \\\"../../Version.sol\\\";\\nimport {ERC165} from \\\"@openzeppelin/contracts/utils/introspection/ERC165.sol\\\";\\nimport {IERC165} from \\\"@openzeppelin/contracts/utils/introspection/IERC165.sol\\\";\\n\\ninterface ILinearERC20VotingV1 {\\n    function vote(uint32 proposalId, uint8 voteType) external;\\n\\n    function hasVoted(\\n        uint32 proposalId,\\n        address account\\n    ) external view returns (bool);\\n\\n    function getProposalPeriod(\\n        uint32 proposalId\\n    ) external view returns (uint32, uint32);\\n\\n    function votingPeriodEnded(uint32 proposalId) external view returns (bool);\\n\\n    function governanceToken() external view returns (address);\\n}\\n\\nstruct Checkpoint {\\n    uint32 fromBlock;\\n    uint224 votes;\\n}\\n\\ninterface IERC20Votes {\\n    function numCheckpoints(address account) external view returns (uint32);\\n\\n    function checkpoints(\\n        address account,\\n        uint32 pos\\n    ) external view returns (Checkpoint memory);\\n}\\n\\n/**\\n * @title LinearERC20VotingV1ValidatorV1\\n * @dev Validates vote operations for LinearERC20VotingV1 to ensure they will succeed\\n */\\ncontract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {\\n    uint16 public constant VERSION = 1;\\n\\n    /**\\n     * @dev Validates if a vote operation will succeed\\n     * @param lightAccountOwner The account attempting to vote\\n     * @param votingContract The address of the voting contract\\n     * @param callData The encoded vote function call\\n     * @return isValid True if the vote operation will succeed\\n     */\\n    function validateOperation(\\n        address,\\n        address lightAccountOwner,\\n        address votingContract,\\n        bytes calldata callData\\n    ) external view returns (bool) {\\n        // confirm here that the calldata selector is correct (`vote(uint32,uint8)`)?\\n        if (bytes4(callData) != ILinearERC20VotingV1.vote.selector) {\\n            return false;\\n        }\\n\\n        // Decode vote parameters from callData\\n        // vote(uint32 _proposalId, uint8 _voteType)\\n        (uint32 proposalId, uint8 voteType) = abi.decode(\\n            callData[4:], // skip selector\\n            (uint32, uint8)\\n        );\\n\\n        // Check if vote type is valid (NO=0, YES=1, ABSTAIN=2)\\n        if (voteType > 2) {\\n            return false;\\n        }\\n\\n        // get the proposal start and end blocks to determine if the proposal exists\\n        (uint32 startBlock, uint32 endBlock) = ILinearERC20VotingV1(\\n            votingContract\\n        ).getProposalPeriod(proposalId);\\n\\n        // Check if proposal exists (will have non-zero endBlock if it exists)\\n        if (endBlock == 0) {\\n            return false;\\n        }\\n\\n        // Check if voting period has ended\\n        if (\\n            ILinearERC20VotingV1(votingContract).votingPeriodEnded(proposalId)\\n        ) {\\n            return false;\\n        }\\n\\n        // check if user has already voted\\n        if (\\n            ILinearERC20VotingV1(votingContract).hasVoted(\\n                proposalId,\\n                lightAccountOwner\\n            )\\n        ) {\\n            return false;\\n        }\\n\\n        // get the governance token\\n        IERC20Votes governanceToken = IERC20Votes(\\n            ILinearERC20VotingV1(votingContract).governanceToken()\\n        );\\n\\n        // get the number of checkpoints for the voter\\n        uint32 numCheckpoints = governanceToken.numCheckpoints(\\n            lightAccountOwner\\n        );\\n\\n        // if there are no checkpoints, user has no voting weight\\n        if (numCheckpoints == 0) {\\n            return false;\\n        }\\n\\n        // Iterate backwards through checkpoints to find the relevant one for startBlock.\\n        // This is potentially more efficient than binary search if startBlock is recent.\\n        uint256 votingWeight = 0;\\n        for (uint256 i = numCheckpoints; i > 0; i--) {\\n            // Checkpoint indices are 0-based, loop index 'i' is 1-based count.\\n            Checkpoint memory checkpoint = governanceToken.checkpoints(\\n                lightAccountOwner,\\n                uint32(i - 1)\\n            );\\n\\n            // If the checkpoint block is less than or equal to the proposal start block,\\n            // we've found the relevant voting weight.\\n            if (checkpoint.fromBlock <= startBlock) {\\n                votingWeight = checkpoint.votes;\\n                break; // Exit loop once the correct checkpoint is found\\n            }\\n        }\\n        // If the loop completes without finding a checkpoint where fromBlock <= startBlock,\\n        // it means all checkpoints are after startBlock, so the weight at startBlock was 0.\\n        // votingWeight remains 0 in this case.\\n\\n        // Check if the user had any voting weight at the proposal start block\\n        if (votingWeight == 0) {\\n            return false;\\n        }\\n\\n        // All checks passed\\n        return true;\\n    }\\n\\n    function getVersion() public pure override returns (uint16) {\\n        return VERSION;\\n    }\\n\\n    /**\\n     * @dev ERC165 interface support\\n     */\\n    function supportsInterface(\\n        bytes4 interfaceId\\n    ) public view override(ERC165, Version, IFunctionValidator) returns (bool) {\\n        return\\n            interfaceId == type(IFunctionValidator).interfaceId ||\\n            super.supportsInterface(interfaceId);\\n    }\\n}\\n\",\"keccak256\":\"0x560a7863c11592e7f78500f2f553fecfb05736a7d475b00a4452786a0adff0e6\",\"license\":\"AGPL-3.0\"},\"contracts/interfaces/IVersion.sol\":{\"content\":\"// SPDX-License-Identifier: AGPL-3.0\\npragma solidity ^0.8.19;\\n\\ninterface IVersion {\\n    function getVersion() external view returns (uint16);\\n}\\n\",\"keccak256\":\"0x03f8d9e49e53c7219f8cff3ee347989573db69ba10d7cbf2ac8d7de426d8ee9e\",\"license\":\"AGPL-3.0\"},\"contracts/interfaces/account-abstraction/IFunctionValidator.sol\":{\"content\":\"// SPDX-License-Identifier: AGPL-3.0\\npragma solidity ^0.8.28;\\n\\ninterface IFunctionValidator {\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n\\n    function validateOperation(\\n        address userOpSender,\\n        address lightAccountOwner,\\n        address target,\\n        bytes calldata callData\\n    ) external view returns (bool isValid);\\n}\\n\",\"keccak256\":\"0x54957abf5793487399f6b1d94aca433257fe44320e9a4e35491f49ea4eaeb728\",\"license\":\"AGPL-3.0\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506108298061001f6000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806301ffc9a7146100515780630d8e6e2c14610079578063d7c7141c1461008f578063ffa1ad74146100a2575b600080fd5b61006461005f366004610506565b6100aa565b60405190151581526020015b60405180910390f35b60015b60405161ffff9091168152602001610070565b61006461009d36600461054f565b6100d5565b61007c600181565b60006001600160e01b0319821663d638ddbb60e01b14806100cf57506100cf826104d1565b92915050565b6000634bb3fdb960e11b6100e983856105f9565b6001600160e01b03191614610100575060006104c8565b6000806101108460048188610631565b81019061011d919061066d565b9150915060028160ff161115610138576000925050506104c8565b6040516320f2e20960e11b815263ffffffff8316600482015260009081906001600160a01b038916906341e5c412906024016040805180830381865afa158015610186573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101aa91906106ac565b915091508063ffffffff166000036101c95760009450505050506104c8565b60405163b2958b3160e01b815263ffffffff851660048201526001600160a01b0389169063b2958b3190602401602060405180830381865afa158015610213573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023791906106db565b156102495760009450505050506104c8565b604051631a78456760e31b815263ffffffff851660048201526001600160a01b038a8116602483015289169063d3c22b3890604401602060405180830381865afa15801561029b573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102bf91906106db565b156102d15760009450505050506104c8565b6000886001600160a01b031663f96dae0a6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610311573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061033591906106fd565b604051636fcfff4560e01b81526001600160a01b038c81166004830152919250600091831690636fcfff4590602401602060405180830381865afa158015610381573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103a5919061071a565b90508063ffffffff166000036103c457600096505050505050506104c8565b600063ffffffff82165b80156104a35760006001600160a01b03851663f1127ed88f6103f160018661074d565b6040516001600160e01b031960e085901b1681526001600160a01b03909216600483015263ffffffff1660248201526044016040805180830381865afa15801561043f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104639190610760565b90508663ffffffff16816000015163ffffffff161161049057602001516001600160e01b031691506104a3565b508061049b816107dc565b9150506103ce565b50806000036104bc5760009750505050505050506104c8565b60019750505050505050505b95945050505050565b60006001600160e01b031982166303639b8b60e21b14806100cf57506301ffc9a760e01b6001600160e01b03198316146100cf565b60006020828403121561051857600080fd5b81356001600160e01b03198116811461053057600080fd5b9392505050565b6001600160a01b038116811461054c57600080fd5b50565b60008060008060006080868803121561056757600080fd5b853561057281610537565b9450602086013561058281610537565b9350604086013561059281610537565b9250606086013567ffffffffffffffff8111156105ae57600080fd5b8601601f810188136105bf57600080fd5b803567ffffffffffffffff8111156105d657600080fd5b8860208284010111156105e857600080fd5b959894975092955050506020019190565b80356001600160e01b0319811690600484101561062a576001600160e01b0319600485900360031b81901b82161691505b5092915050565b6000808585111561064157600080fd5b8386111561064e57600080fd5b5050820193919092039150565b63ffffffff8116811461054c57600080fd5b6000806040838503121561068057600080fd5b823561068b8161065b565b9150602083013560ff811681146106a157600080fd5b809150509250929050565b600080604083850312156106bf57600080fd5b82516106ca8161065b565b60208401519092506106a18161065b565b6000602082840312156106ed57600080fd5b8151801515811461053057600080fd5b60006020828403121561070f57600080fd5b815161053081610537565b60006020828403121561072c57600080fd5b81516105308161065b565b634e487b7160e01b600052601160045260246000fd5b818103818111156100cf576100cf610737565b6000604082840312801561077357600080fd5b600090506040516040810181811067ffffffffffffffff821117156107a657634e487b7160e01b83526041600452602483fd5b60405283516107b48161065b565b815260208401516001600160e01b03811681146107cf578283fd5b6020820152949350505050565b6000816107eb576107eb610737565b50600019019056fea264697066735822122041bb84cfbb73b56c8a4dcf4ce7b4949cd2601a21496e9f40718152e87ad06b7364736f6c634300081c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c806301ffc9a7146100515780630d8e6e2c14610079578063d7c7141c1461008f578063ffa1ad74146100a2575b600080fd5b61006461005f366004610506565b6100aa565b60405190151581526020015b60405180910390f35b60015b60405161ffff9091168152602001610070565b61006461009d36600461054f565b6100d5565b61007c600181565b60006001600160e01b0319821663d638ddbb60e01b14806100cf57506100cf826104d1565b92915050565b6000634bb3fdb960e11b6100e983856105f9565b6001600160e01b03191614610100575060006104c8565b6000806101108460048188610631565b81019061011d919061066d565b9150915060028160ff161115610138576000925050506104c8565b6040516320f2e20960e11b815263ffffffff8316600482015260009081906001600160a01b038916906341e5c412906024016040805180830381865afa158015610186573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101aa91906106ac565b915091508063ffffffff166000036101c95760009450505050506104c8565b60405163b2958b3160e01b815263ffffffff851660048201526001600160a01b0389169063b2958b3190602401602060405180830381865afa158015610213573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023791906106db565b156102495760009450505050506104c8565b604051631a78456760e31b815263ffffffff851660048201526001600160a01b038a8116602483015289169063d3c22b3890604401602060405180830381865afa15801561029b573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102bf91906106db565b156102d15760009450505050506104c8565b6000886001600160a01b031663f96dae0a6040518163ffffffff1660e01b8152600401602060405180830381865afa158015610311573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061033591906106fd565b604051636fcfff4560e01b81526001600160a01b038c81166004830152919250600091831690636fcfff4590602401602060405180830381865afa158015610381573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103a5919061071a565b90508063ffffffff166000036103c457600096505050505050506104c8565b600063ffffffff82165b80156104a35760006001600160a01b03851663f1127ed88f6103f160018661074d565b6040516001600160e01b031960e085901b1681526001600160a01b03909216600483015263ffffffff1660248201526044016040805180830381865afa15801561043f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906104639190610760565b90508663ffffffff16816000015163ffffffff161161049057602001516001600160e01b031691506104a3565b508061049b816107dc565b9150506103ce565b50806000036104bc5760009750505050505050506104c8565b60019750505050505050505b95945050505050565b60006001600160e01b031982166303639b8b60e21b14806100cf57506301ffc9a760e01b6001600160e01b03198316146100cf565b60006020828403121561051857600080fd5b81356001600160e01b03198116811461053057600080fd5b9392505050565b6001600160a01b038116811461054c57600080fd5b50565b60008060008060006080868803121561056757600080fd5b853561057281610537565b9450602086013561058281610537565b9350604086013561059281610537565b9250606086013567ffffffffffffffff8111156105ae57600080fd5b8601601f810188136105bf57600080fd5b803567ffffffffffffffff8111156105d657600080fd5b8860208284010111156105e857600080fd5b959894975092955050506020019190565b80356001600160e01b0319811690600484101561062a576001600160e01b0319600485900360031b81901b82161691505b5092915050565b6000808585111561064157600080fd5b8386111561064e57600080fd5b5050820193919092039150565b63ffffffff8116811461054c57600080fd5b6000806040838503121561068057600080fd5b823561068b8161065b565b9150602083013560ff811681146106a157600080fd5b809150509250929050565b600080604083850312156106bf57600080fd5b82516106ca8161065b565b60208401519092506106a18161065b565b6000602082840312156106ed57600080fd5b8151801515811461053057600080fd5b60006020828403121561070f57600080fd5b815161053081610537565b60006020828403121561072c57600080fd5b81516105308161065b565b634e487b7160e01b600052601160045260246000fd5b818103818111156100cf576100cf610737565b6000604082840312801561077357600080fd5b600090506040516040810181811067ffffffffffffffff821117156107a657634e487b7160e01b83526041600452602483fd5b60405283516107b48161065b565b815260208401516001600160e01b03811681146107cf578283fd5b6020820152949350505050565b6000816107eb576107eb610737565b50600019019056fea264697066735822122041bb84cfbb73b56c8a4dcf4ce7b4949cd2601a21496e9f40718152e87ad06b7364736f6c634300081c0033",
+  "devdoc": {
+    "details": "Validates vote operations for LinearERC20VotingV1 to ensure they will succeed",
+    "kind": "dev",
+    "methods": {
+      "getVersion()": {
+        "details": "Returns the version number of this contract implementation Inheriting contracts MUST override this function."
+      },
+      "supportsInterface(bytes4)": {
+        "details": "ERC165 interface support"
+      },
+      "validateOperation(address,address,address,bytes)": {
+        "details": "Validates if a vote operation will succeed",
+        "params": {
+          "callData": "The encoded vote function call",
+          "lightAccountOwner": "The account attempting to vote",
+          "votingContract": "The address of the voting contract"
+        },
+        "returns": {
+          "_0": "isValid True if the vote operation will succeed"
+        }
+      }
+    },
+    "title": "LinearERC20VotingV1ValidatorV1",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
