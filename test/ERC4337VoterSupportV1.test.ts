@@ -108,4 +108,63 @@ describe('ERC4337VoterSupportV1', () => {
       });
     });
   });
+
+  describe('voting period ended', () => {
+    it('should initially return false for any proposal', async () => {
+      const proposalId = 1;
+      const result = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId);
+      void expect(result).to.be.false;
+    });
+
+    it('should be able to set and get voting period ended status', async () => {
+      const proposalId = 1;
+
+      // Initially false
+      let result = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId);
+      void expect(result).to.be.false;
+
+      // Set to true
+      await concreteERC4337VoterSupport.setVotingPeriodEnded(proposalId, true);
+      result = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId);
+      void expect(result).to.be.true;
+
+      // Set back to false
+      await concreteERC4337VoterSupport.setVotingPeriodEnded(proposalId, false);
+      result = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId);
+      void expect(result).to.be.false;
+    });
+
+    it('should maintain separate states for different proposal IDs', async () => {
+      const proposalId1 = 1;
+      const proposalId2 = 2;
+
+      // Set first proposal to ended
+      await concreteERC4337VoterSupport.setVotingPeriodEnded(proposalId1, true);
+
+      // First proposal should be ended
+      const result1 = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId1);
+      void expect(result1).to.be.true;
+
+      // Second proposal should still be false
+      const result2 = await concreteERC4337VoterSupport.votingPeriodEnded(proposalId2);
+      void expect(result2).to.be.false;
+    });
+
+    it('should be accessible by any address', async () => {
+      const proposalId = 1;
+
+      await concreteERC4337VoterSupport.setVotingPeriodEnded(proposalId, true);
+
+      // Test access from different accounts
+      const userResult = await concreteERC4337VoterSupport
+        .connect(user)
+        .votingPeriodEnded(proposalId);
+      void expect(userResult).to.be.true;
+
+      const ownerResult = await concreteERC4337VoterSupport
+        .connect(owner)
+        .votingPeriodEnded(proposalId);
+      void expect(ownerResult).to.be.true;
+    });
+  });
 });

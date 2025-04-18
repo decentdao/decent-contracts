@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { mine, mineUpTo, time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
+import type { TransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   IERC165__factory,
@@ -672,17 +673,6 @@ describe('LinearERC721VotingV1', () => {
       expect(abstainVotes).to.equal(1);
     });
 
-    it('should not allow voting after voting period ends', async () => {
-      // Mine blocks to advance past the voting period
-      await mine(VOTING_PERIOD + 1);
-
-      await expect(
-        linearERC721Voting
-          .connect(tokenHolder1)
-          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder1Ids[0]]),
-      ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
-    });
-
     it('should revert on invalid vote type', async () => {
       // Valid vote types are 0, 1, 2 (NO, YES, ABSTAIN)
       const invalidVoteType = 3;
@@ -692,6 +682,69 @@ describe('LinearERC721VotingV1', () => {
           .connect(tokenHolder1)
           .vote(proposalId, invalidVoteType, [await mockNFT1.getAddress()], [tokenHolder1Ids[0]]),
       ).to.be.revertedWithCustomError(linearERC721Voting, 'InvalidVote');
+    });
+
+    describe('voting period ended', () => {
+      let noVotesBefore: bigint;
+      let yesVotesBefore: bigint;
+      let abstainVotesBefore: bigint;
+      let initialVoteTx: TransactionResponse;
+
+      beforeEach(async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // Get initial vote counts
+        [noVotesBefore, yesVotesBefore, abstainVotesBefore, , ,] =
+          await linearERC721Voting.getProposalVotes(proposalId);
+
+        // First vote to mark the period as ended
+        initialVoteTx = await linearERC721Voting
+          .connect(tokenHolder1)
+          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder1Ids[0]]);
+      });
+
+      it('should handle first vote after voting period ends correctly', async () => {
+        // Verify event emission
+        await expect(initialVoteTx).to.emit(linearERC721Voting, 'VotingPeriodEnded');
+
+        // Verify no votes were actually counted
+        const [noVotesAfter, yesVotesAfter, abstainVotesAfter, , ,] =
+          await linearERC721Voting.getProposalVotes(proposalId);
+        expect(noVotesAfter).to.equal(noVotesBefore, 'NO votes should not change');
+        expect(yesVotesAfter).to.equal(yesVotesBefore, 'YES votes should not change');
+        expect(abstainVotesAfter).to.equal(abstainVotesBefore, 'ABSTAIN votes should not change');
+
+        // Verify the voting period is marked as ended
+        void expect(await linearERC721Voting.votingPeriodEnded(proposalId)).to.be.true;
+      });
+
+      it('should revert on votes after voting period is marked as ended', async () => {
+        // Verify subsequent votes revert
+        await expect(
+          linearERC721Voting
+            .connect(tokenHolder2)
+            .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]),
+        ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
+
+        await expect(
+          linearERC721Voting
+            .connect(tokenHolder3)
+            .vote(proposalId, VoteType.NO, [await mockNFT2.getAddress()], [tokenHolder3Ids[0]]),
+        ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
+
+        // Verify even the same account that marked it as ended can't vote again
+        await expect(
+          linearERC721Voting
+            .connect(tokenHolder1)
+            .vote(
+              proposalId,
+              VoteType.ABSTAIN,
+              [await mockNFT1.getAddress()],
+              [tokenHolder1Ids[1]],
+            ),
+        ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
+      });
     });
   });
 
@@ -1102,11 +1155,17 @@ describe('LinearERC721VotingV1', () => {
       // Advance time to just after voting end
       await mineUpTo(endBlock + 1n);
 
-      // Try to vote after voting ended - should revert
+      // First vote attempt after period ends should mark it as ended and return
+      const tx = await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]);
+      await expect(tx).to.emit(linearERC721Voting, 'VotingPeriodEnded');
+
+      // Subsequent vote attempts should revert
       await expect(
         linearERC721Voting
-          .connect(tokenHolder1)
-          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder1Ids[1]]),
+          .connect(tokenHolder3)
+          .vote(proposalId, VoteType.YES, [await mockNFT2.getAddress()], [tokenHolder3Ids[0]]),
       ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
     });
 
@@ -1164,12 +1223,72 @@ describe('LinearERC721VotingV1', () => {
       // Mine up to the exact end block number
       await mineUpTo(endBlock);
 
-      // Should no longer be able to vote at exactly the end timestamp
+      // First vote attempt after period ends should mark it as ended and return
+      const tx = await linearERC721Voting
+        .connect(tokenHolder2)
+        .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]);
+      await expect(tx).to.emit(linearERC721Voting, 'VotingPeriodEnded');
+
+      // Subsequent vote attempts should revert
       await expect(
         linearERC721Voting
-          .connect(tokenHolder1)
-          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder1Ids[1]]),
+          .connect(tokenHolder3)
+          .vote(proposalId, VoteType.YES, [await mockNFT2.getAddress()], [tokenHolder3Ids[0]]),
       ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
+    });
+
+    describe('voting period ended events', () => {
+      it('should emit VotingPeriodEnded event with correct parameters', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // Get the voting end block
+        const [, , , , endBlock] = await linearERC721Voting.getProposalVotes(proposalId);
+
+        // First vote attempt after period ends should emit event with correct parameters
+        const currentBlock = await ethers.provider.getBlockNumber();
+        const tx = await linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]);
+
+        await expect(tx)
+          .to.emit(linearERC721Voting, 'VotingPeriodEnded')
+          .withArgs(proposalId, endBlock, currentBlock + 1);
+      });
+
+      it('should only emit VotingPeriodEnded event once', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // First vote attempt should emit event
+        const tx1 = await linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]);
+        await expect(tx1).to.emit(linearERC721Voting, 'VotingPeriodEnded');
+
+        // Subsequent vote attempts should not emit event, just revert
+        await expect(
+          linearERC721Voting
+            .connect(tokenHolder3)
+            .vote(proposalId, VoteType.YES, [await mockNFT2.getAddress()], [tokenHolder3Ids[0]]),
+        ).to.be.revertedWithCustomError(linearERC721Voting, 'VotingEnded');
+      });
+
+      it('should update votingPeriodEnded state after emitting event', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // votingPeriodEnded should initially be false
+        void expect(await linearERC721Voting.votingPeriodEnded(proposalId)).to.be.false;
+
+        // First vote attempt after period ends should update state
+        await linearERC721Voting
+          .connect(tokenHolder2)
+          .vote(proposalId, VoteType.YES, [await mockNFT1.getAddress()], [tokenHolder2Ids[0]]);
+
+        // Should now be true
+        void expect(await linearERC721Voting.votingPeriodEnded(proposalId)).to.be.true;
+      });
     });
   });
 

@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { mine, mineUpTo } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
+import type { TransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   IERC165__factory,
@@ -342,13 +343,56 @@ describe('LinearERC20VotingV1', () => {
       ).to.be.revertedWithCustomError(linearERC20Voting, 'AlreadyVoted');
     });
 
-    it('should not allow voting after voting period ends', async () => {
-      // Mine blocks to advance past the voting period
-      await mine(VOTING_PERIOD + 1);
+    describe('voting period ended', () => {
+      let noVotesBefore: bigint;
+      let yesVotesBefore: bigint;
+      let abstainVotesBefore: bigint;
+      let initialVoteTx: TransactionResponse;
 
-      await expect(
-        linearERC20Voting.connect(tokenHolder1).vote(proposalId, VoteType.YES),
-      ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+      beforeEach(async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // Get initial vote counts
+        [noVotesBefore, yesVotesBefore, abstainVotesBefore, , ,] =
+          await linearERC20Voting.getProposalVotes(proposalId);
+
+        // First vote to mark the period as ended
+        initialVoteTx = await linearERC20Voting
+          .connect(tokenHolder1)
+          .vote(proposalId, VoteType.YES);
+      });
+
+      it('should handle first vote after voting period ends correctly', async () => {
+        // Verify event emission
+        await expect(initialVoteTx).to.emit(linearERC20Voting, 'VotingPeriodEnded');
+
+        // Verify no votes were actually counted
+        const [noVotesAfter, yesVotesAfter, abstainVotesAfter, , ,] =
+          await linearERC20Voting.getProposalVotes(proposalId);
+        expect(noVotesAfter).to.equal(noVotesBefore, 'NO votes should not change');
+        expect(yesVotesAfter).to.equal(yesVotesBefore, 'YES votes should not change');
+        expect(abstainVotesAfter).to.equal(abstainVotesBefore, 'ABSTAIN votes should not change');
+
+        // Verify the voting period is marked as ended
+        void expect(await linearERC20Voting.votingPeriodEnded(proposalId)).to.be.true;
+      });
+
+      it('should revert on votes after voting period is marked as ended', async () => {
+        // Verify subsequent votes revert
+        await expect(
+          linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES),
+        ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+
+        await expect(
+          linearERC20Voting.connect(tokenHolder3).vote(proposalId, VoteType.NO),
+        ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+
+        // Verify even the same account that marked it as ended can't vote again
+        await expect(
+          linearERC20Voting.connect(tokenHolder1).vote(proposalId, VoteType.ABSTAIN),
+        ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+      });
     });
 
     it('should revert on invalid vote type', async () => {
@@ -632,9 +676,13 @@ describe('LinearERC20VotingV1', () => {
       // Advance block to just after voting end
       await mineUpTo(endBlock + 1n);
 
-      // Try to vote after voting ended - should revert
+      // First vote attempt after period ends should mark it as ended and return
+      const tx = await linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES);
+      await expect(tx).to.emit(linearERC20Voting, 'VotingPeriodEnded');
+
+      // Subsequent vote attempts should revert
       await expect(
-        linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES),
+        linearERC20Voting.connect(tokenHolder3).vote(proposalId, VoteType.YES),
       ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
     });
 
@@ -699,10 +747,60 @@ describe('LinearERC20VotingV1', () => {
       // Advance to end block
       await mineUpTo(endBlock);
 
-      // Should no longer be able to vote at exactly the end block
+      // First vote attempt after period ends should mark it as ended and return
+      const tx = await linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES);
+      await expect(tx).to.emit(linearERC20Voting, 'VotingPeriodEnded');
+
+      // Subsequent vote attempts should revert
       await expect(
-        linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES),
+        linearERC20Voting.connect(tokenHolder3).vote(proposalId, VoteType.YES),
       ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+    });
+
+    describe('voting period ended events', () => {
+      it('should emit VotingPeriodEnded event with correct parameters', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // Get the voting end block
+        const [, , , , endBlock] = await linearERC20Voting.getProposalVotes(proposalId);
+
+        // First vote attempt after period ends should emit event with correct parameters
+        const currentBlock = await ethers.provider.getBlockNumber();
+        const tx = await linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES);
+
+        await expect(tx)
+          .to.emit(linearERC20Voting, 'VotingPeriodEnded')
+          .withArgs(proposalId, endBlock, currentBlock + 1);
+      });
+
+      it('should only emit VotingPeriodEnded event once', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // First vote attempt should emit event
+        const tx1 = await linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES);
+        await expect(tx1).to.emit(linearERC20Voting, 'VotingPeriodEnded');
+
+        // Subsequent vote attempts should not emit event, just revert
+        await expect(
+          linearERC20Voting.connect(tokenHolder3).vote(proposalId, VoteType.YES),
+        ).to.be.revertedWithCustomError(linearERC20Voting, 'VotingEnded');
+      });
+
+      it('should update votingPeriodEnded state after emitting event', async () => {
+        // Mine blocks to advance past the voting period
+        await mine(VOTING_PERIOD + 1);
+
+        // votingPeriodEnded should initially be false
+        void expect(await linearERC20Voting.votingPeriodEnded(proposalId)).to.be.false;
+
+        // First vote attempt after period ends should update state
+        await linearERC20Voting.connect(tokenHolder2).vote(proposalId, VoteType.YES);
+
+        // Should now be true
+        void expect(await linearERC20Voting.votingPeriodEnded(proposalId)).to.be.true;
+      });
     });
   });
 
