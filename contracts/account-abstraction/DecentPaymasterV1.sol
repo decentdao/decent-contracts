@@ -28,7 +28,7 @@ contract DecentPaymasterV1 is
     );
     event FunctionValidatorRemoved(address target, bytes4 selector);
 
-    error NotWhitelistedFunction(address target, bytes4 selector);
+    error NoValidatorSet(address target, bytes4 selector);
     error ValidationFailed(address target, bytes4 selector);
     error InvalidValidator();
 
@@ -126,7 +126,7 @@ contract DecentPaymasterV1 is
         // Check if function has a validator
         address validator = _functionValidators[target][selector];
         if (validator == address(0)) {
-            revert NotWhitelistedFunction(target, selector);
+            revert NoValidatorSet(target, selector);
         }
 
         // Extract the inner calldata from the UserOp

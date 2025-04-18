@@ -287,7 +287,7 @@ describe('DecentPaymasterV1', function () {
         decentPaymaster
           .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
           .validatePaymasterUserOp.staticCall(mockUserOp, ethers.ZeroHash, 0),
-      ).to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction');
+      ).to.be.revertedWithCustomError(decentPaymaster, 'NoValidatorSet');
     });
 
     it('Should revert for non-whitelisted function selectors', async function () {
@@ -314,7 +314,7 @@ describe('DecentPaymasterV1', function () {
           .connect(await ethers.getImpersonatedSigner(await entryPoint.getAddress()))
           .validatePaymasterUserOp.staticCall(userOp, ethers.ZeroHash, 0),
       )
-        .to.be.revertedWithCustomError(decentPaymaster, 'NotWhitelistedFunction')
+        .to.be.revertedWithCustomError(decentPaymaster, 'NoValidatorSet')
         .withArgs(await mockTarget.getAddress(), nonWhitelistedSelector);
     });
   });
