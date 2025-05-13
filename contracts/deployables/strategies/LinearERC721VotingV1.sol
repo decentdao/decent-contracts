@@ -110,7 +110,8 @@ contract LinearERC721VotingV1 is
     error InvalidProposal();
     error VotingEnded();
     error InvalidVote();
-    error InvalidTokenAddress();
+    error InvalidTokenAddress(address tokenAddress);
+    error InvalidWeight();
     error NoVotingWeight();
     error TokenAlreadySet();
     error TokenNotSet();
@@ -128,6 +129,7 @@ contract LinearERC721VotingV1 is
      * @param _quorumThreshold Total voting weight required to achieve quorum
      * @param _proposerThreshold Required voting weight to submit proposals
      * @param _basisNumerator The numerator for basis calculation
+     * @param _lightAccountFactory The address of the light account factory
      */
     function initialize(
         address _owner,
@@ -137,7 +139,8 @@ contract LinearERC721VotingV1 is
         uint32 _votingPeriod,
         uint256 _quorumThreshold,
         uint256 _proposerThreshold,
-        uint256 _basisNumerator
+        uint256 _basisNumerator,
+        address _lightAccountFactory
     ) public initializer {
         if (_tokens.length != _weights.length) {
             revert InvalidParams();
@@ -151,6 +154,7 @@ contract LinearERC721VotingV1 is
         }
 
         BaseStrategyV1.initialize(_owner, _proposalInitializer);
+        __ERC4337VoterSupportV1_init(_lightAccountFactory);
 
         _updateQuorumThreshold(_quorumThreshold);
         _updateProposerThreshold(_proposerThreshold);
@@ -402,9 +406,9 @@ contract LinearERC721VotingV1 is
         uint256 _weight
     ) internal virtual {
         if (!IERC721(_tokenAddress).supportsInterface(0x80ac58cd))
-            revert InvalidTokenAddress();
+            revert InvalidTokenAddress(_tokenAddress);
 
-        if (_weight == 0) revert NoVotingWeight();
+        if (_weight == 0) revert InvalidWeight();
 
         if (tokenWeights[_tokenAddress] > 0) revert TokenAlreadySet();
 
@@ -482,6 +486,10 @@ contract LinearERC721VotingV1 is
                 revert IdAlreadyVoted(tokenId);
             }
 
+            if (tokenWeights[tokenAddress] == 0) {
+                revert InvalidTokenAddress(tokenAddress);
+            }
+
             weight += tokenWeights[tokenAddress];
             proposalVotes[_proposalId].hasVoted[tokenAddress][tokenId] = true;
             unchecked {
@@ -495,7 +503,18 @@ contract LinearERC721VotingV1 is
 
         if (proposal.votingEndTimestamp == 0) revert InvalidProposal();
 
-        if (block.timestamp > proposal.votingEndTimestamp) revert VotingEnded();
+        if (block.timestamp > proposal.votingEndTimestamp) {
+            if (!_votingPeriodEnded[_proposalId]) {
+                _votingPeriodEnded[_proposalId] = true;
+                emit VotingPeriodEnded(
+                    _proposalId,
+                    proposal.votingEndTimestamp,
+                    block.timestamp
+                );
+                return;
+            }
+            revert VotingEnded();
+        }
 
         if (_voteType == uint8(VoteType.NO)) {
             proposal.noVotes += weight;

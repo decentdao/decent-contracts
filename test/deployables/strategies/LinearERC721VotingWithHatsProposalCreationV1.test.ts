@@ -39,6 +39,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
   let tokenHolder1: SignerWithAddress;
   let hatWearer: SignerWithAddress;
   let nonHatWearer: SignerWithAddress;
+  let lightAccountFactoryMock: SignerWithAddress;
 
   // Contracts
   let linearERC721VotingWithHatsProposalCreationImplementation: LinearERC721VotingWithHatsProposalCreationV1;
@@ -65,21 +66,27 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
     azoriusAddr: string,
     hatsContract: MockHats,
     initialWhitelistedHats: bigint[],
+    lightAccountFactoryAddress: string,
   ): Promise<LinearERC721VotingWithHatsProposalCreationV1> {
     // Create the initialization data using the interface
+    const linearVotingParams = {
+      tokens: nftAddresses,
+      weights: nftWeights,
+      azoriusModule: azoriusAddr,
+      votingPeriod: VOTING_PERIOD,
+      quorumThreshold: QUORUM_THRESHOLD,
+      basisNumerator: BASIS_NUMERATOR,
+      lightAccountFactory: lightAccountFactoryAddress,
+    };
+
+    const hatsParams = {
+      hatsContract: await hatsContract.getAddress(),
+      initialWhitelistedHats: initialWhitelistedHats,
+    };
+
     const initializeCalldata = implementation.interface.encodeFunctionData(
-      'initialize(address,address[],uint256[],address,uint32,uint256,uint256,address,uint256[])',
-      [
-        strategyOwner.address,
-        nftAddresses,
-        nftWeights,
-        azoriusAddr,
-        VOTING_PERIOD,
-        QUORUM_THRESHOLD,
-        BASIS_NUMERATOR,
-        await hatsContract.getAddress(),
-        initialWhitelistedHats,
-      ],
+      'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address),(address,uint256[]))',
+      [strategyOwner.address, linearVotingParams, hatsParams],
     );
 
     // Deploy the proxy with owner as the deployer
@@ -96,7 +103,8 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
   }
 
   beforeEach(async () => {
-    [deployer, owner, nonOwner, tokenHolder1, hatWearer, nonHatWearer] = await ethers.getSigners();
+    [deployer, owner, nonOwner, tokenHolder1, hatWearer, nonHatWearer, lightAccountFactoryMock] =
+      await ethers.getSigners();
 
     // Use nonOwner address as a mock azorius address for testing
     azoriusAddress = await nonOwner.getAddress();
@@ -126,6 +134,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
         azoriusAddress,
         mockHats,
         [proposerHatId1, proposerHatId2],
+        lightAccountFactoryMock.address,
       );
   });
 
@@ -165,27 +174,37 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
         expect(whitelistedHats.length).to.equal(2);
         expect(whitelistedHats[0]).to.equal(proposerHatId1);
         expect(whitelistedHats[1]).to.equal(proposerHatId2);
+
+        // Check light account factory address
+        const factoryAddress =
+          await linearERC721VotingWithHatsProposalCreation.lightAccountFactory();
+        expect(factoryAddress).to.equal(lightAccountFactoryMock.address);
       });
 
       it('should not allow reinitialization', async () => {
         const nftAddresses = [await mockNFT1.getAddress(), await mockNFT2.getAddress()];
         const nftWeights = [1, 2];
 
+        const linearVotingParams = {
+          tokens: nftAddresses,
+          weights: nftWeights,
+          azoriusModule: azoriusAddress,
+          votingPeriod: VOTING_PERIOD,
+          quorumThreshold: QUORUM_THRESHOLD,
+          basisNumerator: BASIS_NUMERATOR,
+          lightAccountFactory: lightAccountFactoryMock.address,
+        };
+
+        const hatsParams = {
+          hatsContract: await mockHats.getAddress(),
+          initialWhitelistedHats: [proposerHatId1, proposerHatId2],
+        };
+
         // Create initialization data for a second attempt
         const initializeCalldata =
           linearERC721VotingWithHatsProposalCreationImplementation.interface.encodeFunctionData(
-            'initialize(address,address[],uint256[],address,uint32,uint256,uint256,address,uint256[])',
-            [
-              owner.address,
-              nftAddresses,
-              nftWeights,
-              azoriusAddress,
-              VOTING_PERIOD,
-              QUORUM_THRESHOLD,
-              BASIS_NUMERATOR,
-              await mockHats.getAddress(),
-              [proposerHatId1, proposerHatId2],
-            ],
+            'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address),(address,uint256[]))',
+            [owner.address, linearVotingParams, hatsParams],
           );
 
         // Try to initialize directly through the proxy - should revert

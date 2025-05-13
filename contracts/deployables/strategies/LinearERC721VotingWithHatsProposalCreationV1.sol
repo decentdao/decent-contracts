@@ -15,6 +15,21 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
 {
     uint16 private constant VERSION = 1;
 
+    struct LinearERC721VotingParams {
+        address[] tokens;
+        uint256[] weights;
+        address azoriusModule;
+        uint32 votingPeriod;
+        uint256 quorumThreshold;
+        uint256 basisNumerator;
+        address lightAccountFactory;
+    }
+
+    struct HatsProposalCreationWhitelistParams {
+        address hatsContract;
+        uint256[] initialWhitelistedHats;
+    }
+
     /**
      * @dev Constructor that disables initializers
      */
@@ -26,43 +41,32 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
      * Initializes the contract with its initial parameters.
      *
      * @param _owner The owner of the contract
-     * @param _tokens Array of ERC-721 token addresses that can vote
-     * @param _weights Array of voting weights for each token
-     * @param _azoriusModule The Azorius module address
-     * @param _votingPeriod The voting time period (in blocks)
-     * @param _quorumThreshold Total voting weight required to achieve quorum
-     * @param _basisNumerator The numerator for basis calculation
-     * @param _hatsContract Address of the Hats contract
-     * @param _initialWhitelistedHats Array of initial whitelisted Hat IDs
+     * @param _linearVotingParams Parameters for LinearERC721VotingV1 initialization
+     * @param _hatsParams Parameters for HatsProposalCreationWhitelistV1 initialization
      */
     function initialize(
         address _owner,
-        address[] memory _tokens,
-        uint256[] memory _weights,
-        address _azoriusModule,
-        uint32 _votingPeriod,
-        uint256 _quorumThreshold,
-        uint256 _basisNumerator,
-        address _hatsContract,
-        uint256[] memory _initialWhitelistedHats
+        LinearERC721VotingParams memory _linearVotingParams,
+        HatsProposalCreationWhitelistParams memory _hatsParams
     ) public initializer {
         // Initialize LinearERC721VotingV1
         LinearERC721VotingV1.initialize(
             _owner,
-            _tokens,
-            _weights,
-            _azoriusModule,
-            _votingPeriod,
-            _quorumThreshold,
+            _linearVotingParams.tokens,
+            _linearVotingParams.weights,
+            _linearVotingParams.azoriusModule,
+            _linearVotingParams.votingPeriod,
+            _linearVotingParams.quorumThreshold,
             0, // _proposerThreshold is zero because we only care about the hat check
-            _basisNumerator
+            _linearVotingParams.basisNumerator,
+            _linearVotingParams.lightAccountFactory
         );
 
         // Initialize HatsProposalCreationWhitelistV1
         HatsProposalCreationWhitelistV1.initialize(
             _owner,
-            _hatsContract,
-            _initialWhitelistedHats
+            _hatsParams.hatsContract,
+            _hatsParams.initialWhitelistedHats
         );
     }
 
