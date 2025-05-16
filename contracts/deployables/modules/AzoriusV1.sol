@@ -4,8 +4,6 @@ pragma solidity ^0.8.30;
 import {Version} from "../Version.sol";
 import {IBaseStrategyV1} from "../../interfaces/decent/deployables/IBaseStrategyV1.sol";
 import {IAzoriusV1, Enum} from "../../interfaces/decent/deployables/IAzoriusV1.sol";
-import {ClockMode} from "../../interfaces/decent/ClockMode.sol";
-import {ClockModeLib} from "../../libs/ClockModeLib.sol";
 import {GuardableModule} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -389,14 +387,10 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         if (_proposal.strategy == address(0)) revert InvalidProposal();
 
         IBaseStrategyV1 _strategy = IBaseStrategyV1(_proposal.strategy);
-        ClockMode clockMode = _strategy.getClockMode();
-        uint256 currentPoint = ClockModeLib.getCurrentPoint(clockMode);
+        (, uint256 endTime) = _strategy.getVotingTimestamps(_proposalId);
 
-        (, uint256 votingEndPoint) = _strategy.getProposalVotingPeriodPoints(
-            _proposalId
-        );
-
-        if (currentPoint <= votingEndPoint) {
+        uint256 currentTimestamp = block.timestamp;
+        if (currentTimestamp <= endTime) {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
@@ -405,13 +399,11 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
             // this allows for the potential for on-chain voting for
             // "off-chain" executed decisions
             return ProposalState.EXECUTED;
-        } else if (currentPoint <= votingEndPoint + _proposal.timelockPeriod) {
+        } else if (currentTimestamp <= endTime + _proposal.timelockPeriod) {
             return ProposalState.TIMELOCKED;
         } else if (
-            currentPoint <=
-            votingEndPoint +
-                _proposal.timelockPeriod +
-                _proposal.executionPeriod
+            currentTimestamp <=
+            endTime + _proposal.timelockPeriod + _proposal.executionPeriod
         ) {
             return ProposalState.EXECUTABLE;
         } else {
