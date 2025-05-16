@@ -44,20 +44,12 @@ interface IBaseStrategyV1 {
     function isProposer(address _address) external view returns (bool);
 
     /**
-     * @notice Returns the clock mode used by this strategy instance.
-     * @dev This determines if time-related values are in blocks or timestamps.
-     * @return The ClockMode for the strategy.
-     */
-    function getClockMode() external view returns (ClockMode);
-
-    /**
-     * @notice Returns the start and end points of a proposal's voting period.
-     * @dev Interpretation of the points depends on getClockMode().
+     * @notice Returns the start and end timestamps of a proposal's voting period.
      * @param _proposalId The ID of the proposal.
-     * @return startPoint The start point of the voting period.
-     * @return endPoint The end point of the voting period.
+     * @return startTime The start timestamp of the voting period.
+     * @return endTime The end timestamp of the voting period.
      */
-    function getProposalVotingPeriodPoints(
+    function getVotingTimestamps(
         uint32 _proposalId
-    ) external view returns (uint256 startPoint, uint256 endPoint);
+    ) external view returns (uint48 startTime, uint48 endTime);
 }
