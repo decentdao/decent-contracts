@@ -16,7 +16,6 @@ contract CounterSignV1 is Initializable, ICounterSignV1 {
     address[] private signers;
     mapping(address => string) private entityNames;
     mapping(address => string) private signerPersonalNames;
-    mapping(address => Transaction[]) private signerTransactions;
     mapping(address => bool) public signedAddresses;
 
     Transaction[] private finalAgreementTransactions;
@@ -30,29 +29,17 @@ contract CounterSignV1 is Initializable, ICounterSignV1 {
         (
             address[] memory _signers,
             string[] memory _entityNames,
-            Transaction[][] memory _signerTxs,
             uint256 _expiration,
             string memory _agreementUrl,
             Transaction[] memory _finalTxs
         ) = abi.decode(
                 params,
-                (
-                    address[],
-                    string[],
-                    Transaction[][],
-                    uint256,
-                    string,
-                    Transaction[]
-                )
+                (address[], string[], uint256, string, Transaction[])
             );
 
         require(
             _signers.length == _entityNames.length,
             "Signers and names mismatch"
-        );
-        require(
-            _signers.length == _signerTxs.length,
-            "Signers and transactions mismatch"
         );
 
         signers = _signers;
@@ -65,11 +52,6 @@ contract CounterSignV1 is Initializable, ICounterSignV1 {
         for (uint256 i = 0; i < _signers.length; i++) {
             address signer = _signers[i];
             entityNames[signer] = _entityNames[i];
-
-            Transaction[] memory txs = _signerTxs[i];
-            for (uint256 j = 0; j < txs.length; j++) {
-                signerTransactions[signer].push(txs[j]);
-            }
         }
     }
 
@@ -85,11 +67,6 @@ contract CounterSignV1 is Initializable, ICounterSignV1 {
 
         signedAddresses[msg.sender] = true;
         signerPersonalNames[msg.sender] = name;
-
-        Transaction[] storage txs = signerTransactions[msg.sender];
-        for (uint256 i = 0; i < txs.length; i++) {
-            _executeTransaction(txs[i]);
-        }
     }
 
     function executeAgreement() external override {
