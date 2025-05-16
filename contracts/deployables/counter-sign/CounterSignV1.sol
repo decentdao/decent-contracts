@@ -4,6 +4,10 @@ pragma solidity ^0.8.30;
 import {ICounterSignV1} from "../../interfaces/decent/deployables/ICounterSignV1.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+/*
+Design discussion: https://docs.google.com/document/d/1xp8w25O7CnsMf3cVPX_AZ3XT0k6DaAaWWl50p-VCj9A/edit?usp=sharing
+*/
+
 contract CounterSignV1 is Initializable, ICounterSignV1 {
     string private agreementUrl;
     uint256 private expirationTimestamp;
