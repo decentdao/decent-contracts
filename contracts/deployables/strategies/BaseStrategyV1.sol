@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IBaseStrategyV1} from "../../interfaces/decent/deployables/IBaseStrategyV1.sol";
+import {ClockMode} from "../../interfaces/decent/ClockMode.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -67,10 +68,14 @@ abstract contract BaseStrategyV1 is
     function isProposer(address _address) external view virtual returns (bool);
 
     /** @inheritdoc IBaseStrategyV1*/
-    function votingEndTimestamp(
-        uint32 _proposalId
-    ) external view virtual returns (uint48);
+    function getClockMode() external view virtual returns (ClockMode);
 
+    /** @inheritdoc IBaseStrategyV1*/
+    function getProposalVotingPeriodPoints(
+        uint32 _proposalId
+    ) external view virtual returns (uint256 startPoint, uint256 endPoint);
+
+    /** @inheritdoc ERC165*/
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override returns (bool) {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
+import {ClockMode} from "../ClockMode.sol";
+
 /**
  * The specification for a voting strategy in Azorius.
  *
@@ -42,12 +44,20 @@ interface IBaseStrategyV1 {
     function isProposer(address _address) external view returns (bool);
 
     /**
-     * Returns the absolute timestamp that voting ends on a given Proposal.
-     *
-     * @param _proposalId proposalId to check
-     * @return uint48 timestamp when voting ends on the Proposal
+     * @notice Returns the clock mode used by this strategy instance.
+     * @dev This determines if time-related values are in blocks or timestamps.
+     * @return The ClockMode for the strategy.
      */
-    function votingEndTimestamp(
+    function getClockMode() external view returns (ClockMode);
+
+    /**
+     * @notice Returns the start and end points of a proposal's voting period.
+     * @dev Interpretation of the points depends on getClockMode().
+     * @param _proposalId The ID of the proposal.
+     * @return startPoint The start point of the voting period.
+     * @return endPoint The end point of the voting period.
+     */
+    function getProposalVotingPeriodPoints(
         uint32 _proposalId
-    ) external view returns (uint48);
+    ) external view returns (uint256 startPoint, uint256 endPoint);
 }
