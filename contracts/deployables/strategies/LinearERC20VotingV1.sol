@@ -272,9 +272,8 @@ contract LinearERC20VotingV1 is
         uint32 _proposalId
     ) public view virtual override returns (bool) {
         ProposalVotes storage currentProposalVotes = proposalVotes[_proposalId];
-        uint48 currentTime = uint48(block.timestamp);
 
-        return (currentTime > currentProposalVotes.votingEndTime && // voting period has ended
+        return (block.timestamp > currentProposalVotes.votingEndTime && // voting period has ended
             meetsQuorum(
                 getProposalVotingSupply(_proposalId),
                 currentProposalVotes.yesVotes,
@@ -338,7 +337,7 @@ contract LinearERC20VotingV1 is
 
     function getVotingTimestamps(
         uint32 _proposalId
-    ) public view virtual override returns (uint48 startTime, uint48 endTime) {
+    ) public view virtual override returns (uint48, uint48) {
         return (
             proposalVotes[_proposalId].votingStartTime,
             proposalVotes[_proposalId].votingEndTime
