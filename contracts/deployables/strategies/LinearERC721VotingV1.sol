@@ -352,25 +352,23 @@ contract LinearERC721VotingV1 is
         bytes memory _data
     ) public virtual override onlyProposalInitializer {
         uint32 proposalId = abi.decode(_data, (uint32));
-        uint48 startTime = uint48(block.timestamp);
-        uint48 endTime = startTime + votingPeriod;
+        uint48 votingEndTime = uint48(block.timestamp) + votingPeriod;
 
-        proposalVotes[proposalId].votingStartTime = startTime;
-        proposalVotes[proposalId].votingEndTime = endTime;
+        proposalVotes[proposalId].votingStartTime = uint48(block.timestamp);
+        proposalVotes[proposalId].votingEndTime = votingEndTime;
 
-        emit ProposalInitialized(proposalId, endTime);
+        emit ProposalInitialized(proposalId, votingEndTime);
     }
 
     /** @inheritdoc BaseStrategyV1*/
     function isPassed(
         uint32 _proposalId
     ) public view virtual override returns (bool) {
-        uint48 currentTime = uint48(block.timestamp);
         ProposalVotes storage currentProposal = proposalVotes[_proposalId];
-        return (currentTime > currentProposal.votingEndTime &&
+        return (block.timestamp > currentProposal.votingEndTime && // voting period has ended
             quorumThreshold <=
-            currentProposal.yesVotes + currentProposal.abstainVotes &&
-            meetsBasis(currentProposal.yesVotes, currentProposal.noVotes));
+            currentProposal.yesVotes + currentProposal.abstainVotes && // yes + abstain votes meets the quorum
+            meetsBasis(currentProposal.yesVotes, currentProposal.noVotes)); // yes votes meets the basis
     }
 
     /** @inheritdoc BaseStrategyV1*/
@@ -392,7 +390,7 @@ contract LinearERC721VotingV1 is
 
     function getVotingTimestamps(
         uint32 _proposalId
-    ) public view virtual override returns (uint48 startTime, uint48 endTime) {
+    ) public view virtual override returns (uint48, uint48) {
         return (
             proposalVotes[_proposalId].votingStartTime,
             proposalVotes[_proposalId].votingEndTime
@@ -502,15 +500,13 @@ contract LinearERC721VotingV1 is
 
         if (proposal.votingEndTime == 0) revert InvalidProposal();
 
-        uint48 currentTime = uint48(block.timestamp);
-
-        if (currentTime > proposal.votingEndTime) {
+        if (block.timestamp > proposal.votingEndTime) {
             if (!_votingPeriodEnded[_proposalId]) {
                 _votingPeriodEnded[_proposalId] = true;
                 emit VotingPeriodEnded(
                     _proposalId,
                     proposal.votingEndTime,
-                    currentTime
+                    uint48(block.timestamp)
                 );
                 return;
             }

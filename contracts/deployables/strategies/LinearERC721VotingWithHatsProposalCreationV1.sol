@@ -49,6 +49,7 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
         LinearERC721VotingParams memory _linearVotingParams,
         HatsProposalCreationWhitelistParams memory _hatsParams
     ) public initializer {
+        // Initialize LinearERC721VotingV1
         LinearERC721VotingV1.initialize(
             _owner,
             _linearVotingParams.tokens,
@@ -61,6 +62,7 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
             _linearVotingParams.lightAccountFactory
         );
 
+        // Initialize HatsProposalCreationWhitelistV1
         HatsProposalCreationWhitelistV1.initialize(
             _owner,
             _hatsParams.hatsContract,
