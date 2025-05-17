@@ -62,9 +62,9 @@ describe('LinearERC721VotingV1ValidatorV1', function () {
       _tokenIds: number[],
     ) {
       const currentTimestamp = await time.latest();
-      await mockERC721Strategy.setProposalPeriod(_proposalId, {
-        startPoint: currentTimestamp,
-        endPoint: currentTimestamp + 100,
+      await mockERC721Strategy.setVotingTimestamps(_proposalId, {
+        startTime: currentTimestamp,
+        endTime: currentTimestamp + 100,
       });
 
       // Set up token weight
@@ -200,9 +200,9 @@ describe('LinearERC721VotingV1ValidatorV1', function () {
       void expect(validResult).to.be.true;
 
       // Now set the proposal to non-existent
-      await mockERC721Strategy.setProposalPeriod(proposalId, {
-        startPoint: 0,
-        endPoint: 0,
+      await mockERC721Strategy.setVotingTimestamps(proposalId, {
+        startTime: 0,
+        endTime: 0,
       });
 
       const invalidResult = await validator.validateOperation(

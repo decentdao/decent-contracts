@@ -52,12 +52,12 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       const currentTimestamp = await time.latest();
 
       const proposalPeriod = {
-        startPoint: currentTimestamp,
-        endPoint: currentTimestamp + 100,
+        startTime: currentTimestamp,
+        endTime: currentTimestamp + 100,
       };
 
       // Set up proposal votes data with safe timestamps
-      await mockERC20Strategy.setProposalPeriod(_proposalId, proposalPeriod);
+      await mockERC20Strategy.setVotingTimestamps(_proposalId, proposalPeriod);
 
       // Set up voting state
       await mockERC20Strategy.setVotingPeriodEnded(_proposalId, false);
@@ -148,9 +148,9 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       void expect(validResult).to.be.true;
 
       // Now set the proposal to non-existent (endTimestamp = 0)
-      await mockERC20Strategy.setProposalPeriod(proposalId, {
-        startPoint: 0,
-        endPoint: 0, // Zero end timepoint
+      await mockERC20Strategy.setVotingTimestamps(proposalId, {
+        startTime: 0,
+        endTime: 0, // Zero end timepoint
       });
 
       const invalidResult = await validator.validateOperation(
@@ -237,11 +237,11 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set checkpoints that are all after the proposal start timestamp
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint + 1, // After proposal start
+              key: proposalPeriod.startTime + 1, // After proposal start
               value: 100n,
             },
             {
-              key: proposalPeriod.startPoint + 2, // Even later checkpoint
+              key: proposalPeriod.startTime + 2, // Even later checkpoint
               value: 200n,
             },
           ]);
@@ -266,7 +266,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set a checkpoint before proposal start but with zero votes
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 1, // Just before proposal start
+              key: proposalPeriod.startTime - 1, // Just before proposal start
               value: 0n, // Zero voting weight
             },
           ]);
@@ -293,7 +293,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set a single checkpoint before proposal start
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 1, // One timestamp before proposal start
+              key: proposalPeriod.startTime - 1, // One timestamp before proposal start
               value: 100n,
             },
           ]);
@@ -318,7 +318,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set a single checkpoint exactly at proposal start timestamp
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint, // Same as proposal start timestamp
+              key: proposalPeriod.startTime, // Same as proposal start timestamp
               value: 100n,
             },
           ]);
@@ -343,7 +343,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set a single checkpoint after proposal start timestamp
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint + 1, // One timestamp after proposal start
+              key: proposalPeriod.startTime + 1, // One timestamp after proposal start
               value: 100n, // Non-zero votes to ensure failure is due to timing
             },
           ]);
@@ -370,15 +370,15 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set multiple checkpoints before proposal start with different vote amounts
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 3, // Oldest checkpoint
+              key: proposalPeriod.startTime - 3, // Oldest checkpoint
               value: 50n,
             },
             {
-              key: proposalPeriod.startPoint - 2, // Middle checkpoint
+              key: proposalPeriod.startTime - 2, // Middle checkpoint
               value: 0n, // Zero votes - if this was used, validation would fail
             },
             {
-              key: proposalPeriod.startPoint - 1, // Most recent valid checkpoint
+              key: proposalPeriod.startTime - 1, // Most recent valid checkpoint
               value: 100n, // Non-zero votes - this should be used
             },
           ]);
@@ -403,15 +403,15 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set checkpoints both before and after proposal start
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 1, // Valid checkpoint before start
+              key: proposalPeriod.startTime - 1, // Valid checkpoint before start
               value: 0n, // Zero votes - this should be used, causing validation to fail
             },
             {
-              key: proposalPeriod.startPoint + 1, // After proposal start
+              key: proposalPeriod.startTime + 1, // After proposal start
               value: 100n, // Non-zero votes - this should be ignored
             },
             {
-              key: proposalPeriod.startPoint + 2, // Even later checkpoint
+              key: proposalPeriod.startTime + 2, // Even later checkpoint
               value: 200n, // Higher votes - should also be ignored
             },
           ]);
@@ -436,15 +436,15 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set checkpoints before, at, and after proposal start
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 2, // Earlier checkpoint
+              key: proposalPeriod.startTime - 2, // Earlier checkpoint
               value: 0n, // Should be ignored in favor of later checkpoint
             },
             {
-              key: proposalPeriod.startPoint, // Exactly at proposal start
+              key: proposalPeriod.startTime, // Exactly at proposal start
               value: 100n, // This should be used for validation
             },
             {
-              key: proposalPeriod.startPoint + 1, // After start
+              key: proposalPeriod.startTime + 1, // After start
               value: 0n, // Should be ignored
             },
           ]);
@@ -472,7 +472,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           const maxUint208 = 2n ** 208n - 1n;
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 1,
+              key: proposalPeriod.startTime - 1,
               value: maxUint208,
             },
           ]);
@@ -491,9 +491,9 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           const { calldata } = await setupVoteOperation(proposalId, voteTypes.YES, voter.address);
 
           // Override proposal to start at timestamp 0
-          await mockERC20Strategy.setProposalPeriod(proposalId, {
-            startPoint: 0,
-            endPoint: 100,
+          await mockERC20Strategy.setVotingTimestamps(proposalId, {
+            startTime: 0,
+            endTime: 100,
           });
 
           // Set checkpoint at timestamp 0
@@ -528,11 +528,11 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
               value: 50n,
             },
             {
-              key: Math.floor(proposalPeriod.startPoint / 2), // Checkpoint halfway between genesis and proposal start
+              key: Math.floor(proposalPeriod.startTime / 2), // Checkpoint halfway between genesis and proposal start
               value: 0n,
             },
             {
-              key: proposalPeriod.startPoint - 1, // Checkpoint just before proposal start
+              key: proposalPeriod.startTime - 1, // Checkpoint just before proposal start
               value: 100n, // This should be used
             },
           ]);
@@ -561,11 +561,11 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // - A newer one that is after endTimestamp (should trigger the optimization)
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.startPoint - 10, // Older, valid checkpoint
+              key: proposalPeriod.startTime - 10, // Older, valid checkpoint
               value: 100n,
             },
             {
-              key: proposalPeriod.endPoint + 1, // Newer, after proposal end
+              key: proposalPeriod.endTime + 1, // Newer, after proposal end
               value: 50n, // Votes here don't matter as it should short-circuit
             },
           ]);
@@ -590,7 +590,7 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
           // Set up a single checkpoint that is after endTimestamp
           await mockERC20Strategy.setCheckpoints(voter.address, [
             {
-              key: proposalPeriod.endPoint + 5, // After proposal end
+              key: proposalPeriod.endTime + 5, // After proposal end
               value: 100n,
             },
           ]);
@@ -625,20 +625,18 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
       const expectedStart = currentTimestamp;
       const expectedEnd = currentTimestamp + 100;
 
-      await mockERC20Strategy.setProposalPeriod(proposalId, {
-        startPoint: expectedStart,
-        endPoint: expectedEnd,
+      await mockERC20Strategy.setVotingTimestamps(proposalId, {
+        startTime: expectedStart,
+        endTime: expectedEnd,
       });
 
-      const [actualStart, actualEnd] =
-        await mockERC20Strategy.getProposalVotingPeriodPoints(proposalId);
+      const [actualStart, actualEnd] = await mockERC20Strategy.getVotingTimestamps(proposalId);
       expect(actualStart).to.equal(expectedStart);
       expect(actualEnd).to.equal(expectedEnd);
     });
 
     it('Should return zeros for non-existent proposal', async function () {
-      const [startTimestamp, endTimestamp] =
-        await mockERC20Strategy.getProposalVotingPeriodPoints(999); // Using an unused proposal ID
+      const [startTimestamp, endTimestamp] = await mockERC20Strategy.getVotingTimestamps(999); // Using an unused proposal ID
       expect(startTimestamp).to.equal(0);
       expect(endTimestamp).to.equal(0);
     });
@@ -646,22 +644,22 @@ describe('LinearERC20VotingV1ValidatorV1', function () {
     it('Should return updated values after modifying proposal period', async function () {
       // Set initial values
       const currentTimestamp = await time.latest();
-      await mockERC20Strategy.setProposalPeriod(proposalId, {
-        startPoint: currentTimestamp,
-        endPoint: currentTimestamp + 100,
+      await mockERC20Strategy.setVotingTimestamps(proposalId, {
+        startTime: currentTimestamp,
+        endTime: currentTimestamp + 10,
       });
 
       // Update to new values
       const newStart = currentTimestamp + 50;
       const newEnd = currentTimestamp + 150;
-      await mockERC20Strategy.setProposalPeriod(proposalId, {
-        startPoint: newStart,
-        endPoint: newEnd,
+      await mockERC20Strategy.setVotingTimestamps(proposalId, {
+        startTime: newStart,
+        endTime: newEnd,
       });
 
       // Verify the update
       const [startTimestamp, endTimestamp] =
-        await mockERC20Strategy.getProposalVotingPeriodPoints(proposalId);
+        await mockERC20Strategy.getVotingTimestamps(proposalId);
       expect(startTimestamp).to.equal(newStart);
       expect(endTimestamp).to.equal(newEnd);
     });

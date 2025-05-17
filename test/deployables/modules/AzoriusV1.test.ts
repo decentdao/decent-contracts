@@ -1064,7 +1064,7 @@ describe('AzoriusV1', () => {
         // Set voting end block to future block and mark as passed by default
         const currentBlockTimestamp = await time.latest();
 
-        await mockStrategy.setProposalPeriodPoints(
+        await mockStrategy.setVotingTimestamps(
           proposalId,
           currentBlockTimestamp,
           currentBlockTimestamp + 10,
@@ -1079,7 +1079,7 @@ describe('AzoriusV1', () => {
         const currentBlockTimestamp = await time.latest();
 
         // End voting immediately
-        await mockStrategy.setProposalPeriodPoints(proposalId, 0, currentBlockTimestamp);
+        await mockStrategy.setVotingTimestamps(proposalId, 0, currentBlockTimestamp);
 
         // Should be in timelock since we set isPassed to true in beforeEach
         expect(await azorius.proposalState(proposalId)).to.equal(1); // TIMELOCKED
@@ -1104,7 +1104,7 @@ describe('AzoriusV1', () => {
         // End voting immediately
         const currentBlockTimestamp = await time.latest();
         const votingEnd = currentBlockTimestamp + 10;
-        await mockStrategy.setProposalPeriodPoints(proposalId, currentBlockTimestamp, votingEnd);
+        await mockStrategy.setVotingTimestamps(proposalId, currentBlockTimestamp, votingEnd);
 
         // Move past timelock
         await time.increaseTo(votingEnd + TIMELOCK_PERIOD);
@@ -1127,7 +1127,7 @@ describe('AzoriusV1', () => {
 
       it('should not execute proposal before timelock period', async () => {
         // Set voting to passed
-        await mockStrategy.setProposalPeriodPoints(proposalId, 0, 0);
+        await mockStrategy.setVotingTimestamps(proposalId, 0, 0);
         await mockStrategy.setIsPassed(proposalId, true);
 
         await expect(
@@ -1143,7 +1143,7 @@ describe('AzoriusV1', () => {
 
       it('should not execute proposal after execution period', async () => {
         // Set voting to passed
-        await mockStrategy.setProposalPeriodPoints(proposalId, 0, 0);
+        await mockStrategy.setVotingTimestamps(proposalId, 0, 0);
         await mockStrategy.setIsPassed(proposalId, true);
 
         // Move past timelock and execution period
@@ -1167,7 +1167,7 @@ describe('AzoriusV1', () => {
           const currentTimestamp = await time.latest();
 
           // Set a future voting end timestamp
-          await mockStrategy.setProposalPeriodPoints(
+          await mockStrategy.setVotingTimestamps(
             proposalId,
             currentTimestamp,
             currentTimestamp + 100,
@@ -1204,7 +1204,7 @@ describe('AzoriusV1', () => {
           const currentTimestamp = await time.latest();
 
           // Set exact timestamps for voting end
-          await mockStrategy.setProposalPeriodPoints(
+          await mockStrategy.setVotingTimestamps(
             proposalId,
             currentTimestamp,
             currentTimestamp + 100,
@@ -1264,7 +1264,7 @@ describe('AzoriusV1', () => {
           .submitProposal(await mockStrategy.getAddress(), '0x', [tx1, tx2], 'Test proposal');
 
         // Set voting to passed and move past timelock
-        await mockStrategy.setProposalPeriodPoints(0, 0, 0);
+        await mockStrategy.setVotingTimestamps(0, 0, 0);
         await mockStrategy.setIsPassed(0, true);
         await time.increase(TIMELOCK_PERIOD);
 
@@ -1277,7 +1277,7 @@ describe('AzoriusV1', () => {
         beforeEach(async () => {
           // Get current block number
           const currentBlockTimestamp = await time.latest();
-          await mockStrategy.setProposalPeriodPoints(
+          await mockStrategy.setVotingTimestamps(
             0,
             currentBlockTimestamp,
             currentBlockTimestamp + 10,
@@ -1339,7 +1339,7 @@ describe('AzoriusV1', () => {
 
         // Get current block number and set up proposal state
         const currentBlockTimestamp = await time.latest();
-        await mockStrategy.setProposalPeriodPoints(
+        await mockStrategy.setVotingTimestamps(
           1,
           currentBlockTimestamp,
           currentBlockTimestamp + 10,

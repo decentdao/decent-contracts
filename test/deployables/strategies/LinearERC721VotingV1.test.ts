@@ -56,11 +56,6 @@ describe('LinearERC721VotingV1', () => {
     ABSTAIN = 2,
   }
 
-  enum ClockMode {
-    Timestamp,
-    BlockNumber,
-  }
-
   async function deployLinearERC721Voting(
     strategyOwner: SignerWithAddress,
     governanceTokens: { tokenAddress: string; weight: number }[],
@@ -72,7 +67,7 @@ describe('LinearERC721VotingV1', () => {
 
     // Create the initialization data
     const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-      'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)',
+      'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)',
       [
         strategyOwner.address,
         tokenAddresses,
@@ -83,7 +78,6 @@ describe('LinearERC721VotingV1', () => {
         PROPOSER_THRESHOLD,
         BASIS_NUMERATOR,
         lightAccountFactoryAddress,
-        ClockMode.Timestamp,
       ],
     );
 
@@ -174,7 +168,7 @@ describe('LinearERC721VotingV1', () => {
       // Try to call initialize again - should revert
       await expect(
         linearERC721Voting[
-          'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)'
+          'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)'
         ](
           owner.address,
           tokenAddresses,
@@ -185,7 +179,6 @@ describe('LinearERC721VotingV1', () => {
           PROPOSER_THRESHOLD,
           BASIS_NUMERATOR,
           lightAccountFactoryMock.address,
-          ClockMode.Timestamp,
         ),
       ).to.be.revertedWithCustomError(linearERC721Voting, 'InvalidInitialization');
     });
@@ -196,7 +189,7 @@ describe('LinearERC721VotingV1', () => {
 
       // Create initialization data with mismatched arrays
       const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)',
+        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)',
         [
           owner.address,
           tokenAddresses,
@@ -207,7 +200,6 @@ describe('LinearERC721VotingV1', () => {
           PROPOSER_THRESHOLD,
           BASIS_NUMERATOR,
           lightAccountFactoryMock.address,
-          ClockMode.Timestamp,
         ],
       );
 
@@ -226,7 +218,7 @@ describe('LinearERC721VotingV1', () => {
 
       // Create initialization data with invalid token weight
       const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)',
+        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)',
         [
           owner.address,
           tokenAddresses,
@@ -237,7 +229,6 @@ describe('LinearERC721VotingV1', () => {
           PROPOSER_THRESHOLD,
           BASIS_NUMERATOR,
           lightAccountFactoryMock.address,
-          ClockMode.Timestamp,
         ],
       );
 
@@ -256,7 +247,7 @@ describe('LinearERC721VotingV1', () => {
 
       // Create initialization data with empty token arrays
       const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)',
+        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)',
         [
           owner.address,
           emptyTokenAddresses,
@@ -267,7 +258,6 @@ describe('LinearERC721VotingV1', () => {
           PROPOSER_THRESHOLD,
           BASIS_NUMERATOR,
           lightAccountFactoryMock.address,
-          ClockMode.Timestamp,
         ],
       );
 
@@ -466,8 +456,7 @@ describe('LinearERC721VotingV1', () => {
       await linearERC721Voting.connect(nonOwner).initializeProposal(initializeData);
 
       // Check that proposal was initialized correctly
-      const [, votingEndTimestamp] =
-        await linearERC721Voting.getProposalVotingPeriodPoints(proposalId);
+      const [, votingEndTimestamp] = await linearERC721Voting.getVotingTimestamps(proposalId);
       expect(votingEndTimestamp).to.not.equal(0);
     });
 
@@ -980,7 +969,7 @@ describe('LinearERC721VotingV1', () => {
 
       // Create initialization data with non-ERC721 token
       const initializeCalldata = LinearERC721VotingV1__factory.createInterface().encodeFunctionData(
-        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address,uint8)',
+        'initialize(address,address[],uint256[],address,uint32,uint256,uint256,uint256,address)',
         [
           owner.address,
           tokenAddresses,
@@ -991,7 +980,6 @@ describe('LinearERC721VotingV1', () => {
           PROPOSER_THRESHOLD,
           BASIS_NUMERATOR,
           lightAccountFactoryMock.address,
-          ClockMode.Timestamp,
         ],
       );
 
