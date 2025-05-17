@@ -10,7 +10,7 @@ import {SmartAccountValidationV1} from "../account-abstraction/SmartAccountValid
 abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
     /**
      * @dev Tracks whether a proposal's voting period has been marked as ended.
-     * This flag is set to true when the first vote attempt occurs after the voting end timepoint,
+     * This flag is set to true when the first vote attempt occurs after the voting end timestamp,
      * triggering a VotingPeriodEnded event. Used to allow an at-most-once vote to not revert
      * after the voting period has ended, and to give bundlers the ability to determine
      * if a proposal voting period has ended without using the banned NUMBER opcode.
@@ -19,8 +19,8 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
 
     event VotingPeriodEnded(
         uint32 indexed proposalId,
-        uint256 votingEndPoint,
-        uint256 currentPoint
+        uint48 votingEndTime,
+        uint48 currentTime
     );
 
     constructor() {
@@ -51,11 +51,11 @@ abstract contract ERC4337VoterSupportV1 is SmartAccountValidationV1 {
 
     /**
      * @dev Tracks whether a proposal's voting period has been officially marked as ended.
-     * This flag is set to true when the first vote attempt occurs after the voting end timepoint,
+     * This flag is set to true when the first vote attempt occurs after the voting end timestamp,
      * triggering a VotingPeriodEnded event. Used to ensure the event is emitted exactly once
-     * per proposal, and only if a vote has been attempted after the voting end timepoint.
+     * per proposal, and only if a vote has been attempted after the voting end timestamp.
      * @param _proposalId The ID of the proposal to check.
-     * @return True if the voting period has ended and a vote has been attempted after the voting end timepoint, false otherwise.
+     * @return True if the voting period has ended and a vote has been attempted after the voting end timestamp, false otherwise.
      */
     function votingPeriodEnded(
         uint32 _proposalId
