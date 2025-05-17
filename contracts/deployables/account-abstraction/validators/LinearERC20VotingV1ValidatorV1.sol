@@ -14,9 +14,9 @@ interface ILinearERC20VotingV1 {
         address account
     ) external view returns (bool);
 
-    function getProposalVotingPeriodPoints(
+    function getVotingTimestamps(
         uint32 proposalId
-    ) external view returns (uint256 startPoint, uint256 endPoint);
+    ) external view returns (uint48 startTime, uint48 endTime);
 
     function votingPeriodEnded(uint32 proposalId) external view returns (bool);
 
@@ -74,13 +74,13 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
             return false;
         }
 
-        // get the proposal start and end points to determine if the proposal exists
-        (uint256 startPoint, uint256 endPoint) = ILinearERC20VotingV1(
+        // get the proposal start and end timestamps to determine if the proposal exists
+        (uint48 startTime, uint48 endTime) = ILinearERC20VotingV1(
             votingContract
-        ).getProposalVotingPeriodPoints(proposalId);
+        ).getVotingTimestamps(proposalId);
 
-        // Check if proposal exists (will have non-zero endPoint if it exists)
-        if (endPoint == 0) {
+        // Check if proposal exists (will have non-zero endTime if it exists)
+        if (endTime == 0) {
             return false;
         }
 
@@ -116,8 +116,8 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
             return false;
         }
 
-        // Iterate backwards through checkpoints to find the relevant one for startPoint.
-        // This is potentially more efficient than binary search if startPoint is recent.
+        // Iterate backwards through checkpoints to find the relevant one for startTime.
+        // This is potentially more efficient than binary search if startTime is recent.
         uint256 votingWeight = 0;
         for (uint256 i = numCheckpoints; i > 0; i--) {
             // Checkpoint indices are 0-based, loop index 'i' is 1-based count.
@@ -126,26 +126,26 @@ contract LinearERC20VotingV1ValidatorV1 is IFunctionValidator, ERC165, Version {
                 uint32(i - 1)
             );
 
-            // If this checkpoint's timepoint is after the proposal's endPoint,
-            // it implies the current timepoint is also after endPoint.
+            // If this checkpoint's timestamp is after the proposal's endTime,
+            // it implies the current timestamp is also after endTime.
             // Thus, the voting period has definitively ended, and any vote is invalid.
-            if (checkpoint.key > endPoint) {
+            if (checkpoint.key > endTime) {
                 return false; // Vote is invalid as the proposal has ended.
             }
 
-            // If the checkpoint timepoint is less than or equal to the proposal start point,
+            // If the checkpoint timestamp is less than or equal to the proposal startTime,
             // we've found the relevant voting weight.
-            if (checkpoint.key <= startPoint) {
+            if (checkpoint.key <= startTime) {
                 votingWeight = checkpoint.value;
                 break; // Exit loop once the correct checkpoint is found
             }
         }
-        // If the loop completes without finding a checkpoint where fromPoint <= startPoint,
+        // If the loop completes without finding a checkpoint where fromTime <= startTime,
         // (and the optimization above didn't trigger and return false),
-        // it means all checkpoints are after startPoint, so the weight at startPoint was 0.
+        // it means all checkpoints are after startTime, so the weight at startTime was 0.
         // votingWeight remains 0 in this case.
 
-        // Check if the user had any voting weight at the proposal start point
+        // Check if the user had any voting weight at the proposal startTime
         if (votingWeight == 0) {
             return false;
         }
