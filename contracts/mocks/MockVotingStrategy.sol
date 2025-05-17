@@ -5,20 +5,17 @@ import {IBaseStrategyV1} from "../interfaces/decent/deployables/IBaseStrategyV1.
 import {ClockMode} from "../interfaces/decent/ClockMode.sol";
 
 contract MockVotingStrategy is IBaseStrategyV1 {
-    struct PeriodPoints {
-        uint256 startPoint;
-        uint256 endPoint;
+    struct TimestampPoints {
+        uint48 startTime;
+        uint48 endTime;
     }
 
     address public proposer;
     mapping(uint32 => bool) private _isPassed;
-    mapping(uint32 => PeriodPoints) private _proposalPeriodPoints;
-
-    ClockMode private currentClockMode;
+    mapping(uint32 => TimestampPoints) private _proposalTimestamps;
 
     constructor(address _proposer) {
         proposer = _proposer;
-        currentClockMode = ClockMode.Timestamp;
     }
 
     function initializeProposal(bytes memory) external override {}
@@ -33,27 +30,19 @@ contract MockVotingStrategy is IBaseStrategyV1 {
         return _proposer == proposer;
     }
 
-    function setClockMode(ClockMode _newMode) external {
-        currentClockMode = _newMode;
-    }
-
-    function getClockMode() external view override returns (ClockMode) {
-        return currentClockMode;
-    }
-
-    function getProposalVotingPeriodPoints(
+    function getVotingTimestamps(
         uint32 proposalId
-    ) external view override returns (uint256, uint256) {
-        PeriodPoints memory periodPoints = _proposalPeriodPoints[proposalId];
-        return (periodPoints.startPoint, periodPoints.endPoint);
+    ) external view override returns (uint48, uint48) {
+        TimestampPoints memory timestamps = _proposalTimestamps[proposalId];
+        return (timestamps.startTime, timestamps.endTime);
     }
 
-    function setProposalPeriodPoints(
+    function setProposalTimestamps(
         uint32 proposalId,
-        uint256 startPoint,
-        uint256 endPoint
+        uint48 startTime,
+        uint48 endTime
     ) external {
-        _proposalPeriodPoints[proposalId] = PeriodPoints(startPoint, endPoint);
+        _proposalTimestamps[proposalId] = TimestampPoints(startTime, endTime);
     }
 
     function setIsPassed(uint32 proposalId, bool passed) external {

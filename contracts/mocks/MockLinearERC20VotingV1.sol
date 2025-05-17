@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 // Mirror the struct for getProposalVotes return values
 struct ProposalPeriod {
-    uint256 startPoint;
-    uint256 endPoint;
+    uint48 startTime;
+    uint48 endTime;
 }
 
 // Mirror the struct from IERC20Votes
@@ -15,7 +15,7 @@ struct Checkpoint208 {
 
 contract MockLinearERC20VotingV1 {
     // Mapping: proposalId => ProposalPeriod
-    mapping(uint32 => ProposalPeriod) public getProposalVotingPeriodPoints;
+    mapping(uint32 => ProposalPeriod) public getVotingTimestamps;
     // Mapping: proposalId => votingPeriodEnded
     mapping(uint32 => bool) public votingPeriodEnded;
     // Mapping: proposalId => voter => hasVoted
@@ -32,11 +32,11 @@ contract MockLinearERC20VotingV1 {
         // Mock implementation - just for interface matching
     }
 
-    function setProposalPeriod(
+    function setVotingTimestamps(
         uint32 proposalId,
         ProposalPeriod calldata data
     ) external {
-        getProposalVotingPeriodPoints[proposalId] = data;
+        getVotingTimestamps[proposalId] = data;
     }
 
     function setVotingPeriodEnded(uint32 proposalId, bool ended) external {
