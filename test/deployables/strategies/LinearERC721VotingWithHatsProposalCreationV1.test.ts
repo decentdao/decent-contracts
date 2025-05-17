@@ -31,6 +31,11 @@ import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTest
  */
 
 describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
+  enum ClockMode {
+    Timestamp,
+    BlockNumber,
+  }
+
   // Signers
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -77,6 +82,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
       quorumThreshold: QUORUM_THRESHOLD,
       basisNumerator: BASIS_NUMERATOR,
       lightAccountFactory: lightAccountFactoryAddress,
+      initialClockMode: ClockMode.Timestamp,
     };
 
     const hatsParams = {
@@ -85,7 +91,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
     };
 
     const initializeCalldata = implementation.interface.encodeFunctionData(
-      'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address),(address,uint256[]))',
+      'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address,uint8),(address,uint256[]))',
       [strategyOwner.address, linearVotingParams, hatsParams],
     );
 
@@ -193,6 +199,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
           quorumThreshold: QUORUM_THRESHOLD,
           basisNumerator: BASIS_NUMERATOR,
           lightAccountFactory: lightAccountFactoryMock.address,
+          initialClockMode: ClockMode.Timestamp,
         };
 
         const hatsParams = {
@@ -203,7 +210,7 @@ describe('LinearERC721VotingWithHatsProposalCreationV1', () => {
         // Create initialization data for a second attempt
         const initializeCalldata =
           linearERC721VotingWithHatsProposalCreationImplementation.interface.encodeFunctionData(
-            'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address),(address,uint256[]))',
+            'initialize(address,(address[],uint256[],address,uint32,uint256,uint256,address,uint8),(address,uint256[]))',
             [owner.address, linearVotingParams, hatsParams],
           );
 
