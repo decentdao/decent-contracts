@@ -37,7 +37,7 @@ contract MockVotingStrategy is IBaseStrategyV1 {
         return (timestamps.startTime, timestamps.endTime);
     }
 
-    function setProposalTimestamps(
+    function setVotingTimestamps(
         uint32 proposalId,
         uint48 startTime,
         uint48 endTime
