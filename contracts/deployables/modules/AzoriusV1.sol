@@ -387,10 +387,11 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         if (_proposal.strategy == address(0)) revert InvalidProposal();
 
         IBaseStrategyV1 _strategy = IBaseStrategyV1(_proposal.strategy);
-        (, uint256 endTime) = _strategy.getVotingTimestamps(_proposalId);
+        (, uint256 votingEndTimestamp) = _strategy.getVotingTimestamps(
+            _proposalId
+        );
 
-        uint256 currentTimestamp = block.timestamp;
-        if (currentTimestamp <= endTime) {
+        if (block.timestamp <= votingEndTimestamp) {
             return ProposalState.ACTIVE;
         } else if (!_strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
@@ -399,11 +400,15 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
             // this allows for the potential for on-chain voting for
             // "off-chain" executed decisions
             return ProposalState.EXECUTED;
-        } else if (currentTimestamp <= endTime + _proposal.timelockPeriod) {
+        } else if (
+            block.timestamp <= votingEndTimestamp + _proposal.timelockPeriod
+        ) {
             return ProposalState.TIMELOCKED;
         } else if (
-            currentTimestamp <=
-            endTime + _proposal.timelockPeriod + _proposal.executionPeriod
+            block.timestamp <=
+            votingEndTimestamp +
+                _proposal.timelockPeriod +
+                _proposal.executionPeriod
         ) {
             return ProposalState.EXECUTABLE;
         } else {
