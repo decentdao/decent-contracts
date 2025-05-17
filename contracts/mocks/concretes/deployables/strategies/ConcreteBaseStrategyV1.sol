@@ -2,12 +2,17 @@
 pragma solidity ^0.8.30;
 
 import {BaseStrategyV1} from "../../../../deployables/strategies/BaseStrategyV1.sol";
+import {ClockMode} from "../../../../interfaces/decent/ClockMode.sol";
+import {ClockModeLib} from "../../../../libs/ClockModeLib.sol";
 
 /**
  * A concrete implementation of BaseStrategyV1 for testing purposes.
  */
 contract ConcreteBaseStrategyV1 is BaseStrategyV1 {
-    event ConcreteFunctionCalled();
+    uint32 public constant CONCRETE_VOTING_PERIOD_SECONDS = 100;
+    uint32 public constant CONCRETE_VOTING_PERIOD_BLOCKS = 10;
+
+    ClockMode private currentClockMode;
 
     /**
      * Sets up the concrete strategy contract.
@@ -19,49 +24,48 @@ contract ConcreteBaseStrategyV1 is BaseStrategyV1 {
         address _proposalInitializer
     ) public override initializer {
         BaseStrategyV1.initialize(_owner, _proposalInitializer);
-
+        currentClockMode = ClockMode.Timestamp; // Default clock mode
         emit StrategySetUp(_proposalInitializer, _owner);
     }
 
-    /**
-     * A concrete function that uses the onlyAzorius modifier for testing.
-     */
+    function setClockMode(ClockMode _newMode) external {
+        currentClockMode = _newMode;
+    }
+
     function concreteOnlyProposalInitializerFunction()
         external
         onlyProposalInitializer
-    {
-        emit ConcreteFunctionCalled();
-    }
+    {}
 
-    /**
-     * Concrete implementation of the abstract initializeProposal function.
-     */
     function initializeProposal(
         bytes memory
-    ) external override onlyProposalInitializer {
-        emit ConcreteFunctionCalled();
-    }
+    ) external override onlyProposalInitializer {}
 
-    /**
-     * Concrete implementation of the abstract isPassed function.
-     */
     function isPassed(uint32) external pure override returns (bool) {
         return true;
     }
 
-    /**
-     * Concrete implementation of the abstract isProposer function.
-     */
     function isProposer(address) external pure override returns (bool) {
         return true;
     }
 
-    /**
-     * Concrete implementation of the abstract votingEndTimestamp function.
-     */
-    function votingEndTimestamp(
+    function getClockMode() public view override returns (ClockMode) {
+        return currentClockMode;
+    }
+
+    function getProposalVotingPeriodPoints(
         uint32
-    ) external view override returns (uint48) {
-        return uint48(block.timestamp) + 100;
+    ) public view override returns (uint256 startPoint, uint256 endPoint) {
+        ClockMode mode = getClockMode();
+        uint256 currentPoint = ClockModeLib.getCurrentPoint(mode);
+
+        if (mode == ClockMode.Timestamp) {
+            startPoint = currentPoint;
+            endPoint = currentPoint + CONCRETE_VOTING_PERIOD_SECONDS;
+        } else {
+            startPoint = currentPoint;
+            endPoint = currentPoint + CONCRETE_VOTING_PERIOD_BLOCKS;
+        }
+        return (startPoint, endPoint);
     }
 }

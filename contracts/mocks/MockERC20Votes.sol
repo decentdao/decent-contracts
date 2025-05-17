@@ -20,6 +20,14 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
         ERC20Permit("Mock Voting Token")
     {}
 
+    function clock() public view returns (uint256) {
+        return block.timestamp;
+    }
+
+    function CLOCK_MODE() public pure returns (string memory) {
+        return "mode=timestamp";
+    }
+
     /**
      * @dev Mints tokens to the specified address
      * @param to The address to mint tokens to
@@ -30,29 +38,29 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
     }
 
     /**
-     * @dev Sets a specific past voting weight for an account at a specific timestamp
+     * @dev Sets a specific past voting weight for an account at a specific timepoint
      * @param account The account to set past votes for
-     * @param timestamp The timestamp to set votes at
+     * @param timepoint The timepoint to set votes at
      * @param votes The amount of votes to set
      */
     function setPastVotes(
         address account,
-        uint256 timestamp,
+        uint256 timepoint,
         uint256 votes
     ) external {
-        _mockPastVotes[account][timestamp] = votes;
+        _mockPastVotes[account][timepoint] = votes;
     }
 
     /**
-     * @dev Sets a specific past total supply for a specific timestamp
-     * @param timestamp The timestamp to set total supply at
+     * @dev Sets a specific past total supply for a specific timepoint
+     * @param timepoint The timepoint to set total supply at
      * @param totalSupply The total supply to set
      */
     function setPastTotalSupply(
-        uint256 timestamp,
+        uint256 timepoint,
         uint256 totalSupply
     ) external {
-        _mockPastTotalSupply[timestamp] = totalSupply;
+        _mockPastTotalSupply[timepoint] = totalSupply;
     }
 
     /**
@@ -97,12 +105,12 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
      */
     function getPastVotes(
         address account,
-        uint256 timestamp
+        uint256 timepoint
     ) public view override returns (uint256) {
-        if (_mockPastVotes[account][timestamp] > 0) {
-            return _mockPastVotes[account][timestamp];
+        if (_mockPastVotes[account][timepoint] > 0) {
+            return _mockPastVotes[account][timepoint];
         }
-        // If no explicit value is set for this timestamp, return the current balance
+        // If no explicit value is set for this timepoint, return the current balance
         // In a real implementation, this would use a checkpoint system
         return balanceOf(account);
     }
@@ -111,12 +119,12 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
      * @dev Enhanced implementation that properly handles historical snapshots
      */
     function getPastTotalSupply(
-        uint256 timestamp
+        uint256 timepoint
     ) public view override returns (uint256) {
-        if (_mockPastTotalSupply[timestamp] > 0) {
-            return _mockPastTotalSupply[timestamp];
+        if (_mockPastTotalSupply[timepoint] > 0) {
+            return _mockPastTotalSupply[timepoint];
         }
-        // If no explicit value is set for this timestamp, return the current total supply
+        // If no explicit value is set for this timepoint, return the current total supply
         // In a real implementation, this would use a checkpoint system
         return totalSupply();
     }
