@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {LinearERC721VotingV1} from "./LinearERC721VotingV1.sol";
 import {HatsProposalCreationWhitelistV1} from "./HatsProposalCreationWhitelistV1.sol";
-import {ClockMode} from "../../interfaces/decent/ClockMode.sol";
 
 /**
  * An [Azorius](./Azorius.md) [BaseStrategy](./BaseStrategy.md) implementation that
@@ -24,7 +23,6 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
         uint256 quorumThreshold;
         uint256 basisNumerator;
         address lightAccountFactory;
-        ClockMode initialClockMode;
     }
 
     struct HatsProposalCreationWhitelistParams {
@@ -51,14 +49,6 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
         LinearERC721VotingParams memory _linearVotingParams,
         HatsProposalCreationWhitelistParams memory _hatsParams
     ) public initializer {
-        initializeLinearERC721Voting(_owner, _linearVotingParams);
-        initializeHatsProposalCreationWhitelist(_owner, _hatsParams);
-    }
-
-    function initializeLinearERC721Voting(
-        address _owner,
-        LinearERC721VotingParams memory _linearVotingParams
-    ) private {
         LinearERC721VotingV1.initialize(
             _owner,
             _linearVotingParams.tokens,
@@ -68,15 +58,9 @@ contract LinearERC721VotingWithHatsProposalCreationV1 is
             _linearVotingParams.quorumThreshold,
             0, // _proposerThreshold is zero because we only care about the hat check
             _linearVotingParams.basisNumerator,
-            _linearVotingParams.lightAccountFactory,
-            _linearVotingParams.initialClockMode
+            _linearVotingParams.lightAccountFactory
         );
-    }
 
-    function initializeHatsProposalCreationWhitelist(
-        address _owner,
-        HatsProposalCreationWhitelistParams memory _hatsParams
-    ) private {
         HatsProposalCreationWhitelistV1.initialize(
             _owner,
             _hatsParams.hatsContract,
