@@ -19,14 +19,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  */
 contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     uint16 private constant VERSION = 1;
-
-    /**
-     * The sentinel node of the linked list of enabled [BaseStrategies](./BaseStrategy.md).
-     *
-     * See https://en.wikipedia.org/wiki/Sentinel_node.
-     */
-    address internal constant SENTINEL_STRATEGY = address(0x1);
-
     /**
      * ```
      * keccak256(
@@ -65,8 +57,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     /** Proposals by `proposalId`. */
     mapping(uint256 => Proposal) internal proposals;
 
-    /** A linked list of enabled [BaseStrategies](./BaseStrategy.md). */
-    mapping(address => address) internal strategies;
+    IBaseStrategyV1 public strategy;
 
     event AzoriusSetUp(
         address indexed creator,
@@ -75,23 +66,15 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         address target
     );
     event ProposalCreated(
-        address strategy,
         uint256 proposalId,
         address proposer,
         Transaction[] transactions,
         string metadata
     );
     event ProposalExecuted(uint32 proposalId, bytes32[] txHashes);
-    event EnabledStrategy(address strategy);
-    event DisabledStrategy(address strategy);
     event TimelockPeriodUpdated(uint32 timelockPeriod);
     event ExecutionPeriodUpdated(uint32 executionPeriod);
 
-    error InvalidStrategy();
-    error InvalidStartAddress();
-    error InvalidCount();
-    error StrategyEnabled();
-    error StrategyDisabled();
     error InvalidProposal();
     error InvalidProposer();
     error ProposalNotExecutable();
@@ -110,7 +93,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
      * @param _owner Address that will own the contract
      * @param _avatar Address of the avatar (e.g., the Safe)
      * @param _target Address that avatar calls are directed to
-     * @param _strategies Array of strategy addresses to enable
+     * @param _strategy Address of the strategy
      * @param _timelockPeriod Initial timelock period
      * @param _executionPeriod Initial execution period
      */
@@ -118,7 +101,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         address _owner,
         address _avatar,
         address _target,
-        address[] memory _strategies,
+        address _strategy,
         uint32 _timelockPeriod,
         uint32 _executionPeriod
     ) public initializer {
@@ -128,9 +111,9 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         __UUPSUpgradeable_init();
 
         // Setup module parameters
+        strategy = IBaseStrategyV1(_strategy);
         setAvatar(_avatar);
         setTarget(_target);
-        _setUpStrategies(_strategies);
         _updateTimelockPeriod(_timelockPeriod);
         _updateExecutionPeriod(_executionPeriod);
 
@@ -149,18 +132,18 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
             address _owner,
             address _avatar,
             address _target,
-            address[] memory _strategies, // enabled BaseStrategies
-            uint32 _timelockPeriod, // initial timelockPeriod
-            uint32 _executionPeriod // initial executionPeriod
+            address _strategy,
+            uint32 _timelockPeriod,
+            uint32 _executionPeriod
         ) = abi.decode(
                 initializeParams,
-                (address, address, address, address[], uint32, uint32)
+                (address, address, address, address, uint32, uint32)
             );
         initialize(
             _owner,
             _avatar,
             _target,
-            _strategies,
+            _strategy,
             _timelockPeriod,
             _executionPeriod
         );
@@ -186,14 +169,11 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
 
     /** @inheritdoc IAzoriusV1*/
     function submitProposal(
-        address _strategy,
         bytes memory _data,
         Transaction[] calldata _transactions,
         string calldata _metadata
     ) external {
-        if (!isStrategyEnabled(_strategy)) revert StrategyDisabled();
-        if (!IBaseStrategyV1(_strategy).isProposer(msg.sender))
-            revert InvalidProposer();
+        if (!strategy.isProposer(msg.sender)) revert InvalidProposer();
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
         uint256 transactionsLength = _transactions.length;
@@ -209,19 +189,17 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
             }
         }
 
-        proposals[totalProposalCount].strategy = _strategy;
         proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].timelockPeriod = timelockPeriod;
         proposals[totalProposalCount].executionPeriod = executionPeriod;
 
         // not all strategy contracts will necessarily use the txHashes and _data values
         // they are encoded to support any strategy contracts that may need them
-        IBaseStrategyV1(_strategy).initializeProposal(
+        strategy.initializeProposal(
             abi.encode(totalProposalCount, txHashes, _data)
         );
 
         emit ProposalCreated(
-            _strategy,
             totalProposalCount,
             msg.sender,
             _transactions,
@@ -267,48 +245,6 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     }
 
     /** @inheritdoc IAzoriusV1*/
-    function getStrategies(
-        address _startAddress,
-        uint256 _count
-    ) external view returns (address[] memory _strategies, address _next) {
-        if (
-            _startAddress != SENTINEL_STRATEGY &&
-            !isStrategyEnabled(_startAddress)
-        ) {
-            revert InvalidStartAddress();
-        }
-
-        if (_count == 0) {
-            revert InvalidCount();
-        }
-
-        // init array with max page size
-        _strategies = new address[](_count);
-
-        // populate return array
-        uint256 strategyCount = 0;
-        _next = strategies[_startAddress];
-
-        while (
-            _next != address(0) &&
-            _next != SENTINEL_STRATEGY &&
-            strategyCount < _count
-        ) {
-            _strategies[strategyCount] = _next;
-            _next = strategies[_next];
-            strategyCount++;
-        }
-
-        if (_next != SENTINEL_STRATEGY) {
-            _next = _strategies[strategyCount - 1];
-        }
-        // set correct size of returned array
-        assembly {
-            mstore(_strategies, strategyCount)
-        }
-    }
-
-    /** @inheritdoc IAzoriusV1*/
     function getProposalTxHash(
         uint32 _proposalId,
         uint32 _txIndex
@@ -330,14 +266,12 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         external
         view
         returns (
-            address _strategy,
             bytes32[] memory _txHashes,
             uint32 _timelockPeriod,
             uint32 _executionPeriod,
             uint32 _executionCounter
         )
     {
-        _strategy = proposals[_proposalId].strategy;
         _txHashes = proposals[_proposalId].txHashes;
         _timelockPeriod = proposals[_proposalId].timelockPeriod;
         _executionPeriod = proposals[_proposalId].executionPeriod;
@@ -345,55 +279,19 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     }
 
     /** @inheritdoc IAzoriusV1*/
-    function enableStrategy(address _strategy) public override onlyOwner {
-        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
-            revert InvalidStrategy();
-        if (strategies[_strategy] != address(0)) revert StrategyEnabled();
-
-        strategies[_strategy] = strategies[SENTINEL_STRATEGY];
-        strategies[SENTINEL_STRATEGY] = _strategy;
-
-        emit EnabledStrategy(_strategy);
-    }
-
-    /** @inheritdoc IAzoriusV1*/
-    function disableStrategy(
-        address _prevStrategy,
-        address _strategy
-    ) public onlyOwner {
-        if (_strategy == address(0) || _strategy == SENTINEL_STRATEGY)
-            revert InvalidStrategy();
-        if (strategies[_prevStrategy] != _strategy) revert StrategyDisabled();
-
-        strategies[_prevStrategy] = strategies[_strategy];
-        strategies[_strategy] = address(0);
-
-        emit DisabledStrategy(_strategy);
-    }
-
-    /** @inheritdoc IAzoriusV1*/
-    function isStrategyEnabled(address _strategy) public view returns (bool) {
-        return
-            SENTINEL_STRATEGY != _strategy &&
-            strategies[_strategy] != address(0);
-    }
-
-    /** @inheritdoc IAzoriusV1*/
     function proposalState(
         uint32 _proposalId
     ) public view returns (ProposalState) {
+        if (_proposalId >= totalProposalCount) revert InvalidProposal();
         Proposal memory _proposal = proposals[_proposalId];
 
-        if (_proposal.strategy == address(0)) revert InvalidProposal();
-
-        IBaseStrategyV1 _strategy = IBaseStrategyV1(_proposal.strategy);
-        (, uint48 votingEndTimestamp) = _strategy.getVotingTimestamps(
+        (, uint48 votingEndTimestamp) = strategy.getVotingTimestamps(
             _proposalId
         );
 
         if (block.timestamp <= votingEndTimestamp) {
             return ProposalState.ACTIVE;
-        } else if (!_strategy.isPassed(_proposalId)) {
+        } else if (!strategy.isPassed(_proposalId)) {
             return ProposalState.FAILED;
         } else if (_proposal.executionCounter == _proposal.txHashes.length) {
             // a Proposal with 0 transactions goes straight to EXECUTED
@@ -486,22 +384,6 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         proposals[_proposalId].executionCounter++;
 
         if (!exec(_target, _value, _data, _operation)) revert TxFailed();
-    }
-
-    /**
-     * Enables the specified array of [BaseStrategy](./BaseStrategy.md) contract addresses.
-     *
-     * @param _strategies array of `BaseStrategy` contract addresses to enable
-     */
-    function _setUpStrategies(address[] memory _strategies) internal {
-        strategies[SENTINEL_STRATEGY] = SENTINEL_STRATEGY;
-        uint256 strategiesLength = _strategies.length;
-        for (uint256 i; i < strategiesLength; ) {
-            enableStrategy(_strategies[i]);
-            unchecked {
-                ++i;
-            }
-        }
     }
 
     /**

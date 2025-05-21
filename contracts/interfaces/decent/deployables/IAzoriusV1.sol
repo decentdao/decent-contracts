@@ -52,7 +52,6 @@ interface IAzoriusV1 {
         uint32 executionCounter; // count of transactions that have been executed within the proposal
         uint32 timelockPeriod; // time this proposal will be timelocked for if it passes
         uint32 executionPeriod; // time this proposal has to be executed after timelock ends before it is expired
-        address strategy; // BaseStrategy contract this proposal was created on
         bytes32[] txHashes; // hashes of the transactions that are being proposed
     }
 
@@ -65,25 +64,6 @@ interface IAzoriusV1 {
         EXPIRED,
         FAILED
     }
-
-    /**
-     * Enables a [BaseStrategy](../BaseStrategy.md) implementation for newly created Proposals.
-     *
-     * Multiple strategies can be enabled, and new Proposals will be able to be
-     * created using any of the currently enabled strategies.
-     *
-     * @param _strategy contract address of the BaseStrategy to be enabled
-     */
-    function enableStrategy(address _strategy) external;
-
-    /**
-     * Disables a previously enabled [BaseStrategy](../BaseStrategy.md) implementation for new proposals.
-     * This has no effect on existing Proposals, either `ACTIVE` or completed.
-     *
-     * @param _prevStrategy BaseStrategy address that pointed in the linked list to the strategy to be removed
-     * @param _strategy address of the BaseStrategy to be removed
-     */
-    function disableStrategy(address _prevStrategy, address _strategy) external;
 
     /**
      * Updates the `timelockPeriod` for newly created Proposals.
@@ -101,17 +81,15 @@ interface IAzoriusV1 {
     function updateExecutionPeriod(uint32 _executionPeriod) external;
 
     /**
-     * Submits a new Proposal, using one of the enabled [BaseStrategies](../BaseStrategy.md).
+     * Submits a new Proposal.
      * New Proposals begin immediately in the `ACTIVE` state.
      *
-     * @param _strategy address of the BaseStrategy implementation which the Proposal will use
      * @param _data arbitrary data passed to the BaseStrategy implementation. This may not be used by all strategies,
      * but is included in case future strategy contracts have a need for it
      * @param _transactions array of transactions to propose
      * @param _metadata additional data such as a title/description to submit with the proposal
      */
     function submitProposal(
-        address _strategy,
         bytes memory _data,
         Transaction[] calldata _transactions,
         string calldata _metadata
@@ -134,31 +112,6 @@ interface IAzoriusV1 {
         bytes[] memory _data,
         Enum.Operation[] memory _operations
     ) external;
-
-    /**
-     * Returns whether a [BaseStrategy](../BaseStrategy.md) implementation is enabled.
-     *
-     * @param _strategy contract address of the BaseStrategy to check
-     * @return bool True if the strategy is enabled, otherwise False
-     */
-    function isStrategyEnabled(address _strategy) external view returns (bool);
-
-    /**
-     * Returns an array of enabled [BaseStrategy](../BaseStrategy.md) contract addresses.
-     * Because the list of BaseStrategies is technically unbounded, this
-     * requires the address of the first strategy you would like, along
-     * with the total count of strategies to return, rather than
-     * returning the whole list at once.
-     *
-     * @param _startAddress contract address of the BaseStrategy to start with
-     * @param _count maximum number of BaseStrategies that should be returned
-     * @return _strategies array of BaseStrategies
-     * @return _next next BaseStrategy contract address in the linked list
-     */
-    function getStrategies(
-        address _startAddress,
-        uint256 _count
-    ) external view returns (address[] memory _strategies, address _next);
 
     /**
      * Gets the state of a Proposal.
@@ -231,7 +184,6 @@ interface IAzoriusV1 {
      * Returns details about the specified Proposal.
      *
      * @param _proposalId identifier of the Proposal
-     * @return _strategy address of the BaseStrategy contract the Proposal is on
      * @return _txHashes hashes of the transactions the Proposal contains
      * @return _timelockPeriod time the Proposal is timelocked for
      * @return _executionPeriod time the Proposal must be executed within, after timelock ends
@@ -243,7 +195,6 @@ interface IAzoriusV1 {
         external
         view
         returns (
-            address _strategy,
             bytes32[] memory _txHashes,
             uint32 _timelockPeriod,
             uint32 _executionPeriod,
