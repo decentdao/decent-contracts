@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IBaseStrategyV1} from "../interfaces/decent/deployables/IBaseStrategyV1.sol";
+import {IStrategyBaseV1} from "../interfaces/decent/deployables/IStrategyBaseV1.sol";
 
-contract MockVotingStrategy is IBaseStrategyV1 {
+contract MockVotingStrategy is IStrategyBaseV1 {
     struct TimestampPoints {
         uint48 startTimestamp;
         uint48 endTimestamp;
@@ -17,7 +17,11 @@ contract MockVotingStrategy is IBaseStrategyV1 {
         proposer = _proposer;
     }
 
-    function initializeProposal(bytes memory) external override {}
+    function initializeProposal(
+        uint32 _proposalId,
+        bytes32[] memory _txHashes,
+        bytes memory _data
+    ) external override {}
 
     function isPassed(uint32 proposalId) external view override returns (bool) {
         return _isPassed[proposalId];
@@ -36,6 +40,12 @@ contract MockVotingStrategy is IBaseStrategyV1 {
         return (timestamps.startTimestamp, timestamps.endTimestamp);
     }
 
+    // mock setters
+
+    function setIsPassed(uint32 proposalId, bool passed) external {
+        _isPassed[proposalId] = passed;
+    }
+
     function setVotingTimestamps(
         uint32 proposalId,
         uint48 startTimestamp,
@@ -45,9 +55,5 @@ contract MockVotingStrategy is IBaseStrategyV1 {
             startTimestamp,
             endTimestamp
         );
-    }
-
-    function setIsPassed(uint32 proposalId, bool passed) external {
-        _isPassed[proposalId] = passed;
     }
 }

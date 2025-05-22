@@ -27,7 +27,7 @@ async function deployAzoriusProxy(
   owner: SignerWithAddress,
   avatar: string,
   target: string,
-  strategies: string[],
+  strategyAddress: string,
   timelockPeriod: number,
   executionPeriod: number,
 ): Promise<AzoriusV1> {
@@ -36,8 +36,8 @@ async function deployAzoriusProxy(
     AzoriusV1__factory.createInterface().getFunction('initialize').selector +
     ethers.AbiCoder.defaultAbiCoder()
       .encode(
-        ['address', 'address', 'address', 'address[]', 'uint32', 'uint32'],
-        [owner.address, avatar, target, strategies, timelockPeriod, executionPeriod],
+        ['address', 'address', 'address', 'address', 'uint32', 'uint32'],
+        [owner.address, avatar, target, strategyAddress, timelockPeriod, executionPeriod],
       )
       .slice(2);
 
@@ -55,15 +55,15 @@ async function deployAzoriusProxyWithSetUp(
   owner: SignerWithAddress,
   avatar: string,
   target: string,
-  strategies: string[],
+  strategyAddress: string,
   timelockPeriod: number,
   executionPeriod: number,
 ): Promise<AzoriusV1> {
   // Create the call to setUp with the encoded parameters
   const fullInitData = AzoriusV1__factory.createInterface().encodeFunctionData('setUp', [
     ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address', 'address', 'address', 'address[]', 'uint32', 'uint32'],
-      [owner.address, avatar, target, strategies, timelockPeriod, executionPeriod],
+      ['address', 'address', 'address', 'address', 'uint32', 'uint32'],
+      [owner.address, avatar, target, strategyAddress, timelockPeriod, executionPeriod],
     ),
   ]);
 
@@ -85,9 +85,8 @@ describe('AzoriusV1', () => {
   // mocks and mastercopies
   let implementation: AzoriusV1;
   let masterCopy: string;
-
-  // constants
-  const SENTINEL_STRATEGY = '0x0000000000000000000000000000000000000001';
+  let mockStrategy: MockVotingStrategy;
+  let mockStrategyAddress: string;
 
   beforeEach(async () => {
     // Get signers
@@ -96,6 +95,10 @@ describe('AzoriusV1', () => {
     // Deploy implementation contract
     implementation = await new AzoriusV1__factory(proxyDeployer).deploy();
     masterCopy = await implementation.getAddress();
+
+    // Deploy a default mock strategy for use in many tests
+    mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
+    mockStrategyAddress = await mockStrategy.getAddress();
   });
 
   describe('Initialization', () => {
@@ -114,7 +117,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -130,8 +133,8 @@ describe('AzoriusV1', () => {
           masterCopy,
           owner,
           await avatar.getAddress(),
-          await avatar.getAddress(), // Same as avatar
-          [],
+          await avatar.getAddress(),
+          mockStrategyAddress,
           100,
           200,
         );
@@ -147,7 +150,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           user.address,
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -163,7 +166,7 @@ describe('AzoriusV1', () => {
           owner,
           ethers.ZeroAddress,
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -178,7 +181,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           ethers.ZeroAddress,
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -193,7 +196,7 @@ describe('AzoriusV1', () => {
           owner,
           ethers.ZeroAddress,
           ethers.ZeroAddress,
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -203,148 +206,24 @@ describe('AzoriusV1', () => {
       });
     });
 
-    describe('Strategies parameter', () => {
-      describe('No strategies', () => {
-        it('should initialize with no strategies', async () => {
-          azorius = await deployAzoriusProxy(
-            proxyDeployer,
-            masterCopy,
-            owner,
-            await avatar.getAddress(),
-            await avatar.getAddress(),
-            [], // empty strategies array
-            100,
-            200,
-          );
+    describe('Strategy parameter', () => {
+      it('should initialize with a valid strategy', async () => {
+        const localMockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
+          proposer.address,
+        );
+        const localMockStrategyAddress = await localMockStrategy.getAddress();
 
-          const [strategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 1);
-          expect(strategies.length).to.equal(0);
-          expect(next).to.equal(SENTINEL_STRATEGY);
-        });
-
-        it('should not allow zero address strategy', async () => {
-          await expect(
-            deployAzoriusProxy(
-              proxyDeployer,
-              masterCopy,
-              owner,
-              await avatar.getAddress(),
-              await avatar.getAddress(),
-              [ethers.ZeroAddress],
-              100,
-              200,
-            ),
-          ).to.be.reverted;
-        });
-
-        it('should not allow sentinel address as strategy', async () => {
-          await expect(
-            deployAzoriusProxy(
-              proxyDeployer,
-              masterCopy,
-              owner,
-              await avatar.getAddress(),
-              await avatar.getAddress(),
-              [SENTINEL_STRATEGY],
-              100,
-              200,
-            ),
-          ).to.be.reverted;
-        });
-      });
-
-      describe('Single strategy', () => {
-        let mockStrategy: MockVotingStrategy;
-
-        beforeEach(async () => {
-          // Deploy a strategy for testing
-          mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-        });
-
-        it('should initialize with single strategy', async () => {
-          azorius = await deployAzoriusProxy(
-            proxyDeployer,
-            masterCopy,
-            owner,
-            await avatar.getAddress(),
-            await avatar.getAddress(),
-            [await mockStrategy.getAddress()],
-            100,
-            200,
-          );
-
-          void expect(await azorius.isStrategyEnabled(await mockStrategy.getAddress())).to.be.true;
-          const [strategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 10);
-          expect(strategies.length).to.equal(1);
-          expect(strategies[0]).to.equal(await mockStrategy.getAddress());
-          expect(next).to.equal(SENTINEL_STRATEGY);
-        });
-      });
-
-      describe('Multiple strategies', () => {
-        it('should initialize with multiple strategies in correct order', async () => {
-          // Deploy multiple strategies
-          const strategy1 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-          const strategy2 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-          const strategy3 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-
-          const initialStrategies = [
-            await strategy1.getAddress(),
-            await strategy2.getAddress(),
-            await strategy3.getAddress(),
-          ];
-
-          azorius = await deployAzoriusProxy(
-            proxyDeployer,
-            masterCopy,
-            owner,
-            await avatar.getAddress(),
-            await avatar.getAddress(),
-            initialStrategies,
-            100,
-            200,
-          );
-
-          // Verify all strategies are enabled
-          for (const strategy of initialStrategies) {
-            void expect(await azorius.isStrategyEnabled(strategy)).to.be.true;
-          }
-
-          // Verify strategies are in correct order (reverse of input order due to linked list structure)
-          const [strategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 10);
-          expect(strategies.length).to.equal(initialStrategies.length);
-          for (let i = 0; i < strategies.length; i++) {
-            expect(strategies[i]).to.equal(initialStrategies[initialStrategies.length - 1 - i]);
-          }
-          expect(next).to.equal(SENTINEL_STRATEGY);
-        });
-
-        it('should not allow duplicate strategies', async () => {
-          const mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-
-          await expect(
-            deployAzoriusProxy(
-              proxyDeployer,
-              masterCopy,
-              owner,
-              await avatar.getAddress(),
-              await avatar.getAddress(),
-              [await mockStrategy.getAddress(), await mockStrategy.getAddress()],
-              100,
-              200,
-            ),
-          ).to.be.reverted;
-        });
+        azorius = await deployAzoriusProxy(
+          proxyDeployer,
+          masterCopy,
+          owner,
+          await avatar.getAddress(),
+          await avatar.getAddress(),
+          localMockStrategyAddress,
+          100,
+          200,
+        );
+        expect(await azorius.strategy()).to.equal(localMockStrategyAddress);
       });
     });
 
@@ -359,7 +238,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           timelockPeriod,
           executionPeriod,
         );
@@ -375,7 +254,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           0,
           0,
         );
@@ -393,7 +272,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           maxUint32,
           maxUint32,
         );
@@ -411,13 +290,20 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
 
         await expect(
-          azorius.initialize(owner.address, ethers.ZeroAddress, ethers.ZeroAddress, [], 0, 0),
+          azorius.initialize(
+            owner.address,
+            ethers.ZeroAddress,
+            ethers.ZeroAddress,
+            mockStrategyAddress,
+            0,
+            0,
+          ),
         ).to.be.revertedWithCustomError(azorius, 'InvalidInitialization');
       });
 
@@ -429,7 +315,7 @@ describe('AzoriusV1', () => {
             owner.address,
             ethers.ZeroAddress,
             ethers.ZeroAddress,
-            [],
+            mockStrategyAddress,
             0,
             0,
           ),
@@ -445,7 +331,7 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
@@ -454,6 +340,7 @@ describe('AzoriusV1', () => {
         expect(await azorius.owner()).to.equal(owner.address);
         expect(await azorius.avatar()).to.equal(await avatar.getAddress());
         expect(await azorius.getFunction('target')()).to.equal(await avatar.getAddress());
+        expect(await azorius.strategy()).to.equal(mockStrategyAddress);
         expect(await azorius.timelockPeriod()).to.equal(100);
         expect(await azorius.executionPeriod()).to.equal(200);
       });
@@ -465,15 +352,22 @@ describe('AzoriusV1', () => {
           owner,
           await avatar.getAddress(),
           await avatar.getAddress(),
-          [],
+          mockStrategyAddress,
           100,
           200,
         );
 
         // Encode parameters correctly for setUp
         const innerParams = ethers.AbiCoder.defaultAbiCoder().encode(
-          ['address', 'address', 'address', 'address[]', 'uint32', 'uint32'],
-          [owner.address, await avatar.getAddress(), await avatar.getAddress(), [], 100, 200],
+          ['address', 'address', 'address', 'address', 'uint32', 'uint32'],
+          [
+            owner.address,
+            await avatar.getAddress(),
+            await avatar.getAddress(),
+            mockStrategyAddress,
+            100,
+            200,
+          ],
         );
 
         // Attempt to call setUp again - should revert
@@ -485,401 +379,10 @@ describe('AzoriusV1', () => {
     });
   });
 
-  describe('Strategy Tests', () => {
-    let azorius: AzoriusV1;
-    let mockStrategy: MockVotingStrategy;
-    let strategyList: string[];
-
-    beforeEach(async () => {
-      // Deploy initial strategy
-      mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
-
-      // Deploy avatar
-      const avatar = await new MockAvatar__factory(proxyDeployer).deploy();
-
-      // Deploy Azorius with initial strategy
-      azorius = await deployAzoriusProxy(
-        proxyDeployer,
-        masterCopy,
-        owner,
-        await avatar.getAddress(),
-        await avatar.getAddress(),
-        [await mockStrategy.getAddress()],
-        0,
-        0,
-      );
-    });
-
-    describe('Strategy Management', () => {
-      let newStrategy: MockVotingStrategy;
-
-      beforeEach(async () => {
-        // Deploy new strategy for testing
-        newStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
-      });
-
-      describe('Enabling and disabling strategies via owner', () => {
-        beforeEach(async () => {
-          await azorius.enableStrategy(await newStrategy.getAddress());
-        });
-
-        it('should allow owner to enable new strategy', async () => {
-          void expect(await azorius.isStrategyEnabled(await newStrategy.getAddress())).to.be.true;
-        });
-
-        it('should allow owner to disable strategy', async () => {
-          await azorius.disableStrategy(SENTINEL_STRATEGY, await newStrategy.getAddress());
-          void expect(await azorius.isStrategyEnabled(await newStrategy.getAddress())).to.be.false;
-        });
-      });
-
-      describe('Enabling and disabling strategies via non-owner', () => {
-        it('should not allow non-owner to enable strategy', async () => {
-          await expect(
-            azorius.connect(user).enableStrategy(await newStrategy.getAddress()),
-          ).to.be.revertedWithCustomError(azorius, 'OwnableUnauthorizedAccount');
-        });
-      });
-
-      describe('Invalid strategy addresses', () => {
-        it('should not allow enabling zero address strategy', async () => {
-          await expect(azorius.enableStrategy(ethers.ZeroAddress)).to.be.revertedWithCustomError(
-            azorius,
-            'InvalidStrategy',
-          );
-        });
-
-        it('should not allow enabling sentinel strategy', async () => {
-          await expect(azorius.enableStrategy(SENTINEL_STRATEGY)).to.be.revertedWithCustomError(
-            azorius,
-            'InvalidStrategy',
-          );
-        });
-      });
-    });
-
-    describe('Strategy Pagination', () => {
-      let foundStrategies: Set<string>;
-
-      beforeEach(async () => {
-        // First disable the initial strategy that was added during Azorius setup
-        await azorius
-          .connect(owner)
-          .disableStrategy(SENTINEL_STRATEGY, await mockStrategy.getAddress());
-
-        // Deploy 6 mock strategies
-        strategyList = [];
-        for (let i = 0; i < 6; i++) {
-          const strategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-          strategyList.push(await strategy.getAddress());
-          await azorius.connect(owner).enableStrategy(await strategy.getAddress());
-        }
-        foundStrategies = new Set<string>();
-      });
-
-      it('should paginate through strategies correctly with page size of 2', async () => {
-        // Start from SENTINEL_STRATEGY
-        let startAddress = SENTINEL_STRATEGY;
-        let hasMore = true;
-
-        while (hasMore) {
-          const [pageStrategies, next] = await azorius.getStrategies(startAddress, 2);
-
-          // Add found strategies to our set
-          for (const strategy of pageStrategies) {
-            foundStrategies.add(strategy.toLowerCase());
-          }
-
-          // If we got an empty page with next=SENTINEL_STRATEGY, it means startAddress is the last strategy
-          if (pageStrategies.length === 0 && next === SENTINEL_STRATEGY) {
-            // Add the last strategy to our set
-            if (startAddress !== SENTINEL_STRATEGY) {
-              foundStrategies.add(startAddress.toLowerCase());
-            }
-            hasMore = false;
-          }
-          // If we got an empty page with next=0x0, we've reached the end
-          else if (
-            pageStrategies.length === 0 &&
-            next === '0x0000000000000000000000000000000000000000'
-          ) {
-            hasMore = false;
-          }
-          // If we got a non-empty page with next=SENTINEL_STRATEGY, we've reached the end
-          else if (next === SENTINEL_STRATEGY) {
-            hasMore = false;
-          }
-          // Otherwise, continue to the next page
-          else {
-            // Add the current strategy to our set before moving to the next page
-            if (startAddress !== SENTINEL_STRATEGY) {
-              foundStrategies.add(startAddress.toLowerCase());
-            }
-            startAddress = next;
-          }
-        }
-
-        // Verify we found all strategies
-        expect(foundStrategies.size).to.equal(strategyList.length);
-        for (const strategy of strategyList) {
-          void expect(foundStrategies.has(strategy.toLowerCase())).to.be.true;
-        }
-
-        // Verify the linked list order (strategies should be in reverse order since newest are added at the front)
-        const [allStrategies] = await azorius.getStrategies(SENTINEL_STRATEGY, strategyList.length);
-        for (let i = 0; i < strategyList.length; i++) {
-          void expect(allStrategies[i].toLowerCase()).to.equal(
-            strategyList[strategyList.length - 1 - i].toLowerCase(),
-          );
-        }
-      });
-
-      it('should return all strategies when page size is larger than total count', async () => {
-        const [allStrategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 100);
-
-        // Should return all strategies in one page
-        expect(allStrategies.length).to.equal(strategyList.length);
-        expect(next).to.equal(SENTINEL_STRATEGY);
-
-        // Verify the order (newest first)
-        for (let i = 0; i < strategyList.length; i++) {
-          void expect(allStrategies[i].toLowerCase()).to.equal(
-            strategyList[strategyList.length - 1 - i].toLowerCase(),
-          );
-        }
-      });
-
-      it('should handle pagination from middle of the list', async () => {
-        // Get the first page to find a middle strategy
-        const [firstPage] = await azorius.getStrategies(SENTINEL_STRATEGY, 2);
-        const middleStrategy = firstPage[1]; // Second strategy in the list
-
-        // Start pagination from the middle strategy
-        const [remainingStrategies, next] = await azorius.getStrategies(middleStrategy, 100);
-
-        // Should return all strategies after the middle strategy
-        expect(remainingStrategies.length).to.be.greaterThan(0);
-        expect(remainingStrategies.length).to.be.lessThan(strategyList.length);
-
-        // The next pointer should be SENTINEL_STRATEGY since we requested all remaining strategies
-        expect(next).to.equal(SENTINEL_STRATEGY);
-
-        // Verify that we don't find the middle strategy or any strategies before it
-        for (const strategy of remainingStrategies) {
-          void expect(strategy.toLowerCase()).to.not.equal(middleStrategy.toLowerCase());
-          void expect(firstPage[0].toLowerCase()).to.not.equal(strategy.toLowerCase());
-        }
-      });
-
-      it('should revert with InvalidStartAddress when using a non-existent strategy', async () => {
-        const nonExistentStrategy = '0x0000000000000000000000000000000000000002';
-
-        await expect(azorius.getStrategies(nonExistentStrategy, 10)).to.be.revertedWithCustomError(
-          azorius,
-          'InvalidStartAddress',
-        );
-      });
-
-      it('should handle pagination with large numbers of strategies', async () => {
-        // Deploy 50 more strategies (for a total of 56)
-        const moreStrategies = [];
-        for (let i = 6; i < 56; i++) {
-          const strategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-          moreStrategies.push(await strategy.getAddress());
-          await azorius.connect(owner).enableStrategy(await strategy.getAddress());
-        }
-
-        // Combine all strategies
-        const allStrategies = [...strategyList, ...moreStrategies];
-
-        // Get all strategies in one go
-        const [retrievedStrategies] = await azorius.getStrategies(SENTINEL_STRATEGY, 1000);
-
-        // Verify we found all strategies
-        expect(retrievedStrategies.length).to.equal(allStrategies.length);
-
-        // Convert to sets for easier comparison
-        const foundSet = new Set(retrievedStrategies.map((s: string) => s.toLowerCase()));
-        const expectedSet = new Set(allStrategies.map((s: string) => s.toLowerCase()));
-
-        // Verify each expected strategy is found
-        for (const strategy of expectedSet) {
-          void expect(foundSet.has(strategy)).to.be.true;
-        }
-
-        // Verify each found strategy was expected
-        for (const strategy of foundSet) {
-          void expect(expectedSet.has(strategy)).to.be.true;
-        }
-      });
-
-      it('should maintain correct linked list structure when adding multiple strategies', async () => {
-        // Add multiple strategies
-        const newStrategies: string[] = [];
-        for (let i = 10; i < 15; i++) {
-          const strategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-            proposer.address,
-          );
-          newStrategies.push(await strategy.getAddress());
-          await azorius.connect(owner).enableStrategy(await strategy.getAddress());
-        }
-
-        // Get all strategies in one go
-        const [allStrategies] = await azorius.getStrategies(SENTINEL_STRATEGY, 1000);
-
-        // Verify the order of our new strategies (they should be at the front, in reverse order)
-        for (let i = 0; i < newStrategies.length; i++) {
-          expect(allStrategies[i]).to.equal(newStrategies[newStrategies.length - 1 - i]);
-        }
-      });
-
-      it('should maintain correct linked list structure when removing strategies', async () => {
-        // First get all current strategies
-        const [currentStrategies] = await azorius.getStrategies(SENTINEL_STRATEGY, 100);
-
-        // Remove strategies from different positions and verify the list remains valid
-        const positions = ['first', 'middle', 'last'];
-        for (const position of positions) {
-          let strategyToRemove: string;
-          let prevStrategy: string;
-
-          if (position === 'first') {
-            strategyToRemove = currentStrategies[0];
-            prevStrategy = SENTINEL_STRATEGY;
-          } else if (position === 'middle') {
-            const midIndex = Math.floor(currentStrategies.length / 2);
-            strategyToRemove = currentStrategies[midIndex];
-            prevStrategy = currentStrategies[midIndex - 1];
-          } else {
-            // last
-            strategyToRemove = currentStrategies[currentStrategies.length - 1];
-            prevStrategy = currentStrategies[currentStrategies.length - 2];
-          }
-
-          // Remove the strategy
-          await azorius.connect(owner).disableStrategy(prevStrategy, strategyToRemove);
-
-          // Verify the strategy is disabled
-          void expect(await azorius.isStrategyEnabled(strategyToRemove)).to.be.false;
-
-          // Get updated list
-          const [updatedStrategies] = await azorius.getStrategies(SENTINEL_STRATEGY, 100);
-
-          // Verify the removed strategy is not in the list
-          expect(updatedStrategies).to.not.include(strategyToRemove);
-
-          // Verify the list is still properly linked
-          if (position === 'first') {
-            const [firstPage] = await azorius.getStrategies(SENTINEL_STRATEGY, 1);
-            if (firstPage.length > 0) {
-              expect(firstPage[0]).to.not.equal(strategyToRemove);
-            }
-          } else if (position === 'last') {
-            const lastStrategy = updatedStrategies[updatedStrategies.length - 1];
-            const [, next] = await azorius.getStrategies(lastStrategy, 1);
-            expect(next).to.equal(SENTINEL_STRATEGY);
-          } else {
-            // middle
-            const [nextStrategies] = await azorius.getStrategies(prevStrategy, 1);
-            if (nextStrategies.length > 0) {
-              expect(nextStrategies[0]).to.not.equal(strategyToRemove);
-            }
-          }
-        }
-      });
-
-      it('should revert with InvalidCount when count is zero', async () => {
-        await expect(azorius.getStrategies(SENTINEL_STRATEGY, 0)).to.be.revertedWithCustomError(
-          azorius,
-          'InvalidCount',
-        );
-      });
-
-      it('should return last strategy as _next when not all strategies fit in the array', async () => {
-        // First, clear any existing strategies (from previous tests)
-        // and create a fresh Azorius instance
-        const mockAvatar = await new MockAvatar__factory(proxyDeployer).deploy();
-        azorius = await deployAzoriusProxy(
-          proxyDeployer,
-          masterCopy,
-          owner,
-          await mockAvatar.getAddress(),
-          await mockAvatar.getAddress(),
-          [], // empty strategies array
-          100,
-          200,
-        );
-
-        // Enable three strategies
-        const strategy1 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-          proposer.address,
-        );
-        const strategy2 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-          proposer.address,
-        );
-        const strategy3 = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-          proposer.address,
-        );
-
-        await azorius.enableStrategy(await strategy1.getAddress());
-        await azorius.enableStrategy(await strategy2.getAddress());
-        await azorius.enableStrategy(await strategy3.getAddress());
-
-        // Request only 2 strategies when there are 3 total
-        const [returnedStrategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 2);
-
-        // Verify the behavior
-        expect(returnedStrategies.length).to.equal(2);
-
-        // The _next pointer should equal the last returned strategy when there are more strategies
-        // This matches the updated contract logic
-        expect(next).to.equal(returnedStrategies[1]);
-      });
-
-      it('should handle the case where all strategies are returned correctly', async () => {
-        // First, clear any existing strategies (from previous tests)
-        // and create a fresh Azorius instance
-        const mockAvatar = await new MockAvatar__factory(proxyDeployer).deploy();
-        azorius = await deployAzoriusProxy(
-          proxyDeployer,
-          masterCopy,
-          owner,
-          await mockAvatar.getAddress(),
-          await mockAvatar.getAddress(),
-          [], // empty strategies array
-          100,
-          200,
-        );
-
-        // Enable just one strategy
-        const strategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-          proposer.address,
-        );
-        await azorius.enableStrategy(await strategy.getAddress());
-
-        // Request strategies with count>1 to ensure we get all strategies
-        const [returnedStrategies, next] = await azorius.getStrategies(SENTINEL_STRATEGY, 2);
-
-        // Verify returned data
-        expect(returnedStrategies.length).to.equal(1);
-        expect(returnedStrategies[0]).to.equal(await strategy.getAddress());
-
-        // Since _next becomes SENTINEL_STRATEGY in the loop (we've reached the end of the list),
-        // it should remain SENTINEL_STRATEGY as per the contract logic
-        expect(next).to.equal(SENTINEL_STRATEGY);
-      });
-    });
-  });
-
   describe('Proposal Tests', () => {
     let azorius: AzoriusV1;
     let avatar: MockAvatar;
     let mockToken: MockERC20Votes;
-    let mockStrategy: MockVotingStrategy;
 
     const TIMELOCK_PERIOD = 100; // blocks
     const EXECUTION_PERIOD = 200; // blocks
@@ -887,9 +390,6 @@ describe('AzoriusV1', () => {
     beforeEach(async () => {
       // Deploy mock contracts
       mockToken = await new MockERC20Votes__factory(proxyDeployer).deploy();
-
-      // Deploy initial strategy
-      mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
 
       // Deploy avatar
       avatar = await new MockAvatar__factory(proxyDeployer).deploy();
@@ -901,7 +401,7 @@ describe('AzoriusV1', () => {
         owner,
         await avatar.getAddress(),
         await avatar.getAddress(),
-        [await mockStrategy.getAddress()],
+        mockStrategyAddress,
         TIMELOCK_PERIOD,
         EXECUTION_PERIOD,
       );
@@ -930,7 +430,7 @@ describe('AzoriusV1', () => {
 
         const tx = await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [proposalTx], proposalMetadata);
+          .submitProposal([proposalTx], proposalMetadata, ethers.ZeroHash);
 
         const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
         if (!receipt) throw new Error('Transaction failed');
@@ -943,7 +443,6 @@ describe('AzoriusV1', () => {
 
         // Check that the event emits the correct values
         expect(event.proposalId).to.equal(0n);
-        expect(event.strategy).to.equal(await mockStrategy.getAddress());
         expect(event.proposer).to.equal(proposer.address);
         expect(event.transactions[0].to).to.equal(proposalTx.to);
         expect(event.transactions[0].value).to.equal(proposalTx.value);
@@ -954,29 +453,75 @@ describe('AzoriusV1', () => {
 
       it('should not allow non-proposer to submit proposal', async () => {
         await expect(
-          azorius
-            .connect(user)
-            .submitProposal(await mockStrategy.getAddress(), '0x', [proposalTx], 'Test proposal'),
+          azorius.connect(user).submitProposal([proposalTx], 'Test proposal', ethers.ZeroHash),
         ).to.be.revertedWithCustomError(azorius, 'InvalidProposer');
       });
 
-      it('should not allow proposal submission with disabled strategy', async () => {
-        const newStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
-          proposer.address,
-        );
+      it('should allow submitting a proposal with zero transactions and verify its state progression', async () => {
+        const proposalMetadata = 'Zero transaction proposal';
+        const proposalId = await azorius.totalProposalCount();
 
+        // Submit with empty transactions array
         await expect(
-          azorius
-            .connect(proposer)
-            .submitProposal(await newStrategy.getAddress(), '0x', [proposalTx], 'Test proposal'),
-        ).to.be.revertedWithCustomError(azorius, 'StrategyDisabled');
+          azorius.connect(proposer).submitProposal([], proposalMetadata, ethers.ZeroHash),
+        )
+          .to.emit(azorius, 'ProposalCreated')
+          .withArgs(mockStrategyAddress, proposalId, proposer.address, [], proposalMetadata);
+
+        expect(await azorius.totalProposalCount()).to.equal(proposalId + 1n);
+        const [, txHashes, , ,] = await azorius.getProposal(Number(proposalId));
+        expect(txHashes.length).to.equal(0);
+
+        // Simulate voting ended and passed
+        const currentTimestamp = await time.latest();
+        await mockStrategy.setVotingTimestamps(
+          Number(proposalId),
+          currentTimestamp,
+          currentTimestamp + 10,
+        );
+        await mockStrategy.setIsPassed(Number(proposalId), true);
+
+        // Advance time past voting
+        const timeToAdvanceTo = currentTimestamp + 11;
+        await time.increaseTo(timeToAdvanceTo);
+
+        const currentState = await azorius.proposalState(Number(proposalId));
+
+        // For a zero-transaction proposal that has passed, the state should directly be EXECUTED
+        // regardless of the timelock period, because the condition
+        // `_proposal.executionCounter == _proposal.txHashes.length` (0 == 0) is met first.
+        expect(currentState).to.equal(3); // EXECUTED
       });
     });
 
     describe('Proposal Transaction Management', () => {
-      it('should revert when accessing invalid proposal tx hash', async () => {
-        // First check if proposal exists
+      it('should revert when accessing proposalState for an uninitialized proposal', async () => {
         await expect(azorius.proposalState(999)).to.be.revertedWithCustomError(
+          azorius,
+          'InvalidProposal',
+        );
+      });
+
+      it('should revert when accessing proposalState with proposalId equal to totalProposalCount', async () => {
+        // No proposals submitted yet, so totalProposalCount is 0.
+        // Accessing proposalState(0) should revert.
+        await expect(azorius.proposalState(0)).to.be.revertedWithCustomError(
+          azorius,
+          'InvalidProposal',
+        );
+
+        // Submit one proposal
+        const proposalTx = {
+          to: await mockToken.getAddress(),
+          value: 0,
+          data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+          operation: 0, // Call
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroHash);
+        // Now totalProposalCount is 1. Accessing proposalState(1) should revert.
+        await expect(azorius.proposalState(1)).to.be.revertedWithCustomError(
           azorius,
           'InvalidProposal',
         );
@@ -994,7 +539,7 @@ describe('AzoriusV1', () => {
         // First create a valid proposal
         await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [proposalTx], 'Test proposal');
+          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroHash);
 
         // Try to access an invalid tx index
         await expect(azorius.getProposalTxHash(0, 999)).to.be.reverted; // Will revert with array out of bounds
@@ -1018,7 +563,7 @@ describe('AzoriusV1', () => {
         // Submit proposal with multiple transactions
         await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [tx1, tx2], 'Test proposal');
+          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroHash);
 
         // Get hashes directly
         const hash1 = await azorius.getTxHash(tx1.to, tx1.value, tx1.data, tx1.operation);
@@ -1033,6 +578,108 @@ describe('AzoriusV1', () => {
         expect(hashes.length).to.equal(2);
         expect(hashes[0]).to.equal(hash1);
         expect(hashes[1]).to.equal(hash2);
+      });
+    });
+
+    describe('getProposal', () => {
+      it('should return correct details for an existing proposal', async () => {
+        const proposalTx = {
+          to: await mockToken.getAddress(),
+          value: 0,
+          data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+          operation: 0, // Call
+        };
+        const metadata = 'Test GetProposal';
+
+        // Submit the proposal
+        await azorius.connect(proposer).submitProposal([proposalTx], metadata, ethers.ZeroHash);
+        const proposalId = 0;
+
+        const expectedTxHash = await azorius.getTxHash(
+          proposalTx.to,
+          proposalTx.value,
+          proposalTx.data,
+          proposalTx.operation,
+        );
+
+        const [strategy, txHashes, timelock, execution, counter] =
+          await azorius.getProposal(proposalId);
+
+        expect(strategy).to.equal(mockStrategyAddress);
+        expect(txHashes.length).to.equal(1);
+        expect(txHashes[0]).to.equal(expectedTxHash);
+        expect(timelock).to.equal(TIMELOCK_PERIOD); // Assuming TIMELOCK_PERIOD is available from outer scope
+        expect(execution).to.equal(EXECUTION_PERIOD); // Assuming EXECUTION_PERIOD is available from outer scope
+        expect(counter).to.equal(0); // Execution counter should be 0 initially
+      });
+
+      it('should return default/zero values for a non-existent proposalId (higher than totalProposalCount)', async () => {
+        const nonExistentProposalId = (await azorius.totalProposalCount()) + 1n; // Get current count and add 1
+        // Solidity will return default values for a mapping if the key doesn't exist
+        // or if the proposal struct was never initialized for that ID.
+
+        const [strategy, txHashes, timelock, execution, counter] = await azorius.getProposal(
+          Number(nonExistentProposalId), // Convert BigInt to number if necessary for your ethers version
+        );
+
+        expect(strategy).to.equal(ethers.ZeroAddress);
+        expect(txHashes.length).to.equal(0);
+        expect(timelock).to.equal(0);
+        expect(execution).to.equal(0);
+        expect(counter).to.equal(0);
+      });
+
+      it('should return details correctly after partial execution', async () => {
+        const tx1 = {
+          to: await mockToken.getAddress(),
+          value: 0,
+          data: mockToken.interface.encodeFunctionData('transfer', [user.address, 50]),
+          operation: 0,
+        };
+        const tx2 = {
+          to: await mockToken.getAddress(),
+          value: 0,
+          data: mockToken.interface.encodeFunctionData('transfer', [owner.address, 50]),
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([tx1, tx2], 'Partial Exec Test', ethers.ZeroHash);
+        const proposalId = 0;
+
+        // --- Setup for execution ---
+        await mockStrategy.setIsPassed(proposalId, true); // Mark as passed
+        await avatar.enableModule(await azorius.getAddress());
+        await mockToken.mint(await avatar.getAddress(), 100);
+
+        // 1. Get current chain time
+        const chainTimeBeforeStrategyUpdate = await time.latest();
+
+        // 2. Set strategy's voting timestamps relative to current chain time
+        const strategyVotingStart = chainTimeBeforeStrategyUpdate;
+        const strategyVotingEnd = chainTimeBeforeStrategyUpdate + 10; // Voting ends 10s from this point
+        await mockStrategy.setVotingTimestamps(proposalId, strategyVotingStart, strategyVotingEnd);
+
+        // 3. Proposal's timelock period is fixed when it's created (TIMELOCK_PERIOD = 100)
+        const proposalStoredTimelock = TIMELOCK_PERIOD;
+
+        // 4. Calculate target execution timestamp to be just after timelock expires
+        const targetExecutionTimestamp = strategyVotingEnd + proposalStoredTimelock + 1;
+
+        // 5. Set the next block's timestamp.
+        await time.increaseTo(targetExecutionTimestamp);
+
+        // Execute only the first transaction
+        await azorius.executeProposal(
+          proposalId,
+          [tx1.to],
+          [tx1.value],
+          [tx1.data],
+          [tx1.operation],
+        );
+
+        const [, , , , counter] = await azorius.getProposal(proposalId);
+        expect(counter).to.equal(1); // Execution counter should be 1
       });
     });
 
@@ -1057,11 +704,11 @@ describe('AzoriusV1', () => {
         // Submit a proposal
         await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [proposalTx], 'Test proposal');
+          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroHash);
 
         proposalId = 0;
 
-        // Set voting end block to future block and mark as passed by default
+        // Set voting end block to future block and mark as passed by default on the mockStrategy
         const currentBlockTimestamp = await time.latest();
 
         await mockStrategy.setVotingTimestamps(
@@ -1078,7 +725,7 @@ describe('AzoriusV1', () => {
 
         const currentBlockTimestamp = await time.latest();
 
-        // End voting immediately
+        // End voting immediately on the mock strategy
         await mockStrategy.setVotingTimestamps(proposalId, 0, currentBlockTimestamp);
 
         // Should be in timelock since we set isPassed to true in beforeEach
@@ -1101,7 +748,7 @@ describe('AzoriusV1', () => {
         // Mint tokens to the avatar (who will execute the transfer)
         await mockToken.mint(await avatar.getAddress(), 1000);
 
-        // End voting immediately
+        // End voting immediately on the mock strategy
         const currentBlockTimestamp = await time.latest();
         const votingEnd = currentBlockTimestamp + 10;
         await mockStrategy.setVotingTimestamps(proposalId, currentBlockTimestamp, votingEnd);
@@ -1126,7 +773,7 @@ describe('AzoriusV1', () => {
       });
 
       it('should not execute proposal before timelock period', async () => {
-        // Set voting to passed
+        // Set voting to passed on the mock strategy
         await mockStrategy.setVotingTimestamps(proposalId, 0, 0);
         await mockStrategy.setIsPassed(proposalId, true);
 
@@ -1142,7 +789,7 @@ describe('AzoriusV1', () => {
       });
 
       it('should not execute proposal after execution period', async () => {
-        // Set voting to passed
+        // Set voting to passed on the mock strategy
         await mockStrategy.setVotingTimestamps(proposalId, 0, 0);
         await mockStrategy.setIsPassed(proposalId, true);
 
@@ -1166,7 +813,7 @@ describe('AzoriusV1', () => {
           // Just need to reset the proposal state for our tests
           const currentTimestamp = await time.latest();
 
-          // Set a future voting end timestamp
+          // Set a future voting end timestamp on mock strategy
           await mockStrategy.setVotingTimestamps(
             proposalId,
             currentTimestamp,
@@ -1203,7 +850,7 @@ describe('AzoriusV1', () => {
         it('should handle exact boundary conditions in timestamp transitions', async () => {
           const currentTimestamp = await time.latest();
 
-          // Set exact timestamps for voting end
+          // Set exact timestamps for voting end on mock strategy
           await mockStrategy.setVotingTimestamps(
             proposalId,
             currentTimestamp,
@@ -1226,6 +873,25 @@ describe('AzoriusV1', () => {
           await time.increaseTo(currentTimestamp + 101 + TIMELOCK_PERIOD + EXECUTION_PERIOD);
           expect(await azorius.proposalState(proposalId)).to.equal(4); // Should be EXPIRED at exactly end of execution period
         });
+      });
+
+      it('should correctly transition to FAILED state if strategy returns isPassed as false', async () => {
+        const proposalIdToFail = 0; // Assuming proposal 0 is already submitted from beforeEach
+
+        // Ensure voting ends and proposal is marked as NOT passed by the strategy
+        const currentTimestamp = await time.latest();
+        await mockStrategy.setVotingTimestamps(
+          proposalIdToFail,
+          currentTimestamp,
+          currentTimestamp + 10,
+        );
+        await mockStrategy.setIsPassed(proposalIdToFail, false); // Key change: proposal does not pass
+
+        // Advance time past voting period
+        await time.increaseTo(currentTimestamp + 11);
+
+        // Verify state is FAILED
+        expect(await azorius.proposalState(proposalIdToFail)).to.equal(5); // FAILED (Enum.ProposalState.FAILED)
       });
     });
 
@@ -1261,9 +927,9 @@ describe('AzoriusV1', () => {
 
         await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [tx1, tx2], 'Test proposal');
+          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroHash);
 
-        // Set voting to passed and move past timelock
+        // Set voting to passed and move past timelock on mock strategy
         await mockStrategy.setVotingTimestamps(0, 0, 0);
         await mockStrategy.setIsPassed(0, true);
         await time.increase(TIMELOCK_PERIOD);
@@ -1332,15 +998,15 @@ describe('AzoriusV1', () => {
       });
 
       it('should revert on execution counter overflow', async () => {
-        // Submit proposal with both transactions
+        // Submit proposal with both transactions (proposalId will be 1 for this new proposal)
         await azorius
           .connect(proposer)
-          .submitProposal(await mockStrategy.getAddress(), '0x', [tx1, tx2], 'Test proposal');
+          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroHash);
 
-        // Get current block number and set up proposal state
+        // Get current block number and set up proposal state for the new proposal (ID 1)
         const currentBlockTimestamp = await time.latest();
         await mockStrategy.setVotingTimestamps(
-          1,
+          1, // new proposalId
           currentBlockTimestamp,
           currentBlockTimestamp + 10,
         );
@@ -1365,6 +1031,71 @@ describe('AzoriusV1', () => {
         await expect(
           azorius.executeProposal(1, [tx1.to], [tx1.value], [tx1.data], [tx1.operation]),
         ).to.be.revertedWithCustomError(azorius, 'InvalidTxs');
+      });
+
+      describe('executeProposal Specific Reverts', () => {
+        let proposalId: number;
+        let validTx: {
+          to: string;
+          value: number;
+          data: string;
+          operation: number;
+        };
+
+        beforeEach(async () => {
+          // Submit a standard proposal to be used for these revert tests
+          validTx = {
+            to: await mockToken.getAddress(),
+            value: 0,
+            data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+            operation: 0, // Call
+          };
+          // Get the next proposalId before submitting
+          proposalId = Number(await azorius.totalProposalCount());
+          await azorius
+            .connect(proposer)
+            .submitProposal([validTx], 'Test for Reverts', ethers.ZeroHash);
+
+          // Setup proposal to be EXECUTABLE for most tests here
+          const chainTimeBeforeStrategyUpdate = await time.latest();
+          const strategyVotingStart = chainTimeBeforeStrategyUpdate;
+          const strategyVotingEnd = chainTimeBeforeStrategyUpdate + 10;
+          await mockStrategy.setVotingTimestamps(
+            proposalId,
+            strategyVotingStart,
+            strategyVotingEnd,
+          );
+          await mockStrategy.setIsPassed(proposalId, true);
+
+          const targetExecutionTimestamp = strategyVotingEnd + TIMELOCK_PERIOD + 1;
+          if (targetExecutionTimestamp <= (await time.latest())) {
+            await time.increaseTo(targetExecutionTimestamp);
+          } else {
+            await time.setNextBlockTimestamp(targetExecutionTimestamp);
+          }
+        });
+
+        it('should revert with InvalidTxs if targets array is empty', async () => {
+          await expect(
+            azorius.executeProposal(proposalId, [], [], [], []),
+          ).to.be.revertedWithCustomError(azorius, 'InvalidTxs');
+        });
+
+        it('should revert with InvalidTxHash if provided tx details do not match stored hash', async () => {
+          const invalidTxData = mockToken.interface.encodeFunctionData('transfer', [
+            user.address,
+            999, // Different amount means different data, thus different hash
+          ]);
+          await expect(
+            azorius.executeProposal(
+              proposalId,
+              [validTx.to],
+              [validTx.value],
+              [invalidTxData], // Using different data
+              [validTx.operation],
+            ),
+          ).to.be.revertedWithCustomError(azorius, 'InvalidTxHash');
+        });
       });
     });
 
@@ -1403,6 +1134,408 @@ describe('AzoriusV1', () => {
         expect(txHash1).to.not.equal(txHash2);
       });
     });
+
+    describe('generateTxHashData', () => {
+      let txParams: {
+        to: string;
+        value: bigint;
+        data: string;
+        operation: number;
+        nonce: bigint;
+      };
+
+      beforeEach(async () => {
+        // Re-deploy Azorius and mocks if they are not available in this scope
+        // For this specific case, Azorius is deployed in the parent 'Proposal Tests' scope
+        // and mockToken is also available.
+        txParams = {
+          to: await mockToken.getAddress(),
+          value: 0n,
+          data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+          operation: 0, // Call
+          nonce: 0n,
+        };
+      });
+
+      it('should generate a non-empty bytes string', async () => {
+        const hashData = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          txParams.operation,
+          txParams.nonce,
+        );
+        expect(hashData).to.be.a('string');
+        expect(hashData).to.not.equal('0x');
+        void expect(ethers.isHexString(hashData)).to.be.true;
+      });
+
+      it('should produce different hash data for different nonces', async () => {
+        const hashData1 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          txParams.operation,
+          0n, // Nonce 0
+        );
+        const hashData2 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          txParams.operation,
+          1n, // Nonce 1
+        );
+        expect(hashData1).to.not.equal(hashData2);
+      });
+
+      it('should produce different hash data for different to addresses', async () => {
+        const hashData1 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          txParams.operation,
+          txParams.nonce,
+        );
+        const hashData2 = await azorius.generateTxHashData(
+          owner.address, // Different 'to'
+          txParams.value,
+          txParams.data,
+          txParams.operation,
+          txParams.nonce,
+        );
+        expect(hashData1).to.not.equal(hashData2);
+      });
+
+      it('should produce different hash data for different values', async () => {
+        const hashData1 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value, // Original value (e.g., 0)
+          txParams.data,
+          txParams.operation,
+          txParams.nonce,
+        );
+        const hashData2 = await azorius.generateTxHashData(
+          txParams.to,
+          1n, // Different value
+          txParams.data,
+          txParams.operation,
+          txParams.nonce,
+        );
+        expect(hashData1).to.not.equal(hashData2);
+      });
+
+      it('should produce different hash data for different data', async () => {
+        const hashData1 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data, // Original data
+          txParams.operation,
+          txParams.nonce,
+        );
+        const differentData = mockToken.interface.encodeFunctionData('transfer', [
+          user.address,
+          200,
+        ]);
+        const hashData2 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          differentData, // Different data
+          txParams.operation,
+          txParams.nonce,
+        );
+        expect(hashData1).to.not.equal(hashData2);
+      });
+
+      it('should produce different hash data for different operations', async () => {
+        const hashData1 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          0, // Operation Call
+          txParams.nonce,
+        );
+        const hashData2 = await azorius.generateTxHashData(
+          txParams.to,
+          txParams.value,
+          txParams.data,
+          1, // Operation DelegateCall
+          txParams.nonce,
+        );
+        expect(hashData1).to.not.equal(hashData2);
+      });
+    });
+  });
+
+  describe('Owner Functions', () => {
+    let azorius: AzoriusV1;
+    let avatar: MockAvatar;
+
+    const INITIAL_TIMELOCK_PERIOD = 100;
+    const INITIAL_EXECUTION_PERIOD = 200;
+
+    beforeEach(async () => {
+      // Deploy avatar
+      avatar = await new MockAvatar__factory(proxyDeployer).deploy();
+
+      // Deploy Azorius
+      azorius = await deployAzoriusProxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        await avatar.getAddress(),
+        await avatar.getAddress(),
+        mockStrategyAddress,
+        INITIAL_TIMELOCK_PERIOD,
+        INITIAL_EXECUTION_PERIOD,
+      );
+    });
+
+    describe('updateTimelockPeriod', () => {
+      const NEW_TIMELOCK_PERIOD = 300;
+
+      it('should allow owner to update timelock period', async () => {
+        await expect(azorius.connect(owner).updateTimelockPeriod(NEW_TIMELOCK_PERIOD))
+          .to.emit(azorius, 'TimelockPeriodUpdated')
+          .withArgs(NEW_TIMELOCK_PERIOD);
+        expect(await azorius.timelockPeriod()).to.equal(NEW_TIMELOCK_PERIOD);
+      });
+
+      it('should not allow non-owner to update timelock period', async () => {
+        await expect(azorius.connect(nonOwner).updateTimelockPeriod(NEW_TIMELOCK_PERIOD))
+          .to.be.revertedWithCustomError(azorius, 'OwnableUnauthorizedAccount')
+          .withArgs(nonOwner.address);
+      });
+
+      it('should apply updated timelock period to new proposals', async () => {
+        // Update the timelock period
+        await azorius.connect(owner).updateTimelockPeriod(NEW_TIMELOCK_PERIOD);
+
+        // Submit a new proposal
+        const proposalTx = {
+          to: owner.address, // Simple target for testing
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal', ethers.ZeroHash);
+        const proposalId = 0; // First proposal
+
+        const [, , timelock, ,] = await azorius.getProposal(proposalId);
+        expect(timelock).to.equal(NEW_TIMELOCK_PERIOD);
+      });
+
+      it('should not apply updated timelock period to existing proposals', async () => {
+        // Submit a proposal with the initial timelock period
+        const proposalTx = {
+          to: owner.address,
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroHash);
+        const existingProposalId = 0;
+
+        // Update the timelock period
+        await azorius.connect(owner).updateTimelockPeriod(NEW_TIMELOCK_PERIOD);
+
+        // Check the timelock period of the existing proposal
+        const [, , timelock, ,] = await azorius.getProposal(existingProposalId);
+        expect(timelock).to.equal(INITIAL_TIMELOCK_PERIOD);
+
+        // Submit a new proposal to ensure it gets the new period
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal post-update', ethers.ZeroHash);
+        const newProposalId = 1;
+        const [, , newTimelock, ,] = await azorius.getProposal(newProposalId);
+        expect(newTimelock).to.equal(NEW_TIMELOCK_PERIOD);
+      });
+    });
+
+    describe('updateExecutionPeriod', () => {
+      const NEW_EXECUTION_PERIOD = 400;
+
+      it('should allow owner to update execution period', async () => {
+        await expect(azorius.connect(owner).updateExecutionPeriod(NEW_EXECUTION_PERIOD))
+          .to.emit(azorius, 'ExecutionPeriodUpdated')
+          .withArgs(NEW_EXECUTION_PERIOD);
+        expect(await azorius.executionPeriod()).to.equal(NEW_EXECUTION_PERIOD);
+      });
+
+      it('should not allow non-owner to update execution period', async () => {
+        await expect(azorius.connect(nonOwner).updateExecutionPeriod(NEW_EXECUTION_PERIOD))
+          .to.be.revertedWithCustomError(azorius, 'OwnableUnauthorizedAccount')
+          .withArgs(nonOwner.address);
+      });
+
+      it('should apply updated execution period to new proposals', async () => {
+        await azorius.connect(owner).updateExecutionPeriod(NEW_EXECUTION_PERIOD);
+
+        const proposalTx = {
+          to: owner.address,
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal', ethers.ZeroHash);
+        const proposalId = 0;
+
+        const [, , , executionPeriod] = await azorius.getProposal(proposalId);
+        expect(executionPeriod).to.equal(NEW_EXECUTION_PERIOD);
+      });
+
+      it('should not apply updated execution period to existing proposals', async () => {
+        const proposalTx = {
+          to: owner.address,
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroHash);
+        const existingProposalId = 0;
+
+        await azorius.connect(owner).updateExecutionPeriod(NEW_EXECUTION_PERIOD);
+
+        const [, , , executionPeriod] = await azorius.getProposal(existingProposalId);
+        expect(executionPeriod).to.equal(INITIAL_EXECUTION_PERIOD);
+
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal post-update', ethers.ZeroHash);
+        const newProposalId = 1;
+        const [, , , newExecution] = await azorius.getProposal(newProposalId);
+        expect(newExecution).to.equal(NEW_EXECUTION_PERIOD);
+      });
+    });
+
+    describe('updateStrategy', () => {
+      let newMockStrategy: MockVotingStrategy;
+      let newMockStrategyAddress: string;
+
+      beforeEach(async () => {
+        // Deploy a new mock strategy for testing updates
+        newMockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(
+          proposer.address,
+        );
+        newMockStrategyAddress = await newMockStrategy.getAddress();
+      });
+
+      it('should allow owner to update strategy', async () => {
+        await expect(azorius.connect(owner).updateStrategy(newMockStrategyAddress))
+          .to.emit(azorius, 'StrategyUpdated')
+          .withArgs(newMockStrategyAddress);
+        expect(await azorius.strategy()).to.equal(newMockStrategyAddress);
+      });
+
+      it('should not allow non-owner to update strategy', async () => {
+        await expect(azorius.connect(nonOwner).updateStrategy(newMockStrategyAddress))
+          .to.be.revertedWithCustomError(azorius, 'OwnableUnauthorizedAccount')
+          .withArgs(nonOwner.address);
+      });
+
+      it('should apply updated strategy to new proposals', async () => {
+        await azorius.connect(owner).updateStrategy(newMockStrategyAddress);
+
+        const proposalTx = {
+          to: owner.address,
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal', ethers.ZeroHash);
+        const proposalId = 0;
+
+        const [strategyAddress, , , ,] = await azorius.getProposal(proposalId);
+        expect(strategyAddress).to.equal(newMockStrategyAddress);
+      });
+
+      it('should not apply updated strategy to existing proposals', async () => {
+        const proposalTx = {
+          to: owner.address,
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroHash);
+        const existingProposalId = 0;
+
+        await azorius.connect(owner).updateStrategy(newMockStrategyAddress);
+
+        const [strategyAddress, , , ,] = await azorius.getProposal(existingProposalId);
+        expect(strategyAddress).to.equal(mockStrategyAddress); // Original strategy
+
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'New proposal post-update', ethers.ZeroHash);
+        const newProposalId = 1;
+        const [newStrategy, , , ,] = await azorius.getProposal(newProposalId);
+        expect(newStrategy).to.equal(newMockStrategyAddress);
+      });
+
+      it("should use the proposal's original strategy for proposalState determination", async () => {
+        const proposalTx = {
+          to: owner.address, // Simple target
+          value: 0,
+          data: '0x',
+          operation: 0,
+        };
+        const existingProposalId = 0;
+
+        // 1. Submit proposal with initial strategy (mockStrategy)
+        // The azorius instance is already configured with mockStrategyAddress in the parent beforeEach
+        await azorius
+          .connect(proposer)
+          .submitProposal([proposalTx], 'Existing proposal with mockStrategy', ethers.ZeroHash);
+
+        // 2. Configure initial strategy (mockStrategy) for this proposal
+        const currentTimestamp = await time.latest();
+        const initialVotingEnd = currentTimestamp + 10;
+        await mockStrategy.setVotingTimestamps(
+          existingProposalId,
+          currentTimestamp,
+          initialVotingEnd,
+        );
+        await mockStrategy.setIsPassed(existingProposalId, true); // Will pass according to initial strategy
+
+        // 3. Configure newMockStrategy (if it were used, proposal would fail or be active longer)
+        // newMockStrategy is deployed in this describe block's beforeEach
+        const newStrategyVotingEnd = currentTimestamp + 1000;
+        await newMockStrategy.setVotingTimestamps(
+          existingProposalId,
+          currentTimestamp,
+          newStrategyVotingEnd,
+        );
+        await newMockStrategy.setIsPassed(existingProposalId, false); // Would fail under new strategy
+
+        // 4. Update global strategy to newMockStrategy
+        await azorius.connect(owner).updateStrategy(newMockStrategyAddress);
+
+        // 5. Advance time past initialVotingEnd (but before newStrategyVotingEnd)
+        await time.increaseTo(initialVotingEnd + 1);
+
+        // 6. Check proposalState. It should be TIMELOCKED because it uses mockStrategy's settings.
+        // ProposalState.TIMELOCKED is 1
+        expect(await azorius.proposalState(existingProposalId)).to.equal(1);
+
+        // 7. Further check: advance past timelock period. Should become EXECUTABLE.
+        // INITIAL_TIMELOCK_PERIOD is available from the 'Owner Functions' describe block's scope.
+        await time.increase(INITIAL_TIMELOCK_PERIOD);
+        // ProposalState.EXECUTABLE is 2
+        expect(await azorius.proposalState(existingProposalId)).to.equal(2);
+      });
+    });
   });
 
   describe('Version', () => {
@@ -1415,7 +1548,7 @@ describe('AzoriusV1', () => {
         proxyDeployer,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
-        [],
+        mockStrategyAddress,
         0,
         0,
       );
@@ -1441,7 +1574,7 @@ describe('AzoriusV1', () => {
         proxyDeployer,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
-        [],
+        mockStrategyAddress,
         0,
         0,
       );
@@ -1490,7 +1623,7 @@ describe('AzoriusV1', () => {
         owner,
         ethers.ZeroAddress,
         ethers.ZeroAddress,
-        [],
+        mockStrategyAddress,
         0,
         0,
       );
