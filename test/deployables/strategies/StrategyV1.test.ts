@@ -1,4 +1,5 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
@@ -6,6 +7,7 @@ import {
   IERC165__factory,
   IStrategyBaseV1__factory,
   IStrategyV1__factory,
+  MockLightAccount__factory,
   MockLightAccountFactory,
   MockLightAccountFactory__factory,
   MockTokenAdapter,
@@ -23,6 +25,7 @@ describe('StrategyV1', () => {
   let azoriusMock: SignerWithAddress; // To simulate calls from Azorius
   let nonOwner: SignerWithAddress;
   let user1: SignerWithAddress;
+  let voter1: SignerWithAddress, voter2: SignerWithAddress, voter3: SignerWithAddress;
 
   // Contract Instances
   let strategyImplementation: StrategyV1;
@@ -71,7 +74,8 @@ describe('StrategyV1', () => {
   }
 
   beforeEach(async () => {
-    [deployer, owner, azoriusMock, nonOwner, user1] = await ethers.getSigners();
+    [deployer, owner, azoriusMock, nonOwner, user1, voter2, voter3] = await ethers.getSigners();
+    voter1 = user1; // Alias for clarity in some tests
 
     strategyImplementation = await new StrategyV1__factory(deployer).deploy();
     await strategyImplementation.waitForDeployment();
@@ -483,7 +487,7 @@ describe('StrategyV1', () => {
     });
   });
 
-  describe('getVotingTimestamps & getProposalBlocks', () => {
+  describe('getVotingTimestamps', () => {
     let proposalId: number;
     let encodedProposalId: string;
 
@@ -517,6 +521,261 @@ describe('StrategyV1', () => {
     });
   });
 
+  describe('vote', () => {
+    let proposalId: number;
+    let encodedProposalId: string;
+    let adapter1Data: string; // abi.encode(tokenId[]) for ERC721, or empty for ERC20
+    let adapter2Data: string;
+
+    beforeEach(async () => {
+      proposalId = 1;
+      encodedProposalId = ethers.AbiCoder.defaultAbiCoder().encode(['uint32'], [proposalId]);
+
+      // Add at least one adapter for most tests
+      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      // Initialize the proposal by azoriusMock
+      await strategy
+        .connect(azoriusMock)
+        .initializeProposal(encodedProposalId, [], ethers.ZeroHash);
+
+      // Example adapter data (can be customized per test)
+      // For ERC20Adapter, this would typically be ethers.AbiCoder.defaultAbiCoder().encode([], []); (empty)
+      // For ERC721Adapter, ethers.AbiCoder.defaultAbiCoder().encode(['uint256[]'], [[101, 102]]);
+      adapter1Data = ethers.AbiCoder.defaultAbiCoder().encode(['uint256[]'], [[1]]); // Mocking ERC721 style data
+      adapter2Data = ethers.AbiCoder.defaultAbiCoder().encode(['uint256[]'], [[2]]);
+
+      // Deploy MockLightAccount for ERC4337 tests if not already available globally
+      // For this specific test, we might deploy it inside if needed fresh
+    });
+
+    it('should revert if _adaptersToUse and _adapterVoteData lengths mismatch', async () => {
+      const adaptersToUse = [mockAdapter1]; // 1 adapter
+      const adapterVoteData: string[] = []; // 0 data entries
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1, adaptersToUse, adapterVoteData),
+      ).to.be.revertedWithCustomError(strategy, 'MismatchedInputs');
+    });
+
+    it('should revert if proposal is not initialized (votingEndTimestamp is 0)', async () => {
+      const uninitializedProposalId = 999;
+      await expect(
+        strategy.connect(user1).vote(uninitializedProposalId, 1, [mockAdapter1], [adapter1Data]),
+      ).to.be.revertedWithCustomError(strategy, 'ProposalNotFoundOrNotActive');
+    });
+
+    it('should revert if voting period has ended', async () => {
+      // Advance time beyond voting period
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      await time.increaseTo(proposalDetails.votingEndTimestamp + 1n);
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1, [mockAdapter1], [adapter1Data]),
+      ).to.be.revertedWithCustomError(strategy, 'ProposalNotFoundOrNotActive');
+    });
+
+    it('should revert if total weight cast is zero (e.g., adapter.recordVote returns 0)', async () => {
+      await mockAdapter1.connect(owner).setWeight(user1.address, 0); // Ensure recordVote (via setWeight) returns 0
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1, [mockAdapter1], [adapter1Data]),
+      ).to.be.revertedWithCustomError(strategy, 'NoVotingWeight');
+    });
+
+    it('should revert on invalid voteType', async () => {
+      const invalidVoteType = 3; // VoteType enum is 0, 1, 2
+      await mockAdapter1.connect(owner).setWeight(user1.address, 10); // Give some weight
+      await expect(
+        strategy.connect(user1).vote(proposalId, invalidVoteType, [mockAdapter1], [adapter1Data]),
+      ).to.be.revertedWithCustomError(strategy, 'InvalidVoteType');
+    });
+
+    it('should revert with InvalidAdapterProvidedInVote if an adapter in _adaptersToUse is not configured in the strategy', async () => {
+      const unconfiguredAdapter = await new MockTokenAdapter__factory(deployer).deploy();
+      await unconfiguredAdapter.waitForDeployment();
+      const unconfiguredAdapterAddress = await unconfiguredAdapter.getAddress();
+
+      // mockAdapter1 is configured from the beforeEach of the parent 'vote' describe block
+      await mockAdapter1.setWeight(user1.address, 10);
+
+      const adaptersToUse = [await mockAdapter1.getAddress(), unconfiguredAdapterAddress];
+      const adapterDataArray = [adapter1Data, adapter1Data]; // Dummy data for both
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1 /* YES */, adaptersToUse, adapterDataArray),
+      ).to.be.revertedWithCustomError(strategy, 'InvalidAdapterProvidedInVote');
+    });
+
+    it('should correctly record a YES vote, update counts, and emit Voted event', async () => {
+      const voteWeight = 100;
+      await mockAdapter1.connect(owner).setWeight(user1.address, voteWeight);
+
+      const tx = await strategy
+        .connect(user1)
+        .vote(proposalId, 1 /* YES */, [mockAdapter1], [adapter1Data]);
+
+      await expect(tx)
+        .to.emit(strategy, 'Voted')
+        .withArgs(user1.address, proposalId, 1 /* YES */, voteWeight);
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.yesVotes).to.equal(voteWeight);
+      expect(proposalDetails.noVotes).to.equal(0);
+      expect(proposalDetails.abstainVotes).to.equal(0);
+
+      // Verify adapter's recordVote was called (using our mock's state)
+      expect(await mockAdapter1.lastVoterForRecordVote()).to.equal(user1.address);
+      expect(await mockAdapter1.lastProposalIdForRecordVote()).to.equal(proposalId);
+      // Note: MockTokenAdapter currently doesn't store lastAdapterDataForRecordVote to save gas
+      // but we can check if it was recorded if needed by enhancing the mock.
+      expect(
+        await mockAdapter1.recordedVotesWeight(
+          user1.address,
+          proposalId,
+          ethers.keccak256(adapter1Data),
+        ),
+      ).to.equal(voteWeight);
+    });
+
+    it('should correctly record a NO vote', async () => {
+      const voteWeight = 50;
+      await mockAdapter1.connect(owner).setWeight(user1.address, voteWeight);
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 0 /* NO */, [mockAdapter1], [adapter1Data]),
+      )
+        .to.emit(strategy, 'Voted')
+        .withArgs(user1.address, proposalId, 0 /* NO */, voteWeight);
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.noVotes).to.equal(voteWeight);
+      expect(proposalDetails.yesVotes).to.equal(0);
+      expect(proposalDetails.abstainVotes).to.equal(0);
+    });
+
+    it('should correctly record an ABSTAIN vote', async () => {
+      const voteWeight = 25;
+      await mockAdapter1.connect(owner).setWeight(user1.address, voteWeight);
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 2 /* ABSTAIN */, [mockAdapter1], [adapter1Data]),
+      )
+        .to.emit(strategy, 'Voted')
+        .withArgs(user1.address, proposalId, 2 /* ABSTAIN */, voteWeight);
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.abstainVotes).to.equal(voteWeight);
+      expect(proposalDetails.yesVotes).to.equal(0);
+      expect(proposalDetails.noVotes).to.equal(0);
+    });
+
+    it('should sum weights if multiple adapters are used in one vote call', async () => {
+      // Add second adapter to the strategy for this test
+      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+
+      const weight1 = 60;
+      const weight2 = 40;
+      await mockAdapter1.connect(owner).setWeight(user1.address, weight1);
+      await mockAdapter2.connect(owner).setWeight(user1.address, weight2); // user1 votes with both adapters
+
+      const adaptersToUse = [mockAdapter1, mockAdapter2];
+      const adapterVoteDataArray = [adapter1Data, adapter2Data]; // Assuming different data for each or just placeholders
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1 /* YES */, adaptersToUse, adapterVoteDataArray),
+      )
+        .to.emit(strategy, 'Voted')
+        .withArgs(user1.address, proposalId, 1 /* YES */, weight1 + weight2);
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.yesVotes).to.equal(weight1 + weight2);
+    });
+
+    it('should support ERC4337 by using the resolved voter address', async () => {
+      const smartAccountOwner = user1;
+      const relayer = nonOwner;
+
+      // 1. Deploy MockLightAccount directly, owned by smartAccountOwner
+      const mockLightAccountDeployedFactory = new MockLightAccount__factory(deployer);
+      const mockSmartAccount = await mockLightAccountDeployedFactory.deploy(
+        smartAccountOwner.address,
+      );
+      await mockSmartAccount.waitForDeployment();
+      const mockSmartAccountAddress = await mockSmartAccount.getAddress();
+
+      // 2. IMPORTANT: Configure the lightAccountFactoryMock (used by StrategyV1) to correctly resolve this smart account
+      await lightAccountFactoryMock.setAccountAddress(
+        smartAccountOwner.address,
+        0,
+        mockSmartAccountAddress,
+      );
+
+      const voteWeight = 77;
+      // Set weight for the smartAccountOwner (user1) in the mock adapter
+      await mockAdapter1.connect(owner).setWeight(smartAccountOwner.address, voteWeight);
+
+      const tx = await mockSmartAccount
+        .connect(relayer)
+        .callStrategyVote(
+          await strategy.getAddress(),
+          proposalId,
+          1 /* YES */,
+          [await mockAdapter1.getAddress()],
+          [adapter1Data],
+        );
+
+      await expect(tx)
+        .to.emit(strategy, 'Voted')
+        .withArgs(smartAccountOwner.address, proposalId, 1 /* YES */, voteWeight);
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.yesVotes).to.equal(voteWeight);
+
+      expect(await mockAdapter1.lastVoterForRecordVote()).to.equal(smartAccountOwner.address);
+    });
+
+    it('should revert if an adapter call to recordVote reverts', async () => {
+      await mockAdapter1.connect(owner).setWeight(user1.address, 10);
+      await mockAdapter1.setShouldRevertOnRecordVote(true); // Configure mock to revert
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1 /* YES */, [mockAdapter1], [adapter1Data]),
+      ).to.be.revertedWith('MockTokenAdapter: recordVote forced revert');
+    });
+
+    it('should revert if any adapter call reverts in a multi-adapter vote (all-or-nothing)', async () => {
+      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+
+      await mockAdapter1.connect(owner).setWeight(user1.address, 10);
+      await mockAdapter2.connect(owner).setWeight(user1.address, 20);
+
+      await mockAdapter1.setShouldRevertOnRecordVote(false); // Adapter 1 should succeed initially
+      await mockAdapter2.setShouldRevertOnRecordVote(true); // Adapter 2 will revert
+
+      const adaptersToUse = [mockAdapter1, mockAdapter2];
+      const adapterDataForVoter1Adapter1 = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['uint256[]'],
+        [[777]],
+      );
+      const adapterDataForVoter1Adapter2 = ethers.AbiCoder.defaultAbiCoder().encode(
+        ['uint256[]'],
+        [[888]],
+      );
+      const adapterVoteDataArray = [adapterDataForVoter1Adapter1, adapterDataForVoter1Adapter2];
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1 /* YES */, adaptersToUse, adapterVoteDataArray),
+      ).to.be.revertedWith('MockTokenAdapter: recordVote forced revert');
+
+      const proposalDetails = await strategy.proposalVotingDetails(proposalId);
+      expect(proposalDetails.yesVotes).to.equal(0);
+      expect(proposalDetails.noVotes).to.equal(0);
+      expect(proposalDetails.abstainVotes).to.equal(0);
+
+      const dataHashAdapter1 = ethers.keccak256(adapterDataForVoter1Adapter1);
+      void expect(await mockAdapter1.hasRecordedVote(user1.address, proposalId, dataHashAdapter1))
+        .to.be.false;
+    });
+  });
+
   describe('isPassed', () => {
     const PROPOSAL_ID = 1;
     // This beforeEach ensures that for each test in this describe block,
@@ -534,6 +793,71 @@ describe('StrategyV1', () => {
         strategy,
         'ProposalNotInitialized',
       );
+    });
+
+    it('should return false if voting period is not over', async () => {
+      // Proposal PROPOSAL_ID is initialized by this describe block's beforeEach.
+      await mockAdapter1.setWeight(voter1.address, DEFAULT_QUORUM_THRESHOLD + 10n);
+      await strategy
+        .connect(voter1)
+        .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+      void expect(await strategy.isPassed(PROPOSAL_ID)).to.be.false; // Voting not over
+    });
+
+    it('should return true if quorum and basis are met and voting is over', async () => {
+      await mockAdapter1.setWeight(voter1.address, DEFAULT_QUORUM_THRESHOLD + 10n);
+      await strategy
+        .connect(voter1)
+        .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+
+      const proposalDetails = await strategy.proposalVotingDetails(PROPOSAL_ID);
+      await time.increaseTo(proposalDetails.votingEndTimestamp + 1n);
+
+      void expect(await strategy.isPassed(PROPOSAL_ID)).to.be.true;
+    });
+
+    it('should return false if quorum is met but basis is not, after voting period', async () => {
+      await strategy.connect(owner).updateQuorumThreshold(50n);
+      await strategy.connect(owner).updateBasisNumerator(500_001n);
+
+      await mockAdapter1.setWeight(voter1.address, 50n);
+      await mockAdapter1.setWeight(voter2.address, 50n);
+      await mockAdapter1.setWeight(voter3.address, 10n);
+
+      await strategy
+        .connect(voter1)
+        .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+      await strategy
+        .connect(voter2)
+        .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+      await strategy
+        .connect(voter3)
+        .vote(PROPOSAL_ID, 2 /* ABSTAIN */, [mockAdapter1], [ethers.ZeroHash]);
+
+      const proposalDetails = await strategy.proposalVotingDetails(PROPOSAL_ID);
+      await time.increaseTo(proposalDetails.votingEndTimestamp + 1n);
+
+      void expect(await strategy.isPassed(PROPOSAL_ID)).to.be.false;
+    });
+
+    it('should return false if basis is met but quorum is not, after voting period', async () => {
+      await strategy.connect(owner).updateQuorumThreshold(100n);
+      await strategy.connect(owner).updateBasisNumerator(500_001n);
+
+      await mockAdapter1.setWeight(voter1.address, 60n);
+      await mockAdapter1.setWeight(voter2.address, 10n);
+
+      await strategy
+        .connect(voter1)
+        .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+      await strategy
+        .connect(voter2)
+        .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+
+      const proposalDetails = await strategy.proposalVotingDetails(PROPOSAL_ID);
+      await time.increaseTo(proposalDetails.votingEndTimestamp + 1n);
+
+      void expect(await strategy.isPassed(PROPOSAL_ID)).to.be.false;
     });
   });
 
@@ -697,6 +1021,198 @@ describe('StrategyV1', () => {
   describe('Version', () => {
     it('should return the correct version', async () => {
       void expect(await strategy.getVersion()).to.equal(1);
+    });
+  });
+
+  describe('Quorum and Basis Checks', () => {
+    const PROPOSAL_ID = 1;
+
+    beforeEach(async () => {
+      const adapterCount = await strategy.getTokenAdapterCount();
+      if (adapterCount === 0n) {
+        await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      }
+
+      await strategy.connect(azoriusMock).initializeProposal(PROPOSAL_ID, [], ethers.ZeroHash);
+    });
+
+    describe('isQuorumMet', () => {
+      it('should revert if proposal not initialized', async () => {
+        await expect(strategy.isQuorumMet(999)).to.be.revertedWithCustomError(
+          strategy,
+          'ProposalNotInitialized',
+        );
+      });
+
+      it('should return true if quorum is met exactly (yes + abstain == threshold)', async () => {
+        const quorum = 100n;
+        await strategy.connect(owner).updateQuorumThreshold(quorum);
+        await mockAdapter1.setWeight(voter1.address, 60n);
+        await mockAdapter1.setWeight(voter2.address, 40n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 2 /* ABSTAIN */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isQuorumMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return true if quorum is exceeded (yes + abstain > threshold)', async () => {
+        const quorum = 100n;
+        await strategy.connect(owner).updateQuorumThreshold(quorum);
+        await mockAdapter1.setWeight(voter1.address, 60n);
+        await mockAdapter1.setWeight(voter2.address, 41n); // Exceeds
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 2 /* ABSTAIN */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isQuorumMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return false if quorum is not met (yes + abstain < threshold)', async () => {
+        const quorum = 100n;
+        await strategy.connect(owner).updateQuorumThreshold(quorum);
+        await mockAdapter1.setWeight(voter1.address, 50n);
+        await mockAdapter1.setWeight(voter2.address, 40n); // 90 total, < 100
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 2 /* ABSTAIN */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isQuorumMet(PROPOSAL_ID)).to.be.false;
+      });
+
+      it('should return true if quorum threshold is 0, even with no votes contributing to quorum count', async () => {
+        await strategy.connect(owner).updateQuorumThreshold(0n);
+        await mockAdapter1.setWeight(voter1.address, 10n); // Only NO votes
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isQuorumMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return false if only NO votes are cast and quorum threshold > 0', async () => {
+        const quorum = 100n;
+        await strategy.connect(owner).updateQuorumThreshold(quorum);
+        await mockAdapter1.setWeight(voter1.address, 150n); // Sufficient weight, but wrong type
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isQuorumMet(PROPOSAL_ID)).to.be.false;
+      });
+    });
+
+    describe('isBasisMet', () => {
+      it('should revert if proposal not initialized', async () => {
+        await expect(strategy.isBasisMet(999)).to.be.revertedWithCustomError(
+          strategy,
+          'ProposalNotInitialized',
+        );
+      });
+
+      it('should return true if basis is met (yes > no for >50% basis)', async () => {
+        // Default basis is 500,001 / 1,000,000 (requires yes > no)
+        await mockAdapter1.setWeight(voter1.address, 101n);
+        await mockAdapter1.setWeight(voter2.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return false if basis is not met (yes == no for >50% basis)', async () => {
+        await mockAdapter1.setWeight(voter1.address, 100n);
+        await mockAdapter1.setWeight(voter2.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.false;
+      });
+
+      it('should return false if basis is not met (yes < no for >50% basis)', async () => {
+        await mockAdapter1.setWeight(voter1.address, 99n);
+        await mockAdapter1.setWeight(voter2.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.false;
+      });
+
+      it('should return false if totalYesAndNoVotes is 0 (only abstain)', async () => {
+        await mockAdapter1.setWeight(voter1.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 2 /* ABSTAIN */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.false;
+      });
+
+      it('should return true if basisNumerator is 500,000 (50%) and yes > no', async () => {
+        await strategy.connect(owner).updateBasisNumerator(500_000n);
+        await mockAdapter1.setWeight(voter1.address, 101n);
+        await mockAdapter1.setWeight(voter2.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return false if basisNumerator is 500,000 (50%) and yes == no', async () => {
+        await strategy.connect(owner).updateBasisNumerator(500_000n);
+        await mockAdapter1.setWeight(voter1.address, 100n);
+        await mockAdapter1.setWeight(voter2.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.false;
+      });
+
+      it('should return true if basisNumerator is max valid (DENOMINATOR - 1) and yes > 0, no == 0', async () => {
+        const maxValidBasis = 1_000_000n - 1n;
+        await strategy.connect(owner).updateBasisNumerator(maxValidBasis);
+        await mockAdapter1.setWeight(voter1.address, 100n);
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        // (100 * 1M) > (100 * (1M-1)) => 100M > 100M - 100. This is true.
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.true;
+      });
+
+      it('should return false if basisNumerator is max valid (DENOMINATOR - 1) and yes > 0, no > 0', async () => {
+        const maxValidBasis = 1_000_000n - 1n;
+        await strategy.connect(owner).updateBasisNumerator(maxValidBasis);
+        await mockAdapter1.setWeight(voter1.address, 100n);
+        await mockAdapter1.setWeight(voter2.address, 1n); // Add one NO vote
+        await strategy
+          .connect(voter1)
+          .vote(PROPOSAL_ID, 1 /* YES */, [mockAdapter1], [ethers.ZeroHash]);
+        await strategy
+          .connect(voter2)
+          .vote(PROPOSAL_ID, 0 /* NO */, [mockAdapter1], [ethers.ZeroHash]);
+        // yes = 100, no = 1, totalYesNo = 101
+        // (100 * 1M) > (101 * (1M-1))
+        // 100_000_000 > 101_000_000 - 101
+        // 100_000_000 > 100_999_899. This is false.
+        void expect(await strategy.isBasisMet(PROPOSAL_ID)).to.be.false;
+      });
     });
   });
 });

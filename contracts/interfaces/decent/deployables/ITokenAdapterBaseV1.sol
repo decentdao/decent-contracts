@@ -3,4 +3,10 @@ pragma solidity ^0.8.30;
 
 interface ITokenAdapterBaseV1 {
     function isProposer(address _proposer) external view returns (bool);
+
+    function recordVote(
+        address _voter,
+        uint32 _proposalId,
+        bytes calldata _adapterVoteData
+    ) external returns (uint256 weightCasted);
 }

@@ -201,6 +201,104 @@ contract StrategyV1 is
         );
     }
 
+    function vote(
+        uint32 _proposalId,
+        uint8 _voteType,
+        address[] calldata _adaptersToUse,
+        bytes[] calldata _adapterVoteData
+    ) external virtual override {
+        if (_adaptersToUse.length != _adapterVoteData.length)
+            revert MismatchedInputs();
+
+        address resolvedVoter = voter(msg.sender);
+        ProposalVotingDetails storage proposal = proposalVotingDetails[
+            _proposalId
+        ];
+
+        if (
+            proposal.votingEndTimestamp == 0 ||
+            block.timestamp > proposal.votingEndTimestamp
+        ) {
+            revert ProposalNotFoundOrNotActive();
+        }
+
+        uint256 totalWeightForThisVoteTransaction = 0;
+        uint256 numConfiguredAdapters = tokenAdapters.length;
+
+        for (uint256 i = 0; i < _adaptersToUse.length; i++) {
+            bool isValidAndConfiguredAdapter = false;
+            uint256 configuredAdapterIndex = 0;
+
+            for (uint256 j = 0; j < numConfiguredAdapters; j++) {
+                if (
+                    tokenAdapters[j] == ITokenAdapterBaseV1(_adaptersToUse[i])
+                ) {
+                    isValidAndConfiguredAdapter = true;
+                    configuredAdapterIndex = j;
+                    break;
+                }
+            }
+
+            if (!isValidAndConfiguredAdapter) {
+                revert InvalidAdapterProvidedInVote();
+            }
+
+            totalWeightForThisVoteTransaction += tokenAdapters[
+                configuredAdapterIndex
+            ].recordVote(resolvedVoter, _proposalId, _adapterVoteData[i]);
+        }
+
+        if (totalWeightForThisVoteTransaction == 0) revert NoVotingWeight();
+
+        if (_voteType == uint8(VoteType.YES)) {
+            proposal.yesVotes += totalWeightForThisVoteTransaction;
+        } else if (_voteType == uint8(VoteType.NO)) {
+            proposal.noVotes += totalWeightForThisVoteTransaction;
+        } else if (_voteType == uint8(VoteType.ABSTAIN)) {
+            proposal.abstainVotes += totalWeightForThisVoteTransaction;
+        } else {
+            revert InvalidVoteType();
+        }
+
+        emit Voted(
+            resolvedVoter,
+            _proposalId,
+            VoteType(_voteType),
+            totalWeightForThisVoteTransaction
+        );
+    }
+
+    function isQuorumMet(
+        uint32 _proposalId
+    ) public view virtual override returns (bool) {
+        ProposalVotingDetails storage proposal = proposalVotingDetails[
+            _proposalId
+        ];
+
+        if (proposal.votingEndTimestamp == 0) {
+            revert ProposalNotInitialized();
+        }
+
+        uint256 totalVotesForQuorum = proposal.yesVotes + proposal.abstainVotes;
+        return totalVotesForQuorum >= quorumThreshold;
+    }
+
+    function isBasisMet(
+        uint32 _proposalId
+    ) public view virtual override returns (bool) {
+        ProposalVotingDetails storage proposal = proposalVotingDetails[
+            _proposalId
+        ];
+
+        if (proposal.votingEndTimestamp == 0) {
+            revert ProposalNotInitialized();
+        }
+
+        return
+            (proposal.yesVotes * BASIS_DENOMINATOR) >
+            ((proposal.yesVotes + proposal.noVotes) * basisNumerator);
+    }
+
     function isPassed(
         uint32 _proposalId
     ) external view virtual override returns (bool) {
@@ -216,7 +314,7 @@ contract StrategyV1 is
             return false;
         }
 
-        return true;
+        return isQuorumMet(_proposalId) && isBasisMet(_proposalId);
     }
 
     function isProposer(

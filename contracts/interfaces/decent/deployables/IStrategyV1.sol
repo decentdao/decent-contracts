@@ -15,4 +15,15 @@ interface IStrategyV1 is IStrategyBaseV1 {
     function removeAdapter(address _adapter) external;
 
     function getTokenAdapterCount() external view returns (uint256);
+
+    function isQuorumMet(uint32 _proposalId) external view returns (bool);
+
+    function isBasisMet(uint32 _proposalId) external view returns (bool);
+
+    function vote(
+        uint32 _proposalId,
+        uint8 _voteType,
+        address[] calldata _adaptersToUse,
+        bytes[] calldata _adapterVoteData
+    ) external;
 }
