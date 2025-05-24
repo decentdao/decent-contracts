@@ -82,7 +82,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         address _strategy,
         uint32 _timelockPeriod,
         uint32 _executionPeriod
-    ) public initializer {
+    ) public virtual initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
 
@@ -98,7 +98,9 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         emit AzoriusSetUp(msg.sender, _owner, _avatar, _target);
     }
 
-    function setUp(bytes memory initializeParams) public override initializer {
+    function setUp(
+        bytes memory initializeParams
+    ) public virtual override initializer {
         (
             address _owner,
             address _avatar,
@@ -126,17 +128,19 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
 
     function updateTimelockPeriod(
         uint32 _timelockPeriod
-    ) external override onlyOwner {
+    ) external virtual override onlyOwner {
         _updateTimelockPeriod(_timelockPeriod);
     }
 
     function updateExecutionPeriod(
         uint32 _executionPeriod
-    ) external override onlyOwner {
+    ) external virtual override onlyOwner {
         _updateExecutionPeriod(_executionPeriod);
     }
 
-    function updateStrategy(address _strategy) external override onlyOwner {
+    function updateStrategy(
+        address _strategy
+    ) external virtual override onlyOwner {
         _updateStrategy(_strategy);
     }
 
@@ -144,7 +148,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         Transaction[] calldata _transactions,
         string calldata _metadata,
         bytes memory _data
-    ) external override {
+    ) external virtual override {
         if (!strategy.isProposer(msg.sender)) revert InvalidProposer();
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
@@ -185,7 +189,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         uint256[] memory _values,
         bytes[] memory _data,
         Enum.Operation[] memory _operations
-    ) external override {
+    ) external virtual override {
         if (_targets.length == 0) revert InvalidTxs();
         if (
             _targets.length != _values.length ||
@@ -216,13 +220,13 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     function getProposalTxHash(
         uint32 _proposalId,
         uint32 _txIndex
-    ) external view override returns (bytes32) {
+    ) external view virtual override returns (bytes32) {
         return proposals[_proposalId].txHashes[_txIndex];
     }
 
     function getProposalTxHashes(
         uint32 _proposalId
-    ) external view override returns (bytes32[] memory) {
+    ) external view virtual override returns (bytes32[] memory) {
         return proposals[_proposalId].txHashes;
     }
 
@@ -231,6 +235,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     )
         external
         view
+        virtual
         override
         returns (
             address _strategy,
@@ -250,7 +255,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
 
     function proposalState(
         uint32 _proposalId
-    ) public view override returns (ProposalState) {
+    ) public view virtual override returns (ProposalState) {
         if (_proposalId >= totalProposalCount) revert InvalidProposal();
         Proposal memory _proposal = proposals[_proposalId];
         IStrategyBaseV1 _strategy = IStrategyBaseV1(_proposal.strategy);
@@ -287,7 +292,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         bytes memory _data,
         Enum.Operation _operation,
         uint256 _nonce
-    ) public view override returns (bytes memory) {
+    ) public view virtual override returns (bytes memory) {
         uint256 chainId = block.chainid;
         bytes32 domainSeparator = keccak256(
             abi.encode(DOMAIN_SEPARATOR_TYPEHASH, chainId, this)
@@ -316,7 +321,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         uint256 _value,
         bytes memory _data,
         Enum.Operation _operation
-    ) public view override returns (bytes32) {
+    ) public view virtual override returns (bytes32) {
         return keccak256(generateTxHashData(_to, _value, _data, _operation, 0));
     }
 
@@ -326,7 +331,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         uint256 _value,
         bytes memory _data,
         Enum.Operation _operation
-    ) internal returns (bytes32 txHash) {
+    ) internal virtual returns (bytes32 txHash) {
         if (proposalState(_proposalId) != ProposalState.EXECUTABLE)
             revert ProposalNotExecutable();
         txHash = getTxHash(_target, _value, _data, _operation);
@@ -341,17 +346,17 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         if (!exec(_target, _value, _data, _operation)) revert TxFailed();
     }
 
-    function _updateTimelockPeriod(uint32 _timelockPeriod) internal {
+    function _updateTimelockPeriod(uint32 _timelockPeriod) internal virtual {
         timelockPeriod = _timelockPeriod;
         emit TimelockPeriodUpdated(_timelockPeriod);
     }
 
-    function _updateExecutionPeriod(uint32 _executionPeriod) internal {
+    function _updateExecutionPeriod(uint32 _executionPeriod) internal virtual {
         executionPeriod = _executionPeriod;
         emit ExecutionPeriodUpdated(_executionPeriod);
     }
 
-    function _updateStrategy(address _strategy) internal {
+    function _updateStrategy(address _strategy) internal virtual {
         strategy = IStrategyBaseV1(_strategy);
         emit StrategyUpdated(_strategy);
     }

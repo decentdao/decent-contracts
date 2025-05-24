@@ -47,7 +47,7 @@ contract ERC721TokenAdapterV1 is
         address _strategy,
         uint256 _weightPerNft,
         uint256 _proposerThreshold
-    ) external initializer {
+    ) external virtual initializer {
         __Ownable_init(_initialOwner);
         __UUPSUpgradeable_init();
 
@@ -65,9 +65,11 @@ contract ERC721TokenAdapterV1 is
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyOwner {}
+    ) internal virtual override onlyOwner {}
 
-    function updateWeightPerNft(uint256 _newWeightPerNft) external onlyOwner {
+    function updateWeightPerNft(
+        uint256 _newWeightPerNft
+    ) external virtual onlyOwner {
         _updateWeightPerNft(_newWeightPerNft);
         emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
     }
@@ -79,7 +81,7 @@ contract ERC721TokenAdapterV1 is
         emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
     }
 
-    function _updateWeightPerNft(uint256 _newWeightPerNft) internal {
+    function _updateWeightPerNft(uint256 _newWeightPerNft) internal virtual {
         if (_newWeightPerNft == 0) revert InvalidWeightPerNft();
         weightPerNft = _newWeightPerNft;
     }
@@ -95,6 +97,7 @@ contract ERC721TokenAdapterV1 is
     )
         internal
         view
+        virtual
         returns (
             uint256[] memory validTokenIdsForThisCall,
             uint256 totalCalculatedWeight
@@ -144,7 +147,7 @@ contract ERC721TokenAdapterV1 is
         address _voter,
         uint32 _proposalId,
         bytes calldata _adapterVoteData
-    ) external view override returns (uint256 weight) {
+    ) external view virtual override returns (uint256 weight) {
         (, uint256 totalCalculatedWeight) = _getValidUnvotedTokenIdsAndWeight(
             _voter,
             _proposalId,
@@ -157,7 +160,7 @@ contract ERC721TokenAdapterV1 is
         address _voter,
         uint32 _proposalId,
         bytes calldata _adapterVoteData
-    ) external override returns (uint256 weightCasted) {
+    ) external virtual override returns (uint256 weightCasted) {
         (
             uint256[] memory validTokenIdsToRecord,
             uint256 totalCalculatedWeight
@@ -181,13 +184,13 @@ contract ERC721TokenAdapterV1 is
         return (token.balanceOf(_proposer) * weightPerNft) >= proposerThreshold;
     }
 
-    function getVersion() public pure override returns (uint16) {
+    function getVersion() public pure virtual override returns (uint16) {
         return VERSION;
     }
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC165, Version) returns (bool) {
+    ) public view virtual override(ERC165, Version) returns (bool) {
         return
             interfaceId == type(ITokenAdapterV1).interfaceId ||
             interfaceId == type(ITokenAdapterBaseV1).interfaceId ||

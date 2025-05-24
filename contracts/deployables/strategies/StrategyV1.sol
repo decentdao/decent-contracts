@@ -124,7 +124,7 @@ contract StrategyV1 is
 
     function updateVotingPeriod(
         uint32 _newVotingPeriod
-    ) external override onlyOwner {
+    ) external virtual override onlyOwner {
         _updateVotingPeriod(_newVotingPeriod);
         emit StrategyParametersUpdated(
             votingPeriod,
@@ -135,7 +135,7 @@ contract StrategyV1 is
 
     function updateQuorumThreshold(
         uint256 _newQuorumThreshold
-    ) external override onlyOwner {
+    ) external virtual override onlyOwner {
         _updateQuorumThreshold(_newQuorumThreshold);
         emit StrategyParametersUpdated(
             votingPeriod,
@@ -146,7 +146,7 @@ contract StrategyV1 is
 
     function updateBasisNumerator(
         uint256 _newBasisNumerator
-    ) external override onlyOwner {
+    ) external virtual override onlyOwner {
         _updateBasisNumerator(_newBasisNumerator);
         emit StrategyParametersUpdated(
             votingPeriod,
@@ -155,11 +155,15 @@ contract StrategyV1 is
         );
     }
 
-    function addTokenAdapter(address _adapter) public override onlyOwner {
+    function addTokenAdapter(
+        address _adapter
+    ) public virtual override onlyOwner {
         _addTokenAdapter(_adapter);
     }
 
-    function removeTokenAdapter(address _adapter) external override onlyOwner {
+    function removeTokenAdapter(
+        address _adapter
+    ) external virtual override onlyOwner {
         if (_adapter == address(0)) revert TokenAdapterIsZeroAddress();
         uint256 adapterCount = tokenAdapters.length;
         if (adapterCount == 0) revert TokenAdapterNotFound();
@@ -175,7 +179,13 @@ contract StrategyV1 is
         revert TokenAdapterNotFound();
     }
 
-    function getTokenAdapterCount() external view override returns (uint256) {
+    function getTokenAdapterCount()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return tokenAdapters.length;
     }
 
@@ -360,16 +370,20 @@ contract StrategyV1 is
         return details.votingStartBlock;
     }
 
-    function _updateVotingPeriod(uint32 _newVotingPeriod) internal {
+    function _updateVotingPeriod(uint32 _newVotingPeriod) internal virtual {
         if (_newVotingPeriod == 0) revert InvalidVotingPeriod();
         votingPeriod = _newVotingPeriod;
     }
 
-    function _updateQuorumThreshold(uint256 _newQuorumThreshold) internal {
+    function _updateQuorumThreshold(
+        uint256 _newQuorumThreshold
+    ) internal virtual {
         quorumThreshold = _newQuorumThreshold;
     }
 
-    function _updateBasisNumerator(uint256 _newBasisNumerator) internal {
+    function _updateBasisNumerator(
+        uint256 _newBasisNumerator
+    ) internal virtual {
         if (
             _newBasisNumerator >= BASIS_DENOMINATOR ||
             _newBasisNumerator < BASIS_DENOMINATOR / 2
@@ -378,7 +392,7 @@ contract StrategyV1 is
         basisNumerator = _newBasisNumerator;
     }
 
-    function _addTokenAdapter(address _adapter) internal {
+    function _addTokenAdapter(address _adapter) internal virtual {
         if (_adapter == address(0)) revert TokenAdapterIsZeroAddress();
         for (uint256 i = 0; i < tokenAdapters.length; i++) {
             if (address(tokenAdapters[i]) == _adapter)

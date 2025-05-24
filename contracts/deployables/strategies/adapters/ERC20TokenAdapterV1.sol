@@ -53,7 +53,7 @@ contract ERC20TokenAdapterV1 is
         address _strategy,
         uint256 _proposerThreshold,
         uint256 _weightPerToken
-    ) external initializer {
+    ) external virtual initializer {
         __Ownable_init(_initialOwner);
         __UUPSUpgradeable_init();
 
@@ -72,7 +72,7 @@ contract ERC20TokenAdapterV1 is
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyOwner {}
+    ) internal virtual override onlyOwner {}
 
     function updateProposerThreshold(
         uint256 _newProposerThreshold
@@ -83,7 +83,7 @@ contract ERC20TokenAdapterV1 is
 
     function updateWeightPerToken(
         uint256 _newWeightPerToken
-    ) external onlyOwner {
+    ) external virtual onlyOwner {
         _updateWeightPerToken(_newWeightPerToken);
         emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
     }
@@ -92,7 +92,9 @@ contract ERC20TokenAdapterV1 is
         proposerThreshold = _newProposerThreshold;
     }
 
-    function _updateWeightPerToken(uint256 _newWeightPerToken) internal {
+    function _updateWeightPerToken(
+        uint256 _newWeightPerToken
+    ) internal virtual {
         if (_newWeightPerToken == 0) revert InvalidWeightPerToken();
         weightPerToken = _newWeightPerToken;
     }
@@ -100,7 +102,7 @@ contract ERC20TokenAdapterV1 is
     function _getVoteWeightDetails(
         address _voter,
         uint32 _proposalId
-    ) internal view returns (uint256 weight) {
+    ) internal view virtual returns (uint256 weight) {
         uint256 rawVotes;
         if (tokenClockMode == ClockMode.Timestamp) {
             (uint48 startTimestamp, ) = strategy.getVotingTimestamps(
@@ -120,7 +122,7 @@ contract ERC20TokenAdapterV1 is
         address _voter,
         uint32 _proposalId,
         bytes calldata
-    ) external view override returns (uint256 weight) {
+    ) external view virtual override returns (uint256 weight) {
         if (_hasCastedVoteForProposal[_proposalId][_voter]) {
             return 0;
         }
@@ -131,7 +133,7 @@ contract ERC20TokenAdapterV1 is
         address _voter,
         uint32 _proposalId,
         bytes calldata
-    ) external override returns (uint256 weightCasted) {
+    ) external virtual override returns (uint256 weightCasted) {
         if (_hasCastedVoteForProposal[_proposalId][_voter]) {
             revert ERC20AlreadyVoted();
         }
@@ -149,13 +151,13 @@ contract ERC20TokenAdapterV1 is
         return (rawVotes * weightPerToken) >= proposerThreshold;
     }
 
-    function getVersion() public pure override returns (uint16) {
+    function getVersion() public pure virtual override returns (uint16) {
         return VERSION;
     }
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC165, Version) returns (bool) {
+    ) public view virtual override(ERC165, Version) returns (bool) {
         return
             interfaceId == type(ITokenAdapterV1).interfaceId ||
             interfaceId == type(ITokenAdapterBaseV1).interfaceId ||
