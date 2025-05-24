@@ -26,14 +26,12 @@ async function deployERC20AdapterProxy(
   ownerAddress: string,
   tokenAddress: string,
   strategyAddress: string,
-  proposerThreshold: bigint,
   weightPerToken: bigint,
 ): Promise<{ adapter: ERC20TokenAdapterV1; deployTx: ContractTransactionResponse }> {
   const initData = ERC20TokenAdapterV1__factory.createInterface().encodeFunctionData('initialize', [
     ownerAddress,
     tokenAddress,
     strategyAddress,
-    proposerThreshold,
     weightPerToken,
   ]);
   const proxyContractFactory = new ERC1967Proxy__factory(proxyDeployer);
@@ -53,7 +51,6 @@ describe('ERC20TokenAdapterV1', () => {
   let ownerG: SignerWithAddress;
   let erc20AdapterImplementationAddressG: string;
 
-  const DEFAULT_PROPOSER_THRESHOLD = ethers.parseUnits('100', 18);
   const DEFAULT_WEIGHT_PER_TOKEN = 1n;
 
   async function deployGlobalFixture() {
@@ -117,7 +114,6 @@ describe('ERC20TokenAdapterV1', () => {
   let mockStrategy: MockVotingStrategy;
   let deployer: SignerWithAddress;
   let user1Signer: SignerWithAddress;
-  let user2Signer: SignerWithAddress;
 
   beforeEach(async () => {
     const {
@@ -127,11 +123,9 @@ describe('ERC20TokenAdapterV1', () => {
       mockStrategy: mStrategy,
       deployer: dDeployer,
       user1Signer: vSigner,
-      user2Signer: v2Signer,
     } = await loadFixture(deployMocksAndSignersFixture);
 
     user1Signer = vSigner;
-    user2Signer = v2Signer;
     ownerSigner = oSigner;
     nonOwnerSigner = nSigner;
     mockToken = mToken;
@@ -147,7 +141,6 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
 
@@ -156,12 +149,11 @@ describe('ERC20TokenAdapterV1', () => {
       // as the event is emitted from the proxy's address due to delegatecall.
       await expect(deployTx.hash)
         .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
-        .withArgs(DEFAULT_PROPOSER_THRESHOLD, DEFAULT_WEIGHT_PER_TOKEN);
+        .withArgs(DEFAULT_WEIGHT_PER_TOKEN);
 
       expect(await erc20Adapter.owner()).to.equal(ownerSigner.address);
       expect(await erc20Adapter.token()).to.equal(await mockToken.getAddress());
       expect(await erc20Adapter.strategy()).to.equal(await mockStrategy.getAddress());
-      expect(await erc20Adapter.proposerThreshold()).to.equal(DEFAULT_PROPOSER_THRESHOLD);
       expect(await erc20Adapter.weightPerToken()).to.equal(DEFAULT_WEIGHT_PER_TOKEN);
     });
 
@@ -178,7 +170,6 @@ describe('ERC20TokenAdapterV1', () => {
           ownerSigner.address,
           ethers.ZeroAddress,
           await mockStrategy.getAddress(),
-          DEFAULT_PROPOSER_THRESHOLD,
           DEFAULT_WEIGHT_PER_TOKEN,
         ),
       ).to.be.revertedWithCustomError(erc20AdapterImplementation, 'InvalidTokenAddress');
@@ -197,7 +188,6 @@ describe('ERC20TokenAdapterV1', () => {
           ownerSigner.address,
           await mockToken.getAddress(),
           ethers.ZeroAddress,
-          DEFAULT_PROPOSER_THRESHOLD,
           DEFAULT_WEIGHT_PER_TOKEN,
         ),
       ).to.be.revertedWithCustomError(erc20AdapterImplementation, 'InvalidStrategyAddress');
@@ -216,7 +206,6 @@ describe('ERC20TokenAdapterV1', () => {
           ownerSigner.address,
           await mockToken.getAddress(),
           await mockStrategy.getAddress(),
-          DEFAULT_PROPOSER_THRESHOLD,
           0n,
         ),
       ).to.be.revertedWithCustomError(erc20AdapterImplementation, 'InvalidWeightPerToken');
@@ -229,18 +218,11 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
 
       await expect(
-        erc20Adapter.initialize(
-          ownerSigner.address,
-          ethers.ZeroAddress,
-          ethers.ZeroAddress,
-          0n,
-          0n,
-        ),
+        erc20Adapter.initialize(ownerSigner.address, ethers.ZeroAddress, ethers.ZeroAddress, 0n),
       ).to.be.revertedWithCustomError(erc20Adapter, 'InvalidInitialization');
     });
 
@@ -255,7 +237,6 @@ describe('ERC20TokenAdapterV1', () => {
           ownerSigner.address,
           await mockToken.getAddress(),
           await mockStrategy.getAddress(),
-          DEFAULT_PROPOSER_THRESHOLD,
           DEFAULT_WEIGHT_PER_TOKEN,
         ),
       ).to.be.revertedWithCustomError(implementationContract, 'InvalidInitialization');
@@ -277,42 +258,9 @@ describe('ERC20TokenAdapterV1', () => {
         currentOwnerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
       erc20Adapter = adapter;
-    });
-
-    describe('updateProposerThreshold', () => {
-      const NEW_PROPOSER_THRESHOLD = ethers.parseUnits('200', 18);
-
-      it('should allow owner to update proposer threshold and emit event', async () => {
-        await expect(
-          erc20Adapter.connect(currentOwnerSigner).updateProposerThreshold(NEW_PROPOSER_THRESHOLD),
-        )
-          .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(NEW_PROPOSER_THRESHOLD, DEFAULT_WEIGHT_PER_TOKEN);
-
-        expect(await erc20Adapter.proposerThreshold()).to.equal(NEW_PROPOSER_THRESHOLD);
-      });
-
-      it('should not allow non-owner to update proposer threshold', async () => {
-        await expect(
-          erc20Adapter
-            .connect(currentNonOwnerSigner)
-            .updateProposerThreshold(NEW_PROPOSER_THRESHOLD),
-        )
-          .to.be.revertedWithCustomError(erc20Adapter, 'OwnableUnauthorizedAccount')
-          .withArgs(currentNonOwnerSigner.address);
-      });
-
-      it('should allow updating to zero proposer threshold', async () => {
-        await expect(erc20Adapter.connect(currentOwnerSigner).updateProposerThreshold(0n))
-          .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(0n, DEFAULT_WEIGHT_PER_TOKEN);
-
-        expect(await erc20Adapter.proposerThreshold()).to.equal(0n);
-      });
     });
 
     describe('updateWeightPerToken', () => {
@@ -323,7 +271,7 @@ describe('ERC20TokenAdapterV1', () => {
           erc20Adapter.connect(currentOwnerSigner).updateWeightPerToken(NEW_WEIGHT_PER_TOKEN),
         )
           .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(DEFAULT_PROPOSER_THRESHOLD, NEW_WEIGHT_PER_TOKEN);
+          .withArgs(NEW_WEIGHT_PER_TOKEN);
         expect(await erc20Adapter.weightPerToken()).to.equal(NEW_WEIGHT_PER_TOKEN);
       });
 
@@ -356,7 +304,6 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         customWeightPerToken || DEFAULT_WEIGHT_PER_TOKEN,
       );
       adapter = deployedAdapter;
@@ -488,7 +435,6 @@ describe('ERC20TokenAdapterV1', () => {
         owner.address,
         await token.getAddress(),
         await strategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         customWeightPerToken || DEFAULT_WEIGHT_PER_TOKEN,
       );
       adapter = deployedAdapter;
@@ -596,96 +542,6 @@ describe('ERC20TokenAdapterV1', () => {
     });
   });
 
-  describe('isProposer', () => {
-    let adapter: ERC20TokenAdapterV1;
-
-    const SUITE_WEIGHT_PER_TOKEN = 2n;
-    const SUITE_RAW_VOTES_THRESHOLD = ethers.parseUnits('100', 18);
-    const SUITE_EFFECTIVE_PROPOSER_THRESHOLD = SUITE_RAW_VOTES_THRESHOLD * SUITE_WEIGHT_PER_TOKEN;
-
-    beforeEach(async () => {
-      const { adapter: deployedAdapter } = await deployERC20AdapterProxy(
-        deployer,
-        erc20AdapterImplementationAddressG,
-        ownerSigner.address,
-        await mockToken.getAddress(),
-        await mockStrategy.getAddress(),
-        SUITE_EFFECTIVE_PROPOSER_THRESHOLD,
-        SUITE_WEIGHT_PER_TOKEN,
-      );
-      adapter = deployedAdapter;
-    });
-
-    it('should return true if user meets proposer threshold (with suite weightPerToken)', async () => {
-      await mockToken.mint(user1Signer.address, SUITE_RAW_VOTES_THRESHOLD);
-      await mockToken.connect(user1Signer).delegate(user1Signer.address);
-      void expect(await adapter.isProposer(user1Signer.address)).to.be.true;
-    });
-
-    it('should return true if user exceeds proposer threshold (with suite weightPerToken)', async () => {
-      const rawVotesExceeding = SUITE_RAW_VOTES_THRESHOLD + ethers.parseUnits('1', 18);
-      await mockToken.mint(user1Signer.address, rawVotesExceeding);
-      await mockToken.connect(user1Signer).delegate(user1Signer.address);
-      void expect(await adapter.isProposer(user1Signer.address)).to.be.true;
-    });
-
-    it('should return false if user is below proposer threshold (with suite weightPerToken)', async () => {
-      const rawVotesBelow = SUITE_RAW_VOTES_THRESHOLD - ethers.parseUnits('1', 18);
-      const currentBal = await mockToken.balanceOf(user2Signer.address);
-      await mockToken.burn(user2Signer.address, currentBal - rawVotesBelow);
-      await mockToken.connect(user2Signer).delegate(user2Signer.address);
-      void expect(await adapter.isProposer(user2Signer.address)).to.be.false;
-    });
-
-    it('should return true if proposer threshold is 0, regardless of balance (with suite weightPerToken > 0)', async () => {
-      const { adapter: adapterWithZeroThreshold } = await deployERC20AdapterProxy(
-        deployer,
-        erc20AdapterImplementationAddressG,
-        ownerSigner.address,
-        await mockToken.getAddress(),
-        await mockStrategy.getAddress(),
-        0n,
-        SUITE_WEIGHT_PER_TOKEN,
-      );
-
-      await mockToken.mint(user1Signer.address, ethers.parseUnits('1', 18));
-      await mockToken.connect(user1Signer).delegate(user1Signer.address);
-      void expect(await adapterWithZeroThreshold.isProposer(user1Signer.address)).to.be.true;
-      const currentBalance = await mockToken.balanceOf(user2Signer.address);
-      await mockToken.burn(user2Signer.address, currentBalance);
-      await mockToken.connect(user2Signer).delegate(user2Signer.address);
-      void expect(await adapterWithZeroThreshold.isProposer(user2Signer.address)).to.be.true;
-    });
-
-    it('should correctly factor in a *different* custom weightPerToken for isProposer', async () => {
-      const customWeightForThisTest = 5n;
-      const rawVotesForCustomTest = ethers.parseUnits('30', 18);
-      const effectiveThresholdForCustomTest = rawVotesForCustomTest * customWeightForThisTest;
-
-      const { adapter: adapterCustomWeight } = await deployERC20AdapterProxy(
-        deployer,
-        erc20AdapterImplementationAddressG,
-        ownerSigner.address,
-        await mockToken.getAddress(),
-        await mockStrategy.getAddress(),
-        effectiveThresholdForCustomTest,
-        customWeightForThisTest,
-      );
-
-      const balProposer = await mockToken.balanceOf(user1Signer.address);
-      await mockToken.burn(user1Signer.address, balProposer - rawVotesForCustomTest);
-      await mockToken.connect(user1Signer).delegate(user1Signer.address);
-
-      void expect(await adapterCustomWeight.isProposer(user1Signer.address)).to.be.true;
-
-      const rawVotesBelowCustom = rawVotesForCustomTest - ethers.parseUnits('1', 18);
-      const balNonProposer = await mockToken.balanceOf(user2Signer.address);
-      await mockToken.burn(user2Signer.address, balNonProposer - rawVotesBelowCustom);
-      await mockToken.connect(user2Signer).delegate(user2Signer.address);
-      void expect(await adapterCustomWeight.isProposer(user2Signer.address)).to.be.false;
-    });
-  });
-
   describe('getVersion()', () => {
     it('should return the correct version', async () => {
       const { adapter: erc20Adapter } = await deployERC20AdapterProxy(
@@ -694,7 +550,6 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
 
@@ -716,7 +571,6 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
       erc20Adapter = adapter;
@@ -763,7 +617,6 @@ describe('ERC20TokenAdapterV1', () => {
         ownerSigner.address,
         await mockToken.getAddress(),
         await mockStrategy.getAddress(),
-        DEFAULT_PROPOSER_THRESHOLD,
         DEFAULT_WEIGHT_PER_TOKEN,
       );
       erc20AdapterProxy = adapter;

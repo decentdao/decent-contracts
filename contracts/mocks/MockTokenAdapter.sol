@@ -4,7 +4,6 @@ pragma solidity ^0.8.30;
 import {ITokenAdapterBaseV1} from "../interfaces/decent/deployables/ITokenAdapterBaseV1.sol";
 
 contract MockTokenAdapter is ITokenAdapterBaseV1 {
-    mapping(address => bool) public proposerStatusToReturn;
     mapping(address => uint256) public weightsToReturn;
     mapping(address => mapping(uint32 => mapping(bytes32 => uint256)))
         public recordedVotesWeight;
@@ -38,17 +37,7 @@ contract MockTokenAdapter is ITokenAdapterBaseV1 {
         return weightToRecord;
     }
 
-    function isProposer(
-        address _proposer
-    ) external view override returns (bool) {
-        return proposerStatusToReturn[_proposer];
-    }
-
     // mock setters
-
-    function setProposerStatus(address _proposer, bool _isProposer) external {
-        proposerStatusToReturn[_proposer] = _isProposer;
-    }
 
     function setWeight(address _voter, uint256 _weight) external {
         weightsToReturn[_voter] = _weight;

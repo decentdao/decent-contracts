@@ -16,6 +16,12 @@ interface IStrategyV1 is IStrategyBaseV1 {
 
     function getTokenAdapterCount() external view returns (uint256);
 
+    function addProposerAdapter(address _adapter) external;
+
+    function removeProposerAdapter(address _adapter) external;
+
+    function getProposerAdapterCount() external view returns (uint256);
+
     function isQuorumMet(uint32 _proposalId) external view returns (bool);
 
     function isBasisMet(uint32 _proposalId) external view returns (bool);

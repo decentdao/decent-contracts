@@ -22,16 +22,12 @@ contract ERC721TokenAdapterV1 is
     IERC721 public token;
     IStrategyBaseV1 public strategy;
     uint256 public weightPerNft;
-    uint256 public proposerThreshold;
 
     mapping(uint32 => mapping(uint256 => bool)) public nftUsedForVote;
 
     uint16 public constant VERSION = 1;
 
-    event TokenAdapterParametersUpdated(
-        uint256 newWeightPerNft,
-        uint256 newProposerThreshold
-    );
+    event TokenAdapterParametersUpdated(uint256 newWeightPerNft);
 
     error InvalidTokenAddress();
     error InvalidStrategyAddress();
@@ -45,8 +41,7 @@ contract ERC721TokenAdapterV1 is
         address _initialOwner,
         address _token,
         address _strategy,
-        uint256 _weightPerNft,
-        uint256 _proposerThreshold
+        uint256 _weightPerNft
     ) external virtual initializer {
         __Ownable_init(_initialOwner);
         __UUPSUpgradeable_init();
@@ -58,9 +53,8 @@ contract ERC721TokenAdapterV1 is
         strategy = IStrategyBaseV1(_strategy);
 
         _updateWeightPerNft(_weightPerNft);
-        _updateProposerThreshold(_proposerThreshold);
 
-        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
+        emit TokenAdapterParametersUpdated(weightPerNft);
     }
 
     function _authorizeUpgrade(
@@ -71,23 +65,12 @@ contract ERC721TokenAdapterV1 is
         uint256 _newWeightPerNft
     ) external virtual onlyOwner {
         _updateWeightPerNft(_newWeightPerNft);
-        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
-    }
-
-    function updateProposerThreshold(
-        uint256 _newProposerThreshold
-    ) external onlyOwner {
-        _updateProposerThreshold(_newProposerThreshold);
-        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
+        emit TokenAdapterParametersUpdated(weightPerNft);
     }
 
     function _updateWeightPerNft(uint256 _newWeightPerNft) internal virtual {
         if (_newWeightPerNft == 0) revert InvalidWeightPerNft();
         weightPerNft = _newWeightPerNft;
-    }
-
-    function _updateProposerThreshold(uint256 _newProposerThreshold) internal {
-        proposerThreshold = _newProposerThreshold;
     }
 
     function _getValidUnvotedTokenIdsAndWeight(
@@ -176,12 +159,6 @@ contract ERC721TokenAdapterV1 is
         weightCasted = totalCalculatedWeight;
 
         emit VoteRecorded(_voter, _proposalId, weightCasted, _adapterVoteData);
-    }
-
-    function isProposer(
-        address _proposer
-    ) external view override returns (bool) {
-        return (token.balanceOf(_proposer) * weightPerNft) >= proposerThreshold;
     }
 
     function getVersion() public pure virtual override returns (uint16) {

@@ -10,6 +10,8 @@ import {
   MockLightAccount__factory,
   MockLightAccountFactory,
   MockLightAccountFactory__factory,
+  MockProposerAdapter,
+  MockProposerAdapter__factory,
   MockTokenAdapter,
   MockTokenAdapter__factory,
   StrategyV1,
@@ -32,6 +34,8 @@ describe('StrategyV1', () => {
   let strategy: StrategyV1;
   let mockAdapter1: MockTokenAdapter;
   let mockAdapter2: MockTokenAdapter;
+  let mockProposerAdapter1: MockProposerAdapter;
+  let mockProposerAdapter2: MockProposerAdapter;
   let lightAccountFactoryMock: MockLightAccountFactory;
   let lightAccountFactoryMockAddress: string;
 
@@ -46,7 +50,8 @@ describe('StrategyV1', () => {
     votingPeriod: number,
     quorumThreshold: bigint,
     basisNumerator: bigint,
-    initialAdaptersAddresses: string[], // Changed to addresses for calldata
+    initialTokenAdaptersAddresses: string[],
+    initialProposerAdaptersAddresses: string[],
     lightAccountFactoryAddress: string,
   ): Promise<StrategyV1> {
     // For initialAdapters, StrategyV1's initialize expects ITokenAdapter[]
@@ -63,7 +68,8 @@ describe('StrategyV1', () => {
       votingPeriod,
       quorumThreshold,
       basisNumerator,
-      initialAdaptersAddresses, // Pass addresses directly
+      initialTokenAdaptersAddresses,
+      initialProposerAdaptersAddresses,
       lightAccountFactoryAddress,
     ]);
     const proxy = await new ERC1967Proxy__factory(deployer).deploy(
@@ -89,12 +95,19 @@ describe('StrategyV1', () => {
     mockAdapter2 = await new MockTokenAdapter__factory(deployer).deploy();
     await mockAdapter2.waitForDeployment();
 
+    // Deploy MockProposerAdapters
+    mockProposerAdapter1 = await new MockProposerAdapter__factory(deployer).deploy(undefined);
+    await mockProposerAdapter1.waitForDeployment();
+    mockProposerAdapter2 = await new MockProposerAdapter__factory(deployer).deploy(undefined);
+    await mockProposerAdapter2.waitForDeployment();
+
     strategy = await deployStrategyProxy(
       owner.address,
       azoriusMock.address,
       DEFAULT_VOTING_PERIOD,
       DEFAULT_QUORUM_THRESHOLD,
       DEFAULT_BASIS_NUMERATOR,
+      [],
       [],
       lightAccountFactoryMockAddress,
     );
@@ -105,7 +118,8 @@ describe('StrategyV1', () => {
       const initialOwner = owner.address;
       const azoriusAddress = azoriusMock.address;
       const lightAccountFactoryAddress = lightAccountFactoryMockAddress;
-      const initialAdapters: string[] = [await mockAdapter1.getAddress()];
+      const initialTokenAdapters: string[] = [await mockAdapter1.getAddress()];
+      const initialProposerAdapters: string[] = [await mockProposerAdapter1.getAddress()];
       const votingPeriod = DEFAULT_VOTING_PERIOD + 10;
       const quorumThreshold = DEFAULT_QUORUM_THRESHOLD + 1n;
       const basisNumerator = DEFAULT_BASIS_NUMERATOR + 1n;
@@ -116,7 +130,8 @@ describe('StrategyV1', () => {
         votingPeriod,
         quorumThreshold,
         basisNumerator,
-        initialAdapters,
+        initialTokenAdapters,
+        initialProposerAdapters,
         lightAccountFactoryAddress,
       ]);
       const proxy = await new ERC1967Proxy__factory(deployer).deploy(
@@ -138,6 +153,10 @@ describe('StrategyV1', () => {
       expect(await testStrategy.lightAccountFactory()).to.equal(lightAccountFactoryAddress);
       expect(await testStrategy.getTokenAdapterCount()).to.equal(1);
       expect(await testStrategy.tokenAdapters(0)).to.equal(await mockAdapter1.getAddress());
+      expect(await testStrategy.getProposerAdapterCount()).to.equal(1);
+      expect(await testStrategy.proposerAdapters(0)).to.equal(
+        await mockProposerAdapter1.getAddress(),
+      );
     });
 
     it('should revert if azorius address is zero', async () => {
@@ -148,6 +167,7 @@ describe('StrategyV1', () => {
           DEFAULT_VOTING_PERIOD,
           DEFAULT_QUORUM_THRESHOLD,
           DEFAULT_BASIS_NUMERATOR,
+          [],
           [],
           lightAccountFactoryMockAddress,
         ),
@@ -163,6 +183,7 @@ describe('StrategyV1', () => {
           DEFAULT_QUORUM_THRESHOLD,
           DEFAULT_BASIS_NUMERATOR,
           [],
+          [],
           lightAccountFactoryMockAddress,
         ),
       ).to.be.revertedWithCustomError(strategyImplementation, 'InvalidVotingPeriod');
@@ -176,6 +197,7 @@ describe('StrategyV1', () => {
           DEFAULT_VOTING_PERIOD,
           DEFAULT_QUORUM_THRESHOLD,
           1_000_001n,
+          [],
           [],
           lightAccountFactoryMockAddress,
         ),
@@ -191,6 +213,7 @@ describe('StrategyV1', () => {
           DEFAULT_QUORUM_THRESHOLD,
           499_999n,
           [],
+          [],
           lightAccountFactoryMockAddress,
         ),
       ).to.be.revertedWithCustomError(strategyImplementation, 'InvalidBasisNumerator');
@@ -204,6 +227,7 @@ describe('StrategyV1', () => {
         0n, // Zero quorum threshold
         DEFAULT_BASIS_NUMERATOR,
         [],
+        [],
         lightAccountFactoryMockAddress,
       );
       expect(await testStrategy.quorumThreshold()).to.equal(0n);
@@ -216,6 +240,7 @@ describe('StrategyV1', () => {
         DEFAULT_VOTING_PERIOD,
         DEFAULT_QUORUM_THRESHOLD,
         500_000n, // 50% basis numerator
+        [],
         [],
         lightAccountFactoryMockAddress,
       );
@@ -231,6 +256,7 @@ describe('StrategyV1', () => {
           DEFAULT_QUORUM_THRESHOLD,
           1_000_000n, // 100% basis numerator - now invalid
           [],
+          [],
           lightAccountFactoryMockAddress,
         ),
       ).to.be.revertedWithCustomError(strategyImplementation, 'InvalidBasisNumerator');
@@ -244,6 +270,7 @@ describe('StrategyV1', () => {
         DEFAULT_VOTING_PERIOD,
         DEFAULT_QUORUM_THRESHOLD,
         maxValidBasis,
+        [],
         [],
         lightAccountFactoryMockAddress,
       );
@@ -372,6 +399,123 @@ describe('StrategyV1', () => {
     });
   });
 
+  describe('Proposer Adapter Management', () => {
+    // --- addProposerAdapter ---
+    it('should allow owner to add a new proposer adapter', async () => {
+      const adapterAddress = await mockProposerAdapter1.getAddress();
+      await expect(strategy.connect(owner).addProposerAdapter(adapterAddress))
+        .to.emit(strategy, 'ProposerAdapterAdded')
+        .withArgs(adapterAddress, 0);
+      expect(await strategy.proposerAdapters(0)).to.equal(adapterAddress);
+      expect(await strategy.getProposerAdapterCount()).to.equal(1);
+    });
+
+    it('should revert when non-owner tries to add a proposer adapter', async () => {
+      await expect(
+        strategy.connect(nonOwner).addProposerAdapter(await mockProposerAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'OwnableUnauthorizedAccount');
+    });
+
+    it('should revert when adding a zero address proposer adapter', async () => {
+      await expect(
+        strategy.connect(owner).addProposerAdapter(ethers.ZeroAddress),
+      ).to.be.revertedWithCustomError(strategy, 'ProposerAdapterIsZeroAddress');
+    });
+
+    it('should revert when adding an already existing proposer adapter', async () => {
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      await expect(
+        strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'ProposerAdapterAlreadyExists');
+    });
+
+    it('should allow adding multiple different proposer adapters', async () => {
+      const adapter1Addr = await mockProposerAdapter1.getAddress();
+      const adapter2Addr = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(adapter1Addr);
+      await strategy.connect(owner).addProposerAdapter(adapter2Addr);
+      expect(await strategy.getProposerAdapterCount()).to.equal(2);
+      expect(await strategy.proposerAdapters(0)).to.equal(adapter1Addr);
+      expect(await strategy.proposerAdapters(1)).to.equal(adapter2Addr);
+    });
+
+    // --- removeProposerAdapter ---
+    it('should allow owner to remove an existing proposer adapter', async () => {
+      const adapter1Addr = await mockProposerAdapter1.getAddress();
+      const adapter2Addr = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(adapter1Addr);
+      await strategy.connect(owner).addProposerAdapter(adapter2Addr);
+
+      await expect(strategy.connect(owner).removeProposerAdapter(adapter1Addr))
+        .to.emit(strategy, 'ProposerAdapterRemoved')
+        .withArgs(adapter1Addr, 0);
+
+      expect(await strategy.getProposerAdapterCount()).to.equal(1);
+      expect(await strategy.proposerAdapters(0)).to.equal(adapter2Addr);
+    });
+
+    it('should allow owner to remove an existing proposer adapter (removing last)', async () => {
+      const adapter1Addr = await mockProposerAdapter1.getAddress();
+      const adapter2Addr = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(adapter1Addr);
+      await strategy.connect(owner).addProposerAdapter(adapter2Addr);
+
+      await expect(strategy.connect(owner).removeProposerAdapter(adapter2Addr))
+        .to.emit(strategy, 'ProposerAdapterRemoved')
+        .withArgs(adapter2Addr, 1);
+
+      expect(await strategy.getProposerAdapterCount()).to.equal(1);
+      expect(await strategy.proposerAdapters(0)).to.equal(adapter1Addr);
+    });
+
+    it('should correctly remove the only proposer adapter in the list', async () => {
+      const adapter1Addr = await mockProposerAdapter1.getAddress();
+      await strategy.connect(owner).addProposerAdapter(adapter1Addr);
+
+      await expect(strategy.connect(owner).removeProposerAdapter(adapter1Addr))
+        .to.emit(strategy, 'ProposerAdapterRemoved')
+        .withArgs(adapter1Addr, 0);
+      expect(await strategy.getProposerAdapterCount()).to.equal(0);
+    });
+
+    it('should revert when non-owner tries to remove a proposer adapter', async () => {
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      await expect(
+        strategy.connect(nonOwner).removeProposerAdapter(await mockProposerAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'OwnableUnauthorizedAccount');
+    });
+
+    it('should revert when removing a zero address proposer adapter', async () => {
+      await expect(
+        strategy.connect(owner).removeProposerAdapter(ethers.ZeroAddress),
+      ).to.be.revertedWithCustomError(strategy, 'ProposerAdapterIsZeroAddress');
+    });
+
+    it('should revert when removing a proposer adapter that does not exist', async () => {
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
+      await expect(
+        strategy.connect(owner).removeProposerAdapter(await mockProposerAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'ProposerAdapterNotFound');
+    });
+
+    it('should revert when removing from an empty list of proposer adapters', async () => {
+      await expect(
+        strategy.connect(owner).removeProposerAdapter(await mockProposerAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'ProposerAdapterNotFound'); // Error should be ProposerAdapterNotFound
+    });
+
+    // --- getProposerAdapterCount ---
+    it('should return the correct number of proposer adapters', async () => {
+      expect(await strategy.getProposerAdapterCount()).to.equal(0);
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      expect(await strategy.getProposerAdapterCount()).to.equal(1);
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
+      expect(await strategy.getProposerAdapterCount()).to.equal(2);
+      await strategy.connect(owner).removeProposerAdapter(await mockProposerAdapter1.getAddress());
+      expect(await strategy.getProposerAdapterCount()).to.equal(1);
+    });
+  });
+
   describe('initializeProposal', () => {
     let defaultProposalId: number;
     let encodedDefaultProposalId: string;
@@ -459,32 +603,32 @@ describe('StrategyV1', () => {
     });
 
     it('should return true if any adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
 
-      // mockAdapter1 says NO, mockAdapter2 says YES
-      await mockAdapter1.connect(owner).setProposerStatus(user1.address, false);
-      await mockAdapter2.connect(owner).setProposerStatus(user1.address, true);
+      // mockProposerAdapter1 says NO, mockProposerAdapter2 says YES
+      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, false);
+      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, true);
 
       void expect(await strategy.isProposer(user1.address)).to.be.true;
     });
 
     it('should return false if no adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
 
-      await mockAdapter1.connect(owner).setProposerStatus(user1.address, false);
-      await mockAdapter2.connect(owner).setProposerStatus(user1.address, false);
+      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, false);
+      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, false);
 
       void expect(await strategy.isProposer(user1.address)).to.be.false;
     });
 
     it('should return true if the first adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
+      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
 
-      await mockAdapter1.connect(owner).setProposerStatus(user1.address, true);
-      await mockAdapter2.connect(owner).setProposerStatus(user1.address, false); // Should not be checked
+      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, true);
+      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, false);
 
       void expect(await strategy.isProposer(user1.address)).to.be.true;
     });

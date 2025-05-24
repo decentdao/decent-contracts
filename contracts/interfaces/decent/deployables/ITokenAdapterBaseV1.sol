@@ -9,8 +9,6 @@ interface ITokenAdapterBaseV1 {
         bytes tokenAdapterVoteData
     );
 
-    function isProposer(address _proposer) external view returns (bool);
-
     function recordVote(
         address _voter,
         uint32 _proposalId,

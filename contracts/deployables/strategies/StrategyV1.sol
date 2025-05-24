@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IStrategyBaseV1} from "../../interfaces/decent/deployables/IStrategyBaseV1.sol";
 import {ITokenAdapterBaseV1} from "../../interfaces/decent/deployables/ITokenAdapterBaseV1.sol";
+import {IProposerAdapterBaseV1} from "../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
 import {Version} from "../Version.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -40,6 +41,7 @@ contract StrategyV1 is
     mapping(uint32 => ProposalVotingDetails) public proposalVotingDetails;
 
     ITokenAdapterBaseV1[] public tokenAdapters;
+    IProposerAdapterBaseV1[] public proposerAdapters;
 
     enum VoteType {
         NO,
@@ -54,6 +56,8 @@ contract StrategyV1 is
     );
     event TokenAdapterAdded(address indexed adapter, uint256 index);
     event TokenAdapterRemoved(address indexed adapter, uint256 index);
+    event ProposerAdapterAdded(address indexed adapter, uint256 index);
+    event ProposerAdapterRemoved(address indexed adapter, uint256 index);
     event Voted(
         address indexed voter,
         uint32 indexed proposalId,
@@ -74,6 +78,9 @@ contract StrategyV1 is
     error TokenAdapterAlreadyExists();
     error TokenAdapterNotFound();
     error NoTokenAdapters();
+    error ProposerAdapterIsZeroAddress();
+    error ProposerAdapterAlreadyExists();
+    error ProposerAdapterNotFound();
     error ProposalNotFoundOrNotActive();
     error NoVotingWeight();
     error InvalidVoteType();
@@ -92,6 +99,7 @@ contract StrategyV1 is
         uint256 _quorumThreshold,
         uint256 _basisNumerator,
         address[] memory _initialTokenAdapters,
+        address[] memory _initialProposerAdapters,
         address _lightAccountFactory
     ) public virtual initializer {
         if (_azorius == address(0)) revert InvalidAzoriusAddress();
@@ -108,6 +116,12 @@ contract StrategyV1 is
         if (_initialTokenAdapters.length > 0) {
             for (uint256 i = 0; i < _initialTokenAdapters.length; i++) {
                 _addTokenAdapter(_initialTokenAdapters[i]);
+            }
+        }
+
+        if (_initialProposerAdapters.length > 0) {
+            for (uint256 i = 0; i < _initialProposerAdapters.length; i++) {
+                _addProposerAdapter(_initialProposerAdapters[i]);
             }
         }
 
@@ -187,6 +201,40 @@ contract StrategyV1 is
         returns (uint256)
     {
         return tokenAdapters.length;
+    }
+
+    function addProposerAdapter(
+        address _adapter
+    ) public virtual override onlyOwner {
+        _addProposerAdapter(_adapter);
+    }
+
+    function removeProposerAdapter(
+        address _adapter
+    ) external virtual override onlyOwner {
+        if (_adapter == address(0)) revert ProposerAdapterIsZeroAddress();
+        uint256 adapterCount = proposerAdapters.length;
+        if (adapterCount == 0) revert ProposerAdapterNotFound();
+
+        for (uint256 i = 0; i < adapterCount; i++) {
+            if (address(proposerAdapters[i]) == _adapter) {
+                proposerAdapters[i] = proposerAdapters[adapterCount - 1];
+                proposerAdapters.pop();
+                emit ProposerAdapterRemoved(address(_adapter), i);
+                return;
+            }
+        }
+        revert ProposerAdapterNotFound();
+    }
+
+    function getProposerAdapterCount()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        return proposerAdapters.length;
     }
 
     function initializeProposal(
@@ -335,9 +383,9 @@ contract StrategyV1 is
     function isProposer(
         address _address
     ) external view virtual override returns (bool) {
-        if (tokenAdapters.length == 0) return false;
-        for (uint256 i = 0; i < tokenAdapters.length; i++) {
-            if (tokenAdapters[i].isProposer(_address)) {
+        if (proposerAdapters.length == 0) return false;
+        for (uint256 i = 0; i < proposerAdapters.length; i++) {
+            if (proposerAdapters[i].isProposer(_address)) {
                 return true;
             }
         }
@@ -400,6 +448,19 @@ contract StrategyV1 is
         }
         tokenAdapters.push(ITokenAdapterBaseV1(_adapter));
         emit TokenAdapterAdded(address(_adapter), tokenAdapters.length - 1);
+    }
+
+    function _addProposerAdapter(address _adapter) internal virtual {
+        if (_adapter == address(0)) revert ProposerAdapterIsZeroAddress();
+        for (uint256 i = 0; i < proposerAdapters.length; i++) {
+            if (address(proposerAdapters[i]) == _adapter)
+                revert ProposerAdapterAlreadyExists();
+        }
+        proposerAdapters.push(IProposerAdapterBaseV1(_adapter));
+        emit ProposerAdapterAdded(
+            address(_adapter),
+            proposerAdapters.length - 1
+        );
     }
 
     function getVersion() public view virtual override returns (uint16) {

@@ -26,11 +26,10 @@ async function deployERC721AdapterProxy(
   tokenAddress: string,
   strategyAddress: string,
   weightPerNft: bigint,
-  proposerThreshold: bigint,
 ): Promise<{ adapter: ERC721TokenAdapterV1; deployTx: ContractTransactionResponse }> {
   const initData = ERC721TokenAdapterV1__factory.createInterface().encodeFunctionData(
     'initialize',
-    [initialOwnerAddress, tokenAddress, strategyAddress, weightPerNft, proposerThreshold],
+    [initialOwnerAddress, tokenAddress, strategyAddress, weightPerNft],
   );
   const proxyContractFactory = new ERC1967Proxy__factory(proxyDeployer);
   const proxy = await proxyContractFactory.deploy(implementationAddress, initData);
@@ -54,7 +53,6 @@ describe('ERC721TokenAdapterV1', () => {
 
   // Default Test Params
   const DEFAULT_WEIGHT_PER_NFT = 1n;
-  const DEFAULT_NFT_PROPOSER_THRESHOLD = 2n; // e.g., needs 2 NFTs to be a proposer if weight is 1
 
   async function deployGlobalERC721Fixture() {
     const [deployer] = await ethers.getSigners();
@@ -139,18 +137,16 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
 
       await expect(deployTx)
         .to.emit(erc721Adapter, 'TokenAdapterParametersUpdated')
-        .withArgs(DEFAULT_WEIGHT_PER_NFT, DEFAULT_NFT_PROPOSER_THRESHOLD);
+        .withArgs(DEFAULT_WEIGHT_PER_NFT);
 
       expect(await erc721Adapter.owner()).to.equal(ownerSigner.address);
       expect(await erc721Adapter.token()).to.equal(await mockNft.getAddress());
       expect(await erc721Adapter.strategy()).to.equal(await mockStrategy.getAddress());
       expect(await erc721Adapter.weightPerNft()).to.equal(DEFAULT_WEIGHT_PER_NFT);
-      expect(await erc721Adapter.proposerThreshold()).to.equal(DEFAULT_NFT_PROPOSER_THRESHOLD);
     });
 
     it('should revert if token address is zero', async () => {
@@ -169,7 +165,6 @@ describe('ERC721TokenAdapterV1', () => {
           ethers.ZeroAddress,
           await mockNft.getAddress(),
           DEFAULT_WEIGHT_PER_NFT,
-          DEFAULT_NFT_PROPOSER_THRESHOLD,
         ),
       ).to.be.revertedWithCustomError(erc721AdapterImplementation, 'InvalidTokenAddress');
     });
@@ -190,7 +185,6 @@ describe('ERC721TokenAdapterV1', () => {
           await mockNft.getAddress(),
           ethers.ZeroAddress,
           DEFAULT_WEIGHT_PER_NFT,
-          DEFAULT_NFT_PROPOSER_THRESHOLD,
         ),
       ).to.be.revertedWithCustomError(erc721AdapterImplementation, 'InvalidStrategyAddress');
     });
@@ -213,7 +207,6 @@ describe('ERC721TokenAdapterV1', () => {
           await mockNft.getAddress(),
           await mockStrategy.getAddress(),
           0n, // Invalid weight
-          DEFAULT_NFT_PROPOSER_THRESHOLD,
         ),
       ).to.be.revertedWithCustomError(erc721AdapterImplementation, 'InvalidWeightPerNft');
     });
@@ -231,7 +224,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       await expect(
         erc721Adapter.initialize(
@@ -239,7 +231,6 @@ describe('ERC721TokenAdapterV1', () => {
           await mockNft.getAddress(),
           await mockStrategy.getAddress(),
           DEFAULT_WEIGHT_PER_NFT,
-          DEFAULT_NFT_PROPOSER_THRESHOLD,
         ),
       ).to.be.revertedWithCustomError(erc721Adapter, 'InvalidInitialization');
     });
@@ -260,7 +251,6 @@ describe('ERC721TokenAdapterV1', () => {
           await mockNft.getAddress(),
           await mockStrategy.getAddress(),
           DEFAULT_WEIGHT_PER_NFT,
-          DEFAULT_NFT_PROPOSER_THRESHOLD,
         ),
       ).to.be.revertedWithCustomError(implementationContract, 'InvalidInitialization');
     });
@@ -291,7 +281,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await fixture.mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       adapter = deployedAdapter;
     });
@@ -374,7 +363,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await (await loadFixture(deployMocksAndSignersERC721Fixture)).mockStrategy.getAddress(), // Fresh strategy address
         customWeightPerNft,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
 
       const tokenIdsToVoteWith = [user1TokenIds[0], user1TokenIds[1]];
@@ -416,7 +404,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       adapter = deployedAdapter;
     });
@@ -523,7 +510,6 @@ describe('ERC721TokenAdapterV1', () => {
         await localMockNft.getAddress(),
         await localMockStrategy.getAddress(),
         customWeightPerNft,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
 
       const tokenIdsToUseInVote = [localUser1TestTokenIds[0]]; // Use a token minted for localUser1 on localMockNft
@@ -552,108 +538,6 @@ describe('ERC721TokenAdapterV1', () => {
     });
   });
 
-  describe('isProposer', () => {
-    let adapter: ERC721TokenAdapterV1;
-    let mockNft: MockERC721;
-    let user1: SignerWithAddress; // Fixture user1 (has 3 NFTs: 0,1,2)
-    let user2: SignerWithAddress; // Fixture user2 (has 2 NFTs: 3,4)
-    let nonOwnerSigner: SignerWithAddress; // Fixture nonOwner (has 0 NFTs initially)
-    let deployer: SignerWithAddress;
-    let mockStrategy: MockVotingStrategy;
-    let fixtureDeployer: SignerWithAddress;
-
-    const SUITE_WEIGHT_PER_NFT = 2n;
-    const SUITE_RAW_VOTES_THRESHOLD = 2n; // Needs 2 NFTs
-    const SUITE_EFFECTIVE_PROPOSER_THRESHOLD = SUITE_RAW_VOTES_THRESHOLD * SUITE_WEIGHT_PER_NFT; // 2*2=4
-
-    beforeEach(async () => {
-      const fixture = await loadFixture(deployMocksAndSignersERC721Fixture);
-      mockNft = fixture.mockNft;
-      user1 = fixture.user1Signer;
-      user2 = fixture.user2Signer;
-      nonOwnerSigner = fixture.nonOwnerSigner;
-      deployer = fixture.deployer;
-      mockStrategy = fixture.mockStrategy;
-      fixtureDeployer = fixture.deployer;
-
-      const { adapter: deployedAdapter } = await deployERC721AdapterProxy(
-        deployer,
-        erc721AdapterImplementationAddressG,
-        fixtureDeployer.address,
-        await mockNft.getAddress(),
-        await mockStrategy.getAddress(),
-        SUITE_WEIGHT_PER_NFT,
-        SUITE_EFFECTIVE_PROPOSER_THRESHOLD,
-      );
-      adapter = deployedAdapter;
-    });
-
-    it('should return true if user meets proposer threshold (2 NFTs * weight 2 = 4; threshold 4)', async () => {
-      // User2 has 2 NFTs from fixture. (2 * 2) = 4. Threshold is 4. 4 >= 4 is true.
-      void expect(await adapter.isProposer(user2.address)).to.be.true;
-    });
-
-    it('should return true if user exceeds proposer threshold (3 NFTs * weight 2 = 6; threshold 4)', async () => {
-      // User1 has 3 NFTs from fixture. (3 * 2) = 6. Threshold is 4. 6 >= 4 is true.
-      void expect(await adapter.isProposer(user1.address)).to.be.true;
-    });
-
-    it('should return false if user is below proposer threshold (1 NFT * weight 2 = 2; threshold 4)', async () => {
-      // nonOwnerSigner starts with 0 NFTs. Mint 1 to them.
-      await mockNft.mint(nonOwnerSigner.address);
-      // (1 * 2) = 2. Threshold is 4. 2 >= 4 is false.
-      void expect(await adapter.isProposer(nonOwnerSigner.address)).to.be.false;
-    });
-
-    it('should return true if proposer threshold is 0', async () => {
-      const { adapter: zeroThresholdAdapter } = await deployERC721AdapterProxy(
-        deployer,
-        erc721AdapterImplementationAddressG,
-        fixtureDeployer.address,
-        await mockNft.getAddress(),
-        await mockStrategy.getAddress(),
-        SUITE_WEIGHT_PER_NFT,
-        0n, // Zero threshold
-      );
-      // User1 has NFTs (3*2=6 >=0 true)
-      void expect(await zeroThresholdAdapter.isProposer(user1.address)).to.be.true;
-
-      // nonOwnerSigner has 0 NFTs on the mockNft instance initially from fixture
-      const nonOwnerBalance = await mockNft.balanceOf(nonOwnerSigner.address);
-      expect(nonOwnerBalance).to.equal(0n); // Verify assumption from fixture
-
-      const isNonOwnerProposer = await zeroThresholdAdapter.isProposer(nonOwnerSigner.address);
-
-      void expect(isNonOwnerProposer).to.be.true; // (0 * 2) >= 0 is true
-    });
-
-    it('should correctly apply a different custom weightPerNft', async () => {
-      const customWeightPerNft = 5n;
-      const rawNftsNeeded = 2n; // e.g. user needs 2 NFTs
-      const customProposerThreshold = rawNftsNeeded * customWeightPerNft; // So threshold is 10
-
-      const { adapter: customAdapter } = await deployERC721AdapterProxy(
-        deployer,
-        erc721AdapterImplementationAddressG,
-        fixtureDeployer.address,
-        await mockNft.getAddress(),
-        await mockStrategy.getAddress(),
-        customWeightPerNft,
-        customProposerThreshold,
-      );
-      // User2 has 2 NFTs by default from fixture. (2 NFTs * 5 weight) = 10. Threshold = 10. 10 >= 10 is true.
-      void expect(await customAdapter.isProposer(user2.address)).to.be.true;
-
-      // User1 has 3 NFTs by default. (3 NFTs * 5 weight) = 15. Threshold = 10. 15 >= 10 is true.
-      void expect(await customAdapter.isProposer(user1.address)).to.be.true;
-
-      // nonOwnerSigner has 0 NFTs initially. Mint 1.
-      await mockNft.mint(nonOwnerSigner.address);
-      // (1 NFT * 5 weight) = 5. Threshold = 10. 5 >= 10 is false.
-      void expect(await customAdapter.isProposer(nonOwnerSigner.address)).to.be.false;
-    });
-  });
-
   describe('getVersion()', () => {
     it('should return the correct version', async () => {
       const {
@@ -668,7 +552,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       expect(await erc721Adapter.getVersion()).to.equal(1);
     });
@@ -694,7 +577,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       erc721Adapter = adapter;
 
@@ -754,7 +636,6 @@ describe('ERC721TokenAdapterV1', () => {
         mockNftAddress,
         mockStrategyAddress,
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       adapter = deployedAdapter;
     });
@@ -765,7 +646,7 @@ describe('ERC721TokenAdapterV1', () => {
       it('should allow owner to update weightPerNft and emit event', async () => {
         await expect(adapter.connect(owner).updateWeightPerNft(NEW_WEIGHT_PER_NFT))
           .to.emit(adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(NEW_WEIGHT_PER_NFT, await adapter.proposerThreshold()); // Current proposerThreshold
+          .withArgs(NEW_WEIGHT_PER_NFT);
         expect(await adapter.weightPerNft()).to.equal(NEW_WEIGHT_PER_NFT);
       });
 
@@ -780,30 +661,6 @@ describe('ERC721TokenAdapterV1', () => {
           adapter,
           'InvalidWeightPerNft',
         );
-      });
-    });
-
-    describe('updateProposerThreshold', () => {
-      const NEW_PROPOSER_THRESHOLD = 10n;
-
-      it('should allow owner to update proposerThreshold and emit event', async () => {
-        await expect(adapter.connect(owner).updateProposerThreshold(NEW_PROPOSER_THRESHOLD))
-          .to.emit(adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(await adapter.weightPerNft(), NEW_PROPOSER_THRESHOLD); // Current weightPerNft
-        expect(await adapter.proposerThreshold()).to.equal(NEW_PROPOSER_THRESHOLD);
-      });
-
-      it('should not allow non-owner to update proposerThreshold', async () => {
-        await expect(adapter.connect(nonOwner).updateProposerThreshold(NEW_PROPOSER_THRESHOLD))
-          .to.be.revertedWithCustomError(adapter, 'OwnableUnauthorizedAccount')
-          .withArgs(nonOwner.address);
-      });
-
-      it('should allow updating proposerThreshold to zero', async () => {
-        await expect(adapter.connect(owner).updateProposerThreshold(0n))
-          .to.emit(adapter, 'TokenAdapterParametersUpdated')
-          .withArgs(await adapter.weightPerNft(), 0n);
-        expect(await adapter.proposerThreshold()).to.equal(0n);
       });
     });
   });
@@ -833,7 +690,6 @@ describe('ERC721TokenAdapterV1', () => {
         await mockNft.getAddress(),
         await mockStrategy.getAddress(),
         DEFAULT_WEIGHT_PER_NFT,
-        DEFAULT_NFT_PROPOSER_THRESHOLD,
       );
       erc721AdapterProxy = adapter;
     });

@@ -23,7 +23,6 @@ contract ERC20TokenAdapterV1 is
 {
     IVotes public token;
     IStrategyBaseV1 public strategy;
-    uint256 public proposerThreshold;
     uint256 public weightPerToken;
     ClockMode internal tokenClockMode;
 
@@ -32,10 +31,7 @@ contract ERC20TokenAdapterV1 is
 
     uint16 public constant VERSION = 1;
 
-    event TokenAdapterParametersUpdated(
-        uint256 newProposerThreshold,
-        uint256 newWeightPerToken
-    );
+    event TokenAdapterParametersUpdated(uint256 newWeightPerToken);
 
     error InvalidTokenAddress();
     error InvalidStrategyAddress();
@@ -51,7 +47,6 @@ contract ERC20TokenAdapterV1 is
         address _initialOwner,
         address _token,
         address _strategy,
-        uint256 _proposerThreshold,
         uint256 _weightPerToken
     ) external virtual initializer {
         __Ownable_init(_initialOwner);
@@ -61,35 +56,23 @@ contract ERC20TokenAdapterV1 is
         if (_strategy == address(0)) revert InvalidStrategyAddress();
 
         _updateWeightPerToken(_weightPerToken);
-        _updateProposerThreshold(_proposerThreshold);
 
         token = IVotes(_token);
         strategy = IStrategyBaseV1(_strategy);
         tokenClockMode = ClockModeLib.getClockMode(_token);
 
-        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
+        emit TokenAdapterParametersUpdated(weightPerToken);
     }
 
     function _authorizeUpgrade(
         address newImplementation
     ) internal virtual override onlyOwner {}
 
-    function updateProposerThreshold(
-        uint256 _newProposerThreshold
-    ) external onlyOwner {
-        _updateProposerThreshold(_newProposerThreshold);
-        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
-    }
-
     function updateWeightPerToken(
         uint256 _newWeightPerToken
     ) external virtual onlyOwner {
         _updateWeightPerToken(_newWeightPerToken);
-        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
-    }
-
-    function _updateProposerThreshold(uint256 _newProposerThreshold) internal {
-        proposerThreshold = _newProposerThreshold;
+        emit TokenAdapterParametersUpdated(weightPerToken);
     }
 
     function _updateWeightPerToken(
@@ -142,13 +125,6 @@ contract ERC20TokenAdapterV1 is
         weightCasted = _getVoteWeightDetails(_voter, _proposalId);
 
         emit VoteRecorded(_voter, _proposalId, weightCasted, bytes(""));
-    }
-
-    function isProposer(
-        address _proposer
-    ) external view override returns (bool) {
-        uint256 rawVotes = token.getVotes(_proposer);
-        return (rawVotes * weightPerToken) >= proposerThreshold;
     }
 
     function getVersion() public pure virtual override returns (uint16) {
