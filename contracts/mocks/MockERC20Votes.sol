@@ -51,6 +51,15 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
     }
 
     /**
+     * @dev Burns tokens from the specified address
+     * @param from The address to burn tokens from
+     * @param amount The amount of tokens to burn
+     */
+    function burn(address from, uint256 amount) external {
+        _burn(from, amount);
+    }
+
+    /**
      * @dev Sets a specific past voting weight for an account at a specific timepoint
      * @param account The account to set past votes for
      * @param timepoint The timepoint to set votes at

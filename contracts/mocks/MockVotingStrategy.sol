@@ -12,6 +12,7 @@ contract MockVotingStrategy is IStrategyBaseV1 {
     address public proposer;
     mapping(uint32 => bool) private _isPassed;
     mapping(uint32 => TimestampPoints) private _proposalTimestamps;
+    mapping(uint32 => uint32) public mockVotingStartBlock;
 
     constructor(address _proposer) {
         proposer = _proposer;
@@ -42,7 +43,9 @@ contract MockVotingStrategy is IStrategyBaseV1 {
 
     function getVotingStartBlock(
         uint32 _proposalId
-    ) external view override returns (uint32 votingStartBlock) {}
+    ) external view override returns (uint32 votingStartBlock) {
+        return mockVotingStartBlock[_proposalId];
+    }
 
     // mock setters
 
@@ -59,5 +62,12 @@ contract MockVotingStrategy is IStrategyBaseV1 {
             startTimestamp,
             endTimestamp
         );
+    }
+
+    function setVotingStartBlock(
+        uint32 proposalId,
+        uint32 startBlock
+    ) external {
+        mockVotingStartBlock[proposalId] = startBlock;
     }
 }
