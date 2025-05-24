@@ -40,6 +40,10 @@ contract MockVotingStrategy is IStrategyBaseV1 {
         return (timestamps.startTimestamp, timestamps.endTimestamp);
     }
 
+    function getVotingStartBlock(
+        uint32 _proposalId
+    ) external view override returns (uint32 votingStartBlock) {}
+
     // mock setters
 
     function setIsPassed(uint32 proposalId, bool passed) external {

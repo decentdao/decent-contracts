@@ -32,6 +32,7 @@ contract StrategyV1 is
     struct ProposalVotingDetails {
         uint48 votingStartTimestamp;
         uint48 votingEndTimestamp;
+        uint32 votingStartBlock;
         uint256 yesVotes;
         uint256 noVotes;
         uint256 abstainVotes;
@@ -62,7 +63,8 @@ contract StrategyV1 is
     event ProposalInitialized(
         uint32 indexed proposalId,
         uint48 votingStartTimestamp,
-        uint48 votingEndTimestamp
+        uint48 votingEndTimestamp,
+        uint32 votingStartBlock
     );
 
     error InvalidAzoriusAddress();
@@ -190,6 +192,7 @@ contract StrategyV1 is
         ];
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(block.timestamp + votingPeriod);
+        proposal.votingStartBlock = uint32(block.number);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;
         proposal.abstainVotes = 0;
@@ -197,7 +200,8 @@ contract StrategyV1 is
         emit ProposalInitialized(
             proposalId,
             proposal.votingStartTimestamp,
-            proposal.votingEndTimestamp
+            proposal.votingEndTimestamp,
+            proposal.votingStartBlock
         );
     }
 
@@ -343,6 +347,16 @@ contract StrategyV1 is
         ];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
         return (details.votingStartTimestamp, details.votingEndTimestamp);
+    }
+
+    function getVotingStartBlock(
+        uint32 _proposalId
+    ) external view virtual override returns (uint32 votingStartBlock) {
+        ProposalVotingDetails storage details = proposalVotingDetails[
+            _proposalId
+        ];
+        if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
+        return details.votingStartBlock;
     }
 
     function _updateVotingPeriod(uint32 _newVotingPeriod) internal {

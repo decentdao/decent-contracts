@@ -409,6 +409,7 @@ describe('StrategyV1', () => {
       const blockBefore = await ethers.provider.getBlock('latest');
       if (!blockBefore) throw new Error('Failed to get latest block');
       const timestampBefore = blockBefore.timestamp;
+      const blockNumberBefore = blockBefore.number;
 
       await expect(
         strategy
@@ -420,6 +421,7 @@ describe('StrategyV1', () => {
           defaultProposalId,
           timestampBefore + 1, // Approximate, depends on block mining time
           timestampBefore + 1 + DEFAULT_VOTING_PERIOD, // Approximate
+          blockNumberBefore + 1,
         );
 
       const proposalDetails = await strategy.proposalVotingDetails(defaultProposalId);
@@ -428,6 +430,7 @@ describe('StrategyV1', () => {
         timestampBefore + 1 + DEFAULT_VOTING_PERIOD,
         2,
       );
+      expect(proposalDetails.votingStartBlock).to.equal(blockNumberBefore + 1);
       expect(proposalDetails.yesVotes).to.equal(0);
       expect(proposalDetails.noVotes).to.equal(0);
       expect(proposalDetails.abstainVotes).to.equal(0);
@@ -487,7 +490,7 @@ describe('StrategyV1', () => {
     });
   });
 
-  describe('getVotingTimestamps', () => {
+  describe('getVotingTimestamps & getVotingStartBlock', () => {
     let proposalId: number;
     let encodedProposalId: string;
 
@@ -498,25 +501,35 @@ describe('StrategyV1', () => {
       await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
     });
 
-    it('should return correct timestamps after proposal initialization', async () => {
+    it('should return correct timestamps and block after proposal initialization', async () => {
       const blockBefore = await ethers.provider.getBlock('latest');
       if (!blockBefore) throw new Error('Failed to get latest block');
       const timestampBefore = blockBefore.timestamp;
+      const blockNumberBefore = blockBefore.number;
 
       await strategy
         .connect(azoriusMock)
         .initializeProposal(encodedProposalId, [], ethers.ZeroHash);
 
       const [startTime, endTime] = await strategy.getVotingTimestamps(proposalId);
+      const startBlock = await strategy.getVotingStartBlock(proposalId);
 
       expect(startTime).to.be.closeTo(timestampBefore + 1, 2);
       expect(endTime).to.be.closeTo(timestampBefore + 1 + DEFAULT_VOTING_PERIOD, 2);
+      expect(startBlock).to.equal(blockNumberBefore + 1);
     });
 
     it('getVotingTimestamps should revert if proposal is not initialized', async () => {
       const uninitializedProposalId = 999;
       await expect(
         strategy.getVotingTimestamps(uninitializedProposalId),
+      ).to.be.revertedWithCustomError(strategy, 'ProposalNotInitialized');
+    });
+
+    it('getVotingStartBlock should revert if proposal is not initialized', async () => {
+      const uninitializedProposalId = 999;
+      await expect(
+        strategy.getVotingStartBlock(uninitializedProposalId),
       ).to.be.revertedWithCustomError(strategy, 'ProposalNotInitialized');
     });
   });

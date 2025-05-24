@@ -15,4 +15,8 @@ interface IStrategyBaseV1 {
     function getVotingTimestamps(
         uint32 _proposalId
     ) external view returns (uint48 startTime, uint48 endTime);
+
+    function getVotingStartBlock(
+        uint32 _proposalId
+    ) external view returns (uint32 votingStartBlock);
 }
