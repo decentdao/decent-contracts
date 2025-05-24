@@ -7,6 +7,6 @@ interface ITokenAdapterV1 is ITokenAdapterBaseV1 {
     function weightOf(
         address _voter,
         uint32 _proposalId,
-        bytes calldata _adapterVoteData
+        bytes calldata _tokenAdapterVoteData
     ) external view returns (uint256 weight);
 }

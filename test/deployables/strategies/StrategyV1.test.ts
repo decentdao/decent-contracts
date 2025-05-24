@@ -255,8 +255,8 @@ describe('StrategyV1', () => {
     // --- addAdapter ---
     it('should allow owner to add a new adapter', async () => {
       const adapterAddress = await mockAdapter1.getAddress();
-      await expect(strategy.connect(owner).addAdapter(adapterAddress))
-        .to.emit(strategy, 'AdapterAdded')
+      await expect(strategy.connect(owner).addTokenAdapter(adapterAddress))
+        .to.emit(strategy, 'TokenAdapterAdded')
         .withArgs(adapterAddress, 0);
       expect(await strategy.tokenAdapters(0)).to.equal(adapterAddress);
       expect(await strategy.getTokenAdapterCount()).to.equal(1);
@@ -264,28 +264,28 @@ describe('StrategyV1', () => {
 
     it('should revert when non-owner tries to add an adapter', async () => {
       await expect(
-        strategy.connect(nonOwner).addAdapter(await mockAdapter1.getAddress()),
+        strategy.connect(nonOwner).addTokenAdapter(await mockAdapter1.getAddress()),
       ).to.be.revertedWithCustomError(strategy, 'OwnableUnauthorizedAccount');
     });
 
     it('should revert when adding a zero address adapter', async () => {
       await expect(
-        strategy.connect(owner).addAdapter(ethers.ZeroAddress),
-      ).to.be.revertedWithCustomError(strategy, 'AdapterIsZeroAddress');
+        strategy.connect(owner).addTokenAdapter(ethers.ZeroAddress),
+      ).to.be.revertedWithCustomError(strategy, 'TokenAdapterIsZeroAddress');
     });
 
     it('should revert when adding an already existing adapter', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       await expect(
-        strategy.connect(owner).addAdapter(await mockAdapter1.getAddress()),
-      ).to.be.revertedWithCustomError(strategy, 'AdapterAlreadyExists');
+        strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'TokenAdapterAlreadyExists');
     });
 
     it('should allow adding multiple different adapters', async () => {
       const adapter1Addr = await mockAdapter1.getAddress();
       const adapter2Addr = await mockAdapter2.getAddress();
-      await strategy.connect(owner).addAdapter(adapter1Addr);
-      await strategy.connect(owner).addAdapter(adapter2Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter1Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter2Addr);
       expect(await strategy.getTokenAdapterCount()).to.equal(2);
       expect(await strategy.tokenAdapters(0)).to.equal(adapter1Addr);
       expect(await strategy.tokenAdapters(1)).to.equal(adapter2Addr);
@@ -295,15 +295,15 @@ describe('StrategyV1', () => {
     it('should allow owner to remove an existing adapter', async () => {
       const adapter1Addr = await mockAdapter1.getAddress();
       const adapter2Addr = await mockAdapter2.getAddress();
-      await strategy.connect(owner).addAdapter(adapter1Addr);
-      await strategy.connect(owner).addAdapter(adapter2Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter1Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter2Addr);
 
       // To correctly test the emitted index, we need to know the exact removal logic
       // Assuming it swaps with last and pops:
       // If removing adapter1Addr (at index 0), adapter2Addr (at index 1) moves to 0.
       // The event should reflect the original index of the removed item.
-      await expect(strategy.connect(owner).removeAdapter(adapter1Addr))
-        .to.emit(strategy, 'AdapterRemoved')
+      await expect(strategy.connect(owner).removeTokenAdapter(adapter1Addr))
+        .to.emit(strategy, 'TokenAdapterRemoved')
         .withArgs(adapter1Addr, 0);
 
       expect(await strategy.getTokenAdapterCount()).to.equal(1);
@@ -313,11 +313,11 @@ describe('StrategyV1', () => {
     it('should allow owner to remove an existing adapter (removing last)', async () => {
       const adapter1Addr = await mockAdapter1.getAddress();
       const adapter2Addr = await mockAdapter2.getAddress();
-      await strategy.connect(owner).addAdapter(adapter1Addr);
-      await strategy.connect(owner).addAdapter(adapter2Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter1Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter2Addr);
 
-      await expect(strategy.connect(owner).removeAdapter(adapter2Addr))
-        .to.emit(strategy, 'AdapterRemoved')
+      await expect(strategy.connect(owner).removeTokenAdapter(adapter2Addr))
+        .to.emit(strategy, 'TokenAdapterRemoved')
         .withArgs(adapter2Addr, 1);
 
       expect(await strategy.getTokenAdapterCount()).to.equal(1);
@@ -326,48 +326,48 @@ describe('StrategyV1', () => {
 
     it('should correctly remove the only adapter in the list', async () => {
       const adapter1Addr = await mockAdapter1.getAddress();
-      await strategy.connect(owner).addAdapter(adapter1Addr);
+      await strategy.connect(owner).addTokenAdapter(adapter1Addr);
 
-      await expect(strategy.connect(owner).removeAdapter(adapter1Addr))
-        .to.emit(strategy, 'AdapterRemoved')
+      await expect(strategy.connect(owner).removeTokenAdapter(adapter1Addr))
+        .to.emit(strategy, 'TokenAdapterRemoved')
         .withArgs(adapter1Addr, 0);
       expect(await strategy.getTokenAdapterCount()).to.equal(0);
     });
 
     it('should revert when non-owner tries to remove an adapter', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       await expect(
-        strategy.connect(nonOwner).removeAdapter(await mockAdapter1.getAddress()),
+        strategy.connect(nonOwner).removeTokenAdapter(await mockAdapter1.getAddress()),
       ).to.be.revertedWithCustomError(strategy, 'OwnableUnauthorizedAccount');
     });
 
     it('should revert when removing a zero address adapter', async () => {
       await expect(
-        strategy.connect(owner).removeAdapter(ethers.ZeroAddress),
-      ).to.be.revertedWithCustomError(strategy, 'AdapterIsZeroAddress');
+        strategy.connect(owner).removeTokenAdapter(ethers.ZeroAddress),
+      ).to.be.revertedWithCustomError(strategy, 'TokenAdapterIsZeroAddress');
     });
 
     it('should revert when removing an adapter that does not exist', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress()); // Add a different one
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress()); // Add a different one
       await expect(
-        strategy.connect(owner).removeAdapter(await mockAdapter1.getAddress()),
-      ).to.be.revertedWithCustomError(strategy, 'AdapterNotFound');
+        strategy.connect(owner).removeTokenAdapter(await mockAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'TokenAdapterNotFound');
     });
 
     it('should revert when removing from an empty list of adapters', async () => {
       await expect(
-        strategy.connect(owner).removeAdapter(await mockAdapter1.getAddress()),
-      ).to.be.revertedWithCustomError(strategy, 'AdapterNotFound');
+        strategy.connect(owner).removeTokenAdapter(await mockAdapter1.getAddress()),
+      ).to.be.revertedWithCustomError(strategy, 'TokenAdapterNotFound');
     });
 
     // --- getTokenAdapterCount ---
     it('should return the correct number of adapters', async () => {
       expect(await strategy.getTokenAdapterCount()).to.equal(0);
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       expect(await strategy.getTokenAdapterCount()).to.equal(1);
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
       expect(await strategy.getTokenAdapterCount()).to.equal(2);
-      await strategy.connect(owner).removeAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).removeTokenAdapter(await mockAdapter1.getAddress());
       expect(await strategy.getTokenAdapterCount()).to.equal(1);
     });
   });
@@ -386,7 +386,7 @@ describe('StrategyV1', () => {
 
     it('should revert if called by a non-azorius address', async () => {
       // Ensure at least one adapter is set so NoAdapters isn't hit first
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       await expect(
         strategy
           .connect(nonOwner)
@@ -400,11 +400,11 @@ describe('StrategyV1', () => {
         strategy
           .connect(azoriusMock)
           .initializeProposal(encodedDefaultProposalId, [], ethers.ZeroHash),
-      ).to.be.revertedWithCustomError(strategy, 'NoAdapters');
+      ).to.be.revertedWithCustomError(strategy, 'NoTokenAdapters');
     });
 
     it('should correctly initialize proposal details and emit event', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
 
       const blockBefore = await ethers.provider.getBlock('latest');
       if (!blockBefore) throw new Error('Failed to get latest block');
@@ -437,7 +437,7 @@ describe('StrategyV1', () => {
     });
 
     it('should reset vote counts for a re-initialized proposal', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       await strategy
         .connect(azoriusMock)
         .initializeProposal(encodedDefaultProposalId, [], ethers.ZeroHash);
@@ -459,8 +459,8 @@ describe('StrategyV1', () => {
     });
 
     it('should return true if any adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
 
       // mockAdapter1 says NO, mockAdapter2 says YES
       await mockAdapter1.connect(owner).setProposerStatus(user1.address, false);
@@ -470,8 +470,8 @@ describe('StrategyV1', () => {
     });
 
     it('should return false if no adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
 
       await mockAdapter1.connect(owner).setProposerStatus(user1.address, false);
       await mockAdapter2.connect(owner).setProposerStatus(user1.address, false);
@@ -480,8 +480,8 @@ describe('StrategyV1', () => {
     });
 
     it('should return true if the first adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
 
       await mockAdapter1.connect(owner).setProposerStatus(user1.address, true);
       await mockAdapter2.connect(owner).setProposerStatus(user1.address, false); // Should not be checked
@@ -498,7 +498,7 @@ describe('StrategyV1', () => {
       proposalId = 1;
       encodedProposalId = ethers.AbiCoder.defaultAbiCoder().encode(['uint32'], [proposalId]);
       // Ensure at least one adapter is added for initializeProposal to succeed
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
     });
 
     it('should return correct timestamps and block after proposal initialization', async () => {
@@ -545,7 +545,7 @@ describe('StrategyV1', () => {
       encodedProposalId = ethers.AbiCoder.defaultAbiCoder().encode(['uint32'], [proposalId]);
 
       // Add at least one adapter for most tests
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       // Initialize the proposal by azoriusMock
       await strategy
         .connect(azoriusMock)
@@ -682,7 +682,7 @@ describe('StrategyV1', () => {
 
     it('should sum weights if multiple adapters are used in one vote call', async () => {
       // Add second adapter to the strategy for this test
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
 
       const weight1 = 60;
       const weight2 = 40;
@@ -755,7 +755,7 @@ describe('StrategyV1', () => {
     });
 
     it('should revert if any adapter call reverts in a multi-adapter vote (all-or-nothing)', async () => {
-      await strategy.connect(owner).addAdapter(await mockAdapter2.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter2.getAddress());
 
       await mockAdapter1.connect(owner).setWeight(user1.address, 10);
       await mockAdapter2.connect(owner).setWeight(user1.address, 20);
@@ -795,7 +795,7 @@ describe('StrategyV1', () => {
     // the strategy has an adapter and a proposal is initialized.
     beforeEach(async () => {
       // Ensure adapter is present on the strategy instance for these specific tests
-      await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+      await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       // Initialize the proposal fresh for each isPassed test
       await strategy.connect(azoriusMock).initializeProposal(PROPOSAL_ID, [], ethers.ZeroHash);
     });
@@ -1043,7 +1043,7 @@ describe('StrategyV1', () => {
     beforeEach(async () => {
       const adapterCount = await strategy.getTokenAdapterCount();
       if (adapterCount === 0n) {
-        await strategy.connect(owner).addAdapter(await mockAdapter1.getAddress());
+        await strategy.connect(owner).addTokenAdapter(await mockAdapter1.getAddress());
       }
 
       await strategy.connect(azoriusMock).initializeProposal(PROPOSAL_ID, [], ethers.ZeroHash);

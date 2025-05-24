@@ -5,8 +5,8 @@ import type { ContractTransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  ERC20AdapterV1,
-  ERC20AdapterV1__factory,
+  ERC20TokenAdapterV1,
+  ERC20TokenAdapterV1__factory,
   IERC165__factory,
   ITokenAdapterBaseV1__factory,
   ITokenAdapterV1__factory,
@@ -28,8 +28,8 @@ async function deployERC20AdapterProxy(
   strategyAddress: string,
   proposerThreshold: bigint,
   weightPerToken: bigint,
-): Promise<{ adapter: ERC20AdapterV1; deployTx: ContractTransactionResponse }> {
-  const initData = ERC20AdapterV1__factory.createInterface().encodeFunctionData('initialize', [
+): Promise<{ adapter: ERC20TokenAdapterV1; deployTx: ContractTransactionResponse }> {
+  const initData = ERC20TokenAdapterV1__factory.createInterface().encodeFunctionData('initialize', [
     ownerAddress,
     tokenAddress,
     strategyAddress,
@@ -40,7 +40,7 @@ async function deployERC20AdapterProxy(
   const proxy = await proxyContractFactory.deploy(implementationAddress, initData);
   await proxy.waitForDeployment();
 
-  const adapter = ERC20AdapterV1__factory.connect(await proxy.getAddress(), proxyDeployer);
+  const adapter = ERC20TokenAdapterV1__factory.connect(await proxy.getAddress(), proxyDeployer);
   const deployTx = proxy.deploymentTransaction();
   if (!deployTx) {
     throw new Error('Proxy deployment transaction not found');
@@ -48,7 +48,7 @@ async function deployERC20AdapterProxy(
   return { adapter, deployTx };
 }
 
-describe('ERC20AdapterV1', () => {
+describe('ERC20TokenAdapterV1', () => {
   let deployerG: SignerWithAddress;
   let ownerG: SignerWithAddress;
   let erc20AdapterImplementationAddressG: string;
@@ -58,7 +58,7 @@ describe('ERC20AdapterV1', () => {
 
   async function deployGlobalFixture() {
     const [deployer, owner, user1, user2, nonOwner] = await ethers.getSigners();
-    const adapterImplFactory = new ERC20AdapterV1__factory(deployer);
+    const adapterImplFactory = new ERC20TokenAdapterV1__factory(deployer);
     const deployedAdapterImpl = await adapterImplFactory.deploy();
     await deployedAdapterImpl.waitForDeployment();
 
@@ -155,7 +155,7 @@ describe('ERC20AdapterV1', () => {
       // Provide the proxy instance (erc20Adapter) to .to.emit(),
       // as the event is emitted from the proxy's address due to delegatecall.
       await expect(deployTx.hash)
-        .to.emit(erc20Adapter, 'AdapterParametersUpdated')
+        .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
         .withArgs(DEFAULT_PROPOSER_THRESHOLD, DEFAULT_WEIGHT_PER_TOKEN);
 
       expect(await erc20Adapter.owner()).to.equal(ownerSigner.address);
@@ -166,7 +166,7 @@ describe('ERC20AdapterV1', () => {
     });
 
     it('should revert if token address is zero', async () => {
-      const erc20AdapterImplementation = ERC20AdapterV1__factory.connect(
+      const erc20AdapterImplementation = ERC20TokenAdapterV1__factory.connect(
         erc20AdapterImplementationAddressG,
         deployerG,
       );
@@ -185,7 +185,7 @@ describe('ERC20AdapterV1', () => {
     });
 
     it('should revert if strategy address is zero', async () => {
-      const erc20AdapterImplementation = ERC20AdapterV1__factory.connect(
+      const erc20AdapterImplementation = ERC20TokenAdapterV1__factory.connect(
         erc20AdapterImplementationAddressG,
         deployerG,
       );
@@ -204,7 +204,7 @@ describe('ERC20AdapterV1', () => {
     });
 
     it('should revert if weightPerToken is zero', async () => {
-      const erc20AdapterImplementation = ERC20AdapterV1__factory.connect(
+      const erc20AdapterImplementation = ERC20TokenAdapterV1__factory.connect(
         erc20AdapterImplementationAddressG,
         deployerG,
       );
@@ -245,7 +245,7 @@ describe('ERC20AdapterV1', () => {
     });
 
     it('Should have initialization disabled in the implementation contract', async function () {
-      const implementationContract = ERC20AdapterV1__factory.connect(
+      const implementationContract = ERC20TokenAdapterV1__factory.connect(
         erc20AdapterImplementationAddressG,
         ownerG,
       );
@@ -263,7 +263,7 @@ describe('ERC20AdapterV1', () => {
   });
 
   describe('Owner Functions', () => {
-    let erc20Adapter: ERC20AdapterV1;
+    let erc20Adapter: ERC20TokenAdapterV1;
     let currentOwnerSigner: SignerWithAddress;
     let currentNonOwnerSigner: SignerWithAddress;
 
@@ -290,7 +290,7 @@ describe('ERC20AdapterV1', () => {
         await expect(
           erc20Adapter.connect(currentOwnerSigner).updateProposerThreshold(NEW_PROPOSER_THRESHOLD),
         )
-          .to.emit(erc20Adapter, 'AdapterParametersUpdated')
+          .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
           .withArgs(NEW_PROPOSER_THRESHOLD, DEFAULT_WEIGHT_PER_TOKEN);
 
         expect(await erc20Adapter.proposerThreshold()).to.equal(NEW_PROPOSER_THRESHOLD);
@@ -308,7 +308,7 @@ describe('ERC20AdapterV1', () => {
 
       it('should allow updating to zero proposer threshold', async () => {
         await expect(erc20Adapter.connect(currentOwnerSigner).updateProposerThreshold(0n))
-          .to.emit(erc20Adapter, 'AdapterParametersUpdated')
+          .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
           .withArgs(0n, DEFAULT_WEIGHT_PER_TOKEN);
 
         expect(await erc20Adapter.proposerThreshold()).to.equal(0n);
@@ -322,7 +322,7 @@ describe('ERC20AdapterV1', () => {
         await expect(
           erc20Adapter.connect(currentOwnerSigner).updateWeightPerToken(NEW_WEIGHT_PER_TOKEN),
         )
-          .to.emit(erc20Adapter, 'AdapterParametersUpdated')
+          .to.emit(erc20Adapter, 'TokenAdapterParametersUpdated')
           .withArgs(DEFAULT_PROPOSER_THRESHOLD, NEW_WEIGHT_PER_TOKEN);
         expect(await erc20Adapter.weightPerToken()).to.equal(NEW_WEIGHT_PER_TOKEN);
       });
@@ -346,7 +346,7 @@ describe('ERC20AdapterV1', () => {
   describe('weightOf', () => {
     const proposalId = 1;
     const mockExtraData = ethers.ZeroHash;
-    let adapter: ERC20AdapterV1;
+    let adapter: ERC20TokenAdapterV1;
 
     async function setupAdapterForWeightOf(clockMode: 0 | 1, customWeightPerToken?: bigint) {
       await mockToken.setClockMode(clockMode);
@@ -459,7 +459,7 @@ describe('ERC20AdapterV1', () => {
     const mockExtraData = ethers.ZeroHash;
     const expectedEventAdapterVoteData = '0x';
 
-    let adapter: ERC20AdapterV1;
+    let adapter: ERC20TokenAdapterV1;
     let token: MockERC20Votes;
     let strategy: MockVotingStrategy;
     let voter: SignerWithAddress;
@@ -597,7 +597,7 @@ describe('ERC20AdapterV1', () => {
   });
 
   describe('isProposer', () => {
-    let adapter: ERC20AdapterV1;
+    let adapter: ERC20TokenAdapterV1;
 
     const SUITE_WEIGHT_PER_TOKEN = 2n;
     const SUITE_RAW_VOTES_THRESHOLD = ethers.parseUnits('100', 18);
@@ -703,7 +703,7 @@ describe('ERC20AdapterV1', () => {
   });
 
   describe('ERC165 supportsInterface', () => {
-    let erc20Adapter: ERC20AdapterV1;
+    let erc20Adapter: ERC20TokenAdapterV1;
     let iTokenAdapterV1InterfaceId: string;
     let iTokenAdapterBaseV1InterfaceId: string;
     let iVersionInterfaceId: string;
@@ -754,7 +754,7 @@ describe('ERC20AdapterV1', () => {
   });
 
   describe('UUPS Upgradeability', () => {
-    let erc20AdapterProxy: ERC20AdapterV1;
+    let erc20AdapterProxy: ERC20TokenAdapterV1;
 
     beforeEach(async () => {
       const { adapter } = await deployERC20AdapterProxy(
@@ -772,7 +772,7 @@ describe('ERC20AdapterV1', () => {
     runUUPSUpgradeabilityTests({
       getContract: () => erc20AdapterProxy,
       createNewImplementation: async () => {
-        const newImplementation = await new ERC20AdapterV1__factory(deployer).deploy();
+        const newImplementation = await new ERC20TokenAdapterV1__factory(deployer).deploy();
         return newImplementation;
       },
       owner: () => ownerSigner,

@@ -13,7 +13,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract ERC20AdapterV1 is
+contract ERC20TokenAdapterV1 is
     ITokenAdapterV1,
     Initializable,
     OwnableUpgradeable,
@@ -32,7 +32,7 @@ contract ERC20AdapterV1 is
 
     uint16 public constant VERSION = 1;
 
-    event AdapterParametersUpdated(
+    event TokenAdapterParametersUpdated(
         uint256 newProposerThreshold,
         uint256 newWeightPerToken
     );
@@ -67,7 +67,7 @@ contract ERC20AdapterV1 is
         strategy = IStrategyBaseV1(_strategy);
         tokenClockMode = ClockModeLib.getClockMode(_token);
 
-        emit AdapterParametersUpdated(proposerThreshold, weightPerToken);
+        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
     }
 
     function _authorizeUpgrade(
@@ -78,14 +78,14 @@ contract ERC20AdapterV1 is
         uint256 _newProposerThreshold
     ) external onlyOwner {
         _updateProposerThreshold(_newProposerThreshold);
-        emit AdapterParametersUpdated(proposerThreshold, weightPerToken);
+        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
     }
 
     function updateWeightPerToken(
         uint256 _newWeightPerToken
     ) external onlyOwner {
         _updateWeightPerToken(_newWeightPerToken);
-        emit AdapterParametersUpdated(proposerThreshold, weightPerToken);
+        emit TokenAdapterParametersUpdated(proposerThreshold, weightPerToken);
     }
 
     function _updateProposerThreshold(uint256 _newProposerThreshold) internal {

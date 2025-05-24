@@ -6,7 +6,7 @@ interface ITokenAdapterBaseV1 {
         address indexed voter,
         uint32 indexed proposalId,
         uint256 weightCasted,
-        bytes adapterVoteData
+        bytes tokenAdapterVoteData
     );
 
     function isProposer(address _proposer) external view returns (bool);
@@ -14,6 +14,6 @@ interface ITokenAdapterBaseV1 {
     function recordVote(
         address _voter,
         uint32 _proposalId,
-        bytes calldata _adapterVoteData
+        bytes calldata _tokenAdapterVoteData
     ) external returns (uint256 weightCasted);
 }

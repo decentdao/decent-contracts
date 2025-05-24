@@ -52,8 +52,8 @@ contract StrategyV1 is
         uint256 quorumThreshold,
         uint256 basisNumerator
     );
-    event AdapterAdded(address indexed adapter, uint256 index);
-    event AdapterRemoved(address indexed adapter, uint256 index);
+    event TokenAdapterAdded(address indexed adapter, uint256 index);
+    event TokenAdapterRemoved(address indexed adapter, uint256 index);
     event Voted(
         address indexed voter,
         uint32 indexed proposalId,
@@ -70,10 +70,10 @@ contract StrategyV1 is
     error InvalidAzoriusAddress();
     error InvalidVotingPeriod();
     error InvalidBasisNumerator();
-    error AdapterIsZeroAddress();
-    error AdapterAlreadyExists();
-    error AdapterNotFound();
-    error NoAdapters();
+    error TokenAdapterIsZeroAddress();
+    error TokenAdapterAlreadyExists();
+    error TokenAdapterNotFound();
+    error NoTokenAdapters();
     error ProposalNotFoundOrNotActive();
     error NoVotingWeight();
     error InvalidVoteType();
@@ -107,7 +107,7 @@ contract StrategyV1 is
 
         if (_initialTokenAdapters.length > 0) {
             for (uint256 i = 0; i < _initialTokenAdapters.length; i++) {
-                _addAdapter(_initialTokenAdapters[i]);
+                _addTokenAdapter(_initialTokenAdapters[i]);
             }
         }
 
@@ -155,24 +155,24 @@ contract StrategyV1 is
         );
     }
 
-    function addAdapter(address _adapter) public override onlyOwner {
-        _addAdapter(_adapter);
+    function addTokenAdapter(address _adapter) public override onlyOwner {
+        _addTokenAdapter(_adapter);
     }
 
-    function removeAdapter(address _adapter) external override onlyOwner {
-        if (_adapter == address(0)) revert AdapterIsZeroAddress();
+    function removeTokenAdapter(address _adapter) external override onlyOwner {
+        if (_adapter == address(0)) revert TokenAdapterIsZeroAddress();
         uint256 adapterCount = tokenAdapters.length;
-        if (adapterCount == 0) revert AdapterNotFound();
+        if (adapterCount == 0) revert TokenAdapterNotFound();
 
         for (uint256 i = 0; i < adapterCount; i++) {
             if (address(tokenAdapters[i]) == _adapter) {
                 tokenAdapters[i] = tokenAdapters[adapterCount - 1];
                 tokenAdapters.pop();
-                emit AdapterRemoved(address(_adapter), i);
+                emit TokenAdapterRemoved(address(_adapter), i);
                 return;
             }
         }
-        revert AdapterNotFound();
+        revert TokenAdapterNotFound();
     }
 
     function getTokenAdapterCount() external view override returns (uint256) {
@@ -185,7 +185,7 @@ contract StrategyV1 is
         bytes memory
     ) external virtual override {
         if (msg.sender != azorius) revert InvalidAzoriusAddress();
-        if (tokenAdapters.length == 0) revert NoAdapters();
+        if (tokenAdapters.length == 0) revert NoTokenAdapters();
 
         ProposalVotingDetails storage proposal = proposalVotingDetails[
             proposalId
@@ -208,10 +208,10 @@ contract StrategyV1 is
     function vote(
         uint32 _proposalId,
         uint8 _voteType,
-        address[] calldata _adaptersToUse,
-        bytes[] calldata _adapterVoteData
+        address[] calldata _tokenAdaptersToUse,
+        bytes[] calldata _tokenAdapterVoteData
     ) external virtual override {
-        if (_adaptersToUse.length != _adapterVoteData.length)
+        if (_tokenAdaptersToUse.length != _tokenAdapterVoteData.length)
             revert MismatchedInputs();
 
         address resolvedVoter = voter(msg.sender);
@@ -229,13 +229,14 @@ contract StrategyV1 is
         uint256 totalWeightForThisVoteTransaction = 0;
         uint256 numConfiguredAdapters = tokenAdapters.length;
 
-        for (uint256 i = 0; i < _adaptersToUse.length; i++) {
+        for (uint256 i = 0; i < _tokenAdaptersToUse.length; i++) {
             bool isValidAndConfiguredAdapter = false;
             uint256 configuredAdapterIndex = 0;
 
             for (uint256 j = 0; j < numConfiguredAdapters; j++) {
                 if (
-                    tokenAdapters[j] == ITokenAdapterBaseV1(_adaptersToUse[i])
+                    tokenAdapters[j] ==
+                    ITokenAdapterBaseV1(_tokenAdaptersToUse[i])
                 ) {
                     isValidAndConfiguredAdapter = true;
                     configuredAdapterIndex = j;
@@ -249,7 +250,7 @@ contract StrategyV1 is
 
             totalWeightForThisVoteTransaction += tokenAdapters[
                 configuredAdapterIndex
-            ].recordVote(resolvedVoter, _proposalId, _adapterVoteData[i]);
+            ].recordVote(resolvedVoter, _proposalId, _tokenAdapterVoteData[i]);
         }
 
         if (totalWeightForThisVoteTransaction == 0) revert NoVotingWeight();
@@ -377,14 +378,14 @@ contract StrategyV1 is
         basisNumerator = _newBasisNumerator;
     }
 
-    function _addAdapter(address _adapter) internal {
-        if (_adapter == address(0)) revert AdapterIsZeroAddress();
+    function _addTokenAdapter(address _adapter) internal {
+        if (_adapter == address(0)) revert TokenAdapterIsZeroAddress();
         for (uint256 i = 0; i < tokenAdapters.length; i++) {
             if (address(tokenAdapters[i]) == _adapter)
-                revert AdapterAlreadyExists();
+                revert TokenAdapterAlreadyExists();
         }
         tokenAdapters.push(ITokenAdapterBaseV1(_adapter));
-        emit AdapterAdded(address(_adapter), tokenAdapters.length - 1);
+        emit TokenAdapterAdded(address(_adapter), tokenAdapters.length - 1);
     }
 
     function getVersion() public view virtual override returns (uint16) {

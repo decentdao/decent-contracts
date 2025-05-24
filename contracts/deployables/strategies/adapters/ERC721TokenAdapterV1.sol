@@ -11,7 +11,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract ERC721AdapterV1 is
+contract ERC721TokenAdapterV1 is
     ITokenAdapterV1,
     Initializable,
     OwnableUpgradeable,
@@ -28,7 +28,7 @@ contract ERC721AdapterV1 is
 
     uint16 public constant VERSION = 1;
 
-    event AdapterParametersUpdated(
+    event TokenAdapterParametersUpdated(
         uint256 newWeightPerNft,
         uint256 newProposerThreshold
     );
@@ -60,7 +60,7 @@ contract ERC721AdapterV1 is
         _updateWeightPerNft(_weightPerNft);
         _updateProposerThreshold(_proposerThreshold);
 
-        emit AdapterParametersUpdated(weightPerNft, proposerThreshold);
+        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
     }
 
     function _authorizeUpgrade(
@@ -69,14 +69,14 @@ contract ERC721AdapterV1 is
 
     function updateWeightPerNft(uint256 _newWeightPerNft) external onlyOwner {
         _updateWeightPerNft(_newWeightPerNft);
-        emit AdapterParametersUpdated(weightPerNft, proposerThreshold);
+        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
     }
 
     function updateProposerThreshold(
         uint256 _newProposerThreshold
     ) external onlyOwner {
         _updateProposerThreshold(_newProposerThreshold);
-        emit AdapterParametersUpdated(weightPerNft, proposerThreshold);
+        emit TokenAdapterParametersUpdated(weightPerNft, proposerThreshold);
     }
 
     function _updateWeightPerNft(uint256 _newWeightPerNft) internal {

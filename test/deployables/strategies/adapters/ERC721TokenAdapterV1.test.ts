@@ -5,8 +5,8 @@ import type { ContractTransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  ERC721AdapterV1,
-  ERC721AdapterV1__factory,
+  ERC721TokenAdapterV1,
+  ERC721TokenAdapterV1__factory,
   IERC165__factory,
   ITokenAdapterBaseV1__factory,
   ITokenAdapterV1__factory,
@@ -27,19 +27,19 @@ async function deployERC721AdapterProxy(
   strategyAddress: string,
   weightPerNft: bigint,
   proposerThreshold: bigint,
-): Promise<{ adapter: ERC721AdapterV1; deployTx: ContractTransactionResponse }> {
-  const initData = ERC721AdapterV1__factory.createInterface().encodeFunctionData('initialize', [
-    initialOwnerAddress,
-    tokenAddress,
-    strategyAddress,
-    weightPerNft,
-    proposerThreshold,
-  ]);
+): Promise<{ adapter: ERC721TokenAdapterV1; deployTx: ContractTransactionResponse }> {
+  const initData = ERC721TokenAdapterV1__factory.createInterface().encodeFunctionData(
+    'initialize',
+    [initialOwnerAddress, tokenAddress, strategyAddress, weightPerNft, proposerThreshold],
+  );
   const proxyContractFactory = new ERC1967Proxy__factory(proxyDeployer);
   const proxy = await proxyContractFactory.deploy(implementationAddress, initData);
   await proxy.waitForDeployment();
 
-  const adapterInstance = ERC721AdapterV1__factory.connect(await proxy.getAddress(), proxyDeployer);
+  const adapterInstance = ERC721TokenAdapterV1__factory.connect(
+    await proxy.getAddress(),
+    proxyDeployer,
+  );
   const deployTxObj = proxy.deploymentTransaction();
   if (!deployTxObj) {
     throw new Error('Proxy deployment transaction not found for ERC721AdapterV1');
@@ -47,7 +47,7 @@ async function deployERC721AdapterProxy(
   return { adapter: adapterInstance, deployTx: deployTxObj };
 }
 
-describe('ERC721AdapterV1', () => {
+describe('ERC721TokenAdapterV1', () => {
   // Globally scoped (from first fixture load in `before`)
   let erc721AdapterImplementationAddressG: string;
   let deployerG: SignerWithAddress;
@@ -58,7 +58,7 @@ describe('ERC721AdapterV1', () => {
 
   async function deployGlobalERC721Fixture() {
     const [deployer] = await ethers.getSigners();
-    const adapterImplFactory = new ERC721AdapterV1__factory(deployer);
+    const adapterImplFactory = new ERC721TokenAdapterV1__factory(deployer);
     const deployedAdapterImpl = await adapterImplFactory.deploy();
     await deployedAdapterImpl.waitForDeployment();
     erc721AdapterImplementationAddressG = await deployedAdapterImpl.getAddress();
@@ -124,7 +124,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize correctly, set owner, and emit AdapterParametersUpdated event', async () => {
+    it('should initialize correctly, set owner, and emit TokenAdapterParametersUpdated event', async () => {
       const {
         ownerSigner,
         mockNft,
@@ -143,7 +143,7 @@ describe('ERC721AdapterV1', () => {
       );
 
       await expect(deployTx)
-        .to.emit(erc721Adapter, 'AdapterParametersUpdated')
+        .to.emit(erc721Adapter, 'TokenAdapterParametersUpdated')
         .withArgs(DEFAULT_WEIGHT_PER_NFT, DEFAULT_NFT_PROPOSER_THRESHOLD);
 
       expect(await erc721Adapter.owner()).to.equal(ownerSigner.address);
@@ -157,7 +157,7 @@ describe('ERC721AdapterV1', () => {
       const { mockNft, deployer: fixtureDeployer } = await loadFixture(
         deployMocksAndSignersERC721Fixture,
       );
-      const erc721AdapterImplementation = ERC721AdapterV1__factory.connect(
+      const erc721AdapterImplementation = ERC721TokenAdapterV1__factory.connect(
         erc721AdapterImplementationAddressG,
         deployerG,
       );
@@ -178,7 +178,7 @@ describe('ERC721AdapterV1', () => {
       const { mockNft, deployer: fixtureDeployer } = await loadFixture(
         deployMocksAndSignersERC721Fixture,
       );
-      const erc721AdapterImplementation = ERC721AdapterV1__factory.connect(
+      const erc721AdapterImplementation = ERC721TokenAdapterV1__factory.connect(
         erc721AdapterImplementationAddressG,
         deployerG,
       );
@@ -201,7 +201,7 @@ describe('ERC721AdapterV1', () => {
         mockStrategy,
         deployer: fixtureDeployer,
       } = await loadFixture(deployMocksAndSignersERC721Fixture);
-      const erc721AdapterImplementation = ERC721AdapterV1__factory.connect(
+      const erc721AdapterImplementation = ERC721TokenAdapterV1__factory.connect(
         erc721AdapterImplementationAddressG,
         deployerG,
       );
@@ -250,7 +250,7 @@ describe('ERC721AdapterV1', () => {
         mockStrategy,
         deployer: fixtureDeployer,
       } = await loadFixture(deployMocksAndSignersERC721Fixture);
-      const implementationContract = ERC721AdapterV1__factory.connect(
+      const implementationContract = ERC721TokenAdapterV1__factory.connect(
         erc721AdapterImplementationAddressG,
         fixtureDeployer,
       );
@@ -267,7 +267,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('weightOf', () => {
-    let adapter: ERC721AdapterV1;
+    let adapter: ERC721TokenAdapterV1;
     let mockNft: MockERC721; // Explicitly type mockNft here
     let user1: SignerWithAddress;
     let user1TokenIds: bigint[];
@@ -388,7 +388,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('recordVote', () => {
-    let adapter: ERC721AdapterV1;
+    let adapter: ERC721TokenAdapterV1;
     let mockNft: MockERC721;
     let user1: SignerWithAddress;
     let user1TokenIds: bigint[];
@@ -553,7 +553,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('isProposer', () => {
-    let adapter: ERC721AdapterV1;
+    let adapter: ERC721TokenAdapterV1;
     let mockNft: MockERC721;
     let user1: SignerWithAddress; // Fixture user1 (has 3 NFTs: 0,1,2)
     let user2: SignerWithAddress; // Fixture user2 (has 2 NFTs: 3,4)
@@ -675,7 +675,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('ERC165 supportsInterface', () => {
-    let erc721Adapter: ERC721AdapterV1;
+    let erc721Adapter: ERC721TokenAdapterV1;
     let iTokenAdapterV1InterfaceId: string;
     let iTokenAdapterBaseV1InterfaceId: string;
     let iVersionInterfaceId: string;
@@ -732,7 +732,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('Owner Functions', () => {
-    let adapter: ERC721AdapterV1;
+    let adapter: ERC721TokenAdapterV1;
     let owner: SignerWithAddress;
     let nonOwner: SignerWithAddress;
     let deployer: SignerWithAddress; // This will be the fixture.deployer
@@ -764,7 +764,7 @@ describe('ERC721AdapterV1', () => {
 
       it('should allow owner to update weightPerNft and emit event', async () => {
         await expect(adapter.connect(owner).updateWeightPerNft(NEW_WEIGHT_PER_NFT))
-          .to.emit(adapter, 'AdapterParametersUpdated')
+          .to.emit(adapter, 'TokenAdapterParametersUpdated')
           .withArgs(NEW_WEIGHT_PER_NFT, await adapter.proposerThreshold()); // Current proposerThreshold
         expect(await adapter.weightPerNft()).to.equal(NEW_WEIGHT_PER_NFT);
       });
@@ -788,7 +788,7 @@ describe('ERC721AdapterV1', () => {
 
       it('should allow owner to update proposerThreshold and emit event', async () => {
         await expect(adapter.connect(owner).updateProposerThreshold(NEW_PROPOSER_THRESHOLD))
-          .to.emit(adapter, 'AdapterParametersUpdated')
+          .to.emit(adapter, 'TokenAdapterParametersUpdated')
           .withArgs(await adapter.weightPerNft(), NEW_PROPOSER_THRESHOLD); // Current weightPerNft
         expect(await adapter.proposerThreshold()).to.equal(NEW_PROPOSER_THRESHOLD);
       });
@@ -801,7 +801,7 @@ describe('ERC721AdapterV1', () => {
 
       it('should allow updating proposerThreshold to zero', async () => {
         await expect(adapter.connect(owner).updateProposerThreshold(0n))
-          .to.emit(adapter, 'AdapterParametersUpdated')
+          .to.emit(adapter, 'TokenAdapterParametersUpdated')
           .withArgs(await adapter.weightPerNft(), 0n);
         expect(await adapter.proposerThreshold()).to.equal(0n);
       });
@@ -809,7 +809,7 @@ describe('ERC721AdapterV1', () => {
   });
 
   describe('UUPS Upgradeability', () => {
-    let erc721AdapterProxy: ERC721AdapterV1;
+    let erc721AdapterProxy: ERC721TokenAdapterV1;
     let fixtureOwner: SignerWithAddress;
     let fixtureNonOwner: SignerWithAddress;
     let fixtureDeployer: SignerWithAddress;
@@ -841,7 +841,7 @@ describe('ERC721AdapterV1', () => {
     runUUPSUpgradeabilityTests({
       getContract: () => erc721AdapterProxy,
       createNewImplementation: async () => {
-        const newImplementation = await new ERC721AdapterV1__factory(fixtureDeployer).deploy();
+        const newImplementation = await new ERC721TokenAdapterV1__factory(fixtureDeployer).deploy();
         await newImplementation.waitForDeployment();
         return newImplementation;
       },
