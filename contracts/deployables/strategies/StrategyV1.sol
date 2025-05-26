@@ -382,14 +382,14 @@ contract StrategyV1 is
 
     function isProposer(
         address _address
-    ) external view virtual override returns (bool) {
-        if (proposerAdapters.length == 0) return false;
+    ) external view virtual override returns (bool, address) {
+        if (proposerAdapters.length == 0) return (false, address(0));
         for (uint256 i = 0; i < proposerAdapters.length; i++) {
             if (proposerAdapters[i].isProposer(_address)) {
-                return true;
+                return (true, address(proposerAdapters[i]));
             }
         }
-        return false;
+        return (false, address(0));
     }
 
     function getVotingTimestamps(

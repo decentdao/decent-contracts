@@ -598,39 +598,52 @@ describe('StrategyV1', () => {
   });
 
   describe('isProposer', () => {
-    it('should return false if no adapters are configured', async () => {
-      void expect(await strategy.isProposer(user1.address)).to.be.false;
+    it('should return false and address(0) if no adapters are configured', async () => {
+      const [isProposerResult, proposerAdapterAddress] = await strategy.isProposer(user1.address);
+      void expect(isProposerResult).to.be.false;
+      expect(proposerAdapterAddress).to.equal(ethers.ZeroAddress);
     });
 
-    it('should return true if any adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
+    it('should return true and the adapter address if any adapter identifies the address as a proposer', async () => {
+      const mockProposerAdapter1Address = await mockProposerAdapter1.getAddress();
+      const mockProposerAdapter2Address = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter1Address);
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter2Address);
 
-      // mockProposerAdapter1 says NO, mockProposerAdapter2 says YES
-      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, false);
-      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, true);
+      await mockProposerAdapter1.setProposerStatus(user1.address, false);
+      await mockProposerAdapter2.setProposerStatus(user1.address, true);
 
-      void expect(await strategy.isProposer(user1.address)).to.be.true;
+      const [isProposerResult, proposerAdapterAddress] = await strategy.isProposer(user1.address);
+      void expect(isProposerResult).to.be.true;
+      expect(proposerAdapterAddress).to.equal(mockProposerAdapter2Address);
     });
 
-    it('should return false if no adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
+    it('should return false and address(0) if no adapter identifies the address as a proposer', async () => {
+      const mockProposerAdapter1Address = await mockProposerAdapter1.getAddress();
+      const mockProposerAdapter2Address = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter1Address);
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter2Address);
 
-      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, false);
-      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, false);
+      await mockProposerAdapter1.setProposerStatus(user1.address, false);
+      await mockProposerAdapter2.setProposerStatus(user1.address, false);
 
-      void expect(await strategy.isProposer(user1.address)).to.be.false;
+      const [isProposerResult, proposerAdapterAddress] = await strategy.isProposer(user1.address);
+      void expect(isProposerResult).to.be.false;
+      expect(proposerAdapterAddress).to.equal(ethers.ZeroAddress);
     });
 
-    it('should return true if the first adapter identifies the address as a proposer', async () => {
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter1.getAddress());
-      await strategy.connect(owner).addProposerAdapter(await mockProposerAdapter2.getAddress());
+    it('should return true and the first adapter address if the first adapter identifies the address as a proposer', async () => {
+      const mockProposerAdapter1Address = await mockProposerAdapter1.getAddress();
+      const mockProposerAdapter2Address = await mockProposerAdapter2.getAddress();
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter1Address);
+      await strategy.connect(owner).addProposerAdapter(mockProposerAdapter2Address);
 
-      await mockProposerAdapter1.connect(owner).setProposerStatus(user1.address, true);
-      await mockProposerAdapter2.connect(owner).setProposerStatus(user1.address, false);
+      await mockProposerAdapter1.setProposerStatus(user1.address, true);
+      await mockProposerAdapter2.setProposerStatus(user1.address, false); // Should not be checked
 
-      void expect(await strategy.isProposer(user1.address)).to.be.true;
+      const [isProposerResult, proposerAdapterAddress] = await strategy.isProposer(user1.address);
+      void expect(isProposerResult).to.be.true;
+      expect(proposerAdapterAddress).to.equal(mockProposerAdapter1Address);
     });
   });
 
@@ -1177,7 +1190,7 @@ describe('StrategyV1', () => {
 
   describe('Version', () => {
     it('should return the correct version', async () => {
-      void expect(await strategy.getVersion()).to.equal(1);
+      expect(await strategy.getVersion()).to.equal(1);
     });
   });
 

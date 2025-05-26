@@ -53,10 +53,11 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     );
     event ProposalCreated(
         address strategy,
+        address proposerAdapter,
         uint256 proposalId,
         address proposer,
-        Transaction[] transactions,
-        string metadata
+        string metadata,
+        Transaction[] transactions
     );
     event ProposalExecuted(uint32 proposalId, bytes32[] txHashes);
     event TimelockPeriodUpdated(uint32 timelockPeriod);
@@ -149,7 +150,10 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         string calldata _metadata,
         bytes memory _data
     ) external virtual override {
-        if (!strategy.isProposer(msg.sender)) revert InvalidProposer();
+        (bool isProposer, address proposerAdapter) = strategy.isProposer(
+            msg.sender
+        );
+        if (!isProposer) revert InvalidProposer();
 
         bytes32[] memory txHashes = new bytes32[](_transactions.length);
         uint256 transactionsLength = _transactions.length;
@@ -166,6 +170,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         }
 
         proposals[totalProposalCount].strategy = address(strategy);
+        proposals[totalProposalCount].proposerAdapter = proposerAdapter;
         proposals[totalProposalCount].txHashes = txHashes;
         proposals[totalProposalCount].timelockPeriod = timelockPeriod;
         proposals[totalProposalCount].executionPeriod = executionPeriod;
@@ -174,10 +179,11 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
 
         emit ProposalCreated(
             address(strategy),
+            proposerAdapter,
             totalProposalCount,
             msg.sender,
-            _transactions,
-            _metadata
+            _metadata,
+            _transactions
         );
 
         totalProposalCount++;
@@ -239,6 +245,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
         override
         returns (
             address _strategy,
+            address _proposerAdapter,
             bytes32[] memory _txHashes,
             uint32 _timelockPeriod,
             uint32 _executionPeriod,
@@ -247,6 +254,7 @@ contract AzoriusV1 is IAzoriusV1, GuardableModule, Version, UUPSUpgradeable {
     {
         Proposal memory _proposal = proposals[_proposalId];
         _strategy = _proposal.strategy;
+        _proposerAdapter = _proposal.proposerAdapter;
         _txHashes = _proposal.txHashes;
         _timelockPeriod = _proposal.timelockPeriod;
         _executionPeriod = _proposal.executionPeriod;

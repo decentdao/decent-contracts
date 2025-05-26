@@ -16,6 +16,7 @@ interface IAzoriusV1 {
         uint32 timelockPeriod;
         uint32 executionPeriod;
         address strategy;
+        address proposerAdapter;
         bytes32[] txHashes;
     }
 
@@ -83,6 +84,7 @@ interface IAzoriusV1 {
         view
         returns (
             address _strategy,
+            address _proposerAdapter,
             bytes32[] memory _txHashes,
             uint32 _timelockPeriod,
             uint32 _executionPeriod,

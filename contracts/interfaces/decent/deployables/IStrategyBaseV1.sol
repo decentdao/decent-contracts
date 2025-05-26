@@ -10,7 +10,7 @@ interface IStrategyBaseV1 {
 
     function isPassed(uint32 _proposalId) external view returns (bool);
 
-    function isProposer(address _address) external view returns (bool);
+    function isProposer(address _address) external view returns (bool, address);
 
     function getVotingTimestamps(
         uint32 _proposalId

@@ -13,6 +13,8 @@ import {
   MockAvatar__factory,
   MockERC20Votes,
   MockERC20Votes__factory,
+  MockProposerAdapter,
+  MockProposerAdapter__factory,
   MockVotingStrategy,
   MockVotingStrategy__factory,
   UUPSUpgradeable,
@@ -87,6 +89,7 @@ describe('AzoriusV1', () => {
   let masterCopy: string;
   let mockStrategy: MockVotingStrategy;
   let mockStrategyAddress: string;
+  let mockProposerAdapter: MockProposerAdapter;
 
   beforeEach(async () => {
     // Get signers
@@ -99,6 +102,9 @@ describe('AzoriusV1', () => {
     // Deploy a default mock strategy for use in many tests
     mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
     mockStrategyAddress = await mockStrategy.getAddress();
+
+    // Deploy MockProposerAdapter
+    mockProposerAdapter = await new MockProposerAdapter__factory(proxyDeployer).deploy();
   });
 
   describe('Initialization', () => {
@@ -428,6 +434,9 @@ describe('AzoriusV1', () => {
       it('should allow proposer to submit proposal', async () => {
         const proposalMetadata = 'Test proposal';
 
+        // Set the proposer adapter on the mock strategy
+        await mockStrategy.setProposerAdapter(await mockProposerAdapter.getAddress());
+
         const tx = await azorius
           .connect(proposer)
           .submitProposal([proposalTx], proposalMetadata, ethers.ZeroHash);
@@ -442,13 +451,15 @@ describe('AzoriusV1', () => {
         );
 
         // Check that the event emits the correct values
+        expect(event.strategy).to.equal(mockStrategyAddress);
+        expect(event.proposerAdapter).to.equal(await mockProposerAdapter.getAddress());
         expect(event.proposalId).to.equal(0n);
         expect(event.proposer).to.equal(proposer.address);
+        expect(event.metadata).to.equal(proposalMetadata);
         expect(event.transactions[0].to).to.equal(proposalTx.to);
         expect(event.transactions[0].value).to.equal(proposalTx.value);
         expect(event.transactions[0].data).to.equal(proposalTx.data);
         expect(event.transactions[0].operation).to.equal(proposalTx.operation);
-        expect(event.metadata).to.equal(proposalMetadata);
       });
 
       it('should not allow non-proposer to submit proposal', async () => {
@@ -461,15 +472,25 @@ describe('AzoriusV1', () => {
         const proposalMetadata = 'Zero transaction proposal';
         const proposalId = await azorius.totalProposalCount();
 
+        // Set the proposer adapter on the mock strategy
+        await mockStrategy.setProposerAdapter(await mockProposerAdapter.getAddress());
+
         // Submit with empty transactions array
         await expect(
           azorius.connect(proposer).submitProposal([], proposalMetadata, ethers.ZeroHash),
         )
           .to.emit(azorius, 'ProposalCreated')
-          .withArgs(mockStrategyAddress, proposalId, proposer.address, [], proposalMetadata);
+          .withArgs(
+            mockStrategyAddress,
+            await mockProposerAdapter.getAddress(),
+            proposalId,
+            proposer.address,
+            proposalMetadata,
+            [],
+          );
 
         expect(await azorius.totalProposalCount()).to.equal(proposalId + 1n);
-        const [, txHashes, , ,] = await azorius.getProposal(Number(proposalId));
+        const [, , txHashes] = await azorius.getProposal(Number(proposalId));
         expect(txHashes.length).to.equal(0);
 
         // Simulate voting ended and passed
@@ -591,6 +612,9 @@ describe('AzoriusV1', () => {
         };
         const metadata = 'Test GetProposal';
 
+        // Set the proposer adapter on the mock strategy
+        await mockStrategy.setProposerAdapter(await mockProposerAdapter.getAddress());
+
         // Submit the proposal
         await azorius.connect(proposer).submitProposal([proposalTx], metadata, ethers.ZeroHash);
         const proposalId = 0;
@@ -602,10 +626,11 @@ describe('AzoriusV1', () => {
           proposalTx.operation,
         );
 
-        const [strategy, txHashes, timelock, execution, counter] =
+        const [strategy, proposerAdapter, txHashes, timelock, execution, counter] =
           await azorius.getProposal(proposalId);
 
         expect(strategy).to.equal(mockStrategyAddress);
+        expect(proposerAdapter).to.equal(await mockProposerAdapter.getAddress());
         expect(txHashes.length).to.equal(1);
         expect(txHashes[0]).to.equal(expectedTxHash);
         expect(timelock).to.equal(TIMELOCK_PERIOD); // Assuming TIMELOCK_PERIOD is available from outer scope
@@ -618,11 +643,13 @@ describe('AzoriusV1', () => {
         // Solidity will return default values for a mapping if the key doesn't exist
         // or if the proposal struct was never initialized for that ID.
 
-        const [strategy, txHashes, timelock, execution, counter] = await azorius.getProposal(
-          Number(nonExistentProposalId), // Convert BigInt to number if necessary for your ethers version
-        );
+        const [strategy, proposerAdapter, txHashes, timelock, execution, counter] =
+          await azorius.getProposal(
+            Number(nonExistentProposalId), // Convert BigInt to number if necessary for your ethers version
+          );
 
         expect(strategy).to.equal(ethers.ZeroAddress);
+        expect(proposerAdapter).to.equal(ethers.ZeroAddress);
         expect(txHashes.length).to.equal(0);
         expect(timelock).to.equal(0);
         expect(execution).to.equal(0);
@@ -678,7 +705,7 @@ describe('AzoriusV1', () => {
           [tx1.operation],
         );
 
-        const [, , , , counter] = await azorius.getProposal(proposalId);
+        const [, , , , , counter] = await azorius.getProposal(proposalId);
         expect(counter).to.equal(1); // Execution counter should be 1
       });
     });
@@ -961,7 +988,7 @@ describe('AzoriusV1', () => {
           expect(await mockToken.balanceOf(user.address)).to.equal(100);
 
           // Verify execution counter was incremented
-          const [, , , , executionCounter] = await azorius.getProposal(0);
+          const [, , , , , executionCounter] = await azorius.getProposal(0);
           expect(executionCounter).to.equal(1);
         });
 
@@ -976,7 +1003,7 @@ describe('AzoriusV1', () => {
           expect(await mockToken.balanceOf(user.address)).to.equal(300);
 
           // Verify execution counter was incremented again
-          const [, , , , finalExecutionCounter] = await azorius.getProposal(0);
+          const [, , , , , finalExecutionCounter] = await azorius.getProposal(0);
           expect(finalExecutionCounter).to.equal(2);
 
           // Verify proposal state is now EXECUTED
@@ -1322,7 +1349,7 @@ describe('AzoriusV1', () => {
           .submitProposal([proposalTx], 'New proposal', ethers.ZeroHash);
         const proposalId = 0; // First proposal
 
-        const [, , timelock, ,] = await azorius.getProposal(proposalId);
+        const [, , , timelock] = await azorius.getProposal(proposalId);
         expect(timelock).to.equal(NEW_TIMELOCK_PERIOD);
       });
 
@@ -1343,7 +1370,7 @@ describe('AzoriusV1', () => {
         await azorius.connect(owner).updateTimelockPeriod(NEW_TIMELOCK_PERIOD);
 
         // Check the timelock period of the existing proposal
-        const [, , timelock, ,] = await azorius.getProposal(existingProposalId);
+        const [, , , timelock] = await azorius.getProposal(existingProposalId);
         expect(timelock).to.equal(INITIAL_TIMELOCK_PERIOD);
 
         // Submit a new proposal to ensure it gets the new period
@@ -1351,7 +1378,7 @@ describe('AzoriusV1', () => {
           .connect(proposer)
           .submitProposal([proposalTx], 'New proposal post-update', ethers.ZeroHash);
         const newProposalId = 1;
-        const [, , newTimelock, ,] = await azorius.getProposal(newProposalId);
+        const [, , , newTimelock] = await azorius.getProposal(newProposalId);
         expect(newTimelock).to.equal(NEW_TIMELOCK_PERIOD);
       });
     });
@@ -1386,7 +1413,7 @@ describe('AzoriusV1', () => {
           .submitProposal([proposalTx], 'New proposal', ethers.ZeroHash);
         const proposalId = 0;
 
-        const [, , , executionPeriod] = await azorius.getProposal(proposalId);
+        const [, , , , executionPeriod] = await azorius.getProposal(proposalId);
         expect(executionPeriod).to.equal(NEW_EXECUTION_PERIOD);
       });
 
@@ -1404,14 +1431,14 @@ describe('AzoriusV1', () => {
 
         await azorius.connect(owner).updateExecutionPeriod(NEW_EXECUTION_PERIOD);
 
-        const [, , , executionPeriod] = await azorius.getProposal(existingProposalId);
+        const [, , , , executionPeriod] = await azorius.getProposal(existingProposalId);
         expect(executionPeriod).to.equal(INITIAL_EXECUTION_PERIOD);
 
         await azorius
           .connect(proposer)
           .submitProposal([proposalTx], 'New proposal post-update', ethers.ZeroHash);
         const newProposalId = 1;
-        const [, , , newExecution] = await azorius.getProposal(newProposalId);
+        const [, , , , newExecution] = await azorius.getProposal(newProposalId);
         expect(newExecution).to.equal(NEW_EXECUTION_PERIOD);
       });
     });
