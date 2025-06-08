@@ -39,6 +39,8 @@ contract StrategyV1 is
     mapping(address freezeVoterContract => bool isAuthorizedFreezeVoter)
         internal _authorizedFreezeVotersMapping;
     address[] internal _authorizedFreezeVotersArray;
+    mapping(uint32 proposalId => bool voteCastedBeforeVotingPeriodStarted)
+        internal _voteCastedBeforeVotingPeriodStarted;
     mapping(uint32 proposalId => bool voteCastedAfterVotingPeriodEnded)
         internal _voteCastedAfterVotingPeriodEnded;
 
@@ -163,6 +165,12 @@ contract StrategyV1 is
         return _proposerAdapters;
     }
 
+    function voteCastedBeforeVotingPeriodStarted(
+        uint32 proposalId_
+    ) public view virtual override returns (bool) {
+        return _voteCastedBeforeVotingPeriodStarted[proposalId_];
+    }
+
     function voteCastedAfterVotingPeriodEnded(
         uint32 proposalId_
     ) public view virtual override returns (bool) {
@@ -176,7 +184,7 @@ contract StrategyV1 is
             proposalId_
         ];
 
-        if (proposal.votingEndTimestamp == 0) {
+        if (proposal.votingStartTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
@@ -191,7 +199,7 @@ contract StrategyV1 is
             _proposalId
         ];
 
-        if (proposal.votingEndTimestamp == 0) {
+        if (proposal.votingStartTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
@@ -207,7 +215,7 @@ contract StrategyV1 is
             _proposalId
         ];
 
-        if (proposal.votingEndTimestamp == 0) {
+        if (proposal.votingStartTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
@@ -240,7 +248,7 @@ contract StrategyV1 is
         ProposalVotingDetails storage details = _proposalVotingDetails[
             proposalId_
         ];
-        if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
+        if (details.votingStartTimestamp == 0) revert ProposalNotInitialized();
         return (details.votingStartTimestamp, details.votingEndTimestamp);
     }
 
@@ -250,7 +258,7 @@ contract StrategyV1 is
         ProposalVotingDetails storage details = _proposalVotingDetails[
             proposalId_
         ];
-        if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
+        if (details.votingStartTimestamp == 0) revert ProposalNotInitialized();
         return details.votingStartBlock;
     }
 
@@ -276,13 +284,18 @@ contract StrategyV1 is
         uint8 voteType_,
         VotingAdapterVoteData[] calldata votingAdaptersData_
     ) public view virtual override returns (bool) {
-        // get the proposal start and end timestamps to determine if the proposal exists
+        // get the proposal details
         ProposalVotingDetails storage details = _proposalVotingDetails[
             proposalId_
         ];
 
-        // Check if proposal exists (will have non-zero endTimestamp if it exists)
-        if (details.votingEndTimestamp == 0) {
+        // Check if proposal exists (will have non-zero startTimestamp if it exists)
+        if (details.votingStartTimestamp == 0) {
+            return false;
+        }
+
+        // Check if voting period has started
+        if (_voteCastedBeforeVotingPeriodStarted[proposalId_]) {
             return false;
         }
 
@@ -338,13 +351,22 @@ contract StrategyV1 is
     // --- State-Changing Functions ---
 
     function initializeProposal(
-        uint32 proposalId_
+        uint32 proposalId_,
+        uint48 startTime_
     ) public virtual override onlyStrategyAdmin {
+        if (startTime_ != 0 && startTime_ < block.timestamp) {
+            revert InvalidStartTime();
+        }
+
         ProposalVotingDetails storage proposal = _proposalVotingDetails[
             proposalId_
         ];
-        proposal.votingStartTimestamp = uint48(block.timestamp);
-        proposal.votingEndTimestamp = uint48(block.timestamp + _votingPeriod);
+        proposal.votingStartTimestamp = startTime_ == 0
+            ? uint48(block.timestamp)
+            : startTime_;
+        proposal.votingEndTimestamp = uint48(
+            proposal.votingStartTimestamp + _votingPeriod
+        );
         proposal.votingStartBlock = uint32(block.number);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;
@@ -368,8 +390,17 @@ contract StrategyV1 is
             proposalId_
         ];
 
-        if (proposal.votingEndTimestamp == 0) {
+        if (proposal.votingStartTimestamp == 0) {
             revert ProposalNotInitialized();
+        }
+
+        if (block.timestamp < proposal.votingStartTimestamp) {
+            if (!_voteCastedBeforeVotingPeriodStarted[proposalId_]) {
+                _voteCastedBeforeVotingPeriodStarted[proposalId_] = true;
+                emit VotingPeriodNotStarted(proposalId_);
+                return;
+            }
+            revert ProposalNotActive();
         }
 
         if (block.timestamp > proposal.votingEndTimestamp) {

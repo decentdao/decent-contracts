@@ -159,11 +159,12 @@ contract ModuleAzoriusV1 is
         Proposal memory _proposal = _proposals[proposalId_];
         IStrategyV1 strategy_ = IStrategyV1(_proposal.strategy);
 
-        (, uint48 votingEndTimestamp) = strategy_.getVotingTimestamps(
-            proposalId_
-        );
+        (uint48 votingStartTimestamp, uint48 votingEndTimestamp) = strategy_
+            .getVotingTimestamps(proposalId_);
 
-        if (block.timestamp <= votingEndTimestamp) {
+        if (block.timestamp < votingStartTimestamp) {
+            return ProposalState.PENDING;
+        } else if (block.timestamp <= votingEndTimestamp) {
             return ProposalState.ACTIVE;
         } else if (!strategy_.isPassed(proposalId_)) {
             return ProposalState.FAILED;
@@ -271,6 +272,7 @@ contract ModuleAzoriusV1 is
     }
 
     function submitProposal(
+        uint48 proposalStartTime_,
         Transaction[] calldata transactions_,
         string calldata metadata_,
         address proposerAdapter_,
@@ -298,7 +300,7 @@ contract ModuleAzoriusV1 is
         _proposals[_totalProposalCount].timelockPeriod = _timelockPeriod;
         _proposals[_totalProposalCount].executionPeriod = _executionPeriod;
 
-        _strategy.initializeProposal(_totalProposalCount);
+        _strategy.initializeProposal(_totalProposalCount, proposalStartTime_);
 
         emit ProposalCreated(
             address(_strategy),

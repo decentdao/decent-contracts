@@ -430,7 +430,7 @@ describe('ModuleAzoriusV1', () => {
 
         const tx = await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], proposalMetadata, ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], proposalMetadata, ethers.ZeroAddress, ethers.ZeroHash);
 
         const receipt = await tx.wait();
         if (!receipt) throw new Error('Transaction failed to be mined');
@@ -458,7 +458,7 @@ describe('ModuleAzoriusV1', () => {
         await expect(
           azorius
             .connect(user)
-            .submitProposal([proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash),
+            .submitProposal(0, [proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash),
         ).to.be.revertedWithCustomError(azorius, 'InvalidProposer');
       });
 
@@ -470,7 +470,7 @@ describe('ModuleAzoriusV1', () => {
         await expect(
           azorius
             .connect(proposer)
-            .submitProposal([], proposalMetadata, ethers.ZeroAddress, ethers.ZeroHash),
+            .submitProposal(0, [], proposalMetadata, ethers.ZeroAddress, ethers.ZeroHash),
         )
           .to.emit(azorius, 'ProposalCreated')
           .withArgs(mockStrategyAddress, proposalId, proposer.address, [], proposalMetadata);
@@ -497,7 +497,7 @@ describe('ModuleAzoriusV1', () => {
         // For a zero-transaction proposal that has passed, the state should directly be EXECUTED
         // regardless of the timelock period, because the condition
         // `_proposal.executionCounter == _proposal.txHashes.length` (0 == 0) is met first.
-        expect(currentState).to.equal(3); // EXECUTED
+        expect(currentState).to.equal(4); // EXECUTED
       });
     });
 
@@ -526,7 +526,7 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
         // Now totalProposalCount is 1. Accessing proposalState(1) should revert.
         await expect(azorius.proposalState(1)).to.be.revertedWithCustomError(
           azorius,
@@ -546,7 +546,7 @@ describe('ModuleAzoriusV1', () => {
         // First create a valid proposal
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
 
         // Try to access an invalid tx index
         await expect(azorius.getProposalTxHash(0, 999)).to.be.reverted; // Will revert with array out of bounds
@@ -570,7 +570,7 @@ describe('ModuleAzoriusV1', () => {
         // Submit proposal with multiple transactions
         await azorius
           .connect(proposer)
-          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
 
         // Get hashes directly
         const hash1 = await azorius.getTxHash(tx1);
@@ -601,7 +601,7 @@ describe('ModuleAzoriusV1', () => {
         // Submit the proposal
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], metadata, ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], metadata, ethers.ZeroAddress, ethers.ZeroHash);
         const proposalId = 0;
 
         const expectedTxHash = await azorius.getTxHash(proposalTx);
@@ -648,7 +648,7 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([tx1, tx2], 'Partial Exec Test', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [tx1, tx2], 'Partial Exec Test', ethers.ZeroAddress, ethers.ZeroHash);
         const proposalId = 0;
 
         // --- Setup for execution ---
@@ -702,7 +702,7 @@ describe('ModuleAzoriusV1', () => {
         // Submit a proposal
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
 
         proposalId = 0;
 
@@ -717,29 +717,40 @@ describe('ModuleAzoriusV1', () => {
         await mockStrategy.setIsPassed(proposalId, true);
       });
 
-      it('should track proposal state correctly', async () => {
-        // Initially active (voting not ended)
-        expect(await azorius.proposalState(proposalId)).to.equal(0); // ACTIVE
+      it('should show PENDING state for a proposal with future start time', async () => {
+        const futureStartTime = (await time.latest()) + 3600;
 
-        const currentBlockTimestamp = await time.latest();
+        const newProposalTx = {
+          to: await mockToken.getAddress(),
+          value: 0,
+          data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+          operation: 0, // Call
+        };
 
-        // End voting immediately on the mock strategy
-        await mockStrategy.setVotingTimestamps(proposalId, 0, currentBlockTimestamp);
+        const newProposalId = await azorius.totalProposalCount();
 
-        // Should be in timelock since we set isPassed to true in beforeEach
-        expect(await azorius.proposalState(proposalId)).to.equal(1); // TIMELOCKED
+        // Manually set the timestamps for the upcoming proposal on the mock strategy
+        await mockStrategy.setVotingTimestamps(
+          Number(newProposalId),
+          futureStartTime,
+          futureStartTime + 100, // some voting period
+        );
 
-        // Move past timelock
-        await time.increase(TIMELOCK_PERIOD);
+        await azorius
+          .connect(proposer)
+          .submitProposal(
+            futureStartTime,
+            [newProposalTx],
+            'Future proposal',
+            ethers.ZeroAddress,
+            ethers.ZeroHash,
+          );
 
-        // Should be executable
-        expect(await azorius.proposalState(proposalId)).to.equal(2); // EXECUTABLE
+        expect(await azorius.proposalState(newProposalId)).to.equal(0); // PENDING
 
-        // Move past execution period
-        await time.increase(EXECUTION_PERIOD);
+        await time.increaseTo(futureStartTime);
 
-        // Should be expired
-        expect(await azorius.proposalState(proposalId)).to.equal(4); // EXPIRED
+        expect(await azorius.proposalState(newProposalId)).to.equal(1); // ACTIVE
       });
 
       it('should execute proposal transactions when executable', async () => {
@@ -788,70 +799,59 @@ describe('ModuleAzoriusV1', () => {
       });
 
       describe('Timestamp-based proposal state transitions', () => {
+        let futureProposalId: number;
+        let startTime: number;
+        const VOTING_PERIOD = 100;
+        let endTime: number;
+
         beforeEach(async () => {
-          // Setup is already done in the parent beforeEach
-          // Just need to reset the proposal state for our tests
-          const currentTimestamp = await time.latest();
+          startTime = (await time.latest()) + 50;
+          endTime = startTime + VOTING_PERIOD;
+          futureProposalId = Number(await azorius.totalProposalCount());
 
-          // Set a future voting end timestamp on mock strategy
-          await mockStrategy.setVotingTimestamps(
-            proposalId,
-            currentTimestamp,
-            currentTimestamp + 100,
+          await mockStrategy.setVotingTimestamps(futureProposalId, startTime, endTime);
+          await mockStrategy.setIsPassed(futureProposalId, true);
+
+          await azorius.connect(proposer).submitProposal(
+            futureProposalId,
+            [
+              {
+                to: await mockToken.getAddress(),
+                value: 0,
+                data: mockToken.interface.encodeFunctionData('transfer', [user.address, 100]),
+                operation: 0,
+              },
+            ],
+            'Future Timestamps Proposal',
+            ethers.ZeroAddress,
+            ethers.ZeroHash,
           );
-          await mockStrategy.setIsPassed(proposalId, true);
-        });
-
-        it('should correctly transition between states based on timestamps', async () => {
-          const currentTimestamp = await time.latest();
-
-          // Initially active
-          expect(await azorius.proposalState(proposalId)).to.equal(0); // ACTIVE
-
-          // Advance time just past voting end
-          await time.increaseTo(currentTimestamp + 101);
-
-          // Verify state changes to TIMELOCKED
-          expect(await azorius.proposalState(proposalId)).to.equal(1); // TIMELOCKED
-
-          // Advance time past timelock period
-          await time.increaseTo(currentTimestamp + 101 + TIMELOCK_PERIOD);
-
-          // Verify state changes to EXECUTABLE
-          expect(await azorius.proposalState(proposalId)).to.equal(2); // EXECUTABLE
-
-          // Advance time past execution period
-          await time.increaseTo(currentTimestamp + 101 + TIMELOCK_PERIOD + EXECUTION_PERIOD);
-
-          // Verify state changes to EXPIRED
-          expect(await azorius.proposalState(proposalId)).to.equal(4); // EXPIRED
         });
 
         it('should handle exact boundary conditions in timestamp transitions', async () => {
-          const currentTimestamp = await time.latest();
+          // At the block before start time, it should be PENDING
+          await time.increaseTo(startTime - 1);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(0); // PENDING
 
-          // Set exact timestamps for voting end on mock strategy
-          await mockStrategy.setVotingTimestamps(
-            proposalId,
-            currentTimestamp,
-            currentTimestamp + 100,
-          );
+          // At exactly the voting start time, should be ACTIVE
+          await time.increaseTo(startTime);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(1); // ACTIVE
 
-          // At exactly the voting end time
-          await time.increaseTo(currentTimestamp + 100);
-          expect(await azorius.proposalState(proposalId)).to.equal(0); // Should still be ACTIVE at exactly the end timestamp
+          // At exactly the voting end time, should be ACTIVE
+          await time.increaseTo(endTime);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(1); // Should still be ACTIVE at exactly the end timestamp
 
-          // One second after voting end
-          await time.increaseTo(currentTimestamp + 101);
-          expect(await azorius.proposalState(proposalId)).to.equal(1); // Should be TIMELOCKED after end timestamp
+          // One second after voting end, should be TIMELOCKED
+          await time.increaseTo(endTime + 1);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(2); // Should be TIMELOCKED after end timestamp
 
           // At exactly the end of timelock period
-          await time.increaseTo(currentTimestamp + 101 + TIMELOCK_PERIOD);
-          expect(await azorius.proposalState(proposalId)).to.equal(2); // Should be EXECUTABLE
+          await time.increaseTo(endTime + 1 + TIMELOCK_PERIOD);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(3); // Should be EXECUTABLE
 
           // At exactly the end of execution period
-          await time.increaseTo(currentTimestamp + 101 + TIMELOCK_PERIOD + EXECUTION_PERIOD);
-          expect(await azorius.proposalState(proposalId)).to.equal(4); // Should be EXPIRED at exactly end of execution period
+          await time.increaseTo(endTime + 1 + TIMELOCK_PERIOD + EXECUTION_PERIOD);
+          expect(await azorius.proposalState(futureProposalId)).to.equal(5); // Should be EXPIRED at exactly end of execution period
         });
       });
 
@@ -871,7 +871,7 @@ describe('ModuleAzoriusV1', () => {
         await time.increaseTo(currentTimestamp + 11);
 
         // Verify state is FAILED
-        expect(await azorius.proposalState(proposalIdToFail)).to.equal(5); // FAILED (Enum.ProposalState.FAILED)
+        expect(await azorius.proposalState(proposalIdToFail)).to.equal(6); // FAILED (Enum.ProposalState.FAILED)
       });
     });
 
@@ -907,7 +907,7 @@ describe('ModuleAzoriusV1', () => {
 
         await azorius
           .connect(proposer)
-          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
 
         // Set voting to passed and move past timelock on mock strategy
         await mockStrategy.setVotingTimestamps(0, 0, 0);
@@ -960,7 +960,7 @@ describe('ModuleAzoriusV1', () => {
           expect(finalExecutionCounter).to.equal(2);
 
           // Verify proposal state is now EXECUTED
-          expect(await azorius.proposalState(0)).to.equal(3); // EXECUTED
+          expect(await azorius.proposalState(0)).to.equal(4); // EXECUTED
         });
       });
 
@@ -968,7 +968,7 @@ describe('ModuleAzoriusV1', () => {
         // Submit proposal with both transactions (proposalId will be 1 for this new proposal)
         await azorius
           .connect(proposer)
-          .submitProposal([tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [tx1, tx2], 'Test proposal', ethers.ZeroAddress, ethers.ZeroHash);
 
         // Get current block number and set up proposal state for the new proposal (ID 1)
         const currentBlockTimestamp = await time.latest();
@@ -983,7 +983,7 @@ describe('ModuleAzoriusV1', () => {
         await time.increase(10 + TIMELOCK_PERIOD);
 
         // Verify proposal is executable
-        expect(await azorius.proposalState(1)).to.equal(2); // EXECUTABLE
+        expect(await azorius.proposalState(1)).to.equal(3); // EXECUTABLE
 
         // First execute all transactions
         await azorius.executeProposal(1, [tx1, tx2]);
@@ -1016,7 +1016,7 @@ describe('ModuleAzoriusV1', () => {
           proposalId = Number(await azorius.totalProposalCount());
           await azorius
             .connect(proposer)
-            .submitProposal([validTx], 'Test for Reverts', ethers.ZeroAddress, ethers.ZeroHash);
+            .submitProposal(0, [validTx], 'Test for Reverts', ethers.ZeroAddress, ethers.ZeroHash);
 
           // Setup proposal to be EXECUTABLE for most tests here
           const chainTimeBeforeStrategyUpdate = await time.latest();
@@ -1228,7 +1228,7 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
         const proposalId = 0; // First proposal
 
         const [, , timelock, ,] = await azorius.getProposal(proposalId);
@@ -1245,7 +1245,13 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(
+            0,
+            [proposalTx],
+            'Existing proposal',
+            ethers.ZeroAddress,
+            ethers.ZeroHash,
+          );
         const existingProposalId = 0;
 
         // Update the timelock period
@@ -1259,6 +1265,7 @@ describe('ModuleAzoriusV1', () => {
         await azorius
           .connect(proposer)
           .submitProposal(
+            0,
             [proposalTx],
             'New proposal post-update',
             ethers.ZeroAddress,
@@ -1297,7 +1304,7 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
         const proposalId = 0;
 
         const [, , , executionPeriod] = await azorius.getProposal(proposalId);
@@ -1313,7 +1320,13 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(
+            0,
+            [proposalTx],
+            'Existing proposal',
+            ethers.ZeroAddress,
+            ethers.ZeroHash,
+          );
         const existingProposalId = 0;
 
         await azorius.connect(owner).updateExecutionPeriod(NEW_EXECUTION_PERIOD);
@@ -1324,6 +1337,7 @@ describe('ModuleAzoriusV1', () => {
         await azorius
           .connect(proposer)
           .submitProposal(
+            0,
             [proposalTx],
             'New proposal post-update',
             ethers.ZeroAddress,
@@ -1377,7 +1391,7 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(0, [proposalTx], 'New proposal', ethers.ZeroAddress, ethers.ZeroHash);
         const proposalId = 0;
 
         const [strategyAddress, , , ,] = await azorius.getProposal(proposalId);
@@ -1393,7 +1407,13 @@ describe('ModuleAzoriusV1', () => {
         };
         await azorius
           .connect(proposer)
-          .submitProposal([proposalTx], 'Existing proposal', ethers.ZeroAddress, ethers.ZeroHash);
+          .submitProposal(
+            0,
+            [proposalTx],
+            'Existing proposal',
+            ethers.ZeroAddress,
+            ethers.ZeroHash,
+          );
         const existingProposalId = 0;
 
         await azorius.connect(owner).updateStrategy(newMockStrategyAddress);
@@ -1404,6 +1424,7 @@ describe('ModuleAzoriusV1', () => {
         await azorius
           .connect(proposer)
           .submitProposal(
+            0,
             [proposalTx],
             'New proposal post-update',
             ethers.ZeroAddress,
@@ -1428,6 +1449,7 @@ describe('ModuleAzoriusV1', () => {
         await azorius
           .connect(proposer)
           .submitProposal(
+            0,
             [proposalTx],
             'Existing proposal with mockStrategy',
             ethers.ZeroAddress,
@@ -1461,14 +1483,14 @@ describe('ModuleAzoriusV1', () => {
         await time.increaseTo(initialVotingEnd + 1);
 
         // 6. Check proposalState. It should be TIMELOCKED because it uses mockStrategy's settings.
-        // ProposalState.TIMELOCKED is 1
-        expect(await azorius.proposalState(existingProposalId)).to.equal(1);
+        // ProposalState.TIMELOCKED is 2
+        expect(await azorius.proposalState(existingProposalId)).to.equal(2);
 
         // 7. Further check: advance past timelock period. Should become EXECUTABLE.
         // INITIAL_TIMELOCK_PERIOD is available from the 'Owner Functions' describe block's scope.
         await time.increase(INITIAL_TIMELOCK_PERIOD);
-        // ProposalState.EXECUTABLE is 2
-        expect(await azorius.proposalState(existingProposalId)).to.equal(2);
+        // ProposalState.EXECUTABLE is 3
+        expect(await azorius.proposalState(existingProposalId)).to.equal(3);
       });
     });
   });

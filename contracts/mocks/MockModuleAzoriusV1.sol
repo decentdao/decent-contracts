@@ -65,6 +65,7 @@ contract MockModuleAzoriusV1 is IModuleAzoriusV1 {
     }
 
     function submitProposal(
+        uint48,
         Transaction[] calldata,
         string calldata,
         address,

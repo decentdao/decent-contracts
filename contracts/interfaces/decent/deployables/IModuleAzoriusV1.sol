@@ -27,6 +27,7 @@ interface IModuleAzoriusV1 {
     // --- Enums ---
 
     enum ProposalState {
+        PENDING,
         ACTIVE,
         TIMELOCKED,
         EXECUTABLE,
@@ -121,6 +122,7 @@ interface IModuleAzoriusV1 {
     function updateStrategy(address strategy_) external;
 
     function submitProposal(
+        uint48 proposalStartTime_,
         Transaction[] calldata transactions_,
         string calldata metadata_,
         address proposerAdapter_,

@@ -327,7 +327,7 @@ describe('StrategyV1', () => {
 
     it('should revert if called by a non-strategy admin address', async () => {
       await expect(
-        strategy.connect(nonOwner).initializeProposal(defaultProposalId),
+        strategy.connect(nonOwner).initializeProposal(defaultProposalId, 0),
       ).to.be.revertedWithCustomError(strategy, 'InvalidStrategyAdmin');
     });
 
@@ -337,7 +337,7 @@ describe('StrategyV1', () => {
       const timestampBefore = blockBefore.timestamp;
       const blockNumberBefore = blockBefore.number;
 
-      await expect(strategy.connect(strategyAdmin).initializeProposal(defaultProposalId))
+      await expect(strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, 0))
         .to.emit(strategy, 'ProposalInitialized')
         .withArgs(
           defaultProposalId,
@@ -358,10 +358,39 @@ describe('StrategyV1', () => {
       expect(proposalDetails.abstainVotes).to.equal(0);
     });
 
-    it('should reset vote counts for a re-initialized proposal', async () => {
-      await strategy.connect(strategyAdmin).initializeProposal(defaultProposalId);
+    it('should correctly initialize a proposal with a future start time', async () => {
+      const futureStartTime = (await time.latest()) + 3600; // 1 hour in the future
+      await expect(
+        strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, futureStartTime),
+      ).to.emit(strategy, 'ProposalInitialized');
 
-      await strategy.connect(strategyAdmin).initializeProposal(defaultProposalId); // Re-initialize
+      const proposalDetails = await strategy.proposalVotingDetails(defaultProposalId);
+      expect(proposalDetails.votingStartTimestamp).to.equal(futureStartTime);
+      expect(proposalDetails.votingEndTimestamp).to.equal(futureStartTime + DEFAULT_VOTING_PERIOD);
+    });
+
+    it('should revert if proposal start time is in the past', async () => {
+      const pastStartTime = (await time.latest()) - 3600; // 1 hour in the past
+      await expect(
+        strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, pastStartTime),
+      ).to.be.revertedWithCustomError(strategy, 'InvalidStartTime');
+    });
+
+    it('should use current timestamp if startTime is 0', async () => {
+      const blockBefore = await ethers.provider.getBlock('latest');
+      if (!blockBefore) throw new Error('Failed to get latest block');
+      const timestampBefore = blockBefore.timestamp;
+
+      await strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, 0);
+
+      const proposalDetails = await strategy.proposalVotingDetails(defaultProposalId);
+      expect(proposalDetails.votingStartTimestamp).to.be.closeTo(timestampBefore + 1, 2);
+    });
+
+    it('should reset vote counts for a re-initialized proposal', async () => {
+      await strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, 0);
+
+      await strategy.connect(strategyAdmin).initializeProposal(defaultProposalId, 0); // Re-initialize
 
       const proposalDetails = await strategy.proposalVotingDetails(defaultProposalId);
       expect(proposalDetails.yesVotes).to.equal(0);
@@ -464,7 +493,7 @@ describe('StrategyV1', () => {
 
     beforeEach(async () => {
       proposalId = 1;
-      await strategy.connect(strategyAdmin).initializeProposal(proposalId);
+      await strategy.connect(strategyAdmin).initializeProposal(proposalId, 0);
     });
 
     it('should return correct timestamps and block after proposal initialization', async () => {
@@ -501,7 +530,7 @@ describe('StrategyV1', () => {
 
     beforeEach(async () => {
       proposalId = 1;
-      await strategy.connect(strategyAdmin).initializeProposal(proposalId);
+      await strategy.connect(strategyAdmin).initializeProposal(proposalId, 0);
 
       adapter1Data = ethers.AbiCoder.defaultAbiCoder().encode(['uint256[]'], [[1]]);
       adapter2Data = ethers.AbiCoder.defaultAbiCoder().encode(['uint256[]'], [[2]]);
@@ -517,6 +546,30 @@ describe('StrategyV1', () => {
           },
         ]),
       ).to.be.revertedWithCustomError(strategy, 'ProposalNotInitialized');
+    });
+
+    it('should revert if proposal is not yet active (pending)', async () => {
+      const futureStartTime = (await time.latest()) + 3600; // 1 hour in the future
+      await strategy.connect(strategyAdmin).initializeProposal(proposalId, futureStartTime);
+
+      // First call after period ends should emit event and not revert immediately
+      const tx = await strategy.connect(user1).vote(proposalId, 1, [
+        {
+          votingAdapter: await mockAdapter1.getAddress(),
+          adapterVoteData: adapter1Data,
+        },
+      ]);
+
+      await expect(tx).to.emit(strategy, 'VotingPeriodNotStarted').withArgs(proposalId);
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1, [
+          {
+            votingAdapter: await mockAdapter1.getAddress(),
+            adapterVoteData: ethers.ZeroHash,
+          },
+        ]),
+      ).to.be.revertedWithCustomError(strategy, 'ProposalNotActive');
     });
 
     it('should revert if voting period has ended', async () => {
@@ -706,7 +759,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(proposalId);
+      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(proposalId, 0);
 
       const weight1 = 60;
       const weight2 = 40;
@@ -795,7 +848,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(proposalId);
+      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(proposalId, 0);
 
       await mockAdapter1.setWeight(user1.address, 10);
       await mockAdapter2.setWeight(user1.address, 20);
@@ -837,7 +890,7 @@ describe('StrategyV1', () => {
   describe('isPassed', () => {
     const PROPOSAL_ID = 1;
     beforeEach(async () => {
-      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
     });
 
     it('should revert with ProposalNotInitialized if proposal was not initialized', async () => {
@@ -884,7 +937,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await specificStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await specificStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
       await mockAdapter1.setWeight(voter1.address, 50n);
       await mockAdapter1.setWeight(voter2.address, 50n);
@@ -925,7 +978,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await specificStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await specificStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
       await mockAdapter1.setWeight(voter1.address, 60n); // YES
       await mockAdapter1.setWeight(voter2.address, 10n); // NO
@@ -950,15 +1003,98 @@ describe('StrategyV1', () => {
     });
   });
 
+  describe('voting period not started', () => {
+    const PROPOSAL_ID = 1;
+    const PROPOSAL_ID_2 = 2;
+
+    beforeEach(async () => {
+      await mockAdapter1.setWeight(voter1.address, 100n);
+      await strategy
+        .connect(strategyAdmin)
+        .initializeProposal(PROPOSAL_ID, (await time.latest()) + 50);
+      await time.increase(1n);
+      await strategy
+        .connect(strategyAdmin)
+        .initializeProposal(PROPOSAL_ID_2, (await time.latest()) + 50);
+    });
+
+    it('should initially return false for any proposal', async () => {
+      const result = await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID);
+      void expect(result).to.be.false;
+    });
+
+    it('should still return false if voting period is not started but no vote has been cast', async () => {
+      await time.increaseTo(
+        (await strategy.proposalVotingDetails(PROPOSAL_ID)).votingStartTimestamp + 1n,
+      );
+      const result = await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID);
+      void expect(result).to.be.false;
+    });
+
+    it('should get set to true after casting a vote before voting period starts', async () => {
+      // Initially false
+      let result = await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID);
+      void expect(result).to.be.false;
+
+      await strategy.connect(voter1).vote(PROPOSAL_ID, 1 /* YES */, [
+        {
+          votingAdapter: await mockAdapter1.getAddress(),
+          adapterVoteData: ethers.ZeroHash,
+        },
+      ]);
+
+      result = await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID);
+      void expect(result).to.be.true;
+    });
+
+    it('should maintain separate states for different proposal IDs', async () => {
+      await strategy.connect(voter1).vote(PROPOSAL_ID, 1 /* YES */, [
+        {
+          votingAdapter: await mockAdapter1.getAddress(),
+          adapterVoteData: ethers.ZeroHash,
+        },
+      ]);
+      void expect(await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID)).to.be.true;
+      void expect(await strategy.voteCastedBeforeVotingPeriodStarted(PROPOSAL_ID_2)).to.be.false;
+    });
+
+    it('should not emit VotingPeriodNotStarted event when casting a vote after voting period starts', async () => {
+      await time.increaseTo(
+        (await strategy.proposalVotingDetails(PROPOSAL_ID)).votingStartTimestamp + 1n,
+      );
+      await expect(
+        strategy.connect(voter1).vote(PROPOSAL_ID, 1 /* YES */, [
+          {
+            votingAdapter: await mockAdapter1.getAddress(),
+            adapterVoteData: ethers.ZeroHash,
+          },
+        ]),
+      ).not.to.emit(strategy, 'VotingPeriodNotStarted');
+    });
+
+    it('should emit VotingPeriodNotStarted event when casting a vote before voting period starts', async () => {
+      await expect(
+        strategy.connect(voter1).vote(PROPOSAL_ID, 1 /* YES */, [
+          {
+            votingAdapter: await mockAdapter1.getAddress(),
+            adapterVoteData: ethers.ZeroHash,
+          },
+        ]),
+      )
+        .to.emit(strategy, 'VotingPeriodNotStarted')
+        .withArgs(PROPOSAL_ID);
+    });
+  });
+
   describe('voting period ended', () => {
     const PROPOSAL_ID = 1;
     const PROPOSAL_ID_2 = 2;
 
     beforeEach(async () => {
       await mockAdapter1.setWeight(voter1.address, 50n);
-      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
       await time.increase(1n);
-      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID_2);
+      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID_2, 0);
     });
 
     it('should initially return false for any proposal', async () => {
@@ -1092,7 +1228,7 @@ describe('StrategyV1', () => {
     const PROPOSAL_ID = 1;
 
     beforeEach(async () => {
-      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
     });
 
     describe('isQuorumMet', () => {
@@ -1114,7 +1250,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 60n);
         await mockAdapter1.setWeight(voter2.address, 40n);
@@ -1144,7 +1280,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 60n);
         await mockAdapter1.setWeight(voter2.address, 41n); // Exceeds
@@ -1174,7 +1310,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 50n);
         await mockAdapter1.setWeight(voter2.address, 40n); // 90 total, < 100
@@ -1204,7 +1340,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await qStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 10n); // Only NO votes
         await qStrategy.connect(voter1).vote(PROPOSAL_ID, 0 /* NO */, [
@@ -1313,7 +1449,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 101n);
         await mockAdapter1.setWeight(voter2.address, 100n);
@@ -1342,7 +1478,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 100n);
         await mockAdapter1.setWeight(voter2.address, 100n);
@@ -1372,7 +1508,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 100n);
         await bStrategy.connect(voter1).vote(PROPOSAL_ID, 1 /* YES */, [
@@ -1395,7 +1531,7 @@ describe('StrategyV1', () => {
           defaultInitialProposerAdapters,
           lightAccountFactoryMockAddress,
         );
-        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+        await bStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
         await mockAdapter1.setWeight(voter1.address, 100n);
         await mockAdapter1.setWeight(voter2.address, 1n);
@@ -1613,7 +1749,8 @@ describe('StrategyV1', () => {
     const ADAPTER_VOTE_DATA = ethers.ZeroHash;
 
     beforeEach(async () => {
-      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await mockAdapter1.setWeight(voter1.address, 100n);
+      await strategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
     });
 
     it('should return true for a valid vote configuration', async () => {
@@ -1641,12 +1778,33 @@ describe('StrategyV1', () => {
       void expect(isValid).to.be.false;
     });
 
+    it('should return false if the voting period has not started', async () => {
+      // Set the proposal to start in the future
+      await strategy
+        .connect(strategyAdmin)
+        .initializeProposal(PROPOSAL_ID, (await time.latest()) + 50);
+
+      // Trigger the start of the voting period
+      await strategy.connect(voter1).vote(PROPOSAL_ID, VOTE_TYPE_YES, [
+        {
+          votingAdapter: await mockAdapter1.getAddress(),
+          adapterVoteData: ADAPTER_VOTE_DATA,
+        },
+      ]);
+
+      const isValid = await strategy.validStrategyVote(voter1.address, PROPOSAL_ID, VOTE_TYPE_YES, [
+        { votingAdapter: await mockAdapter1.getAddress(), adapterVoteData: ADAPTER_VOTE_DATA },
+      ]);
+
+      void expect(isValid).to.be.false;
+    });
+
     it('should return false if the voting period has ended', async () => {
       const proposalDetails = await strategy.proposalVotingDetails(PROPOSAL_ID);
       await time.increaseTo(proposalDetails.votingEndTimestamp + 1n);
 
       // Trigger the end of the voting period
-      await strategy.connect(voter1).vote(PROPOSAL_ID, 1, [
+      await strategy.connect(voter1).vote(PROPOSAL_ID, VOTE_TYPE_YES, [
         {
           votingAdapter: await mockAdapter1.getAddress(),
           adapterVoteData: ADAPTER_VOTE_DATA,
@@ -1721,7 +1879,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
       await mockAdapter1.setWeight(voter1.address, 50n);
       await mockAdapter2.setWeight(voter1.address, 50n);
@@ -1754,7 +1912,7 @@ describe('StrategyV1', () => {
         defaultInitialProposerAdapters,
         lightAccountFactoryMockAddress,
       );
-      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID);
+      await multiAdapterStrategy.connect(strategyAdmin).initializeProposal(PROPOSAL_ID, 0);
 
       await mockAdapter1.setWeight(voter1.address, 50n);
       await mockAdapter2.setValidVote(voter1.address, false, 50n); // This one will be invalid

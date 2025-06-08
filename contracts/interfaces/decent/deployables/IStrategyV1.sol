@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 interface IStrategyV1 {
     // --- Errors ---
 
+    error InvalidStartTime();
     error InvalidProposerAdapter();
     error NoVotingAdapters();
     error NoProposerAdapters();
@@ -58,6 +59,7 @@ interface IStrategyV1 {
         address indexed freezeVoterContract,
         bool isAuthorized
     );
+    event VotingPeriodNotStarted(uint32 indexed proposalId);
     event VotingPeriodEnded(uint32 indexed proposalId);
 
     // --- Initializer Functions ---
@@ -140,6 +142,10 @@ interface IStrategyV1 {
         view
         returns (address[] memory authorizedFreezeVoters);
 
+    function voteCastedBeforeVotingPeriodStarted(
+        uint32 proposalId_
+    ) external view returns (bool voteCastedBeforeVotingPeriodStarted);
+
     function voteCastedAfterVotingPeriodEnded(
         uint32 proposalId_
     ) external view returns (bool voteCastedAfterVotingPeriodEnded);
@@ -153,7 +159,7 @@ interface IStrategyV1 {
 
     // --- State-Changing Functions ---
 
-    function initializeProposal(uint32 proposalId_) external;
+    function initializeProposal(uint32 proposalId_, uint48 startTime_) external;
 
     function vote(
         uint32 proposalId_,

@@ -152,13 +152,18 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
         return votingStartBlocksMap[proposalId];
     }
 
-    function initializeProposal(uint32 proposalId) external virtual override {
+    function initializeProposal(
+        uint32 proposalId,
+        uint48 startTime
+    ) external virtual override {
         ProposalVotingDetails storage proposal = proposalVotingDetailsMap[
             proposalId
         ];
-        proposal.votingStartTimestamp = uint48(block.timestamp);
+        proposal.votingStartTimestamp = startTime == 0
+            ? uint48(block.timestamp)
+            : startTime;
         proposal.votingEndTimestamp = uint48(
-            block.timestamp + _mockVotingPeriod
+            uint256(proposal.votingStartTimestamp) + _mockVotingPeriod
         );
         proposal.votingStartBlock = uint32(block.number);
         emit ProposalInitialized(
@@ -295,6 +300,10 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
     {
         return _authorizedFreezeVotersArray;
     }
+
+    function voteCastedBeforeVotingPeriodStarted(
+        uint32 _proposalId
+    ) external view override returns (bool) {}
 
     function voteCastedAfterVotingPeriodEnded(
         uint32 _proposalId
