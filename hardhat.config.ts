@@ -2,6 +2,7 @@ import '@nomicfoundation/hardhat-toolbox';
 import * as dotenv from 'dotenv';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
+import 'hardhat-gas-reporter';
 import 'solidity-docgen';
 
 dotenv.config();
@@ -22,6 +23,12 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+  },
+  gasReporter: {
+    enabled: process.env.RUN_GAS_REPORT === 'true',
+    currency: 'USD',
+    gasPrice: 21,
+    showMethodSig: true,
   },
   namedAccounts: {
     deployer: {
