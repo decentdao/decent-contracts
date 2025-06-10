@@ -39,7 +39,7 @@ contract VotingAdapterERC721V1 is
         address strategy_,
         uint256 weightPerToken_
     ) public virtual override initializer {
-        __BaseVotingAdapterV1_init(strategy_);
+        __VotingAdapterBaseV1_init(strategy_);
         _token = IERC721(token_);
         _weightPerToken = weightPerToken_;
     }

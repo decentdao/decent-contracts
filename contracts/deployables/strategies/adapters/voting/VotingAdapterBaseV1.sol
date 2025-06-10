@@ -36,7 +36,7 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
         _disableInitializers();
     }
 
-    function __BaseVotingAdapterV1_init(
+    function __VotingAdapterBaseV1_init(
         address strategy_
     ) internal onlyInitializing {
         _strategy = IStrategyV1(strategy_);

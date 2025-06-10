@@ -44,7 +44,7 @@ contract VotingAdapterERC20V1 is
         address strategy_,
         uint256 weightPerToken_
     ) public virtual override initializer {
-        __BaseVotingAdapterV1_init(strategy_);
+        __VotingAdapterBaseV1_init(strategy_);
         _token = IVotes(token_);
         _weightPerToken = weightPerToken_;
         _tokenClockMode = ClockModeLib.getClockMode(token_);

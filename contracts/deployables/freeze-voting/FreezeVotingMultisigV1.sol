@@ -40,7 +40,7 @@ contract FreezeVotingMultisigV1 is
         address parentSafe_,
         address lightAccountFactory_
     ) public virtual override initializer {
-        __BaseFreezeVotingV1_init(
+        __FreezeVotingBaseV1_init(
             owner_,
             freezeProposalPeriod_,
             freezePeriod_,

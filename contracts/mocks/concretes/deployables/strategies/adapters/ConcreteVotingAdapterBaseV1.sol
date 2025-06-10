@@ -10,7 +10,7 @@ contract ConcreteVotingAdapterBaseV1 is VotingAdapterBaseV1 {
     }
 
     function initialize(address strategy_) external initializer {
-        __BaseVotingAdapterV1_init(strategy_);
+        __VotingAdapterBaseV1_init(strategy_);
     }
 
     // Implement IBaseVotingAdapterV1 functions

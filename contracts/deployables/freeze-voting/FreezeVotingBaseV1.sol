@@ -27,7 +27,7 @@ abstract contract FreezeVotingBaseV1 is
         _disableInitializers();
     }
 
-    function __BaseFreezeVotingV1_init(
+    function __FreezeVotingBaseV1_init(
         address owner_,
         uint32 freezeProposalPeriod_,
         uint32 freezePeriod_,
