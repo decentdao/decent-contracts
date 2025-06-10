@@ -32,20 +32,22 @@ async function deployAzoriusProxy(
   executionPeriod: number,
 ): Promise<ModuleAzoriusV1> {
   // Combine selector and encoded params
-  const fullInitData =
-    ModuleAzoriusV1__factory.createInterface().getFunction('initialize').selector +
-    ethers.AbiCoder.defaultAbiCoder()
-      .encode(
-        ['address', 'address', 'address', 'address', 'uint32', 'uint32'],
-        [owner.address, avatar, target, strategyAddress, timelockPeriod, executionPeriod],
-      )
-      .slice(2);
+
+  const fullInitData = ModuleAzoriusV1__factory.createInterface().encodeFunctionData('initialize', [
+    owner.address,
+    avatar,
+    target,
+    timelockPeriod,
+    executionPeriod,
+  ]);
 
   // Deploy the proxy with the implementation
   const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
 
   // Return a contract instance connected to the proxy
-  return ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
+  const azoriusInstance = ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
+  await azoriusInstance.updateStrategy(strategyAddress);
+  return azoriusInstance;
 }
 
 // Helper function for deploying AzoriusV1 using setUp instead of initialize
@@ -62,8 +64,8 @@ async function deployAzoriusProxyWithSetUp(
   // Create the call to setUp with the encoded parameters
   const fullInitData = ModuleAzoriusV1__factory.createInterface().encodeFunctionData('setUp', [
     ethers.AbiCoder.defaultAbiCoder().encode(
-      ['address', 'address', 'address', 'address', 'uint32', 'uint32'],
-      [owner.address, avatar, target, strategyAddress, timelockPeriod, executionPeriod],
+      ['address', 'address', 'address', 'uint32', 'uint32'],
+      [owner.address, avatar, target, timelockPeriod, executionPeriod],
     ),
   ]);
 
@@ -71,7 +73,9 @@ async function deployAzoriusProxyWithSetUp(
   const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
 
   // Return a contract instance connected to the proxy
-  return ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
+  const azoriusInstance = ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
+  await azoriusInstance.updateStrategy(strategyAddress);
+  return azoriusInstance;
 }
 
 describe('ModuleAzoriusV1', () => {
@@ -296,14 +300,7 @@ describe('ModuleAzoriusV1', () => {
         );
 
         await expect(
-          azorius.initialize(
-            owner.address,
-            ethers.ZeroAddress,
-            ethers.ZeroAddress,
-            mockStrategyAddress,
-            0,
-            0,
-          ),
+          azorius.initialize(owner.address, ethers.ZeroAddress, ethers.ZeroAddress, 0, 0),
         ).to.be.revertedWithCustomError(azorius, 'InvalidInitialization');
       });
 
@@ -315,7 +312,6 @@ describe('ModuleAzoriusV1', () => {
             owner.address,
             ethers.ZeroAddress,
             ethers.ZeroAddress,
-            mockStrategyAddress,
             0,
             0,
           ),

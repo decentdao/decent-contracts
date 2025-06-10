@@ -55,7 +55,6 @@ interface IModuleAzoriusV1 {
         address owner_,
         address avatar_,
         address target_,
-        address strategy_,
         uint32 timelockPeriod_,
         uint32 executionPeriod_
     ) external;

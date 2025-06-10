@@ -67,21 +67,20 @@ contract ModuleAzoriusV1 is
         address owner_,
         address avatar_,
         address target_,
-        address strategy_,
         uint32 timelockPeriod_,
         uint32 executionPeriod_
     ) public virtual override initializer {
-        __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
+        __Ownable_init(owner_);
 
-        setAvatar(avatar_);
-        setTarget(target_);
+        // avoids onlyOwner requirement on setAvatar and setTarget
+        avatar = avatar_;
+        target = target_;
+        emit AvatarSet(address(0), avatar_);
+        emit TargetSet(address(0), target_);
 
-        _updateStrategy(strategy_);
         _updateTimelockPeriod(timelockPeriod_);
         _updateExecutionPeriod(executionPeriod_);
-
-        _transferOwnership(owner_);
     }
 
     function setUp(
@@ -91,21 +90,13 @@ contract ModuleAzoriusV1 is
             address owner_,
             address avatar_,
             address target_,
-            address strategy_,
             uint32 timelockPeriod_,
             uint32 executionPeriod_
         ) = abi.decode(
                 initializeParams_,
-                (address, address, address, address, uint32, uint32)
+                (address, address, address, uint32, uint32)
             );
-        initialize(
-            owner_,
-            avatar_,
-            target_,
-            strategy_,
-            timelockPeriod_,
-            executionPeriod_
-        );
+        initialize(owner_, avatar_, target_, timelockPeriod_, executionPeriod_);
     }
 
     // ======================================================================

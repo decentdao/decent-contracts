@@ -17,11 +17,9 @@ contract MockModuleAzoriusV1 is IModuleAzoriusV1 {
         address /* owner_ */,
         address /* avatar_ */,
         address /* target_ */,
-        address strategy_,
         uint32 timelockPeriod_,
         uint32 executionPeriod_
     ) external virtual {
-        currentStrategy = strategy_;
         currentTimelockPeriod = timelockPeriod_;
         currentExecutionPeriod = executionPeriod_;
     }
