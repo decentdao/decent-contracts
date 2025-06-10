@@ -156,11 +156,16 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
         ProposalVotingDetails storage proposal = proposalVotingDetailsMap[
             proposalId
         ];
+
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(
             block.timestamp + _mockVotingPeriod
         );
         proposal.votingStartBlock = uint32(block.number);
+
+        votingStartTimestampsMap[proposalId] = proposal.votingStartTimestamp;
+        votingEndTimestampsMap[proposalId] = proposal.votingEndTimestamp;
+
         emit ProposalInitialized(
             proposalId,
             proposal.votingStartTimestamp,

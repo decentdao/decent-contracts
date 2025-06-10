@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IVotingAdapterERC20V1} from "../../../../interfaces/decent/deployables/IVotingAdapterERC20V1.sol";
 import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {ClockMode} from "../../../../interfaces/decent/ClockMode.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
 import {VotingAdapterBaseV1} from "./VotingAdapterBaseV1.sol";
@@ -121,8 +122,14 @@ contract VotingAdapterERC20V1 is
         // get the number of checkpoints for the voter
         uint32 numCheckpoints = governanceToken.numCheckpoints(voter_);
 
-        (uint48 startTimestamp, uint48 endTimestamp) = _strategy
-            .getVotingTimestamps(proposalId_);
+        IStrategyV1.ProposalVotingDetails memory details = _strategy
+            .proposalVotingDetails(proposalId_);
+
+        if (details.votingEndTimestamp == 0) {
+            return (false, 0); // Proposal not initialized
+        }
+        uint48 startTimestamp = details.votingStartTimestamp;
+        uint48 endTimestamp = details.votingEndTimestamp;
 
         // if there are no checkpoints, user has no voting weight
         if (numCheckpoints == 0) {
@@ -280,7 +287,7 @@ contract VotingAdapterERC20V1 is
             startTimepoint = _strategy.getVotingStartBlock(proposalId_);
         }
 
-        if (startTimepoint == 0) revert ProposalNotReadyForSnapshot();
+        if (startTimepoint == 0) revert ProposalNotInitialized();
         return _calculateWeightAtSnapshot(voter_, startTimepoint);
     }
 }

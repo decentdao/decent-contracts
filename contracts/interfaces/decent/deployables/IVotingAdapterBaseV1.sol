@@ -5,6 +5,7 @@ interface IVotingAdapterBaseV1 {
     // --- Errors ---
 
     error NotStrategy();
+    error ProposalNotInitialized();
     error UnauthorizedFreezeVoter(address caller);
     error NoFreezeVotingWeight();
 

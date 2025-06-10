@@ -4,7 +4,6 @@ pragma solidity ^0.8.30;
 interface IVotingAdapterERC20V1 {
     // --- Errors ---
 
-    error ProposalNotReadyForSnapshot();
     error AlreadyVoted();
 
     // --- Initializer Functions ---

@@ -276,6 +276,10 @@ contract StrategyV1 is
         uint8 voteType_,
         VotingAdapterVoteData[] calldata votingAdaptersData_
     ) public view virtual override returns (bool) {
+        if (votingAdaptersData_.length == 0) {
+            return false;
+        }
+
         // get the proposal start and end timestamps to determine if the proposal exists
         ProposalVotingDetails storage details = _proposalVotingDetails[
             proposalId_
@@ -309,6 +313,7 @@ contract StrategyV1 is
                 return false;
             }
 
+            // validVotingAdapterVote should NEVER return (true, 0)
             (bool isValid, uint256 votingWeight) = IVotingAdapterBaseV1(
                 votingAdapter
             ).validVotingAdapterVote(
@@ -328,11 +333,7 @@ contract StrategyV1 is
             }
         }
 
-        if (totalVotingWeight == 0) {
-            return false;
-        }
-
-        return true;
+        return totalVotingWeight > 0;
     }
 
     // --- State-Changing Functions ---
@@ -363,6 +364,10 @@ contract StrategyV1 is
         uint8 voteType_,
         VotingAdapterVoteData[] calldata votingAdaptersData
     ) public virtual override {
+        if (votingAdaptersData.length == 0) {
+            revert NoVotingAdapters();
+        }
+
         address resolvedVoter = voter(msg.sender);
         ProposalVotingDetails storage proposal = _proposalVotingDetails[
             proposalId_
@@ -392,20 +397,23 @@ contract StrategyV1 is
                 revert InvalidVotingAdapter(votingAdapter);
             }
 
-            totalWeightForThisVoteTransaction += IVotingAdapterBaseV1(
-                votingAdapter
-            ).recordVote(
+            uint256 votingWeight = IVotingAdapterBaseV1(votingAdapter)
+                .recordVote(
                     resolvedVoter,
                     proposalId_,
                     votingAdapterVoteData.adapterVoteData
                 );
 
+            if (votingWeight == 0) {
+                revert NoVotingAdapterVotingWeight(votingAdapter);
+            }
+
+            totalWeightForThisVoteTransaction += votingWeight;
+
             unchecked {
                 ++i;
             }
         }
-
-        if (totalWeightForThisVoteTransaction == 0) revert NoVotingWeight();
 
         if (voteType_ == uint8(VoteType.YES)) {
             proposal.yesVotes += totalWeightForThisVoteTransaction;

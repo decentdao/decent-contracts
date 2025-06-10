@@ -575,7 +575,7 @@ describe('StrategyV1', () => {
       ).to.be.revertedWithCustomError(strategy, 'ProposalNotActive');
     });
 
-    it('should revert if total weight cast is zero (e.g., adapter.recordVote returns 0)', async () => {
+    it('should revert if single adapter has zero vote weight', async () => {
       await mockAdapter1.setWeight(user1.address, 0);
       await expect(
         strategy.connect(user1).vote(proposalId, 1, [
@@ -584,7 +584,41 @@ describe('StrategyV1', () => {
             adapterVoteData: adapter1Data,
           },
         ]),
-      ).to.be.revertedWithCustomError(strategy, 'NoVotingWeight');
+      )
+        .to.be.revertedWithCustomError(strategy, 'NoVotingAdapterVotingWeight')
+        .withArgs(await mockAdapter1.getAddress());
+    });
+
+    it('should revert if one adapter of many has zero vote weight', async () => {
+      strategy = await deployStrategyProxy(
+        strategyAdmin.address,
+        DEFAULT_VOTING_PERIOD,
+        DEFAULT_QUORUM_THRESHOLD,
+        DEFAULT_BASIS_NUMERATOR,
+        [await mockAdapter1.getAddress(), await mockAdapter2.getAddress()],
+        defaultInitialProposerAdapters,
+        lightAccountFactoryMockAddress,
+      );
+
+      await strategy.connect(strategyAdmin).initializeProposal(proposalId);
+
+      await mockAdapter1.setWeight(user1.address, 50);
+      await mockAdapter2.setWeight(user1.address, 0);
+
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1, [
+          {
+            votingAdapter: await mockAdapter1.getAddress(),
+            adapterVoteData: adapter1Data,
+          },
+          {
+            votingAdapter: await mockAdapter2.getAddress(),
+            adapterVoteData: adapter2Data,
+          },
+        ]),
+      )
+        .to.be.revertedWithCustomError(strategy, 'NoVotingAdapterVotingWeight')
+        .withArgs(await mockAdapter2.getAddress());
     });
 
     it('should revert on invalid voteType', async () => {
@@ -831,6 +865,12 @@ describe('StrategyV1', () => {
       const dataHashAdapter1 = ethers.keccak256(adapter1DataForVoter1);
       void expect(await mockAdapter1.hasRecordedVote(user1.address, proposalId, dataHashAdapter1))
         .to.be.false;
+    });
+
+    it('should revert if attempting to vote with no voting adapters', async () => {
+      await expect(
+        strategy.connect(user1).vote(proposalId, 1 /* YES */, []),
+      ).to.be.revertedWithCustomError(strategy, 'NoVotingAdapters');
     });
   });
 
@@ -1774,6 +1814,20 @@ describe('StrategyV1', () => {
           },
         ],
       );
+      void expect(isValid).to.be.false;
+    });
+
+    it('should return false if no voting adapters are provided', async () => {
+      // Setup: Ensure the voter WOULD have valid weight if an adapter was passed.
+      await mockAdapter1.setWeight(voter1.address, 100n);
+
+      const isValid = await strategy.validStrategyVote(
+        voter1.address,
+        PROPOSAL_ID,
+        VOTE_TYPE_YES,
+        [], // Empty array is the reason for returning false
+      );
+
       void expect(isValid).to.be.false;
     });
   });

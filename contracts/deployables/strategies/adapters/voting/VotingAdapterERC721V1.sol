@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
+import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVotingAdapterERC721V1} from "../../../../interfaces/decent/deployables/IVotingAdapterERC721V1.sol";
 import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
@@ -61,6 +62,11 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         uint256 tokenId_
     ) public view virtual override returns (bool) {
+        if (
+            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+        ) {
+            revert ProposalNotInitialized();
+        }
         return _tokenIdUsedForVote[proposalId_][tokenId_];
     }
 
@@ -126,14 +132,16 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         bytes calldata adapterVoteData_
     ) public view virtual override returns (bool, uint256) {
-        uint256[] memory allTokenIds = abi.decode(
-            adapterVoteData_,
-            (uint256[])
-        );
+        if (
+            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+        ) {
+            return (false, 0);
+        }
+        uint256[] memory allTokenIds = _decodeTokenIds(adapterVoteData_);
         (
             uint256 votingWeight,
             uint256[] memory validTokenIds
-        ) = _getValidTokenIds(voter_, proposalId_, allTokenIds);
+        ) = _getValidTokenIdsSafe(voter_, proposalId_, allTokenIds);
 
         if (validTokenIds.length != allTokenIds.length || votingWeight == 0) {
             return (false, 0);
@@ -150,13 +158,13 @@ contract VotingAdapterERC721V1 is
         bytes calldata adapterVoteData_
     ) public virtual override onlyAuthorizedFreezeVoter returns (uint256) {
         uint256[] memory tokenIds = _decodeTokenIds(adapterVoteData_);
-        if (tokenIds.length == 0) {
-            revert NoTokenIdsPassed();
+        uint256[] memory uniqueTokenIds = _getUniqueTokenIds(tokenIds);
+        if (uniqueTokenIds.length != tokenIds.length) {
+            revert DuplicateTokenIds();
         }
 
-        uint256 currentWeightCasted = 0;
-        for (uint256 i = 0; i < tokenIds.length; ) {
-            uint256 tokenId = tokenIds[i];
+        for (uint256 i = 0; i < uniqueTokenIds.length; ) {
+            uint256 tokenId = uniqueTokenIds[i];
             if (_token.ownerOf(tokenId) != voter_) {
                 revert TokenIdNotOwnedByVoter(tokenId);
             }
@@ -170,24 +178,26 @@ contract VotingAdapterERC721V1 is
             _tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[msg.sender][
                 freezeProposalSnapshotAndId_
             ][tokenId] = true;
-            currentWeightCasted += _weightPerToken;
+
             unchecked {
                 ++i;
             }
         }
 
-        if (currentWeightCasted == 0) {
+        uint256 totalWeight = uniqueTokenIds.length * _weightPerToken;
+
+        if (totalWeight == 0) {
             revert NoFreezeVotingWeight();
         }
 
         emit FreezeVoteRecorded(
             voter_,
             freezeProposalSnapshotAndId_,
-            currentWeightCasted,
+            totalWeight,
             adapterVoteData_
         );
 
-        return currentWeightCasted;
+        return totalWeight;
     }
 
     function recordVote(
@@ -195,13 +205,20 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         bytes calldata adapterVoteData_
     ) public virtual override onlyStrategy returns (uint256) {
-        uint256[] memory tokenIds = _decodeTokenIds(adapterVoteData_);
-        if (tokenIds.length == 0) {
-            revert NoTokenIdsPassed();
+        if (
+            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+        ) {
+            revert ProposalNotInitialized();
         }
 
-        for (uint256 i = 0; i < tokenIds.length; ) {
-            uint256 tokenId = tokenIds[i];
+        uint256[] memory tokenIds = _decodeTokenIds(adapterVoteData_);
+        uint256[] memory uniqueTokenIds = _getUniqueTokenIds(tokenIds);
+        if (uniqueTokenIds.length != tokenIds.length) {
+            revert DuplicateTokenIds();
+        }
+
+        for (uint256 i = 0; i < uniqueTokenIds.length; ) {
+            uint256 tokenId = uniqueTokenIds[i];
             if (_token.ownerOf(tokenId) != voter_) {
                 revert TokenIdNotOwnedByVoter(tokenId);
             }
@@ -215,7 +232,7 @@ contract VotingAdapterERC721V1 is
             }
         }
 
-        uint256 weightCasted = tokenIds.length * _weightPerToken;
+        uint256 weightCasted = uniqueTokenIds.length * _weightPerToken;
 
         emit VoteRecorded(voter_, proposalId_, weightCasted, adapterVoteData_);
 
@@ -407,7 +424,7 @@ contract VotingAdapterERC721V1 is
         return unusedTokenIds;
     }
 
-    function _getValidTokenIds(
+    function _getValidTokenIdsSafe(
         address voter_,
         uint32 proposalId_,
         uint256[] memory allTokenIds_
@@ -423,5 +440,19 @@ contract VotingAdapterERC721V1 is
         );
 
         return (unusedTokenIds.length * _weightPerToken, unusedTokenIds);
+    }
+
+    function _getValidTokenIds(
+        address voter_,
+        uint32 proposalId_,
+        uint256[] memory allTokenIds_
+    ) internal view virtual returns (uint256, uint256[] memory) {
+        if (
+            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+        ) {
+            revert ProposalNotInitialized();
+        }
+
+        return _getValidTokenIdsSafe(voter_, proposalId_, allTokenIds_);
     }
 }

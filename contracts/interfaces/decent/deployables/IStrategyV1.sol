@@ -10,7 +10,7 @@ interface IStrategyV1 {
     error InvalidBasisNumerator();
     error InvalidStrategyAdmin();
     error ProposalNotActive();
-    error NoVotingWeight();
+    error NoVotingAdapterVotingWeight(address votingAdapter);
     error InvalidVoteType();
     error ProposalNotInitialized();
     error InvalidVotingAdapter(address votingAdapter);
