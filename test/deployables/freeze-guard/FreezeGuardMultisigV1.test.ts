@@ -6,6 +6,7 @@ import {
   ERC1967Proxy__factory,
   FreezeGuardMultisigV1,
   FreezeGuardMultisigV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IFreezeGuardBaseV1__factory,
   IFreezeGuardMultisigV1__factory,
@@ -16,6 +17,7 @@ import {
   MockSafe,
   MockSafe__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -504,6 +506,14 @@ describe('FreezeGuardMultisigV1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await multisigFreezeGuard.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       void expect(await multisigFreezeGuard.supportsInterface('0x12345678')).to.be.false;
     });
@@ -518,6 +528,12 @@ describe('FreezeGuardMultisigV1', () => {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => multisigFreezeGuard,
     });
   });
 });

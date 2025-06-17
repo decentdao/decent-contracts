@@ -7,6 +7,7 @@ import {
   CountersignV1__factory,
   ERC1967Proxy__factory,
   ICountersignV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IVersion__factory,
   MockERC20Votes,
@@ -14,6 +15,7 @@ import {
   MockKYCVerifier,
   MockKYCVerifier__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 // Helper function for deploying Countersign instances using ERC1967Proxy
@@ -457,6 +459,14 @@ describe('CountersignV1', () => {
       void expect(supported).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await countersign.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       const supported = await countersign.supportsInterface(randomInterfaceId);
@@ -533,6 +543,12 @@ describe('CountersignV1', () => {
         countersign,
         'InvalidKYCSignature',
       );
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => countersign,
     });
   });
 });

@@ -7,14 +7,15 @@ import {IProposerAdapterBaseV1} from "../../interfaces/decent/deployables/IPropo
 import {IVoterResolverV1} from "../../interfaces/decent/deployables/IVoterResolverV1.sol";
 import {ISmartAccountValidationV1} from "../../interfaces/decent/deployables/ISmartAccountValidationV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {VoterResolverV1} from "./VoterResolverV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {VoterResolverV1} from "../account-abstraction/VoterResolverV1.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract StrategyV1 is
     IStrategyV1,
     IVersion,
-    Initializable,
+    DeploymentBlockV1,
     VoterResolverV1,
     ERC165
 {
@@ -76,6 +77,7 @@ contract StrategyV1 is
         ) revert InvalidBasisNumerator();
 
         __VoterResolverV1_init(lightAccountFactory_);
+        __DeploymentBlockV1_init();
         _votingPeriod = votingPeriod_;
         _quorumThreshold = quorumThreshold_;
         _basisNumerator = basisNumerator_;
@@ -497,6 +499,7 @@ contract StrategyV1 is
             interfaceId_ == type(IVoterResolverV1).interfaceId ||
             interfaceId_ == type(ISmartAccountValidationV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

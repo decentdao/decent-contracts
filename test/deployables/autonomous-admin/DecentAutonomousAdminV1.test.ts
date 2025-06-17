@@ -6,9 +6,11 @@ import {
   DecentAutonomousAdminV1__factory,
   ERC1967Proxy__factory,
   IDecentAutonomousAdminV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IVersion__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 // Helper function for deploying DecentAutonomousAdminV1 instances using ERC1967Proxy
@@ -47,37 +49,36 @@ describe('DecentAutonomousAdminV1', function () {
   });
 
   describe('ERC165', function () {
-    let iDecentAutonomousAdminV1InterfaceId: string;
-    let iVersionInterfaceId: string;
-    let iERC165InterfaceId: string;
-
-    beforeEach(async function () {
-      // Dynamically calculate interface IDs
-      const IDecentAutonomousAdminV1Interface = IDecentAutonomousAdminV1__factory.createInterface();
-      iDecentAutonomousAdminV1InterfaceId = calculateInterfaceId(IDecentAutonomousAdminV1Interface);
-
-      const IVersionInterface = IVersion__factory.createInterface();
-      iVersionInterfaceId = calculateInterfaceId(IVersionInterface);
-
-      const IERC165Interface = IERC165__factory.createInterface();
-      iERC165InterfaceId = calculateInterfaceId(IERC165Interface);
-    });
-
     it('Should support IERC165 interface', async function () {
-      const supported = await decentAutonomousAdmin.supportsInterface(iERC165InterfaceId);
-      void expect(supported).to.be.true;
+      void expect(
+        await decentAutonomousAdmin.supportsInterface(
+          calculateInterfaceId(IERC165__factory.createInterface()),
+        ),
+      ).to.be.true;
     });
 
     it('Should support IDecentAutonomousAdminV1 interface', async function () {
-      const supported = await decentAutonomousAdmin.supportsInterface(
-        iDecentAutonomousAdminV1InterfaceId,
-      );
-      void expect(supported).to.be.true;
+      void expect(
+        await decentAutonomousAdmin.supportsInterface(
+          calculateInterfaceId(IDecentAutonomousAdminV1__factory.createInterface()),
+        ),
+      ).to.be.true;
     });
 
     it('Should support IVersion interface', async function () {
-      const supported = await decentAutonomousAdmin.supportsInterface(iVersionInterfaceId);
-      void expect(supported).to.be.true;
+      void expect(
+        await decentAutonomousAdmin.supportsInterface(
+          calculateInterfaceId(IVersion__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await decentAutonomousAdmin.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
     });
 
     it('should not support random interface', async function () {
@@ -92,6 +93,12 @@ describe('DecentAutonomousAdminV1', function () {
   describe('Version', () => {
     it('should return the correct version number', async () => {
       expect(await decentAutonomousAdmin.version()).to.equal(1);
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => decentAutonomousAdmin,
     });
   });
 });

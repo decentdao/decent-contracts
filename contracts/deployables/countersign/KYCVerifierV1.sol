@@ -4,10 +4,11 @@ pragma solidity ^0.8.30;
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IKYCVerifierV1} from "../../interfaces/decent/deployables/IKYCVerifierV1.sol";
 import {IZKMEVerify} from "../../interfaces/zkme/IZKMEVerify.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract KYCVerifierV1 is IKYCVerifierV1, IVersion, ERC165, Initializable {
+contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -27,6 +28,7 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, ERC165, Initializable {
         address zkMeVerify_,
         address cooperator_
     ) public virtual override initializer {
+        __DeploymentBlockV1_init();
         _zkMeVerify = zkMeVerify_;
         _cooperator = cooperator_;
     }
@@ -73,6 +75,7 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, ERC165, Initializable {
         return
             interfaceId_ == type(IKYCVerifierV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

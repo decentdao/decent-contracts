@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {VoterResolverV1} from "../../../../deployables/account-abstraction/VoterResolverV1.sol";
+import {VoterResolverV1} from "../../../../deployables/strategies/VoterResolverV1.sol";
 import {ILightAccountFactory} from "../../../../interfaces/light-account/ILightAccountFactory.sol";
 
 /**

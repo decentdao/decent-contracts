@@ -6,6 +6,8 @@ import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {NoncesUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
@@ -22,6 +24,7 @@ contract VotesERC20V1 is
     ERC20PermitUpgradeable,
     UUPSUpgradeable,
     Ownable2StepUpgradeable,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -42,6 +45,7 @@ contract VotesERC20V1 is
         __ERC20Votes_init();
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
+        __DeploymentBlockV1_init();
 
         uint256 holderCount = allocations_.length;
         for (uint256 i; i < holderCount; ) {
@@ -147,6 +151,7 @@ contract VotesERC20V1 is
             interfaceId_ == type(IERC20Permit).interfaceId ||
             interfaceId_ == type(IVotes).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

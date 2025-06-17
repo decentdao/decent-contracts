@@ -3,7 +3,9 @@ pragma solidity ^0.8.30;
 
 import {IModuleFractalV1} from "../../interfaces/decent/deployables/IModuleFractalV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {Transaction} from "../../interfaces/decent/Module.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {GuardableModule, Enum} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -14,6 +16,7 @@ contract ModuleFractalV1 is
     IModuleFractalV1,
     IVersion,
     GuardableModule,
+    DeploymentBlockV1,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
     ERC165
@@ -33,6 +36,7 @@ contract ModuleFractalV1 is
     ) public virtual override initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
+        __DeploymentBlockV1_init();
 
         avatar = avatar_;
         target = target_;
@@ -126,6 +130,7 @@ contract ModuleFractalV1 is
         return
             interfaceId_ == type(IModuleFractalV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

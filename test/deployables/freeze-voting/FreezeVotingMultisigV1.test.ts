@@ -6,6 +6,7 @@ import {
   ERC1967Proxy__factory,
   FreezeVotingMultisigV1,
   FreezeVotingMultisigV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IFreezeVotingBaseV1__factory,
   IFreezeVotingMultisigV1__factory,
@@ -18,6 +19,7 @@ import {
   MockSafe,
   MockSafe__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 // Helper function for deploying MultisigFreezeVotingV1 proxy instances using ERC1967Proxy
@@ -547,6 +549,14 @@ describe('FreezeVotingMultisigV1', () => {
       ).to.be.true;
     });
 
+    it('should support the IDeploymentBlockV1 interface', async () => {
+      void expect(
+        await freezeVoting.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should not support a random interface', async () => {
       void expect(await freezeVoting.supportsInterface('0x12345678')).to.be.false;
     });
@@ -630,6 +640,12 @@ describe('FreezeVotingMultisigV1', () => {
           .connect(relayerSA)
           .executeFreezeVote(await freezeVotingSA.getAddress(), castVoteCalldata),
       ).to.be.revertedWithCustomError(freezeVotingSA, 'NoVotes');
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => freezeVoting,
     });
   });
 });

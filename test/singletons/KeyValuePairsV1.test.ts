@@ -2,11 +2,13 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
+  IDeploymentBlockV1__factory,
   IKeyValuePairsV1__factory,
   IVersion__factory,
   KeyValuePairsV1,
   KeyValuePairsV1__factory,
 } from '../../typechain-types';
+import { runDeploymentBlockTests } from '../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../helpers/utils';
 
 describe('KeyValuePairsV1', function () {
@@ -74,8 +76,23 @@ describe('KeyValuePairsV1', function () {
       ).to.be.true;
     });
 
+    it('should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await keyValuePairs.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should not support a random interfaceId', async function () {
       void expect(await keyValuePairs.supportsInterface('0x12345678')).to.be.false;
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => keyValuePairs,
+      isNonUpgradeable: true,
     });
   });
 });

@@ -4,9 +4,16 @@ pragma solidity ^0.8.30;
 import {IFunctionValidator} from "../../../interfaces/decent/deployables/IFunctionValidator.sol";
 import {IStrategyV1} from "../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVersion} from "../../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1NonUpgradeable} from "../../../DeploymentBlockV1NonUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract StrategyV1ValidatorV1 is IFunctionValidator, IVersion, ERC165 {
+contract StrategyV1ValidatorV1 is
+    IFunctionValidator,
+    IVersion,
+    DeploymentBlockV1NonUpgradeable,
+    ERC165
+{
     // ======================================================================
     // IFunctionValidator
     // ======================================================================
@@ -66,6 +73,7 @@ contract StrategyV1ValidatorV1 is IFunctionValidator, IVersion, ERC165 {
         return
             interfaceId_ == type(IFunctionValidator).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

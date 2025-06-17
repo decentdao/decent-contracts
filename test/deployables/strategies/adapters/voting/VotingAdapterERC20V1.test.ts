@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IVersion__factory,
   IVotingAdapterBaseV1__factory,
@@ -15,6 +16,7 @@ import {
   VotingAdapterERC20V1,
   VotingAdapterERC20V1__factory,
 } from '../../../../../typechain-types';
+import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../../../helpers/utils';
 
 // Modified helper function to return deployment tx hash
@@ -717,6 +719,14 @@ describe('VotingAdapterERC20V1', () => {
       ).to.be.true;
     });
 
+    it('should support IDeploymentBlockV1', async () => {
+      void expect(
+        await erc20Adapter.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should not support a random interfaceId', async () => {
       void expect(await erc20Adapter.supportsInterface('0x12345678')).to.be.false;
     });
@@ -1335,6 +1345,25 @@ describe('VotingAdapterERC20V1', () => {
         void expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
+    });
+  });
+
+  describe('Deployment Block', () => {
+    let adapter: VotingAdapterERC20V1;
+
+    beforeEach(async () => {
+      const { adapter: deployedAdapter } = await deployERC20AdapterProxy(
+        deployer,
+        erc20AdapterImplementationAddressG,
+        await mockToken.getAddress(),
+        await mockStrategy.getAddress(),
+        DEFAULT_WEIGHT_PER_TOKEN,
+      );
+      adapter = deployedAdapter;
+    });
+
+    runDeploymentBlockTests({
+      getContract: () => adapter,
     });
   });
 });

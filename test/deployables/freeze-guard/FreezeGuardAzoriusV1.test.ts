@@ -5,6 +5,7 @@ import {
   ERC1967Proxy__factory,
   FreezeGuardAzoriusV1,
   FreezeGuardAzoriusV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IFreezeGuardAzoriusV1__factory,
   IFreezeGuardBaseV1__factory,
@@ -13,6 +14,7 @@ import {
   MockFreezeVoting,
   MockFreezeVoting__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -36,7 +38,7 @@ async function deployAzoriusFreezeGuardProxy(
   return FreezeGuardAzoriusV1__factory.connect(await proxy.getAddress(), owner);
 }
 
-describe('AzoriusFreezeGuardV1', () => {
+describe('FreezeGuardAzoriusV1', () => {
   const Operation = {
     Call: 0,
     DelegateCall: 1,
@@ -260,6 +262,14 @@ describe('AzoriusFreezeGuardV1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await azoriusFreezeGuard.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       void expect(await azoriusFreezeGuard.supportsInterface('0x12345678')).to.be.false;
     });
@@ -285,6 +295,21 @@ describe('AzoriusFreezeGuardV1', () => {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    beforeEach(async function () {
+      azoriusFreezeGuard = await deployAzoriusFreezeGuardProxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        await mockFreezeVoting.getAddress(),
+      );
+    });
+
+    runDeploymentBlockTests({
+      getContract: () => azoriusFreezeGuard,
     });
   });
 });

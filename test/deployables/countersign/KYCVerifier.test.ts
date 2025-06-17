@@ -2,15 +2,17 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
+  ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
+  IKYCVerifierV1__factory,
   IVersion__factory,
   KYCVerifierV1,
   KYCVerifierV1__factory,
-  IKYCVerifierV1__factory,
-  ERC1967Proxy__factory,
   MockZKMEVerify,
   MockZKMEVerify__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 // Helper function for deploying Countersign instances using ERC1967Proxy
@@ -114,6 +116,14 @@ describe('KYCVerifierV1', () => {
       void expect(supported).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await kycVerifier.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       const supported = await kycVerifier.supportsInterface(randomInterfaceId);
@@ -130,6 +140,12 @@ describe('KYCVerifierV1', () => {
     it('should not verify if zkMeVerify has not approved', async () => {
       await mockZKMEVerify.setApproved(false);
       void expect(await kycVerifier.verify(investorAlice.address)).to.be.false;
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => kycVerifier,
     });
   });
 });

@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IERC20__factory,
   IERC20Permit__factory,
@@ -13,6 +14,7 @@ import {
   VotesERC20V1,
   VotesERC20V1__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -272,6 +274,14 @@ describe('VotesERC20V1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await votesERC20.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       void expect(await votesERC20.supportsInterface(randomInterfaceId)).to.be.false;
@@ -343,6 +353,24 @@ describe('VotesERC20V1', () => {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    beforeEach(async function () {
+      votesERC20 = await deployVotesERC20Proxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        'Test Voting Token',
+        'TVT',
+        [],
+        [],
+      );
+    });
+
+    runDeploymentBlockTests({
+      getContract: () => votesERC20,
     });
   });
 });

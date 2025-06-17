@@ -2,6 +2,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IFunctionValidator__factory,
   IStrategyV1,
@@ -12,6 +13,7 @@ import {
   StrategyV1ValidatorV1,
   StrategyV1ValidatorV1__factory,
 } from '../../../../typechain-types';
+import { runDeploymentBlockTests } from '../../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../../helpers/utils';
 
 describe('StrategyV1ValidatorV1', function () {
@@ -229,6 +231,13 @@ describe('StrategyV1ValidatorV1', function () {
       void expect(await validator.supportsInterface(iVersionInterfaceId)).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      const iDeploymentBlockV1InterfaceId = calculateInterfaceId(
+        IDeploymentBlockV1__factory.createInterface(),
+      );
+      void expect(await validator.supportsInterface(iDeploymentBlockV1InterfaceId)).to.be.true;
+    });
+
     it('Should support IERC165 interface', async function () {
       const iERC165InterfaceId = calculateInterfaceId(IERC165__factory.createInterface());
       void expect(await validator.supportsInterface(iERC165InterfaceId)).to.be.true;
@@ -243,6 +252,13 @@ describe('StrategyV1ValidatorV1', function () {
   describe('Version', function () {
     it('Should return correct version', async function () {
       void expect(await validator.version()).to.equal(1);
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => validator,
+      isNonUpgradeable: true,
     });
   });
 });

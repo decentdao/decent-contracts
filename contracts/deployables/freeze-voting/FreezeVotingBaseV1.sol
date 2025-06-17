@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
-import {VoterResolverV1} from "../account-abstraction/VoterResolverV1.sol";
+import {VoterResolverV1} from "../strategies/VoterResolverV1.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 abstract contract FreezeVotingBaseV1 is

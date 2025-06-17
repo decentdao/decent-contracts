@@ -11,4 +11,9 @@ contract ConcreteDeploymentBlockV1 is DeploymentBlockV1 {
     function initialize() external initializer {
         __DeploymentBlockV1_init();
     }
+
+    // This should fail if called after initialize
+    function reinitialize() external reinitializer(2) {
+        __DeploymentBlockV1_init();
+    }
 }

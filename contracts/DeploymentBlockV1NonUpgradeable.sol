@@ -2,24 +2,19 @@
 pragma solidity ^0.8.30;
 
 import {IDeploymentBlockV1} from "./interfaces/decent/IDeploymentBlockV1.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-abstract contract DeploymentBlockV1 is Initializable, IDeploymentBlockV1 {
+abstract contract DeploymentBlockV1NonUpgradeable is IDeploymentBlockV1 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
-    uint256 internal _deploymentBlock;
+    uint256 internal immutable _deploymentBlock;
 
     // ======================================================================
-    // CONSTRUCTOR & INITIALIZERS
+    // CONSTRUCTOR
     // ======================================================================
 
-    function __DeploymentBlockV1_init() internal onlyInitializing {
-        if (_deploymentBlock != 0) {
-            revert DeploymentBlockAlreadySet();
-        }
-
+    constructor() {
         _deploymentBlock = block.number;
     }
 

@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   ISmartAccountValidationV1__factory,
   IStrategyV1__factory,
@@ -19,6 +20,7 @@ import {
   StrategyV1,
   StrategyV1__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 describe('StrategyV1', () => {
@@ -1116,6 +1118,14 @@ describe('StrategyV1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async () => {
+      void expect(
+        await strategy.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support a random interface', async () => {
       const randomInterfaceId = '0x12345678';
       void expect(await strategy.supportsInterface(randomInterfaceId)).to.be.false;
@@ -1829,6 +1839,12 @@ describe('StrategyV1', () => {
       );
 
       void expect(isValid).to.be.false;
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => strategy,
     });
   });
 });

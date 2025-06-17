@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IVersion__factory,
   IVotingAdapterBaseV1__factory,
@@ -15,6 +16,7 @@ import {
   VotingAdapterERC721V1,
   VotingAdapterERC721V1__factory,
 } from '../../../../../typechain-types';
+import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../../../helpers/utils';
 
 async function deployERC721AdapterProxy(
@@ -966,6 +968,14 @@ describe('VotingAdapterERC721V1', () => {
       ).to.be.true;
     });
 
+    it('should support IDeploymentBlockV1', async () => {
+      void expect(
+        await erc721Adapter.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should not support a random interfaceId', async () => {
       void expect(await erc721Adapter.supportsInterface('0x12345678')).to.be.false;
     });
@@ -1684,6 +1694,33 @@ describe('VotingAdapterERC721V1', () => {
 
       void expect(isValid).to.be.false;
       expect(weight).to.equal(0);
+    });
+  });
+
+  describe('Deployment Block', () => {
+    let adapter: VotingAdapterERC721V1;
+    let mockNft: MockERC721;
+    let deployer: SignerWithAddress;
+    let strategy: MockVotingStrategy;
+
+    beforeEach(async () => {
+      const fixture = await loadFixture(deployMocksAndSignersERC721Fixture);
+      mockNft = fixture.mockNft;
+      deployer = fixture.deployer;
+      strategy = fixture.strategy;
+
+      const { adapter: deployedAdapter } = await deployERC721AdapterProxy(
+        deployer,
+        erc721AdapterImplementationAddressG,
+        await mockNft.getAddress(),
+        await strategy.getAddress(),
+        DEFAULT_WEIGHT_PER_NFT,
+      );
+      adapter = deployedAdapter;
+    });
+
+    runDeploymentBlockTests({
+      getContract: () => adapter,
     });
   });
 });

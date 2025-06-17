@@ -5,14 +5,17 @@ import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVo
 import {IFreezeVotingMultisigV1} from "../../interfaces/decent/deployables/IFreezeVotingMultisigV1.sol";
 import {IVoterResolverV1} from "../../interfaces/decent/deployables/IVoterResolverV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {ISafe} from "../../interfaces/safe/ISafe.sol";
 import {FreezeVotingBaseV1} from "./FreezeVotingBaseV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract FreezeVotingMultisigV1 is
     IFreezeVotingMultisigV1,
     IVersion,
     FreezeVotingBaseV1,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -46,6 +49,7 @@ contract FreezeVotingMultisigV1 is
             freezeVotesThreshold_,
             lightAccountFactory_
         );
+        __DeploymentBlockV1_init();
         _parentSafe = ISafe(parentSafe_);
     }
 
@@ -104,6 +108,7 @@ contract FreezeVotingMultisigV1 is
             interfaceId_ == type(IFreezeVotingBaseV1).interfaceId ||
             interfaceId_ == type(IVoterResolverV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

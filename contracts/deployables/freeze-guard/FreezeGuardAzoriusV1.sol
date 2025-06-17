@@ -5,6 +5,8 @@ import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IFreezeGuardAzoriusV1} from "../../interfaces/decent/deployables/IFreezeGuardAzoriusV1.sol";
 import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
 import {IFreezeGuardBaseV1} from "../../interfaces/decent/deployables/IFreezeGuardBaseV1.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IGuard} from "@gnosis-guild/zodiac/contracts/interfaces/IGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -16,6 +18,7 @@ contract FreezeGuardAzoriusV1 is
     IVersion,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -38,6 +41,7 @@ contract FreezeGuardAzoriusV1 is
     ) public virtual override initializer {
         __Ownable_init(owner_);
         __UUPSUpgradeable_init();
+        __DeploymentBlockV1_init();
         _freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
     }
 
@@ -109,6 +113,7 @@ contract FreezeGuardAzoriusV1 is
             interfaceId_ == type(IFreezeGuardBaseV1).interfaceId ||
             interfaceId_ == type(IGuard).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

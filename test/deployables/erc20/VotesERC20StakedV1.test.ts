@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IERC20__factory,
   IVersion__factory,
@@ -14,6 +15,7 @@ import {
   VotesERC20StakedV1,
   VotesERC20StakedV1__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId, executeTxAndCheckBalanceDeltas } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -314,6 +316,14 @@ describe('VotesERC20StakedV1', () => {
     it('Should support IVotes interface', async function () {
       const supported = await votesERC20Staked.supportsInterface(iVotesInterfaceId);
       void expect(supported).to.be.true;
+    });
+
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await votesERC20Staked.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
     });
 
     it('Should not support random interface', async function () {
@@ -1928,6 +1938,12 @@ describe('VotesERC20StakedV1', () => {
         ethers.parseEther('0'),
         ethers.parseEther('0'),
       ]);
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => votesERC20Staked,
     });
   });
 });

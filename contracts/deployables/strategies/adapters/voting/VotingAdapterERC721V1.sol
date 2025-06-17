@@ -5,7 +5,9 @@ import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1
 import {IVotingAdapterERC721V1} from "../../../../interfaces/decent/deployables/IVotingAdapterERC721V1.sol";
 import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
 import {VotingAdapterBaseV1} from "./VotingAdapterBaseV1.sol";
+import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -13,6 +15,7 @@ contract VotingAdapterERC721V1 is
     IVotingAdapterERC721V1,
     IVersion,
     VotingAdapterBaseV1,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -40,6 +43,7 @@ contract VotingAdapterERC721V1 is
         uint256 weightPerToken_
     ) public virtual override initializer {
         __VotingAdapterBaseV1_init(strategy_);
+        __DeploymentBlockV1_init();
         _token = IERC721(token_);
         _weightPerToken = weightPerToken_;
     }
@@ -274,6 +278,7 @@ contract VotingAdapterERC721V1 is
             interfaceId_ == type(IVotingAdapterERC721V1).interfaceId ||
             interfaceId_ == type(IVotingAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

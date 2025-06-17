@@ -5,8 +5,10 @@ import {IDecentPaymasterV1} from "../../interfaces/decent/deployables/IDecentPay
 import {IFunctionValidator} from "../../interfaces/decent/deployables/IFunctionValidator.sol";
 import {ISmartAccountValidationV1} from "../../interfaces/decent/deployables/ISmartAccountValidationV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {BasePaymasterV1} from "./BasePaymasterV1.sol";
 import {SmartAccountValidationV1} from "./SmartAccountValidationV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -20,6 +22,7 @@ contract DecentPaymasterV1 is
     IVersion,
     BasePaymasterV1,
     SmartAccountValidationV1,
+    DeploymentBlockV1,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
     ERC165
@@ -46,6 +49,7 @@ contract DecentPaymasterV1 is
     ) public virtual override initializer {
         __BasePaymasterV1_init(owner_, IEntryPoint(entryPoint_));
         __SmartAccountValidationV1_init(lightAccountFactory_);
+        __DeploymentBlockV1_init();
     }
 
     // ======================================================================
@@ -189,6 +193,7 @@ contract DecentPaymasterV1 is
             interfaceId_ == type(ISmartAccountValidationV1).interfaceId ||
             interfaceId_ == type(IPaymaster).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

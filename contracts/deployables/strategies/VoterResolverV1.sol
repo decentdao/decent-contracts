@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IVoterResolverV1} from "../../interfaces/decent/deployables/IVoterResolverV1.sol";
-import {SmartAccountValidationV1} from "./SmartAccountValidationV1.sol";
+import {SmartAccountValidationV1} from "../account-abstraction/SmartAccountValidationV1.sol";
 
 abstract contract VoterResolverV1 is
     IVoterResolverV1,

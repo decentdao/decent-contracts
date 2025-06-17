@@ -4,13 +4,14 @@ pragma solidity ^0.8.30;
 import {IProposerAdapterERC721V1} from "../../../../interfaces/decent/deployables/IProposerAdapterERC721V1.sol";
 import {IProposerAdapterBaseV1} from "../../../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract ProposerAdapterERC721V1 is
     IProposerAdapterERC721V1,
-    Initializable,
+    DeploymentBlockV1,
     IVersion,
     ERC165
 {
@@ -33,6 +34,7 @@ contract ProposerAdapterERC721V1 is
         address token_,
         uint256 proposerThreshold_
     ) public virtual override initializer {
+        __DeploymentBlockV1_init();
         _token = IERC721(token_);
         _proposerThreshold = proposerThreshold_;
     }
@@ -93,6 +95,7 @@ contract ProposerAdapterERC721V1 is
             interfaceId_ == type(IProposerAdapterERC721V1).interfaceId ||
             interfaceId_ == type(IProposerAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

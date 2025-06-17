@@ -4,6 +4,8 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IModuleAzoriusV1__factory,
   IVersion__factory,
@@ -17,6 +19,7 @@ import {
   ModuleAzoriusV1__factory,
   UUPSUpgradeable,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -1536,6 +1539,14 @@ describe('ModuleAzoriusV1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await azoriusInstance.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       const supported = await azoriusInstance.supportsInterface(randomInterfaceId);
@@ -1569,6 +1580,27 @@ describe('ModuleAzoriusV1', () => {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    let azorius: ModuleAzoriusV1;
+
+    beforeEach(async function () {
+      azorius = await deployAzoriusProxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        mockStrategyAddress,
+        0,
+        0,
+      );
+    });
+
+    runDeploymentBlockTests({
+      getContract: () => azorius as unknown as IDeploymentBlockV1,
     });
   });
 });

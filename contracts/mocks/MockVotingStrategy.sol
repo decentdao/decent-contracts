@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVotingAdapterBaseV1} from "../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
-import {VoterResolverV1} from "../deployables/account-abstraction/VoterResolverV1.sol";
+import {VoterResolverV1} from "../deployables/strategies/VoterResolverV1.sol";
 
 contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
     struct TimestampPoints {

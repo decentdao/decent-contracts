@@ -3,16 +3,25 @@ pragma solidity ^0.8.30;
 
 import {IKeyValuePairsV1} from "../interfaces/decent/singletons/IKeyValuePairsV1.sol";
 import {IVersion} from "../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1NonUpgradeable} from "../DeploymentBlockV1NonUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract KeyValuePairsV1 is IKeyValuePairsV1, IVersion, ERC165 {
+contract KeyValuePairsV1 is
+    IKeyValuePairsV1,
+    IVersion,
+    DeploymentBlockV1NonUpgradeable,
+    ERC165
+{
     // ======================================================================
     // IKeyValuePairs
     // ======================================================================
 
     // --- State-Changing Functions ---
 
-    function updateValues(KeyValuePair[] memory keyValuePairs_) external {
+    function updateValues(
+        KeyValuePair[] calldata keyValuePairs_
+    ) public virtual override {
         for (uint256 i; i < keyValuePairs_.length; ) {
             KeyValuePair memory keyValuePair = keyValuePairs_[i];
 
@@ -46,6 +55,7 @@ contract KeyValuePairsV1 is IKeyValuePairsV1, IVersion, ERC165 {
         return
             interfaceId_ == type(IKeyValuePairsV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

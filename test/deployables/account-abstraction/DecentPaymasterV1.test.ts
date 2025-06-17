@@ -6,6 +6,7 @@ import {
   DecentPaymasterV1__factory,
   ERC1967Proxy__factory,
   IDecentPaymasterV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IPaymaster__factory,
   ISmartAccountValidationV1__factory,
@@ -21,6 +22,7 @@ import {
   MockValidator,
   MockValidator__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -401,6 +403,14 @@ describe('DecentPaymasterV1', function () {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await decentPaymaster.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       const supported = await decentPaymaster.supportsInterface(randomInterfaceId);
@@ -423,6 +433,12 @@ describe('DecentPaymasterV1', function () {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => decentPaymaster,
     });
   });
 });

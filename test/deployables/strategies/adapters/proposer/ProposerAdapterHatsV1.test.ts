@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IProposerAdapterBaseV1__factory,
   IProposerAdapterHatsV1__factory,
@@ -12,6 +13,7 @@ import {
   ProposerAdapterHatsV1,
   ProposerAdapterHatsV1__factory,
 } from '../../../../../typechain-types';
+import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../../../helpers/utils';
 
 async function deployHatsProposerAdapterProxy(
@@ -243,8 +245,22 @@ describe('ProposerAdapterHatsV1', () => {
       ).to.be.true;
     });
 
+    it('should support IDeploymentBlockV1', async () => {
+      void expect(
+        await adapter.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should not support a random interfaceId', async () => {
       void expect(await adapter.supportsInterface('0x12345678')).to.be.false;
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => adapter,
     });
   });
 });

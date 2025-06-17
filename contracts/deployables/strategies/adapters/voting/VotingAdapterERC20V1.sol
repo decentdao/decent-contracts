@@ -6,7 +6,9 @@ import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IV
 import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {ClockMode} from "../../../../interfaces/decent/ClockMode.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
+import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
 import {VotingAdapterBaseV1} from "./VotingAdapterBaseV1.sol";
+import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
 import {ClockModeLib} from "../../../../libs/ClockModeLib.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -17,6 +19,7 @@ contract VotingAdapterERC20V1 is
     IVotingAdapterERC20V1,
     IVersion,
     VotingAdapterBaseV1,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -45,6 +48,7 @@ contract VotingAdapterERC20V1 is
         uint256 weightPerToken_
     ) public virtual override initializer {
         __VotingAdapterBaseV1_init(strategy_);
+        __DeploymentBlockV1_init();
         _token = IVotes(token_);
         _weightPerToken = weightPerToken_;
         _tokenClockMode = ClockModeLib.getClockMode(token_);
@@ -260,6 +264,7 @@ contract VotingAdapterERC20V1 is
             interfaceId_ == type(IVotingAdapterERC20V1).interfaceId ||
             interfaceId_ == type(IVotingAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IDeploymentBlockV1,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IModuleFractalV1__factory,
   IVersion__factory,
@@ -14,6 +16,7 @@ import {
   ModuleFractalV1__factory,
   UUPSUpgradeable,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
 
@@ -72,6 +75,9 @@ describe('ModuleFractalV1', () => {
   // mocks and mastercopies
   let masterCopy: string;
   let mockToken: MockERC20Votes;
+
+  // Shared fractalModule instance for deployment block tests
+  let sharedFractalModule: ModuleFractalV1;
 
   beforeEach(async () => {
     // Get signers
@@ -445,6 +451,14 @@ describe('ModuleFractalV1', () => {
       ).to.be.true;
     });
 
+    it('Should support IDeploymentBlockV1 interface', async function () {
+      void expect(
+        await fractalModuleInstance.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('Should not support random interface', async function () {
       const randomInterfaceId = '0x12345678';
       const supported = await fractalModuleInstance.supportsInterface(randomInterfaceId);
@@ -464,6 +478,9 @@ describe('ModuleFractalV1', () => {
         ethers.ZeroAddress,
         ethers.ZeroAddress,
       );
+
+      // Set shared instance for deployment block tests
+      sharedFractalModule = fractalModule;
     });
 
     // Run UUPS upgradeability tests
@@ -475,6 +492,12 @@ describe('ModuleFractalV1', () => {
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => sharedFractalModule as unknown as IDeploymentBlockV1,
     });
   });
 });

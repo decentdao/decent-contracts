@@ -104,4 +104,35 @@ describe('DeploymentBlockV1', () => {
       expect(block2 - block1).to.be.gte(5);
     });
   });
+
+  describe('Reinitializer Protection', () => {
+    it('should prevent changing deployment block via reinitializer', async () => {
+      // Deploy master copy
+      masterCopy = await (
+        await new ConcreteDeploymentBlockV1__factory(deployer).deploy()
+      ).getAddress();
+
+      // Deploy proxy with initialization
+      const initData =
+        ConcreteDeploymentBlockV1__factory.createInterface().encodeFunctionData('initialize');
+      const proxy = await new ERC1967Proxy__factory(deployer).deploy(masterCopy, initData);
+
+      // Connect to the proxy
+      const contract = ConcreteDeploymentBlockV1__factory.connect(await proxy.getAddress(), owner);
+
+      // Get the initial deployment block
+      const initialDeploymentBlock = await contract.deploymentBlock();
+      expect(initialDeploymentBlock).to.be.gt(0);
+
+      // Try to reinitialize - this should fail with our new protection
+      await expect(contract.reinitialize()).to.be.revertedWithCustomError(
+        contract,
+        'DeploymentBlockAlreadySet',
+      );
+
+      // Verify deployment block hasn't changed
+      const currentDeploymentBlock = await contract.deploymentBlock();
+      expect(currentDeploymentBlock).to.equal(initialDeploymentBlock);
+    });
+  });
 });

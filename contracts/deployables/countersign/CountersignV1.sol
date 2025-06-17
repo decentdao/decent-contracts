@@ -4,11 +4,11 @@ pragma solidity ^0.8.30;
 import {IKYCVerifierV1} from "../../interfaces/decent/deployables/IKYCVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {ICountersignV1} from "../../interfaces/decent/deployables/ICountersignV1.sol";
+import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-
-contract CountersignV1 is ICountersignV1, IVersion, ERC165, Initializable {
+contract CountersignV1 is ICountersignV1, IVersion, DeploymentBlockV1, ERC165 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
@@ -39,6 +39,7 @@ contract CountersignV1 is ICountersignV1, IVersion, ERC165, Initializable {
         SignerInitialization[] memory signerInitializations_,
         Transaction[] memory preExecutionTransactions_
     ) public virtual override initializer {
+        __DeploymentBlockV1_init();
         _agreementUri = agreementUri_;
         _kycVerifier = kycVerifier_;
         _signingDeadline = signingDeadline_;
@@ -100,13 +101,7 @@ contract CountersignV1 is ICountersignV1, IVersion, ERC165, Initializable {
         return _signingDeadline;
     }
 
-    function executionDeadline()
-        public
-        view
-        virtual
-        override
-        returns (uint48)
-    {
+    function executionDeadline() public view virtual override returns (uint48) {
         return _executionDeadline;
     }
 
@@ -217,6 +212,7 @@ contract CountersignV1 is ICountersignV1, IVersion, ERC165, Initializable {
         return
             interfaceId_ == type(ICountersignV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

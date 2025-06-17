@@ -10,6 +10,7 @@ import {
   FreezeGuardMultisigV1__factory,
   FreezeVotingAzoriusV1__factory,
   FreezeVotingMultisigV1__factory,
+  IDeploymentBlockV1__factory,
   IncompatibleStorageContract__factory,
   ISystemDeployerV1,
   ISystemDeployerV1__factory,
@@ -46,6 +47,7 @@ import {
   VotingAdapterERC721V1,
   VotingAdapterERC721V1__factory,
 } from '../../typechain-types';
+import { runDeploymentBlockTests } from '../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../helpers/utils';
 
 // Helper function to create default setupSafe parameters with optional overrides
@@ -5000,6 +5002,14 @@ describe('SystemDeployerV1', () => {
       ).to.be.true;
     });
 
+    it('should support IDeploymentBlockV1 interface', async () => {
+      void expect(
+        await fixtureData.systemDeployer.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
+
     it('should support ERC165 interface', async () => {
       void expect(
         await fixtureData.systemDeployer.supportsInterface(
@@ -5804,6 +5814,13 @@ describe('SystemDeployerV1', () => {
           }
         });
       });
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => fixtureData.systemDeployer,
+      isNonUpgradeable: true,
     });
   });
 });

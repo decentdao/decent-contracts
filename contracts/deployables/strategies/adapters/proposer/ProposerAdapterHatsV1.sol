@@ -5,13 +5,14 @@ import {IProposerAdapterHatsV1} from "../../../../interfaces/decent/deployables/
 import {IProposerAdapterBaseV1} from "../../../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
 import {IHats} from "../../../../interfaces/hats/IHats.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
+import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract ProposerAdapterHatsV1 is
     IProposerAdapterHatsV1,
     IVersion,
-    Initializable,
+    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -34,6 +35,7 @@ contract ProposerAdapterHatsV1 is
         address hatsContract_,
         uint256[] calldata whitelistedHatIds_
     ) public virtual override initializer {
+        __DeploymentBlockV1_init();
         _hatsContract = IHats(hatsContract_);
         _whitelistedHatIds = whitelistedHatIds_;
         for (uint256 i = 0; i < whitelistedHatIds_.length; ) {
@@ -110,6 +112,7 @@ contract ProposerAdapterHatsV1 is
             interfaceId_ == type(IProposerAdapterHatsV1).interfaceId ||
             interfaceId_ == type(IProposerAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
+            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

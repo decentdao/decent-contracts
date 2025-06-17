@@ -6,6 +6,7 @@ import {
   ERC1967Proxy__factory,
   FreezeVotingAzoriusV1,
   FreezeVotingAzoriusV1__factory,
+  IDeploymentBlockV1__factory,
   IERC165__factory,
   IFreezeVotingAzoriusV1,
   IFreezeVotingAzoriusV1__factory,
@@ -21,6 +22,7 @@ import {
   MockVotingStrategy,
   MockVotingStrategy__factory,
 } from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
 import { calculateInterfaceId } from '../../helpers/utils';
 
 async function deployAzoriusFreezeVotingProxy(
@@ -377,8 +379,21 @@ describe('FreezeVotingAzoriusV1', () => {
         ),
       ).to.be.true;
     });
+    it('should support IDeploymentBlockV1', async () => {
+      void expect(
+        await azoriusFreezeVoting.supportsInterface(
+          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
+        ),
+      ).to.be.true;
+    });
     it('should not support a random interfaceId', async () => {
       void expect(await azoriusFreezeVoting.supportsInterface('0x12345678')).to.be.false;
+    });
+  });
+
+  describe('Deployment Block', () => {
+    runDeploymentBlockTests({
+      getContract: () => azoriusFreezeVoting,
     });
   });
 });
