@@ -91,6 +91,8 @@ contract MockSafe is ISafe {
         _guard = guard;
     }
 
+    function enableModule(address module) external {}
+
     function execTransaction(
         address to,
         uint256 value,
