@@ -27,6 +27,9 @@ contract FreezeGuardAzoriusV1 is
 
     IFreezeVotingBaseV1 internal _freezeVoting;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================

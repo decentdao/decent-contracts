@@ -34,6 +34,9 @@ contract DecentPaymasterV1 is
     mapping(address target => mapping(bytes4 selector => address validator))
         internal _functionValidators;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================

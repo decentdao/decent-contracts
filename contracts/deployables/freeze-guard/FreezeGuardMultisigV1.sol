@@ -33,6 +33,9 @@ contract FreezeGuardMultisigV1 is
     mapping(bytes32 signaturesHash => uint48 timelockedTimestamp)
         internal transactionTimelocked;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================

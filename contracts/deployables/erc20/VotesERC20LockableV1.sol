@@ -27,6 +27,9 @@ contract VotesERC20LockableV1 is
     uint256 internal _maxTotalSupply;
     uint48 internal _unlockTime;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // MODIFIERS
     // ======================================================================

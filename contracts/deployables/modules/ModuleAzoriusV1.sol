@@ -58,6 +58,9 @@ contract ModuleAzoriusV1 is
     mapping(uint32 proposalId => Proposal proposal) internal _proposals;
     IStrategyV1 internal _strategy;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================

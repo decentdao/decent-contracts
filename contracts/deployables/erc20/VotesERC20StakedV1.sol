@@ -40,6 +40,9 @@ contract VotesERC20StakedV1 is
     mapping(address rewardsToken => RewardsTokenData rewardsTokenData)
         internal _rewardsTokenDatas;
 
+    // offset to leave for future upgrades
+    uint256[50] private __gap;
+
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================
