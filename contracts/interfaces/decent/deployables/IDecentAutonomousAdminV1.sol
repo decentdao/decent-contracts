@@ -17,6 +17,10 @@ interface IDecentAutonomousAdminV1 {
         address nominatedWearer;
     }
 
+    // --- Constructor & Initializers ---
+
+    function initialize() external;
+
     // --- State-Changing Functions ---
 
     function triggerStartNextTerm(TriggerStartArgs calldata args_) external;

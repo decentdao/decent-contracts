@@ -14,10 +14,15 @@ import { calculateInterfaceId } from '../../helpers/utils';
 // Helper function for deploying DecentAutonomousAdminV1 instances using ERC1967Proxy
 async function deployDecentAutonomousAdminProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: DecentAutonomousAdminV1,
 ): Promise<DecentAutonomousAdminV1> {
+  const initializeCalldata = implementation.interface.encodeFunctionData('initialize');
+
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, '0x');
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    implementation,
+    initializeCalldata,
+  );
 
   // Return a contract instance connected to the proxy
   return DecentAutonomousAdminV1__factory.connect(await proxy.getAddress(), proxyDeployer);
@@ -29,16 +34,13 @@ describe('DecentAutonomousAdminV1', function () {
 
   // Contract instances
   let decentAutonomousAdmin: DecentAutonomousAdminV1;
-  let masterCopy: string;
 
   beforeEach(async function () {
     // Get signers
     [proxyDeployer] = await ethers.getSigners();
 
     // Deploy DecentAutonomousAdminV1 implementation
-    masterCopy = await (
-      await new DecentAutonomousAdminV1__factory(proxyDeployer).deploy()
-    ).getAddress();
+    const masterCopy = await new DecentAutonomousAdminV1__factory(proxyDeployer).deploy();
 
     // Deploy DecentAutonomousAdminV1 via proxy
     decentAutonomousAdmin = await deployDecentAutonomousAdminProxy(proxyDeployer, masterCopy);

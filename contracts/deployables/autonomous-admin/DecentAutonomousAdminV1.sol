@@ -1,12 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IHatsElectionsEligibility} from "../../interfaces/hats/modules/IHatsElectionsEligibility.sol";
 import {IDecentAutonomousAdminV1} from "../../interfaces/decent/deployables/IDecentAutonomousAdminV1.sol";
+import {IHatsElectionsEligibility} from "../../interfaces/hats/modules/IHatsElectionsEligibility.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract DecentAutonomousAdminV1 is IDecentAutonomousAdminV1, IVersion, ERC165 {
+contract DecentAutonomousAdminV1 is
+    IDecentAutonomousAdminV1,
+    IVersion,
+    Initializable,
+    ERC165
+{
+    // ======================================================================
+    // CONSTRUCTOR & INITIALIZERS
+    // ======================================================================
+
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() public virtual override initializer {}
+
     // ======================================================================
     // IDecentAutonomousAdminV1
     // ======================================================================

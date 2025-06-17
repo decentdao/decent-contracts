@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IHats} from "../../hats/IHats.sol";
-import {IERC6551Registry} from "../../erc6551/IERC6551Registry.sol";
-import {IHatsModuleFactory} from "../../hats/IHatsModuleFactory.sol";
-import {IProxyFactory} from "../singletons/IProxyFactory.sol";
-import {DecentHatsModuleUtils} from "../../../utilities/DecentHatsModuleUtils.sol";
+import {IDecentHatsModuleUtils} from "./IDecentHatsModuleUtils.sol";
 
 interface IDecentHatsCreationModule {
     // --- Structs ---
@@ -22,17 +18,17 @@ interface IDecentHatsCreationModule {
     }
 
     struct CreateTreeParams {
-        IHats hatsProtocol;
-        IERC6551Registry erc6551Registry;
-        IHatsModuleFactory hatsModuleFactory;
-        IProxyFactory proxyFactory;
+        address hatsProtocol;
+        address erc6551Registry;
+        address hatsModuleFactory;
+        address systemDeployer;
         address keyValuePairs;
         address decentAutonomousAdminImplementation;
         address hatsAccountImplementation;
         address hatsElectionsEligibilityImplementation;
         TopHatParams topHat;
         AdminHatParams adminHat;
-        DecentHatsModuleUtils.HatParams[] hats;
+        IDecentHatsModuleUtils.HatParams[] hats;
     }
 
     // --- State-Changing Functions ---

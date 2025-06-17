@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {IDecentSablierStreamManagementModule} from "../interfaces/decent/utilities/IDecentSablierStreamManagementModule.sol";
 import {Lockup} from "../interfaces/sablier/types/DataTypes.sol";
 import {ISablierV2Lockup} from "../interfaces/sablier/ISablierV2Lockup.sol";
+import {IERC6551Executable} from "../interfaces/erc6551/IERC6551Executable.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis-guild/zodiac/contracts/interfaces/IAvatar.sol";
 
@@ -17,13 +18,13 @@ contract DecentSablierStreamManagementModule is
     // --- State-Changing Functions ---
 
     function withdrawMaxFromStream(
-        ISablierV2Lockup sablier_,
+        address sablier_,
         address recipientHatAccount_,
         uint256 streamId_,
         address to_
     ) public virtual override {
         // Check if there are funds to withdraw
-        if (sablier_.withdrawableAmountOf(streamId_) == 0) {
+        if (ISablierV2Lockup(sablier_).withdrawableAmountOf(streamId_) == 0) {
             return;
         }
 
@@ -31,27 +32,30 @@ contract DecentSablierStreamManagementModule is
         IAvatar(msg.sender).execTransactionFromModule(
             recipientHatAccount_,
             0,
-            abi.encodeWithSignature(
-                "execute(address,uint256,bytes,uint8)",
-                address(sablier_),
-                0,
-                abi.encodeWithSignature(
-                    "withdrawMax(uint256,address)",
-                    streamId_,
-                    to_
-                ),
-                0
+            abi.encodeCall(
+                IERC6551Executable.execute,
+                (
+                    sablier_,
+                    0,
+                    abi.encodeCall(
+                        ISablierV2Lockup.withdrawMax,
+                        (streamId_, to_)
+                    ),
+                    0
+                )
             ),
             Enum.Operation.Call
         );
     }
 
     function cancelStream(
-        ISablierV2Lockup sablier_,
+        address sablier_,
         uint256 streamId_
     ) public virtual override {
         // Check if the stream can be cancelled
-        Lockup.Status streamStatus = sablier_.statusOf(streamId_);
+        Lockup.Status streamStatus = ISablierV2Lockup(sablier_).statusOf(
+            streamId_
+        );
         if (
             streamStatus != Lockup.Status.PENDING &&
             streamStatus != Lockup.Status.STREAMING
@@ -60,9 +64,9 @@ contract DecentSablierStreamManagementModule is
         }
 
         IAvatar(msg.sender).execTransactionFromModule(
-            address(sablier_),
+            sablier_,
             0,
-            abi.encodeWithSignature("cancel(uint256)", streamId_),
+            abi.encodeCall(ISablierV2Lockup.cancel, (streamId_)),
             Enum.Operation.Call
         );
     }

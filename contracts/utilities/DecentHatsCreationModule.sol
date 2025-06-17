@@ -2,13 +2,19 @@
 pragma solidity ^0.8.30;
 
 import {IDecentHatsCreationModule} from "../interfaces/decent/utilities/IDecentHatsCreationModule.sol";
-import {IProxyFactory} from "../interfaces/decent/singletons/IProxyFactory.sol";
+import {IDecentAutonomousAdminV1} from "../interfaces/decent/deployables/IDecentAutonomousAdminV1.sol";
+import {ISystemDeployerV1} from "../interfaces/decent/singletons/ISystemDeployerV1.sol";
+import {IKeyValuePairsV1} from "../interfaces/decent/singletons/IKeyValuePairsV1.sol";
 import {IERC6551Registry} from "../interfaces/erc6551/IERC6551Registry.sol";
 import {IHats} from "../interfaces/hats/IHats.sol";
 import {DecentHatsModuleUtils} from "./DecentHatsModuleUtils.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis-guild/zodiac/contracts/interfaces/IAvatar.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+
+interface IHatsExtended is IHats {
+    function lastTopHatId() external view returns (uint32 lastTopHatId);
+}
 
 contract DecentHatsCreationModule is
     IDecentHatsCreationModule,
@@ -59,7 +65,7 @@ contract DecentHatsCreationModule is
             treeParams_.hatsAccountImplementation,
             topHatId,
             topHatAccount,
-            treeParams_.proxyFactory,
+            treeParams_.systemDeployer,
             treeParams_.decentAutonomousAdminImplementation,
             treeParams_.adminHat
         );
@@ -88,54 +94,49 @@ contract DecentHatsCreationModule is
     // ======================================================================
 
     function _processTopHat(
-        IHats hatsProtocol_,
-        IERC6551Registry erc6551Registry_,
+        address hatsProtocol_,
+        address erc6551Registry_,
         address hatsAccountImplementation_,
         address keyValuePairs_,
         TopHatParams calldata topHat_
     ) internal virtual returns (uint256, address) {
-        // Call lastTopHatId() and properly decode the response
-        (bool success, bytes memory data) = address(hatsProtocol_).call(
-            abi.encodeWithSignature("lastTopHatId()")
-        );
-        require(success, "Failed to get lastTopHatId");
-        uint256 topHatId = (abi.decode(data, (uint256)) + 1) << 224;
-
         // Mint Top Hat to the Safe
         IAvatar(msg.sender).execTransactionFromModule(
-            address(hatsProtocol_),
+            hatsProtocol_,
             0,
-            abi.encodeWithSignature(
-                "mintTopHat(address,string,string)",
-                msg.sender,
-                topHat_.details,
-                topHat_.imageURI
+            abi.encodeCall(
+                IHats.mintTopHat,
+                (msg.sender, topHat_.details, topHat_.imageURI)
             ),
             Enum.Operation.Call
         );
 
+        // get the new Top Hat ID
+        uint256 topHatId = uint256(
+            IHatsExtended(hatsProtocol_).lastTopHatId()
+        ) << 224;
+
         // Create Top Hat's ERC6551 Account
-        address topHatAccount = erc6551Registry_.createAccount(
-            hatsAccountImplementation_,
-            SALT,
-            block.chainid,
-            address(hatsProtocol_),
-            topHatId
-        );
+        address topHatAccount = IERC6551Registry(erc6551Registry_)
+            .createAccount(
+                hatsAccountImplementation_,
+                SALT,
+                block.chainid,
+                hatsProtocol_,
+                topHatId
+            );
 
         // Declare Top Hat ID to Safe via KeyValuePairs
-        string[] memory keys = new string[](1);
-        string[] memory values = new string[](1);
-        keys[0] = "topHatId";
-        values[0] = Strings.toString(topHatId);
+        IKeyValuePairsV1.KeyValuePair[]
+            memory keyValuePairs = new IKeyValuePairsV1.KeyValuePair[](1);
+        keyValuePairs[0] = IKeyValuePairsV1.KeyValuePair({
+            key: "topHatId",
+            value: Strings.toString(topHatId)
+        });
         IAvatar(msg.sender).execTransactionFromModule(
             keyValuePairs_,
             0,
-            abi.encodeWithSignature(
-                "updateValues(string[],string[])",
-                keys,
-                values
-            ),
+            abi.encodeCall(IKeyValuePairsV1.updateValues, (keyValuePairs)),
             Enum.Operation.Call
         );
 
@@ -143,65 +144,64 @@ contract DecentHatsCreationModule is
     }
 
     function _processAdminHat(
-        IHats hatsProtocol_,
-        IERC6551Registry erc6551Registry_,
+        address hatsProtocol_,
+        address erc6551Registry_,
         address hatsAccountImplementation_,
         uint256 topHatId_,
         address topHatAccount_,
-        IProxyFactory proxyFactory_,
+        address systemDeployer_,
         address decentAutonomousAdminImplementation_,
         AdminHatParams calldata adminHat_
     ) internal virtual returns (uint256) {
         // Create Admin Hat
-        uint256 adminHatId = hatsProtocol_.getNextId(topHatId_);
+        uint256 adminHatId = IHats(hatsProtocol_).getNextId(topHatId_);
         IAvatar(msg.sender).execTransactionFromModule(
-            address(hatsProtocol_),
+            hatsProtocol_,
             0,
-            abi.encodeWithSignature(
-                "createHat(uint256,string,uint32,address,address,bool,string)",
-                topHatId_,
-                adminHat_.details,
-                1, // only one Admin Hat
-                topHatAccount_,
-                topHatAccount_,
-                adminHat_.isMutable,
-                adminHat_.imageURI
+            abi.encodeCall(
+                IHats.createHat,
+                (
+                    topHatId_,
+                    adminHat_.details,
+                    1, // only one Admin Hat
+                    topHatAccount_,
+                    topHatAccount_,
+                    adminHat_.isMutable,
+                    adminHat_.imageURI
+                )
             ),
             Enum.Operation.Call
         );
 
         // Create Admin Hat's ERC6551 Account
-        erc6551Registry_.createAccount(
+        IERC6551Registry(erc6551Registry_).createAccount(
             hatsAccountImplementation_,
             SALT,
             block.chainid,
-            address(hatsProtocol_),
+            hatsProtocol_,
             adminHatId
         );
 
         // Deploy Decent Autonomous Admin Module, which will wear the Admin Hat
-        address autonomousAdmin = proxyFactory_.deployProxy(
-            decentAutonomousAdminImplementation_,
-            abi.encodeWithSignature("initialize(address)", msg.sender),
-            keccak256(
-                abi.encodePacked(
-                    // for the salt, we'll concatenate our static salt
-                    // with the Admin Hat ID
-                    SALT,
-                    adminHatId
+        address autonomousAdmin = ISystemDeployerV1(systemDeployer_)
+            .deployProxy(
+                decentAutonomousAdminImplementation_,
+                abi.encodeCall(IDecentAutonomousAdminV1.initialize, ()),
+                keccak256(
+                    abi.encodePacked(
+                        // for the salt, we'll concatenate our static salt
+                        // with the Admin Hat ID
+                        SALT,
+                        adminHatId
+                    )
                 )
-            )
-        );
+            );
 
         // Mint Hat to the Decent Autonomous Admin Module
         IAvatar(msg.sender).execTransactionFromModule(
-            address(hatsProtocol_),
+            hatsProtocol_,
             0,
-            abi.encodeWithSignature(
-                "mintHat(uint256,address)",
-                adminHatId,
-                autonomousAdmin
-            ),
+            abi.encodeCall(IHats.mintHat, (adminHatId, autonomousAdmin)),
             Enum.Operation.Call
         );
 
