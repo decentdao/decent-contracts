@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity ^0.8.30;
 
 import "../../libs/TransferHelper.sol";
 import "../../interfaces/hedgey/IVestingPlans.sol";
