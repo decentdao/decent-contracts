@@ -58,7 +58,7 @@ abstract contract PlanDelegator is ERC721Enumerable {
         );
         require(spender != msg.sender, "!self approval");
         _approveDelegator(spender, planId);
-        _approve(spender, planId);
+        _approve(spender, planId, msg.sender);
     }
 
     /// @notice this function sets an address to be an operator delegator for the msg.sender, whereby the operator can delegate all tokens owned by the msg.sender
@@ -104,21 +104,21 @@ abstract contract PlanDelegator is ERC721Enumerable {
     }
 
     /// @notice we call the beforeTokenTransfer hook to delete the approvedDelegators storage variable so that the Delegator approval does not travel with the NFT when transferred
-    function _beforeTokenTransfer(
-        address from,
+    function _update(
         address to,
-        uint256 firstTokenId,
-        uint256 batchSize
-    ) internal virtual override {
-        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-        delete _approvedDelegators[firstTokenId];
+        uint256 tokenId,
+        address auth
+    ) internal virtual override returns (address) {
+        address previousOwner = super._update(to, tokenId, auth);
+        delete _approvedDelegators[tokenId];
+        return previousOwner;
     }
 
     /// @notice function to get the approved delegator of a single planId
     function getApprovedDelegator(
         uint256 planId
     ) public view returns (address) {
-        _requireMinted(planId);
+        _requireOwned(planId);
         return _approvedDelegators[planId];
     }
 
