@@ -313,24 +313,70 @@ contract VotingTokenLockupPlans is
         uint256 segmentAmount
     ) internal returns (uint256 newPlanId) {
         require(ownerOf(planId) == msg.sender, "!owner");
-        Plan memory plan = plans[planId];
-        require(segmentAmount < plan.amount, "amount error");
+        require(segmentAmount < plans[planId].amount, "amount error");
         require(segmentAmount > 0, "0_segment");
+        ++_planIds;
+        newPlanId = _planIds;
+        _finalizeSegmentPlan(planId, segmentAmount, newPlanId);
+    }
+
+    function _finalizeSegmentPlan(
+        uint256 planId,
+        uint256 segmentAmount,
+        uint256 newPlanId
+    ) private {
+        Plan memory plan = plans[planId];
         uint256 end = TimelockLibrary.endDate(
             plan.start,
             plan.amount,
             plan.rate,
             plan.period
         );
-        ++_planIds;
-        newPlanId = _planIds;
         uint256 planAmount = plan.amount - segmentAmount;
+
         (
             uint256 planRate,
             uint256 segmentRate,
             uint256 planEnd,
             uint256 segmentEnd
-        ) = TimelockLibrary.calculateSegmentRates(
+        ) = _calculateSegmentRatesHelper(plan, planAmount, segmentAmount, end);
+
+        _checkSegmentEnds(planId, end, planEnd, segmentEnd);
+
+        _updateSegmentStorage(
+            planId,
+            newPlanId,
+            plan,
+            planAmount,
+            planRate,
+            segmentAmount,
+            segmentRate,
+            end
+        );
+
+        _handleSegmentVault(planId, newPlanId, segmentAmount);
+
+        _emitSegmentEvent(
+            planId,
+            newPlanId,
+            planAmount,
+            planRate,
+            segmentAmount,
+            segmentRate,
+            plan,
+            planEnd,
+            segmentEnd
+        );
+    }
+
+    function _calculateSegmentRatesHelper(
+        Plan memory plan,
+        uint256 planAmount,
+        uint256 segmentAmount,
+        uint256 end
+    ) private pure returns (uint256, uint256, uint256, uint256) {
+        return
+            TimelockLibrary.calculateSegmentRates(
                 plan.rate,
                 plan.amount,
                 planAmount,
@@ -340,11 +386,31 @@ contract VotingTokenLockupPlans is
                 plan.period,
                 plan.cliff
             );
+    }
+
+    function _checkSegmentEnds(
+        uint256 planId,
+        uint256 end,
+        uint256 planEnd,
+        uint256 segmentEnd
+    ) private view {
         uint256 endCheck = segmentOriginalEnd[planId] == 0
             ? end
             : segmentOriginalEnd[planId];
         require(planEnd >= endCheck, "plan end error");
         require(segmentEnd >= endCheck, "segmentEnd error");
+    }
+
+    function _updateSegmentStorage(
+        uint256 planId,
+        uint256 newPlanId,
+        Plan memory plan,
+        uint256 planAmount,
+        uint256 planRate,
+        uint256 segmentAmount,
+        uint256 segmentRate,
+        uint256 end
+    ) private {
         plans[planId].amount = planAmount;
         plans[planId].rate = planRate;
         _safeMint(msg.sender, newPlanId);
@@ -362,6 +428,13 @@ contract VotingTokenLockupPlans is
         } else {
             segmentOriginalEnd[newPlanId] = segmentOriginalEnd[planId];
         }
+    }
+
+    function _handleSegmentVault(
+        uint256 planId,
+        uint256 newPlanId,
+        uint256 segmentAmount
+    ) private {
         if (votingVaults[planId] != address(0)) {
             VotingVault(votingVaults[planId]).withdrawTokens(
                 address(this),
@@ -369,6 +442,19 @@ contract VotingTokenLockupPlans is
             );
             _setupVoting(newPlanId);
         }
+    }
+
+    function _emitSegmentEvent(
+        uint256 planId,
+        uint256 newPlanId,
+        uint256 planAmount,
+        uint256 planRate,
+        uint256 segmentAmount,
+        uint256 segmentRate,
+        Plan memory plan,
+        uint256 planEnd,
+        uint256 segmentEnd
+    ) private {
         emit PlanSegmented(
             planId,
             newPlanId,
@@ -382,6 +468,17 @@ contract VotingTokenLockupPlans is
             planEnd,
             segmentEnd
         );
+    }
+
+    modifier plansCanCombine(uint256 planId0, uint256 planId1) {
+        require(planId0 != planId1, "same plan");
+        require(ownerOf(planId0) == msg.sender, "!owner");
+        require(ownerOf(planId1) == msg.sender, "!owner");
+        require(plans[planId0].token == plans[planId1].token, "token error");
+        require(plans[planId0].start == plans[planId1].start, "start error");
+        require(plans[planId0].cliff == plans[planId1].cliff, "cliff error");
+        require(plans[planId0].period == plans[planId1].period, "period error");
+        _;
     }
 
     /// @notice this funtion allows the holder of two plans that have the same parameters to combine them into a single surviving plan
@@ -400,140 +497,148 @@ contract VotingTokenLockupPlans is
     function _combinePlans(
         uint256 planId0,
         uint256 planId1
-    ) internal returns (uint256 survivingPlan) {
-        require(planId0 != planId1, "same plan");
-        require(ownerOf(planId0) == msg.sender, "!owner");
-        require(ownerOf(planId1) == msg.sender, "!owner");
-        Plan memory plan0 = plans[planId0];
-        Plan memory plan1 = plans[planId1];
-        require(plan0.token == plan1.token, "token error");
-        require(plan0.start == plan1.start, "start error");
-        require(plan0.cliff == plan1.cliff, "cliff error");
-        require(plan0.period == plan1.period, "period error");
-        uint256 plan0End = TimelockLibrary.endDate(
-            plan0.start,
-            plan0.amount,
-            plan0.rate,
-            plan0.period
-        );
-        uint256 plan1End = TimelockLibrary.endDate(
-            plan1.start,
-            plan1.amount,
-            plan1.rate,
-            plan1.period
-        );
-        require(
-            plan0End == plan1End ||
-                (segmentOriginalEnd[planId0] == segmentOriginalEnd[planId1] &&
-                    segmentOriginalEnd[planId0] != 0),
-            "end error"
-        );
+    )
+        internal
+        plansCanCombine(planId0, planId1)
+        returns (uint256 survivingPlan)
+    {
         address vault0 = votingVaults[planId0];
         address vault1 = votingVaults[planId1];
-        survivingPlan = planId0;
+
         if (vault0 != address(0)) {
-            plans[planId0].amount += plans[planId1].amount;
-            (uint256 survivorRate, uint256 survivorEnd) = TimelockLibrary
-                .calculateCombinedRate(
-                    plan0.amount + plan1.amount,
-                    plan0.rate + plan1.rate,
-                    plan0.start,
-                    plan0.period,
-                    plan0End
-                );
-            plans[planId0].rate = survivorRate;
-            if (survivorEnd < plan0End) {
-                require(
-                    survivorEnd == segmentOriginalEnd[planId0] ||
-                        survivorEnd == segmentOriginalEnd[planId1],
-                    "original end error"
-                );
-            }
-            if (vault1 != address(0)) {
-                VotingVault(vault1).withdrawTokens(vault0, plan1.amount);
-            } else {
-                TransferHelper.withdrawTokens(
-                    plan0.token,
-                    vault0,
-                    plan1.amount
-                );
-            }
-            delete plans[planId1];
-            _burn(planId1);
-            emit PlansCombined(
-                planId0,
-                planId1,
-                survivingPlan,
-                plans[planId0].amount,
-                plans[planId0].rate,
-                plan0.start,
-                plan0.cliff,
-                plan0.period,
-                survivorEnd
-            );
+            survivingPlan = planId0;
+            _finalizeCombine(planId0, planId1, vault0, vault1);
         } else if (vault1 != address(0)) {
-            plans[planId1].amount += plans[planId0].amount;
-            (uint256 survivorRate, uint256 survivorEnd) = TimelockLibrary
-                .calculateCombinedRate(
-                    plan0.amount + plan1.amount,
-                    plan0.rate + plan1.rate,
-                    plan1.start,
-                    plan1.period,
-                    plan1End
-                );
-            plans[planId1].rate = survivorRate;
-            if (survivorEnd < plan1End) {
-                require(
-                    survivorEnd == segmentOriginalEnd[planId0] ||
-                        survivorEnd == segmentOriginalEnd[planId1],
-                    "original end error"
-                );
-            }
-            TransferHelper.withdrawTokens(plan0.token, vault1, plan0.amount);
             survivingPlan = planId1;
-            delete plans[planId0];
-            _burn(planId0);
-            emit PlansCombined(
-                planId0,
-                planId1,
-                survivingPlan,
-                plans[planId1].amount,
-                plans[planId1].rate,
-                plan1.start,
-                plan1.cliff,
-                plan1.period,
-                survivorEnd
-            );
+            _finalizeCombine(planId1, planId0, vault1, vault0);
         } else {
-            plans[planId0].amount += plans[planId1].amount;
-            (uint256 survivorRate, uint256 survivorEnd) = TimelockLibrary
-                .calculateCombinedRate(
-                    plan0.amount + plan1.amount,
-                    plan0.rate + plan1.rate,
-                    plan0.start,
-                    plan0.period,
-                    plan0End
-                );
-            plans[planId0].rate = survivorRate;
-            if (survivorEnd < plan0End) {
-                require(
-                    survivorEnd == segmentOriginalEnd[planId0] ||
-                        survivorEnd == segmentOriginalEnd[planId1],
-                    "original end error"
-                );
-            }
-            delete plans[planId1];
-            _burn(planId1);
-            emit PlansCombined(
-                planId0,
-                planId1,
-                survivingPlan,
-                plans[planId0].amount,
-                plans[planId0].rate,
-                plan0.start,
-                plan0.cliff,
-                plan0.period,
-                survivorEnd
+            survivingPlan = planId0;
+            _finalizeCombine(planId0, planId1, address(0), address(0));
+        }
+    }
+
+    function _finalizeCombine(
+        uint256 survivorId,
+        uint256 removeId,
+        address survivorVault,
+        address removeVault
+    ) private {
+        _checkCombineEnds(survivorId, removeId);
+
+        plans[survivorId].amount += plans[removeId].amount;
+        (uint256 newRate, uint256 newEnd) = _calculateCombinedRateHelper(
+            survivorId,
+            removeId
+        );
+
+        plans[survivorId].rate = newRate;
+
+        _checkOriginalEnd(survivorId, removeId, newEnd);
+
+        _handleVaultTransfers(survivorId, removeId, survivorVault, removeVault);
+
+        delete plans[removeId];
+        _burn(removeId);
+
+        emit PlansCombined(
+            survivorId,
+            removeId,
+            survivorId,
+            plans[survivorId].amount,
+            plans[survivorId].rate,
+            plans[survivorId].start,
+            plans[survivorId].cliff,
+            plans[survivorId].period,
+            newEnd
+        );
+    }
+
+    function _checkCombineEnds(
+        uint256 survivorId,
+        uint256 removeId
+    ) private view {
+        uint256 survivorEnd = TimelockLibrary.endDate(
+            plans[survivorId].start,
+            plans[survivorId].amount,
+            plans[survivorId].rate,
+            plans[survivorId].period
+        );
+        uint256 removeEnd = TimelockLibrary.endDate(
+            plans[removeId].start,
+            plans[removeId].amount,
+            plans[removeId].rate,
+            plans[removeId].period
+        );
+        require(
+            survivorEnd == removeEnd ||
+                (segmentOriginalEnd[survivorId] ==
+                    segmentOriginalEnd[removeId] &&
+                    segmentOriginalEnd[survivorId] != 0),
+            "end error"
+        );
+    }
+
+    function _calculateCombinedRateHelper(
+        uint256 survivorId,
+        uint256 removeId
+    ) private view returns (uint256 newRate, uint256 newEnd) {
+        uint256 survivorEnd = TimelockLibrary.endDate(
+            plans[survivorId].start,
+            plans[survivorId].amount,
+            plans[survivorId].rate,
+            plans[survivorId].period
+        );
+        (newRate, newEnd) = TimelockLibrary.calculateCombinedRate(
+            plans[survivorId].amount,
+            plans[survivorId].rate + plans[removeId].rate,
+            plans[survivorId].start,
+            plans[survivorId].period,
+            survivorEnd
+        );
+    }
+
+    function _checkOriginalEnd(
+        uint256 survivorId,
+        uint256 removeId,
+        uint256 newEnd
+    ) private view {
+        uint256 survivorEnd = TimelockLibrary.endDate(
+            plans[survivorId].start,
+            plans[survivorId].amount,
+            plans[survivorId].rate,
+            plans[survivorId].period
+        );
+        if (newEnd < survivorEnd) {
+            require(
+                newEnd == segmentOriginalEnd[survivorId] ||
+                    newEnd == segmentOriginalEnd[removeId],
+                "original end error"
+            );
+        }
+    }
+
+    function _handleVaultTransfers(
+        uint256 survivorId,
+        uint256 removeId,
+        address survivorVault,
+        address removeVault
+    ) private {
+        if (survivorVault != address(0) && removeVault != address(0)) {
+            VotingVault(removeVault).withdrawTokens(
+                survivorVault,
+                plans[removeId].amount
+            );
+        } else if (survivorVault != address(0)) {
+            TransferHelper.withdrawTokens(
+                plans[survivorId].token,
+                survivorVault,
+                plans[removeId].amount
+            );
+        } else if (removeVault != address(0)) {
+            TransferHelper.withdrawTokens(
+                plans[survivorId].token,
+                removeVault,
+                plans[survivorId].amount
             );
         }
     }
