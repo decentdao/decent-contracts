@@ -5,7 +5,6 @@ import "./PlanDelegator.sol";
 import "./VotingVault.sol";
 import "./URIAdmin.sol";
 import "./LockupStorage.sol";
-import "../../libs/Counters.sol";
 import "../../libs/TransferHelper.sol";
 import "../../libs/TimelockLibrary.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -28,8 +27,7 @@ contract VotingTokenLockupPlans is
     URIAdmin
 {
     /// @notice uses counters for incrementing token IDs which are the planIds
-    using Counters for Counters.Counter;
-    Counters.Counter private _planIds;
+    uint256 private _planIds;
 
     /// @dev Voting Vaults are external contracts that hold tokens for a lockup plan allowing an owner to delegate their tokens for on-chain governance
     /// the lockup plan ID is mapped to the votingVault address so that it is one to one and unique to the NFT
@@ -76,8 +74,8 @@ contract VotingTokenLockupPlans is
             period
         );
         require(valid);
-        _planIds.increment();
-        newPlanId = _planIds.current();
+        ++_planIds;
+        newPlanId = _planIds;
         TransferHelper.transferTokens(token, msg.sender, address(this), amount);
         plans[newPlanId] = Plan(token, amount, start, cliff, rate, period);
         _safeMint(recipient, newPlanId);
@@ -324,8 +322,8 @@ contract VotingTokenLockupPlans is
             plan.rate,
             plan.period
         );
-        _planIds.increment();
-        newPlanId = _planIds.current();
+        ++_planIds;
+        newPlanId = _planIds;
         uint256 planAmount = plan.amount - segmentAmount;
         (
             uint256 planRate,
