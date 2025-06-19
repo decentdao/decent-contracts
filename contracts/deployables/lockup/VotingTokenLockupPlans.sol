@@ -317,14 +317,7 @@ contract VotingTokenLockupPlans is
         require(segmentAmount > 0, "0_segment");
         ++_planIds;
         newPlanId = _planIds;
-        _finalizeSegmentPlan(planId, segmentAmount, newPlanId);
-    }
 
-    function _finalizeSegmentPlan(
-        uint256 planId,
-        uint256 segmentAmount,
-        uint256 newPlanId
-    ) private {
         Plan memory plan = plans[planId];
         uint256 end = TimelockLibrary.endDate(
             plan.start,
@@ -339,44 +332,7 @@ contract VotingTokenLockupPlans is
             uint256 segmentRate,
             uint256 planEnd,
             uint256 segmentEnd
-        ) = _calculateSegmentRatesHelper(plan, planAmount, segmentAmount, end);
-
-        _checkSegmentEnds(planId, end, planEnd, segmentEnd);
-
-        _updateSegmentStorage(
-            planId,
-            newPlanId,
-            plan,
-            planAmount,
-            planRate,
-            segmentAmount,
-            segmentRate,
-            end
-        );
-
-        _handleSegmentVault(planId, newPlanId, segmentAmount);
-
-        _emitSegmentEvent(
-            planId,
-            newPlanId,
-            planAmount,
-            planRate,
-            segmentAmount,
-            segmentRate,
-            plan,
-            planEnd,
-            segmentEnd
-        );
-    }
-
-    function _calculateSegmentRatesHelper(
-        Plan memory plan,
-        uint256 planAmount,
-        uint256 segmentAmount,
-        uint256 end
-    ) private pure returns (uint256, uint256, uint256, uint256) {
-        return
-            TimelockLibrary.calculateSegmentRates(
+        ) = TimelockLibrary.calculateSegmentRates(
                 plan.rate,
                 plan.amount,
                 planAmount,
@@ -386,31 +342,7 @@ contract VotingTokenLockupPlans is
                 plan.period,
                 plan.cliff
             );
-    }
 
-    function _checkSegmentEnds(
-        uint256 planId,
-        uint256 end,
-        uint256 planEnd,
-        uint256 segmentEnd
-    ) private view {
-        uint256 endCheck = segmentOriginalEnd[planId] == 0
-            ? end
-            : segmentOriginalEnd[planId];
-        require(planEnd >= endCheck, "plan end error");
-        require(segmentEnd >= endCheck, "segmentEnd error");
-    }
-
-    function _updateSegmentStorage(
-        uint256 planId,
-        uint256 newPlanId,
-        Plan memory plan,
-        uint256 planAmount,
-        uint256 planRate,
-        uint256 segmentAmount,
-        uint256 segmentRate,
-        uint256 end
-    ) private {
         plans[planId].amount = planAmount;
         plans[planId].rate = planRate;
         _safeMint(msg.sender, newPlanId);
@@ -428,13 +360,7 @@ contract VotingTokenLockupPlans is
         } else {
             segmentOriginalEnd[newPlanId] = segmentOriginalEnd[planId];
         }
-    }
 
-    function _handleSegmentVault(
-        uint256 planId,
-        uint256 newPlanId,
-        uint256 segmentAmount
-    ) private {
         if (votingVaults[planId] != address(0)) {
             VotingVault(votingVaults[planId]).withdrawTokens(
                 address(this),
@@ -442,19 +368,7 @@ contract VotingTokenLockupPlans is
             );
             _setupVoting(newPlanId);
         }
-    }
 
-    function _emitSegmentEvent(
-        uint256 planId,
-        uint256 newPlanId,
-        uint256 planAmount,
-        uint256 planRate,
-        uint256 segmentAmount,
-        uint256 segmentRate,
-        Plan memory plan,
-        uint256 planEnd,
-        uint256 segmentEnd
-    ) private {
         emit PlanSegmented(
             planId,
             newPlanId,
@@ -468,6 +382,19 @@ contract VotingTokenLockupPlans is
             planEnd,
             segmentEnd
         );
+    }
+
+    function _checkSegmentEnds(
+        uint256 planId,
+        uint256 end,
+        uint256 planEnd,
+        uint256 segmentEnd
+    ) private view {
+        uint256 endCheck = segmentOriginalEnd[planId] == 0
+            ? end
+            : segmentOriginalEnd[planId];
+        require(planEnd >= endCheck, "plan end error");
+        require(segmentEnd >= endCheck, "segmentEnd error");
     }
 
     modifier plansCanCombine(uint256 planId0, uint256 planId1) {
