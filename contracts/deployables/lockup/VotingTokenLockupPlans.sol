@@ -343,6 +343,8 @@ contract VotingTokenLockupPlans is
                 plan.cliff
             );
 
+        _checkSegmentEnds(planId, end, planEnd, segmentEnd);
+
         plans[planId].amount = planAmount;
         plans[planId].rate = planRate;
         _safeMint(msg.sender, newPlanId);
