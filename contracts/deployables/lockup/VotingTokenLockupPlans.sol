@@ -403,10 +403,13 @@ contract VotingTokenLockupPlans is
         require(planId0 != planId1, "same plan");
         require(ownerOf(planId0) == msg.sender, "!owner");
         require(ownerOf(planId1) == msg.sender, "!owner");
-        require(plans[planId0].token == plans[planId1].token, "token error");
-        require(plans[planId0].start == plans[planId1].start, "start error");
-        require(plans[planId0].cliff == plans[planId1].cliff, "cliff error");
-        require(plans[planId0].period == plans[planId1].period, "period error");
+
+        Plan memory plan0 = plans[planId0];
+        Plan memory plan1 = plans[planId1];
+        require(plan0.token == plan1.token, "token error");
+        require(plan0.start == plan1.start, "start error");
+        require(plan0.cliff == plan1.cliff, "cliff error");
+        require(plan0.period == plan1.period, "period error");
         _;
     }
 
