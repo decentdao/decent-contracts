@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import "../../libs/TransferHelper.sol";
-import "../../interfaces/hedgey/IVestingPlans.sol";
 import "../../interfaces/hedgey/ILockupPlans.sol";
 
 /// @title BatchPlanner - contract to create batches of lockup and vesting plans in bulk
@@ -67,62 +66,6 @@ contract BatchPlanner {
                 plans[i].cliff,
                 plans[i].rate,
                 period
-            );
-            amountCheck += plans[i].amount;
-        }
-        require(amountCheck == totalAmount, "totalAmount error");
-        emit BatchCreated(
-            msg.sender,
-            token,
-            plans.length,
-            totalAmount,
-            mintType
-        );
-    }
-
-    /// @notice function to create a batch of vesting plans.
-    /// @dev the function will pull in the entire balance of totalAmount to the contract, increase the allowance and then via loop mint vesting plans
-    /// @param locker is the address of the lockup plan that the tokens will be locked in, and NFT plan provided to
-    /// @param token is the address of the token that is given and locked to the individuals
-    /// @param totalAmount is the total amount of tokens being locked, this has to equal the sum of all the individual amounts in the plans struct
-    /// @param plans is the array of plans that contain each plan parameters
-    /// @param period is the length of the period in seconds that tokens become unlocked / vested
-    /// @param vestingAdmin is the address of the vesting admin, that will be the same for all plans created
-    /// @param adminTransferOBO is an emergency toggle that allows the vesting admin to tranfer a vesting plan on behalf of a beneficiary
-    /// @param mintType is an internal tool to help with identifying front end applications
-    function batchVestingPlans(
-        address locker,
-        address token,
-        uint256 totalAmount,
-        Plan[] calldata plans,
-        uint256 period,
-        address vestingAdmin,
-        bool adminTransferOBO,
-        uint8 mintType
-    ) external {
-        require(totalAmount > 0, "0_totalAmount");
-        require(locker != address(0), "0_locker");
-        require(token != address(0), "0_token");
-        require(plans.length > 0, "no plans");
-        TransferHelper.transferTokens(
-            token,
-            msg.sender,
-            address(this),
-            totalAmount
-        );
-        SafeERC20.safeIncreaseAllowance(IERC20(token), locker, totalAmount);
-        uint256 amountCheck;
-        for (uint16 i; i < plans.length; i++) {
-            IVestingPlans(locker).createPlan(
-                plans[i].recipient,
-                token,
-                plans[i].amount,
-                plans[i].start,
-                plans[i].cliff,
-                plans[i].rate,
-                period,
-                vestingAdmin,
-                adminTransferOBO
             );
             amountCheck += plans[i].amount;
         }
