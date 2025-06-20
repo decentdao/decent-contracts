@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.30;
 
-import "./PlanDelegator.sol";
 import "./VotingVault.sol";
-import "./URIAdmin.sol";
-import "./LockupStorage.sol";
+import "./modules/PlanDelegator.sol";
+import "./modules/URIAdmin.sol";
+import "./modules/LockupStorage.sol";
+import "./libs/TimelockLibrary.sol";
 import "../../libs/TransferHelper.sol";
-import "../../libs/TimelockLibrary.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 

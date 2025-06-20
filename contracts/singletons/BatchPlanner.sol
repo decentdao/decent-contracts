@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.30;
 
-import "../../libs/TransferHelper.sol";
-import "../../interfaces/hedgey/ILockupPlans.sol";
+import "../libs/TransferHelper.sol";
+import "../interfaces/hedgey/ILockupPlans.sol";
 
-/// @title BatchPlanner - contract to create batches of lockup and vesting plans in bulk
+/// @title BatchPlanner - contract to create batches of lockup plans in bulk
 
 contract BatchPlanner {
     /// @dev struct object that defines the parameters of a general lockup and vesting plan, that are shared by both lockup and vesting plans

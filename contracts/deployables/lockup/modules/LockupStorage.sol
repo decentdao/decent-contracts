@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.30;
 
-import "../../libs/TimelockLibrary.sol";
+import "../libs/TimelockLibrary.sol";
 
 /// @notice This contract is the storage contract for the Lockup Plans contracts.
 /// it contains the storage of the lockup plan object (Plan struct), as well as the events that the lockup plan contracts emit
