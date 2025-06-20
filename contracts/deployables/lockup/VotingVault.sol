@@ -25,7 +25,7 @@ contract VotingVault {
     }
 
     modifier onlyController() {
-        require(msg.sender == controller);
+        require(msg.sender == controller, "not controller");
         _;
     }
 

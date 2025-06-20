@@ -131,7 +131,7 @@ contract MockERC20Votes is ERC20, ERC20Permit, IVotes {
     /**
      * @dev Implementation of the delegation function from IVotes
      */
-    function delegate(address delegatee) public override {
+    function delegate(address delegatee) public virtual override {
         _delegates[msg.sender] = delegatee;
     }
 
