@@ -8,7 +8,7 @@ import {
   SystemDeployerEventEmitterV1,
   SystemDeployerEventEmitterV1__factory,
 } from '../../typechain-types';
-import { calculateInterfaceId } from '../helpers/utils';
+import { runSupportsInterfaceTests } from '../shared/supportsInterfaceTests';
 
 describe('SystemDeployerEventEmitterV1', function () {
   let systemDeployerEventEmitter: SystemDeployerEventEmitterV1;
@@ -69,32 +69,13 @@ describe('SystemDeployerEventEmitterV1', function () {
   });
 
   describe('ERC165 supportsInterface', function () {
-    it('should support ISystemDeployerEventEmitterV1 interface', async function () {
-      void expect(
-        await systemDeployerEventEmitter.supportsInterface(
-          calculateInterfaceId(ISystemDeployerEventEmitterV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVersion interface', async function () {
-      void expect(
-        await systemDeployerEventEmitter.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support ERC165 interface', async function () {
-      void expect(
-        await systemDeployerEventEmitter.supportsInterface(
-          calculateInterfaceId(ERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support random interface', async function () {
-      void expect(await systemDeployerEventEmitter.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => systemDeployerEventEmitter,
+      supportedInterfaceFactories: [
+        ISystemDeployerEventEmitterV1__factory,
+        IVersion__factory,
+        ERC165__factory,
+      ],
     });
   });
 });

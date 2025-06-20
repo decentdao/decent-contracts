@@ -13,8 +13,8 @@ import {
   ProposerAdapterERC20V1,
   ProposerAdapterERC20V1__factory,
 } from '../../../../../typechain-types';
-import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../../../helpers/utils';
+import { runDeploymentBlockTests } from '../../../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../../../shared/supportsInterfaceTests';
 
 async function deployERC20ProposerAdapterProxy(
   deployer: SignerWithAddress,
@@ -98,14 +98,14 @@ describe('ProposerAdapterERC20V1', () => {
       await mockToken.connect(deployer).mint(user1.address, DEFAULT_PROPOSER_THRESHOLD);
       await mockToken.connect(user1).delegate(user1.address);
       const canPropose = await adapter.isProposer(user1.address, ethers.ZeroHash);
-      void expect(canPropose).to.be.true;
+      expect(canPropose).to.be.true;
     });
 
     it('should return true if user exceeds the proposer threshold', async () => {
       await mockToken.connect(deployer).mint(user1.address, DEFAULT_PROPOSER_THRESHOLD);
       await mockToken.connect(user1).delegate(user1.address);
       const canPropose = await adapter.isProposer(user1.address, ethers.ZeroHash);
-      void expect(canPropose).to.be.true;
+      expect(canPropose).to.be.true;
     });
 
     it('should return false if user is below the proposer threshold', async () => {
@@ -115,13 +115,13 @@ describe('ProposerAdapterERC20V1', () => {
       await mockToken.connect(user1).delegate(user1.address);
 
       const canPropose = await adapter.isProposer(user1.address, ethers.ZeroHash);
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should return false if user has no votes (or token balance)', async () => {
       await mockToken.connect(user1).delegate(user1.address);
       const canPropose = await adapter.isProposer(user1.address, ethers.ZeroHash);
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should return true if proposerThreshold is 0, even with zero votes', async () => {
@@ -133,7 +133,7 @@ describe('ProposerAdapterERC20V1', () => {
       );
       await mockToken.connect(user1).delegate(user1.address);
       const canPropose = await localAdapter.isProposer(user1.address, ethers.ZeroHash);
-      void expect(canPropose).to.be.true;
+      expect(canPropose).to.be.true;
     });
   });
 
@@ -144,46 +144,18 @@ describe('ProposerAdapterERC20V1', () => {
   });
 
   describe('ERC165 supportsInterface', () => {
-    it('should support IProposerAdapterERC20V1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IProposerAdapterERC20V1__factory.createInterface(), [
-            IProposerAdapterBaseV1__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IProposerAdapterBaseV1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IProposerAdapterBaseV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVersion', async () => {
-      void expect(
-        await adapter.supportsInterface(calculateInterfaceId(IVersion__factory.createInterface())),
-      ).to.be.true;
-    });
-
-    it('should support IERC165', async () => {
-      void expect(
-        await adapter.supportsInterface(calculateInterfaceId(IERC165__factory.createInterface())),
-      ).to.be.true;
-    });
-
-    it('should support IDeploymentBlockV1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support a random interfaceId', async () => {
-      void expect(await adapter.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => adapter,
+      supportedInterfaceFactories: [
+        {
+          factory: IProposerAdapterERC20V1__factory,
+          inheritedFactories: [IProposerAdapterBaseV1__factory],
+        },
+        IProposerAdapterBaseV1__factory,
+        IVersion__factory,
+        IERC165__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

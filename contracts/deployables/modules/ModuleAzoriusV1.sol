@@ -26,37 +26,36 @@ contract ModuleAzoriusV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    /**
-     * ```
-     * keccak256(
-     *      "EIP712Domain(uint256 chainId,address verifyingContract)"
-     * );
-     * ```
-     *
-     * A unique hash intended to prevent signature collisions.
-     *
-     * See https://eips.ethereum.org/EIPS/eip-712.
-     */
+    /// @custom:storage-location erc7201:Decent.ModuleAzorius.main
+    struct ModuleAzoriusStorage {
+        uint32 totalProposalCount;
+        uint32 timelockPeriod;
+        uint32 executionPeriod;
+        mapping(uint32 proposalId => Proposal proposal) proposals;
+        IStrategyV1 strategy;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.ModuleAzorius.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant MODULE_AZORIUS_STORAGE_LOCATION =
+        0xedd394c11bb1dac1602ad0766d0e03cc697fdaf9a9996bf169d40a2c3b6fa100;
+
+    function _getModuleAzoriusStorage()
+        internal
+        pure
+        returns (ModuleAzoriusStorage storage $)
+    {
+        assembly {
+            $.slot := MODULE_AZORIUS_STORAGE_LOCATION
+        }
+    }
+
     bytes32 public constant DOMAIN_SEPARATOR_TYPEHASH =
-        0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+        keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
 
-    /**
-     * ```
-     * keccak256(
-     *      "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
-     * );
-     * ```
-     *
-     * See https://eips.ethereum.org/EIPS/eip-712.
-     */
     bytes32 public constant TRANSACTION_TYPEHASH =
-        0x72e9670a7ee00f5fbf1049b8c38e3f22fab7e9b85029e85cf9412f17fdd5c2ad;
-
-    uint32 internal _totalProposalCount;
-    uint32 internal _timelockPeriod;
-    uint32 internal _executionPeriod;
-    mapping(uint32 proposalId => Proposal proposal) internal _proposals;
-    IStrategyV1 internal _strategy;
+        keccak256(
+            "Transaction(address to,uint256 value,bytes data,uint8 operation,uint256 nonce)"
+        );
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -136,32 +135,38 @@ contract ModuleAzoriusV1 is
         override
         returns (uint32)
     {
-        return _totalProposalCount;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.totalProposalCount;
     }
 
     function timelockPeriod() public view virtual override returns (uint32) {
-        return _timelockPeriod;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.timelockPeriod;
     }
 
     function executionPeriod() public view virtual override returns (uint32) {
-        return _executionPeriod;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.executionPeriod;
     }
 
     function proposals(
         uint32 proposalId_
     ) public view virtual override returns (Proposal memory) {
-        return _proposals[proposalId_];
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.proposals[proposalId_];
     }
 
     function strategy() public view virtual override returns (address) {
-        return address(_strategy);
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return address($.strategy);
     }
 
     function proposalState(
         uint32 proposalId_
     ) public view virtual override returns (ProposalState) {
-        if (proposalId_ >= _totalProposalCount) revert InvalidProposal();
-        Proposal memory _proposal = _proposals[proposalId_];
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        if (proposalId_ >= $.totalProposalCount) revert InvalidProposal();
+        Proposal memory _proposal = $.proposals[proposalId_];
         IStrategyV1 strategy_ = IStrategyV1(_proposal.strategy);
 
         (, uint48 votingEndTimestamp) = strategy_.getVotingTimestamps(
@@ -227,13 +232,15 @@ contract ModuleAzoriusV1 is
         uint32 proposalId_,
         uint32 txIndex_
     ) public view virtual override returns (bytes32) {
-        return _proposals[proposalId_].txHashes[txIndex_];
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.proposals[proposalId_].txHashes[txIndex_];
     }
 
     function getProposalTxHashes(
         uint32 proposalId_
     ) public view virtual override returns (bytes32[] memory) {
-        return _proposals[proposalId_].txHashes;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        return $.proposals[proposalId_].txHashes;
     }
 
     function getProposal(
@@ -245,7 +252,8 @@ contract ModuleAzoriusV1 is
         override
         returns (address, bytes32[] memory, uint32, uint32, uint32)
     {
-        Proposal memory _proposal = _proposals[proposalId_];
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        Proposal memory _proposal = $.proposals[proposalId_];
         return (
             _proposal.strategy,
             _proposal.txHashes,
@@ -281,8 +289,9 @@ contract ModuleAzoriusV1 is
         address proposerAdapter_,
         bytes calldata proposerAdapterData_
     ) public virtual override {
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
         if (
-            !_strategy.isProposer(
+            !$.strategy.isProposer(
                 msg.sender,
                 proposerAdapter_,
                 proposerAdapterData_
@@ -298,22 +307,23 @@ contract ModuleAzoriusV1 is
             }
         }
 
-        _proposals[_totalProposalCount].strategy = address(_strategy);
-        _proposals[_totalProposalCount].txHashes = txHashes;
-        _proposals[_totalProposalCount].timelockPeriod = _timelockPeriod;
-        _proposals[_totalProposalCount].executionPeriod = _executionPeriod;
+        Proposal storage proposal = $.proposals[$.totalProposalCount];
+        proposal.strategy = address($.strategy);
+        proposal.txHashes = txHashes;
+        proposal.timelockPeriod = $.timelockPeriod;
+        proposal.executionPeriod = $.executionPeriod;
 
-        _strategy.initializeProposal(_totalProposalCount);
+        $.strategy.initializeProposal($.totalProposalCount);
 
         emit ProposalCreated(
-            address(_strategy),
-            _totalProposalCount,
+            address($.strategy),
+            $.totalProposalCount,
             msg.sender,
             transactions_,
             metadata_
         );
 
-        _totalProposalCount++;
+        $.totalProposalCount++;
     }
 
     function executeProposal(
@@ -321,10 +331,15 @@ contract ModuleAzoriusV1 is
         Transaction[] calldata transactions_
     ) public virtual override {
         if (transactions_.length == 0) revert InvalidTxs();
+
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        Proposal memory proposal = $.proposals[proposalId_];
+
         if (
-            _proposals[proposalId_].executionCounter + transactions_.length >
-            _proposals[proposalId_].txHashes.length
+            proposal.executionCounter + transactions_.length >
+            proposal.txHashes.length
         ) revert InvalidTxs();
+
         uint256 transactionsLength = transactions_.length;
         bytes32[] memory txHashes = new bytes32[](transactionsLength);
         for (uint256 i; i < transactionsLength; ) {
@@ -398,13 +413,15 @@ contract ModuleAzoriusV1 is
         if (proposalState(proposalId_) != ProposalState.EXECUTABLE)
             revert ProposalNotExecutable();
         bytes32 txHash = getTxHash(transaction_);
-        if (
-            _proposals[proposalId_].txHashes[
-                _proposals[proposalId_].executionCounter
-            ] != txHash
-        ) revert InvalidTxHash();
 
-        _proposals[proposalId_].executionCounter++;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+
+        Proposal storage proposal = $.proposals[proposalId_];
+
+        if (proposal.txHashes[proposal.executionCounter] != txHash)
+            revert InvalidTxHash();
+
+        proposal.executionCounter++;
 
         if (
             !exec(
@@ -419,18 +436,22 @@ contract ModuleAzoriusV1 is
     }
 
     function _updateTimelockPeriod(uint32 timelockPeriod_) internal virtual {
-        _timelockPeriod = timelockPeriod_;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        $.timelockPeriod = timelockPeriod_;
         emit TimelockPeriodUpdated(timelockPeriod_);
     }
 
     function _updateExecutionPeriod(uint32 executionPeriod_) internal virtual {
-        _executionPeriod = executionPeriod_;
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        $.executionPeriod = executionPeriod_;
         emit ExecutionPeriodUpdated(executionPeriod_);
     }
 
     function _updateStrategy(address strategy_) internal virtual {
         if (strategy_ == address(0)) revert InvalidStrategy();
-        _strategy = IStrategyV1(strategy_);
+
+        ModuleAzoriusStorage storage $ = _getModuleAzoriusStorage();
+        $.strategy = IStrategyV1(strategy_);
         emit StrategyUpdated(strategy_);
     }
 }

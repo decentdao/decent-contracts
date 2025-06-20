@@ -15,9 +15,64 @@ import {
   VotesERC20StakedV1,
   VotesERC20StakedV1__factory,
 } from '../../../typechain-types';
-import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
-import { calculateInterfaceId, executeTxAndCheckBalanceDeltas } from '../../helpers/utils';
-import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
+import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests';
+
+// Helper function to check multiple token transfers
+async function runExecuteTxAndCheckBalanceDeltasTests(
+  tx: () => Promise<any>,
+  signer: SignerWithAddress,
+  transfers: {
+    addressToCheck: string;
+    token: string; // address or 'native' for ETH
+    expectedBalanceDelta: bigint; // positive for receiving, negative for sending
+  }[],
+): Promise<void> {
+  // Get initial balances
+  const initialBalances = await Promise.all(
+    transfers.map(async t => {
+      if (t.token === 'native') {
+        return ethers.provider.getBalance(t.addressToCheck);
+      } else {
+        const token = await ethers.getContractAt('IERC20', t.token);
+        const balance = await token.balanceOf(t.addressToCheck);
+        return balance;
+      }
+    }),
+  );
+
+  // Execute transaction
+  const txResponse = await tx();
+  const receipt = await txResponse.wait();
+  const gasSpent = BigInt(receipt!.gasUsed) * BigInt(receipt!.gasPrice);
+
+  // Get final balances and check changes
+  for (let i = 0; i < transfers.length; i++) {
+    const transfer = transfers[i];
+    let finalBalance: bigint;
+
+    if (transfer.token === 'native') {
+      finalBalance = await ethers.provider.getBalance(transfer.addressToCheck);
+    } else {
+      const token = await ethers.getContractAt('IERC20', transfer.token);
+      finalBalance = await token.balanceOf(transfer.addressToCheck);
+    }
+
+    const balanceChange = finalBalance - initialBalances[i];
+
+    // For native token, add gas spent if this is the signer
+    const actualChange =
+      transfer.token === 'native' && transfer.addressToCheck === signer.address
+        ? balanceChange + gasSpent
+        : balanceChange;
+
+    expect(actualChange).to.equal(
+      transfer.expectedBalanceDelta,
+      `Token ${transfer.token} transfer check failed for ${transfer.addressToCheck}`,
+    );
+  }
+}
 
 // Helper function for deploying VotesERC20StakedV1 instances using ERC1967Proxy
 async function deployVotesERC20StakedProxy(
@@ -253,13 +308,7 @@ describe('VotesERC20StakedV1', () => {
     });
   });
 
-  describe('ERC165', function () {
-    // Interface IDs
-    let iVersionInterfaceId: string;
-    let iERC20InterfaceId: string;
-    let iVotesInterfaceId: string;
-    let iERC165InterfaceId: string;
-    let iVotesERC20StakedV1InterfaceId: string;
+  describe('ERC165 supportsInterface', function () {
     beforeEach(async function () {
       votesERC20Staked = await deployVotesERC20StakedProxy(
         proxyDeployer,
@@ -275,61 +324,18 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenC.getAddress(),
         ],
       );
-
-      // Calculate interface IDs
-      const IVersionInterface = IVersion__factory.createInterface();
-      iVersionInterfaceId = calculateInterfaceId(IVersionInterface);
-
-      const IERC20Interface = IERC20__factory.createInterface();
-      iERC20InterfaceId = calculateInterfaceId(IERC20Interface);
-
-      const IVotesInterface = IVotes__factory.createInterface();
-      iVotesInterfaceId = calculateInterfaceId(IVotesInterface);
-
-      const IERC165Interface = IERC165__factory.createInterface();
-      iERC165InterfaceId = calculateInterfaceId(IERC165Interface);
-
-      const IVotesERC20StakedV1Interface = IVotesERC20StakedV1__factory.createInterface();
-      iVotesERC20StakedV1InterfaceId = calculateInterfaceId(IVotesERC20StakedV1Interface);
     });
 
-    it('Should support IERC165 interface', async function () {
-      const supported = await votesERC20Staked.supportsInterface(iERC165InterfaceId);
-      void expect(supported).to.be.true;
-    });
-
-    it('Should support IVotesERC20StakedV1 interface', async function () {
-      const supported = await votesERC20Staked.supportsInterface(iVotesERC20StakedV1InterfaceId);
-      void expect(supported).to.be.true;
-    });
-
-    it('Should support IVersion interface', async function () {
-      const supported = await votesERC20Staked.supportsInterface(iVersionInterfaceId);
-      void expect(supported).to.be.true;
-    });
-
-    it('Should support IERC20 interface', async function () {
-      const supported = await votesERC20Staked.supportsInterface(iERC20InterfaceId);
-      void expect(supported).to.be.true;
-    });
-
-    it('Should support IVotes interface', async function () {
-      const supported = await votesERC20Staked.supportsInterface(iVotesInterfaceId);
-      void expect(supported).to.be.true;
-    });
-
-    it('Should support IDeploymentBlockV1 interface', async function () {
-      void expect(
-        await votesERC20Staked.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should not support random interface', async function () {
-      const randomInterfaceId = '0x12345678';
-      const supported = await votesERC20Staked.supportsInterface(randomInterfaceId);
-      void expect(supported).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => votesERC20Staked,
+      supportedInterfaceFactories: [
+        IERC165__factory,
+        IVotesERC20StakedV1__factory,
+        IVersion__factory,
+        IERC20__factory,
+        IVotes__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 
@@ -991,7 +997,7 @@ describe('VotesERC20StakedV1', () => {
       // Bob => 75% of available rewards
 
       // Alice claims rewards for all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(alice)['claimRewards(address)'](alice.address),
         alice,
         [
@@ -1014,7 +1020,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // Bob claims rewards for all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(bob)['claimRewards(address)'](bob.address),
         bob,
         [
@@ -1056,7 +1062,7 @@ describe('VotesERC20StakedV1', () => {
       await votesERC20Staked.connect(rewardsDistributor)['distributeRewards()']();
 
       // Alice claims rewards for token A and B
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(alice)
@@ -1084,7 +1090,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // Alice claims rewards for native asset
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(alice)
@@ -1110,7 +1116,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // Bob claims rewards for token A and B
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(bob)
@@ -1136,7 +1142,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // Bob claims rewards for native asset
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(bob)
@@ -1275,7 +1281,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // Bob claims rewards for all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(bob)['claimRewards(address)'](bob.address),
         bob,
         [
@@ -1333,7 +1339,7 @@ describe('VotesERC20StakedV1', () => {
       await time.increase(604800);
 
       // Bob unstakes 10 tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(bob).unstake(ethers.parseEther('10')),
         bob,
         [
@@ -1351,7 +1357,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // alice stakes 10 more tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(alice).stake(ethers.parseEther('10')),
         alice,
         [
@@ -1426,7 +1432,7 @@ describe('VotesERC20StakedV1', () => {
       );
 
       // carol stakes 40 tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(carol).stake(ethers.parseEther('40')),
         carol,
         [
@@ -1501,7 +1507,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Carol stakes 20 more tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(carol).stake(ethers.parseEther('20')),
         carol,
         [
@@ -1526,7 +1532,7 @@ describe('VotesERC20StakedV1', () => {
       // Total   |  100
 
       // Bob claims rewards for staked token
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(bob)
@@ -1617,7 +1623,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Bob claims all rewards
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(bob)
@@ -1691,7 +1697,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Bob unstakes all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(bob).unstake(ethers.parseEther('20')),
         bob,
         [
@@ -1757,7 +1763,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Alice claims all rewards
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(alice)
@@ -1812,7 +1818,7 @@ describe('VotesERC20StakedV1', () => {
       await time.increase(604800);
 
       // Alice unstakes all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(alice).unstake(ethers.parseEther('20')),
         alice,
         [
@@ -1850,7 +1856,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Carol unstakes all tokens
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         () => votesERC20Staked.connect(carol).unstake(ethers.parseEther('60')),
         carol,
         [
@@ -1888,7 +1894,7 @@ describe('VotesERC20StakedV1', () => {
       ]);
 
       // Carol claims all rewards
-      await executeTxAndCheckBalanceDeltas(
+      await runExecuteTxAndCheckBalanceDeltasTests(
         async () =>
           votesERC20Staked
             .connect(carol)

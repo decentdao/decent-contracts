@@ -4,11 +4,10 @@ pragma solidity ^0.8.30;
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVotingAdapterBaseV1} from "../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
 import {IProposerAdapterBaseV1} from "../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
-import {IVoterResolverV1} from "../../interfaces/decent/deployables/IVoterResolverV1.sol";
-import {ISmartAccountValidationV1} from "../../interfaces/decent/deployables/ISmartAccountValidationV1.sol";
+import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {VoterResolverV1} from "./VoterResolverV1.sol";
+import {LightAccountValidatorV1} from "../account-abstraction/LightAccountValidatorV1.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -16,39 +15,52 @@ contract StrategyV1 is
     IStrategyV1,
     IVersion,
     DeploymentBlockV1,
-    VoterResolverV1,
+    LightAccountValidatorV1,
     ERC165
 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
-    uint256 public constant BASIS_DENOMINATOR = 1_000_000;
+    /// @custom:storage-location erc7201:Decent.Strategy.main
+    struct StrategyStorage {
+        address strategyAdmin;
+        uint32 votingPeriod;
+        uint256 quorumThreshold;
+        uint256 basisNumerator;
+        mapping(uint32 proposalId => ProposalVotingDetails proposalVotingDetails) proposalVotingDetails;
+        address[] votingAdapters;
+        address[] proposerAdapters;
+        mapping(address votingAdapter => bool isVotingAdapter) isVotingAdapter;
+        mapping(address proposerAdapter => bool isProposerAdapter) isProposerAdapter;
+        mapping(address freezeVoterContract => bool isAuthorizedFreezeVoter) authorizedFreezeVotersMapping;
+        address[] authorizedFreezeVotersArray;
+        mapping(uint32 proposalId => bool voteCastedAfterVotingPeriodEnded) voteCastedAfterVotingPeriodEnded;
+    }
 
-    address internal _strategyAdmin;
-    uint32 internal _votingPeriod;
-    uint256 internal _quorumThreshold;
-    uint256 internal _basisNumerator;
-    mapping(uint32 proposalId => ProposalVotingDetails proposalVotingDetails)
-        internal _proposalVotingDetails;
-    address[] internal _votingAdapters;
-    address[] internal _proposerAdapters;
-    mapping(address votingAdapter => bool isVotingAdapter)
-        internal _isVotingAdapter;
-    mapping(address proposerAdapter => bool isProposerAdapter)
-        internal _isProposerAdapter;
-    mapping(address freezeVoterContract => bool isAuthorizedFreezeVoter)
-        internal _authorizedFreezeVotersMapping;
-    address[] internal _authorizedFreezeVotersArray;
-    mapping(uint32 proposalId => bool voteCastedAfterVotingPeriodEnded)
-        internal _voteCastedAfterVotingPeriodEnded;
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.Strategy.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant STRATEGY_STORAGE_LOCATION =
+        0x95295deadfd7c71125b4fbd75b5d49605029b50806f286522633fd9c072a4700;
+
+    function _getStrategyStorage()
+        internal
+        pure
+        returns (StrategyStorage storage $)
+    {
+        assembly {
+            $.slot := STRATEGY_STORAGE_LOCATION
+        }
+    }
+
+    uint256 public constant BASIS_DENOMINATOR = 1_000_000;
 
     // ======================================================================
     // MODIFIERS
     // ======================================================================
 
     modifier onlyStrategyAdmin() {
-        if (msg.sender != _strategyAdmin) revert InvalidStrategyAdmin();
+        StrategyStorage storage $ = _getStrategyStorage();
+        if (msg.sender != $.strategyAdmin) revert InvalidStrategyAdmin();
         _;
     }
 
@@ -76,15 +88,17 @@ contract StrategyV1 is
             basisNumerator_ < BASIS_DENOMINATOR / 2
         ) revert InvalidBasisNumerator();
 
-        __VoterResolverV1_init(lightAccountFactory_);
+        __LightAccountValidatorV1_init(lightAccountFactory_);
         __DeploymentBlockV1_init();
-        _votingPeriod = votingPeriod_;
-        _quorumThreshold = quorumThreshold_;
-        _basisNumerator = basisNumerator_;
-        _proposerAdapters = proposerAdapters_;
+
+        StrategyStorage storage $ = _getStrategyStorage();
+        $.votingPeriod = votingPeriod_;
+        $.quorumThreshold = quorumThreshold_;
+        $.basisNumerator = basisNumerator_;
+        $.proposerAdapters = proposerAdapters_;
 
         for (uint256 i = 0; i < proposerAdapters_.length; ) {
-            _isProposerAdapter[proposerAdapters_[i]] = true;
+            $.isProposerAdapter[proposerAdapters_[i]] = true;
             unchecked {
                 ++i;
             }
@@ -99,11 +113,13 @@ contract StrategyV1 is
             revert NoVotingAdapters();
         }
 
-        _strategyAdmin = strategyAdmin_;
-        _votingAdapters = votingAdapters_;
+        StrategyStorage storage $ = _getStrategyStorage();
+
+        $.strategyAdmin = strategyAdmin_;
+        $.votingAdapters = votingAdapters_;
 
         for (uint256 i = 0; i < votingAdapters_.length; ) {
-            _isVotingAdapter[votingAdapters_[i]] = true;
+            $.isVotingAdapter[votingAdapters_[i]] = true;
             unchecked {
                 ++i;
             }
@@ -117,25 +133,30 @@ contract StrategyV1 is
     // --- View Functions ---
 
     function strategyAdmin() public view virtual override returns (address) {
-        return _strategyAdmin;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.strategyAdmin;
     }
 
     function votingPeriod() public view virtual override returns (uint32) {
-        return _votingPeriod;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.votingPeriod;
     }
 
     function quorumThreshold() public view virtual override returns (uint256) {
-        return _quorumThreshold;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.quorumThreshold;
     }
 
     function basisNumerator() public view virtual override returns (uint256) {
-        return _basisNumerator;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.basisNumerator;
     }
 
     function proposalVotingDetails(
         uint32 proposalId
     ) public view virtual override returns (ProposalVotingDetails memory) {
-        return _proposalVotingDetails[proposalId];
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.proposalVotingDetails[proposalId];
     }
 
     function votingAdapters()
@@ -145,19 +166,22 @@ contract StrategyV1 is
         override
         returns (address[] memory)
     {
-        return _votingAdapters;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.votingAdapters;
     }
 
     function isVotingAdapter(
         address votingAdapter_
     ) public view virtual override returns (bool) {
-        return _isVotingAdapter[votingAdapter_];
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.isVotingAdapter[votingAdapter_];
     }
 
     function isProposerAdapter(
         address proposerAdapter_
     ) public view virtual override returns (bool) {
-        return _isProposerAdapter[proposerAdapter_];
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.isProposerAdapter[proposerAdapter_];
     }
 
     function proposerAdapters()
@@ -167,19 +191,22 @@ contract StrategyV1 is
         override
         returns (address[] memory)
     {
-        return _proposerAdapters;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.proposerAdapters;
     }
 
     function voteCastedAfterVotingPeriodEnded(
         uint32 proposalId_
     ) public view virtual override returns (bool) {
-        return _voteCastedAfterVotingPeriodEnded[proposalId_];
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.voteCastedAfterVotingPeriodEnded[proposalId_];
     }
 
     function isQuorumMet(
         uint32 proposalId_
     ) public view virtual override returns (bool) {
-        ProposalVotingDetails storage proposal = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
             proposalId_
         ];
 
@@ -188,13 +215,14 @@ contract StrategyV1 is
         }
 
         uint256 totalVotesForQuorum = proposal.yesVotes + proposal.abstainVotes;
-        return totalVotesForQuorum >= _quorumThreshold;
+        return totalVotesForQuorum >= $.quorumThreshold;
     }
 
     function isBasisMet(
         uint32 _proposalId
     ) public view virtual override returns (bool) {
-        ProposalVotingDetails storage proposal = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
             _proposalId
         ];
 
@@ -204,13 +232,14 @@ contract StrategyV1 is
 
         return
             (proposal.yesVotes * BASIS_DENOMINATOR) >
-            ((proposal.yesVotes + proposal.noVotes) * _basisNumerator);
+            ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
     }
 
     function isPassed(
         uint32 _proposalId
     ) public view virtual override returns (bool) {
-        ProposalVotingDetails storage proposal = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
             _proposalId
         ];
 
@@ -230,7 +259,8 @@ contract StrategyV1 is
         address proposerAdapter_,
         bytes calldata proposerAdapterData_
     ) public view virtual override returns (bool) {
-        if (!_isProposerAdapter[proposerAdapter_]) {
+        StrategyStorage storage $ = _getStrategyStorage();
+        if (!$.isProposerAdapter[proposerAdapter_]) {
             revert InvalidProposerAdapter();
         }
 
@@ -244,7 +274,8 @@ contract StrategyV1 is
     function getVotingTimestamps(
         uint32 proposalId_
     ) public view virtual override returns (uint48, uint48) {
-        ProposalVotingDetails storage details = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage details = $.proposalVotingDetails[
             proposalId_
         ];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
@@ -254,7 +285,8 @@ contract StrategyV1 is
     function getVotingStartBlock(
         uint32 proposalId_
     ) public view virtual override returns (uint32) {
-        ProposalVotingDetails storage details = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage details = $.proposalVotingDetails[
             proposalId_
         ];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
@@ -264,7 +296,8 @@ contract StrategyV1 is
     function isAuthorizedFreezeVoter(
         address freezeVoterContract_
     ) public view virtual override returns (bool) {
-        return _authorizedFreezeVotersMapping[freezeVoterContract_];
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.authorizedFreezeVotersMapping[freezeVoterContract_];
     }
 
     function authorizedFreezeVoters()
@@ -274,7 +307,8 @@ contract StrategyV1 is
         override
         returns (address[] memory)
     {
-        return _authorizedFreezeVotersArray;
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.authorizedFreezeVotersArray;
     }
 
     function validStrategyVote(
@@ -287,8 +321,10 @@ contract StrategyV1 is
             return false;
         }
 
+        StrategyStorage storage $ = _getStrategyStorage();
+
         // get the proposal start and end timestamps to determine if the proposal exists
-        ProposalVotingDetails storage details = _proposalVotingDetails[
+        ProposalVotingDetails storage details = $.proposalVotingDetails[
             proposalId_
         ];
 
@@ -298,7 +334,7 @@ contract StrategyV1 is
         }
 
         // Check if voting period has ended
-        if (_voteCastedAfterVotingPeriodEnded[proposalId_]) {
+        if ($.voteCastedAfterVotingPeriodEnded[proposalId_]) {
             return false;
         }
 
@@ -316,7 +352,7 @@ contract StrategyV1 is
             address votingAdapter = votingAdapterVoteData.votingAdapter;
 
             // check if the voting adapter is attached to this strategy
-            if (!_isVotingAdapter[votingAdapter]) {
+            if (!$.isVotingAdapter[votingAdapter]) {
                 return false;
             }
 
@@ -348,11 +384,12 @@ contract StrategyV1 is
     function initializeProposal(
         uint32 proposalId_
     ) public virtual override onlyStrategyAdmin {
-        ProposalVotingDetails storage proposal = _proposalVotingDetails[
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
             proposalId_
         ];
         proposal.votingStartTimestamp = uint48(block.timestamp);
-        proposal.votingEndTimestamp = uint48(block.timestamp + _votingPeriod);
+        proposal.votingEndTimestamp = uint48(block.timestamp + $.votingPeriod);
         proposal.votingStartBlock = uint32(block.number);
         proposal.yesVotes = 0;
         proposal.noVotes = 0;
@@ -366,17 +403,23 @@ contract StrategyV1 is
         );
     }
 
-    function vote(
+    function castVote(
         uint32 proposalId_,
         uint8 voteType_,
-        VotingAdapterVoteData[] calldata votingAdaptersData
+        VotingAdapterVoteData[] calldata votingAdaptersData,
+        uint256 lightAccountIndex_
     ) public virtual override {
         if (votingAdaptersData.length == 0) {
             revert NoVotingAdapters();
         }
 
-        address resolvedVoter = voter(msg.sender);
-        ProposalVotingDetails storage proposal = _proposalVotingDetails[
+        address resolvedVoter = potentialLightAccountResolvedOwner(
+            msg.sender,
+            lightAccountIndex_
+        );
+
+        StrategyStorage storage $ = _getStrategyStorage();
+        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
             proposalId_
         ];
 
@@ -385,8 +428,8 @@ contract StrategyV1 is
         }
 
         if (block.timestamp > proposal.votingEndTimestamp) {
-            if (!_voteCastedAfterVotingPeriodEnded[proposalId_]) {
-                _voteCastedAfterVotingPeriodEnded[proposalId_] = true;
+            if (!$.voteCastedAfterVotingPeriodEnded[proposalId_]) {
+                $.voteCastedAfterVotingPeriodEnded[proposalId_] = true;
                 emit VotingPeriodEnded(proposalId_);
                 return;
             }
@@ -400,7 +443,7 @@ contract StrategyV1 is
                 memory votingAdapterVoteData = votingAdaptersData[i];
             address votingAdapter = votingAdapterVoteData.votingAdapter;
 
-            if (!_isVotingAdapter[votingAdapter]) {
+            if (!$.isVotingAdapter[votingAdapter]) {
                 revert InvalidVotingAdapter(votingAdapter);
             }
 
@@ -444,10 +487,14 @@ contract StrategyV1 is
         address freezeVoterContract_
     ) public virtual override onlyStrategyAdmin {
         if (freezeVoterContract_ == address(0)) revert InvalidAddress();
-        if (!_authorizedFreezeVotersMapping[freezeVoterContract_]) {
-            _authorizedFreezeVotersArray.push(freezeVoterContract_);
+
+        StrategyStorage storage $ = _getStrategyStorage();
+
+        if (!$.authorizedFreezeVotersMapping[freezeVoterContract_]) {
+            $.authorizedFreezeVotersArray.push(freezeVoterContract_);
         }
-        _authorizedFreezeVotersMapping[freezeVoterContract_] = true;
+        $.authorizedFreezeVotersMapping[freezeVoterContract_] = true;
+
         emit FreezeVoterAuthorizationChanged(freezeVoterContract_, true);
     }
 
@@ -455,15 +502,17 @@ contract StrategyV1 is
         address freezeVoterContract_
     ) public virtual override onlyStrategyAdmin {
         if (freezeVoterContract_ == address(0)) revert InvalidAddress();
-        if (_authorizedFreezeVotersMapping[freezeVoterContract_]) {
-            for (uint256 i = 0; i < _authorizedFreezeVotersArray.length; ) {
-                if (_authorizedFreezeVotersArray[i] == freezeVoterContract_) {
-                    _authorizedFreezeVotersArray[
-                        i
-                    ] = _authorizedFreezeVotersArray[
-                        _authorizedFreezeVotersArray.length - 1
-                    ];
-                    _authorizedFreezeVotersArray.pop();
+
+        StrategyStorage storage $ = _getStrategyStorage();
+
+        if ($.authorizedFreezeVotersMapping[freezeVoterContract_]) {
+            for (uint256 i = 0; i < $.authorizedFreezeVotersArray.length; ) {
+                if ($.authorizedFreezeVotersArray[i] == freezeVoterContract_) {
+                    $.authorizedFreezeVotersArray[i] = $
+                        .authorizedFreezeVotersArray[
+                            $.authorizedFreezeVotersArray.length - 1
+                        ];
+                    $.authorizedFreezeVotersArray.pop();
                     break;
                 }
                 unchecked {
@@ -471,7 +520,9 @@ contract StrategyV1 is
                 }
             }
         }
-        _authorizedFreezeVotersMapping[freezeVoterContract_] = false;
+
+        $.authorizedFreezeVotersMapping[freezeVoterContract_] = false;
+
         emit FreezeVoterAuthorizationChanged(freezeVoterContract_, false);
     }
 
@@ -496,8 +547,7 @@ contract StrategyV1 is
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IStrategyV1).interfaceId ||
-            interfaceId_ == type(IVoterResolverV1).interfaceId ||
-            interfaceId_ == type(ISmartAccountValidationV1).interfaceId ||
+            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             super.supportsInterface(interfaceId_);

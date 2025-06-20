@@ -7,26 +7,14 @@ interface ISystemDeployerV1 {
     // --- Errors ---
 
     error ImplementationMustBeAContract();
-    error VotesERC20TokenNotFoundAtIndex(uint256 typeIndex, uint256 tokenIndex);
+    error VotesERC20V1NotFoundAtIndex(uint256 tokenIndex);
     error CannotDeployBothFreezeVotingContracts();
     error FreezeVotingContractNotDeployed();
     error AzoriusModuleNotDeployed();
 
     // --- Structs ---
 
-    struct TypeTokenIndex {
-        uint256 typeI;
-        uint256 tokenI;
-    }
-
     struct VotesERC20V1Params {
-        address implementation;
-        IVotesERC20V1.Metadata metadata;
-        IVotesERC20V1.Allocation[] allocations;
-        uint256 safeSupply;
-    }
-
-    struct VotesERC20LockableV1Params {
         address implementation;
         IVotesERC20V1.Metadata metadata;
         IVotesERC20V1.Allocation[] allocations;
@@ -35,15 +23,10 @@ interface ISystemDeployerV1 {
         uint256 safeSupply;
     }
 
-    struct VotesERC20Params {
-        VotesERC20V1Params[] votesERC20V1Params;
-        VotesERC20LockableV1Params[] votesERC20LockableV1Params;
-    }
-
     struct ProposerAdapterERC20V1Params {
         address implementation;
         address token;
-        TypeTokenIndex index;
+        uint256 newTokenIndex;
         uint256 proposerThreshold;
     }
 
@@ -76,7 +59,7 @@ interface ISystemDeployerV1 {
     struct VotingAdapterERC20V1Params {
         address implementation;
         address token;
-        TypeTokenIndex index;
+        uint256 newTokenIndex;
         uint256 weightPerToken;
     }
 
@@ -175,17 +158,13 @@ interface ISystemDeployerV1 {
         address deployer_
     ) external view returns (address proxy);
 
-    function systemDeployerEventEmitter()
-        external
-        view
-        returns (address systemDeployerEventEmitter);
-
     // --- State-Changing Functions ---
 
     function setupSafe(
-        address safeProxyFactory_,
         bytes32 salt_,
-        VotesERC20Params calldata votesERC20Params_,
+        address safeProxyFactory_,
+        address systemDeployerEventEmitter_,
+        VotesERC20V1Params[] calldata votesERC20V1Params_,
         AzoriusGovernanceParams calldata azoriusGovernanceParams_,
         ModuleFractalV1Params calldata moduleFractalV1Params_,
         FreezeParams calldata freezeParams_

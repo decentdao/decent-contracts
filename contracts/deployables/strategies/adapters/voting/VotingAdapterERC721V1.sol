@@ -22,12 +22,27 @@ contract VotingAdapterERC721V1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IERC721 internal _token;
-    uint256 internal _weightPerToken;
-    mapping(uint32 proposalId => mapping(uint256 tokenId => bool hasBeenUsedForVote))
-        internal _tokenIdUsedForVote;
-    mapping(address freezeVoteContract => mapping(uint48 freezeProposalSnapshotAndId => mapping(uint256 tokenId => bool hasBeenUsedForVote)))
-        internal _tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract;
+    /// @custom:storage-location erc7201:Decent.VotingAdapterERC721.main
+    struct VotingAdapterERC721Storage {
+        IERC721 token;
+        uint256 weightPerToken;
+        mapping(uint32 proposalId => mapping(uint256 tokenId => bool hasBeenUsedForVote)) tokenIdUsedForVote;
+        mapping(address freezeVoteContract => mapping(uint48 freezeProposalSnapshotAndId => mapping(uint256 tokenId => bool hasBeenUsedForVote))) tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.VotingAdapterERC721.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant VOTING_ADAPTER_ERC721_STORAGE_LOCATION =
+        0x925db2005a4192e8c1dc9f83d487902a8179279166e1b104a102067b1083a200;
+
+    function _getVotingAdapterERC721Storage()
+        internal
+        pure
+        returns (VotingAdapterERC721Storage storage $)
+    {
+        assembly {
+            $.slot := VOTING_ADAPTER_ERC721_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -44,8 +59,10 @@ contract VotingAdapterERC721V1 is
     ) public virtual override initializer {
         __VotingAdapterBaseV1_init(strategy_);
         __DeploymentBlockV1_init();
-        _token = IERC721(token_);
-        _weightPerToken = weightPerToken_;
+
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+        $.token = IERC721(token_);
+        $.weightPerToken = weightPerToken_;
     }
 
     // ======================================================================
@@ -55,23 +72,33 @@ contract VotingAdapterERC721V1 is
     // --- View Functions ---
 
     function token() public view virtual override returns (address) {
-        return address(_token);
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+        return address($.token);
     }
 
     function weightPerToken() public view virtual override returns (uint256) {
-        return _weightPerToken;
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+        return $.weightPerToken;
     }
 
     function tokenIdUsedForVote(
         uint32 proposalId_,
         uint256 tokenId_
     ) public view virtual override returns (bool) {
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
         if (
-            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+            $base
+                .strategy
+                .proposalVotingDetails(proposalId_)
+                .votingEndTimestamp == 0
         ) {
             revert ProposalNotInitialized();
         }
-        return _tokenIdUsedForVote[proposalId_][tokenId_];
+
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
+        return $.tokenIdUsedForVote[proposalId_][tokenId_];
     }
 
     function weightOfWithValidTokenIds(
@@ -116,7 +143,9 @@ contract VotingAdapterERC721V1 is
             return 0;
         }
 
-        return validTokenIds.length * _weightPerToken;
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
+        return validTokenIds.length * $.weightPerToken;
     }
 
     function tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract(
@@ -124,8 +153,10 @@ contract VotingAdapterERC721V1 is
         uint48 freezeProposalSnapshotAndId_,
         uint256 tokenId_
     ) public view virtual override returns (bool) {
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         return
-            _tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
+            $.tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
                 freezeVoteContract_
             ][freezeProposalSnapshotAndId_][tokenId_];
     }
@@ -156,8 +187,13 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         bytes calldata adapterVoteData_
     ) public view virtual override returns (bool, uint256) {
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
         if (
-            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+            $base
+                .strategy
+                .proposalVotingDetails(proposalId_)
+                .votingEndTimestamp == 0
         ) {
             return (false, 0);
         }
@@ -183,19 +219,21 @@ contract VotingAdapterERC721V1 is
     ) public virtual override onlyAuthorizedFreezeVoter returns (uint256) {
         uint256[] memory tokenIds = _decodeTokenIds(adapterVoteData_);
 
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         for (uint256 i = 0; i < tokenIds.length; ) {
             uint256 tokenId = tokenIds[i];
-            if (_token.ownerOf(tokenId) != voter_) {
+            if ($.token.ownerOf(tokenId) != voter_) {
                 revert TokenIdNotOwnedByVoter(tokenId);
             }
             if (
-                _tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
+                $.tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
                     msg.sender
                 ][freezeProposalSnapshotAndId_][tokenId]
             ) {
                 revert TokenIdAlreadyUsedForVote(tokenId);
             }
-            _tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[msg.sender][
+            $.tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[msg.sender][
                 freezeProposalSnapshotAndId_
             ][tokenId] = true;
 
@@ -204,7 +242,7 @@ contract VotingAdapterERC721V1 is
             }
         }
 
-        uint256 totalWeight = tokenIds.length * _weightPerToken;
+        uint256 totalWeight = tokenIds.length * $.weightPerToken;
 
         if (totalWeight == 0) {
             revert NoFreezeVotingWeight();
@@ -225,30 +263,37 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         bytes calldata adapterVoteData_
     ) public virtual override onlyStrategy returns (uint256) {
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
         if (
-            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+            $base
+                .strategy
+                .proposalVotingDetails(proposalId_)
+                .votingEndTimestamp == 0
         ) {
             revert ProposalNotInitialized();
         }
 
         uint256[] memory tokenIds = _decodeTokenIds(adapterVoteData_);
 
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         for (uint256 i = 0; i < tokenIds.length; ) {
             uint256 tokenId = tokenIds[i];
-            if (_token.ownerOf(tokenId) != voter_) {
+            if ($.token.ownerOf(tokenId) != voter_) {
                 revert TokenIdNotOwnedByVoter(tokenId);
             }
-            if (_tokenIdUsedForVote[proposalId_][tokenId]) {
+            if ($.tokenIdUsedForVote[proposalId_][tokenId]) {
                 revert TokenIdAlreadyUsedForVote(tokenId);
             }
-            _tokenIdUsedForVote[proposalId_][tokenId] = true;
+            $.tokenIdUsedForVote[proposalId_][tokenId] = true;
 
             unchecked {
                 ++i;
             }
         }
 
-        uint256 weightCasted = tokenIds.length * _weightPerToken;
+        uint256 weightCasted = tokenIds.length * $.weightPerToken;
 
         emit VoteRecorded(voter_, proposalId_, weightCasted, adapterVoteData_);
 
@@ -294,9 +339,11 @@ contract VotingAdapterERC721V1 is
         uint256[] memory unusedFreezeTokenIds = new uint256[](tokenIds_.length);
         uint256 unusedTokenCount = 0;
 
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         for (uint256 i = 0; i < tokenIds_.length; ) {
             if (
-                !_tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
+                !$.tokenIdUsedPerFreezeVoteProposalPerFreezeVoteContract[
                     freezeVoteContract_
                 ][freezeProposalSnapshotAndId_][tokenIds_[i]]
             ) {
@@ -362,8 +409,10 @@ contract VotingAdapterERC721V1 is
         uint256[] memory ownedTokenIds = new uint256[](tokenIds_.length);
         uint256 ownedTokenCount = 0;
 
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         for (uint256 i = 0; i < tokenIds_.length; ) {
-            if (_token.ownerOf(tokenIds_[i]) == voter_) {
+            if ($.token.ownerOf(tokenIds_[i]) == voter_) {
                 ownedTokenIds[ownedTokenCount] = tokenIds_[i];
                 ownedTokenCount++;
             }
@@ -387,8 +436,10 @@ contract VotingAdapterERC721V1 is
         uint256[] memory unusedTokenIds = new uint256[](tokenIds_.length);
         uint256 unusedTokenCount = 0;
 
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
         for (uint256 i = 0; i < tokenIds_.length; ) {
-            if (!_tokenIdUsedForVote[proposalId_][tokenIds_[i]]) {
+            if (!$.tokenIdUsedForVote[proposalId_][tokenIds_[i]]) {
                 unusedTokenIds[unusedTokenCount] = tokenIds_[i];
                 unusedTokenCount++;
             }
@@ -420,7 +471,9 @@ contract VotingAdapterERC721V1 is
             ownedTokenIds
         );
 
-        return (unusedTokenIds.length * _weightPerToken, unusedTokenIds);
+        VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
+
+        return (unusedTokenIds.length * $.weightPerToken, unusedTokenIds);
     }
 
     function _getValidTokenIds(
@@ -428,8 +481,13 @@ contract VotingAdapterERC721V1 is
         uint32 proposalId_,
         uint256[] memory allTokenIds_
     ) internal view virtual returns (uint256, uint256[] memory) {
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
         if (
-            _strategy.proposalVotingDetails(proposalId_).votingEndTimestamp == 0
+            $base
+                .strategy
+                .proposalVotingDetails(proposalId_)
+                .votingEndTimestamp == 0
         ) {
             revert ProposalNotInitialized();
         }

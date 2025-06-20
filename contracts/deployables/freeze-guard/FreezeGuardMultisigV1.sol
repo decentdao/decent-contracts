@@ -26,12 +26,28 @@ contract FreezeGuardMultisigV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IFreezeVotingBaseV1 internal _freezeVoting;
-    uint32 internal _timelockPeriod;
-    uint32 internal _executionPeriod;
-    ISafe internal _childGnosisSafe;
-    mapping(bytes32 signaturesHash => uint48 timelockedTimestamp)
-        internal transactionTimelocked;
+    /// @custom:storage-location erc7201:Decent.FreezeGuardMultisig.main
+    struct FreezeGuardMultisigStorage {
+        IFreezeVotingBaseV1 freezeVoting;
+        uint32 timelockPeriod;
+        uint32 executionPeriod;
+        ISafe childGnosisSafe;
+        mapping(bytes32 signaturesHash => uint48 timelockedTimestamp) transactionTimelocked;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.FreezeGuardMultisig.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant FREEZE_GUARD_MULTISIG_STORAGE_LOCATION =
+        0xb27bf83f95540c9e5ad158f8f59db4886f77b3163b8b8808bcf0da8eb5fd2200;
+
+    function _getFreezeGuardMultisigStorage()
+        internal
+        pure
+        returns (FreezeGuardMultisigStorage storage $)
+    {
+        assembly {
+            $.slot := FREEZE_GUARD_MULTISIG_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -53,8 +69,10 @@ contract FreezeGuardMultisigV1 is
         __DeploymentBlockV1_init();
         _updateTimelockPeriod(timelockPeriod_);
         _updateExecutionPeriod(executionPeriod_);
-        _freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
-        _childGnosisSafe = ISafe(childGnosisSafe_);
+
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        $.freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
+        $.childGnosisSafe = ISafe(childGnosisSafe_);
     }
 
     // ======================================================================
@@ -74,21 +92,25 @@ contract FreezeGuardMultisigV1 is
     // --- View Functions ---
 
     function timelockPeriod() public view virtual override returns (uint32) {
-        return _timelockPeriod;
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        return $.timelockPeriod;
     }
 
     function executionPeriod() public view virtual override returns (uint32) {
-        return _executionPeriod;
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        return $.executionPeriod;
     }
 
     function childGnosisSafe() public view virtual override returns (address) {
-        return address(_childGnosisSafe);
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        return address($.childGnosisSafe);
     }
 
     function getTransactionTimelocked(
         bytes32 signaturesHash_
     ) public view virtual override returns (uint48) {
-        return transactionTimelocked[signaturesHash_];
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        return $.transactionTimelocked[signaturesHash_];
     }
 
     // --- State-Changing Functions ---
@@ -106,12 +128,12 @@ contract FreezeGuardMultisigV1 is
         bytes calldata signatures_,
         uint256 nonce_
     ) public virtual override {
-        bytes32 signaturesHash = keccak256(signatures_);
-
-        if (transactionTimelocked[signaturesHash] != 0)
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        if ($.transactionTimelocked[keccak256(signatures_)] != 0)
             revert AlreadyTimelocked();
 
-        bytes memory transactionHashData = _childGnosisSafe
+        bytes memory transactionHashData = $
+            .childGnosisSafe
             .encodeTransactionData(
                 to_,
                 value_,
@@ -127,13 +149,15 @@ contract FreezeGuardMultisigV1 is
 
         bytes32 transactionHash = keccak256(transactionHashData);
 
-        _childGnosisSafe.checkSignatures(
+        $.childGnosisSafe.checkSignatures(
             transactionHash,
             transactionHashData,
             signatures_
         );
 
-        transactionTimelocked[signaturesHash] = uint48(block.timestamp);
+        $.transactionTimelocked[keccak256(signatures_)] = uint48(
+            block.timestamp
+        );
 
         emit TransactionTimelocked(msg.sender, transactionHash, signatures_);
     }
@@ -157,7 +181,8 @@ contract FreezeGuardMultisigV1 is
     // --- View Functions ---
 
     function freezeVoting() public view virtual override returns (address) {
-        return address(_freezeVoting);
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        return address($.freezeVoting);
     }
 
     // ======================================================================
@@ -181,21 +206,23 @@ contract FreezeGuardMultisigV1 is
     ) public view virtual override {
         bytes32 signaturesHash = keccak256(signatures_);
 
-        if (transactionTimelocked[signaturesHash] == 0) revert NotTimelocked();
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        if ($.transactionTimelocked[signaturesHash] == 0)
+            revert NotTimelocked();
 
         if (
             block.timestamp <
-            transactionTimelocked[signaturesHash] + _timelockPeriod
+            $.transactionTimelocked[signaturesHash] + $.timelockPeriod
         ) revert Timelocked();
 
         if (
             block.timestamp >
-            transactionTimelocked[signaturesHash] +
-                _timelockPeriod +
-                _executionPeriod
+            $.transactionTimelocked[signaturesHash] +
+                $.timelockPeriod +
+                $.executionPeriod
         ) revert Expired();
 
-        if (_freezeVoting.isFrozen()) revert DAOFrozen();
+        if ($.freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
     function checkAfterExecution(bytes32, bool) public view virtual override {}
@@ -233,12 +260,14 @@ contract FreezeGuardMultisigV1 is
     // ======================================================================
 
     function _updateTimelockPeriod(uint32 timelockPeriod_) internal virtual {
-        _timelockPeriod = timelockPeriod_;
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        $.timelockPeriod = timelockPeriod_;
         emit TimelockPeriodUpdated(timelockPeriod_);
     }
 
     function _updateExecutionPeriod(uint32 executionPeriod_) internal virtual {
-        _executionPeriod = executionPeriod_;
+        FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
+        $.executionPeriod = executionPeriod_;
         emit ExecutionPeriodUpdated(executionPeriod_);
     }
 }

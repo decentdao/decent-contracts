@@ -43,6 +43,7 @@ interface IFreezeVotingAzoriusV1 {
     // --- State-Changing Functions ---
 
     function castFreezeVote(
-        VotingAdapterVoteData[] calldata votingAdaptersToUse_
+        VotingAdapterVoteData[] calldata votingAdaptersToUse_,
+        uint256 lightAccountIndex_
     ) external;
 }

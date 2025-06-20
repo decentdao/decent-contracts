@@ -25,7 +25,24 @@ contract FreezeGuardAzoriusV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IFreezeVotingBaseV1 internal _freezeVoting;
+    /// @custom:storage-location erc7201:Decent.FreezeGuardAzorius.main
+    struct FreezeGuardAzoriusStorage {
+        IFreezeVotingBaseV1 freezeVoting;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.FreezeGuardAzorius.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant FREEZE_GUARD_AZORIUS_STORAGE_LOCATION =
+        0x42f8f7e17893446d49739bff9f1513ff5cdb28566127f8e28b562c45b4b30f00;
+
+    function _getFreezeGuardAzoriusStorage()
+        internal
+        pure
+        returns (FreezeGuardAzoriusStorage storage $)
+    {
+        assembly {
+            $.slot := FREEZE_GUARD_AZORIUS_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -42,7 +59,9 @@ contract FreezeGuardAzoriusV1 is
         __Ownable_init(owner_);
         __UUPSUpgradeable_init();
         __DeploymentBlockV1_init();
-        _freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
+
+        FreezeGuardAzoriusStorage storage $ = _getFreezeGuardAzoriusStorage();
+        $.freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
     }
 
     // ======================================================================
@@ -62,7 +81,8 @@ contract FreezeGuardAzoriusV1 is
     // --- View Functions ---
 
     function freezeVoting() public view virtual override returns (address) {
-        return address(_freezeVoting);
+        FreezeGuardAzoriusStorage storage $ = _getFreezeGuardAzoriusStorage();
+        return address($.freezeVoting);
     }
 
     // ======================================================================
@@ -84,7 +104,8 @@ contract FreezeGuardAzoriusV1 is
         bytes memory,
         address
     ) public view virtual override {
-        if (_freezeVoting.isFrozen()) revert DAOFrozen();
+        FreezeGuardAzoriusStorage storage $ = _getFreezeGuardAzoriusStorage();
+        if ($.freezeVoting.isFrozen()) revert DAOFrozen();
     }
 
     function checkAfterExecution(bytes32, bool) public view virtual override {}

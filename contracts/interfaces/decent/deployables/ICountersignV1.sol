@@ -4,53 +4,59 @@ pragma solidity ^0.8.30;
 interface ICountersignV1 {
     // --- Errors ---
 
-    error InvalidArrayLengths();
     error InvalidSigner();
     error SigningDeadlineElapsed();
+    error ExecutionDeadlineElapsed();
     error SignerAlreadySigned();
+    error RequiredSignerNotSigned(address signer);
     error InvalidKYCSignature();
+    error RequiredSignerTxFailed(address signer);
+    error MinimumWeightNotMet();
+    error SigningDeadlineNotElapsed();
+    error PreExecutionTxFailed();
 
     // --- Structs ---
-
-    struct Transaction {
-        address target;
-        uint256 value;
-        bytes data;
-    }
 
     struct SignerInitialization {
         address account;
         bool required;
         uint256 weight;
-        Transaction[] transactions;
+        bytes transactions;
     }
 
     struct Signer {
         bool isSigner;
         bool required;
         bool signed;
+        bool executed;
         uint48 signedTimestamp;
         uint256 weight;
-        Transaction[] transactions;
+        bytes transactions;
     }
 
     // --- Events ---
 
     event Signed(address indexed signer);
+    event SignerTxExecuted(address indexed signer);
+    event SignerTxFailed(address indexed signer);
 
     // --- Initializer Functions ---
 
     function initialize(
+        address owner_,
         string memory agreementUri_,
         address verificationContract_,
         uint48 signingDeadline_,
         uint48 executionDeadline_,
+        address multisend_,
         uint256 minWeight_,
-        SignerInitialization[] memory signerInitializations_,
-        Transaction[] memory preExecutionTransactions_
+        bytes memory preExecutionTransactions_,
+        SignerInitialization[] memory signerInitializations_
     ) external;
 
     // --- View Functions ---
+
+    function initialExecutionComplete() external view returns (bool isComplete);
 
     function agreementUri() external view returns (string memory agreementUri);
 
@@ -63,6 +69,8 @@ interface ICountersignV1 {
         view
         returns (uint48 executionDeadline);
 
+    function multisend() external view returns (address multisend);
+
     function minWeight() external view returns (uint256 minWeight);
 
     function signerAddresses()
@@ -71,7 +79,7 @@ interface ICountersignV1 {
         returns (address[] memory signerAddresses);
 
     function signerData(
-        address signer
+        address signer_
     )
         external
         view
@@ -79,17 +87,20 @@ interface ICountersignV1 {
             bool isSigner,
             bool required,
             bool signed,
+            bool executed,
             uint48 signedTimestamp,
             uint256 weight,
-            Transaction[] memory transactions
+            bytes memory transactions
         );
 
     function preExecutionTransactions()
         external
         view
-        returns (Transaction[] memory preExecutionTransactions);
+        returns (bytes memory preExecutionTransactions);
 
     // --- State-Changing Functions ---
 
     function sign() external;
+
+    function execute() external;
 }

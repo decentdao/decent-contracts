@@ -11,8 +11,8 @@ import {
   IFreezeVotingAzoriusV1,
   IFreezeVotingAzoriusV1__factory,
   IFreezeVotingBaseV1__factory,
+  ILightAccountValidatorV1__factory,
   IVersion__factory,
-  IVoterResolverV1__factory,
   MockLightAccountFactory,
   MockLightAccountFactory__factory,
   MockModuleAzoriusV1,
@@ -22,8 +22,8 @@ import {
   MockVotingStrategy,
   MockVotingStrategy__factory,
 } from '../../../typechain-types';
-import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../helpers/utils';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
 
 async function deployAzoriusFreezeVotingProxy(
   proxyDeployer: SignerWithAddress,
@@ -140,18 +140,18 @@ describe('FreezeVotingAzoriusV1', () => {
 
   describe('Initialization', () => {
     it('should initialize with correct parameters', async () => {
-      void expect(await azoriusFreezeVoting.owner()).to.equal(owner.address);
-      void expect(await azoriusFreezeVoting.freezeVotesThreshold()).to.equal(
+      expect(await azoriusFreezeVoting.owner()).to.equal(owner.address);
+      expect(await azoriusFreezeVoting.freezeVotesThreshold()).to.equal(
         DEFAULT_FREEZE_VOTES_THRESHOLD,
       );
-      void expect(await azoriusFreezeVoting.freezeProposalPeriod()).to.equal(
+      expect(await azoriusFreezeVoting.freezeProposalPeriod()).to.equal(
         DEFAULT_FREEZE_PROPOSAL_PERIOD,
       );
-      void expect(await azoriusFreezeVoting.freezePeriod()).to.equal(DEFAULT_FREEZE_PERIOD);
-      void expect(await azoriusFreezeVoting.parentAzorius()).to.equal(
+      expect(await azoriusFreezeVoting.freezePeriod()).to.equal(DEFAULT_FREEZE_PERIOD);
+      expect(await azoriusFreezeVoting.parentAzorius()).to.equal(
         await mockParentAzorius.getAddress(),
       );
-      void expect(await azoriusFreezeVoting.lightAccountFactory()).to.equal(
+      expect(await azoriusFreezeVoting.lightAccountFactory()).to.equal(
         mockLightAccountFactory.target as string,
       );
     });
@@ -189,7 +189,7 @@ describe('FreezeVotingAzoriusV1', () => {
 
   describe('parentAzorius()', () => {
     it('should return the correct parent Azorius contract address', async () => {
-      void expect(await azoriusFreezeVoting.parentAzorius()).to.equal(
+      expect(await azoriusFreezeVoting.parentAzorius()).to.equal(
         await mockParentAzorius.getAddress(),
       );
     });
@@ -223,9 +223,9 @@ describe('FreezeVotingAzoriusV1', () => {
 
     it('should initiate a new freeze proposal period if none active and record a vote', async () => {
       const initialFreezeProposalCreated = await azoriusFreezeVoting.freezeProposalCreated();
-      void expect(initialFreezeProposalCreated).to.equal(0); // Should be 0 before first vote
+      expect(initialFreezeProposalCreated).to.equal(0); // Should be 0 before first vote
 
-      const txPromise = azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData);
+      const txPromise = azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData, 0n);
 
       const blockNumBefore = await ethers.provider.getBlockNumber();
       await (await txPromise).wait();
@@ -240,26 +240,24 @@ describe('FreezeVotingAzoriusV1', () => {
         .to.emit(azoriusFreezeVoting, 'FreezeVoteCast')
         .withArgs(voter1.address, voteWeightFromAdapter);
 
-      void expect(await azoriusFreezeVoting.freezeProposalCreated()).to.equal(txTimestamp);
-      void expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(
-        voteWeightFromAdapter,
-      );
-      void expect(await azoriusFreezeVoting.freezeProposalStrategy()).to.equal(
+      expect(await azoriusFreezeVoting.freezeProposalCreated()).to.equal(txTimestamp);
+      expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(voteWeightFromAdapter);
+      expect(await azoriusFreezeVoting.freezeProposalStrategy()).to.equal(
         await mockStrategy.getAddress(),
       );
 
       // Verify adapter was called correctly
-      void expect(await mockAdapter1.recordVoteCalled()).to.be.true;
-      void expect(await mockAdapter1.lastVoterForRecord()).to.equal(voter1.address);
-      void expect(await mockAdapter1.lastSnapshotAndIdForRecord()).to.equal(txTimestamp);
-      void expect(await mockAdapter1.lastAdapterDataForRecord()).to.equal(
+      expect(await mockAdapter1.recordVoteCalled()).to.be.true;
+      expect(await mockAdapter1.lastVoterForRecord()).to.equal(voter1.address);
+      expect(await mockAdapter1.lastSnapshotAndIdForRecord()).to.equal(txTimestamp);
+      expect(await mockAdapter1.lastAdapterDataForRecord()).to.equal(
         votingAdapterData[0].adapterVoteData,
       );
     });
 
     it('should use an existing active freeze proposal period', async () => {
       // First vote to establish a period
-      await azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData);
+      await azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData, 0n);
       const firstProposalCreatedTimestamp = await azoriusFreezeVoting.freezeProposalCreated();
       const firstVoteCount = await azoriusFreezeVoting.freezeProposalVoteCount();
 
@@ -269,7 +267,7 @@ describe('FreezeVotingAzoriusV1', () => {
       const newVoteWeight = 30n;
       await mockAdapter1.setWeightToReturnOnRecord(newVoteWeight);
 
-      const txPromise = azoriusFreezeVoting.connect(voter2).castFreezeVote(votingAdapterData); // voter2 casts a vote
+      const txPromise = azoriusFreezeVoting.connect(voter2).castFreezeVote(votingAdapterData, 0n); // voter2 casts a vote
 
       // Should NOT emit FreezeProposalCreated again
       await expect(txPromise).to.not.emit(azoriusFreezeVoting, 'FreezeProposalCreated');
@@ -277,21 +275,21 @@ describe('FreezeVotingAzoriusV1', () => {
         .to.emit(azoriusFreezeVoting, 'FreezeVoteCast')
         .withArgs(voter2.address, newVoteWeight);
 
-      void expect(await azoriusFreezeVoting.freezeProposalCreated()).to.equal(
+      expect(await azoriusFreezeVoting.freezeProposalCreated()).to.equal(
         firstProposalCreatedTimestamp,
       );
-      void expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(
+      expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(
         firstVoteCount + newVoteWeight,
       );
-      void expect(await mockAdapter1.lastVoterForRecord()).to.equal(voter2.address);
-      void expect(await mockAdapter1.lastSnapshotAndIdForRecord()).to.equal(
+      expect(await mockAdapter1.lastVoterForRecord()).to.equal(voter2.address);
+      expect(await mockAdapter1.lastSnapshotAndIdForRecord()).to.equal(
         firstProposalCreatedTimestamp,
       );
     });
 
     it('should start a new proposal period if current one has expired', async () => {
       // First vote
-      await azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData);
+      await azoriusFreezeVoting.connect(voter1).castFreezeVote(votingAdapterData, 0n);
       const firstProposalCreatedTimestamp = await azoriusFreezeVoting.freezeProposalCreated();
 
       // Expire the proposal period
@@ -300,7 +298,7 @@ describe('FreezeVotingAzoriusV1', () => {
       const newVoteWeight = 70n;
       await mockAdapter1.setWeightToReturnOnRecord(newVoteWeight);
 
-      const txPromise = azoriusFreezeVoting.connect(voter2).castFreezeVote(votingAdapterData);
+      const txPromise = azoriusFreezeVoting.connect(voter2).castFreezeVote(votingAdapterData, 0n);
 
       const blockNumBefore = await ethers.provider.getBlockNumber();
       await (await txPromise).wait();
@@ -315,9 +313,9 @@ describe('FreezeVotingAzoriusV1', () => {
         .withArgs(voter2.address, newVoteWeight);
 
       const newProposalCreatedTimestamp = await azoriusFreezeVoting.freezeProposalCreated();
-      void expect(newProposalCreatedTimestamp).to.not.equal(firstProposalCreatedTimestamp);
-      void expect(newProposalCreatedTimestamp).to.equal(newTxTimestamp);
-      void expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(newVoteWeight);
+      expect(newProposalCreatedTimestamp).to.not.equal(firstProposalCreatedTimestamp);
+      expect(newProposalCreatedTimestamp).to.equal(newTxTimestamp);
+      expect(await azoriusFreezeVoting.freezeProposalVoteCount()).to.equal(newVoteWeight);
     });
 
     // Add more tests for reverts and other conditions here
@@ -337,57 +335,26 @@ describe('FreezeVotingAzoriusV1', () => {
     });
   });
 
-  describe('Version and ERC165 supportsInterface', () => {
+  describe('Version', () => {
     it('should return the correct version', async () => {
-      void expect(await azoriusFreezeVoting.version()).to.equal(1);
+      expect(await azoriusFreezeVoting.version()).to.equal(1);
     });
+  });
 
-    it('should support IFreezeVotingAzoriusV1', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IFreezeVotingAzoriusV1__factory.createInterface(), [
-            IFreezeVotingBaseV1__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-    it('should support IFreezeVotingBaseV1', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IFreezeVotingBaseV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-    it('should support IVersion', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-    it('should support IERC165', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-    it('should support IVoterResolverV1', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IVoterResolverV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-    it('should support IDeploymentBlockV1', async () => {
-      void expect(
-        await azoriusFreezeVoting.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-    it('should not support a random interfaceId', async () => {
-      void expect(await azoriusFreezeVoting.supportsInterface('0x12345678')).to.be.false;
+  describe('ERC165 supportsInterface', () => {
+    runSupportsInterfaceTests({
+      getContract: () => azoriusFreezeVoting,
+      supportedInterfaceFactories: [
+        {
+          factory: IFreezeVotingAzoriusV1__factory,
+          inheritedFactories: [IFreezeVotingBaseV1__factory],
+        },
+        IFreezeVotingBaseV1__factory,
+        IVersion__factory,
+        IERC165__factory,
+        ILightAccountValidatorV1__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

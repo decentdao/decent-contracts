@@ -30,11 +30,17 @@ contract MockLightAccount is ILightAccount {
         IStrategyV1 strategy,
         uint32 proposalId,
         uint8 voteType,
-        IStrategyV1.VotingAdapterVoteData[] calldata votingAdaptersData
+        IStrategyV1.VotingAdapterVoteData[] calldata votingAdaptersData,
+        uint256 lightAccountIndex
     ) external {
         // msg.sender here is the EOA calling MockLightAccount (e.g., relayer)
         // When strategy.vote is called, msg.sender from StrategyV1's perspective will be address(this)
-        strategy.vote(proposalId, voteType, votingAdaptersData);
+        strategy.castVote(
+            proposalId,
+            voteType,
+            votingAdaptersData,
+            lightAccountIndex
+        );
     }
 
     // Function specifically for freeze voting tests via smart account

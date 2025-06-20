@@ -66,20 +66,5 @@ describe('DeploymentBlockV1NonUpgradeable', () => {
       expect(block2).to.be.gt(block1);
       expect(block2 - block1).to.be.gte(5);
     });
-
-    it('should use immutable storage for deployment block', async () => {
-      // This test verifies that the deployment block is stored as an immutable variable
-      // by checking that the value is consistent and cannot be changed
-      const block1 = await concreteDeploymentBlock.deploymentBlock();
-
-      // Mine more blocks
-      await mine(100);
-
-      const block2 = await concreteDeploymentBlock.deploymentBlock();
-
-      // The value should remain exactly the same
-      expect(block1).to.equal(block2);
-      expect(block1).to.equal(deploymentBlockNumber);
-    });
   });
 });

@@ -17,9 +17,9 @@ import {
   MockSafe,
   MockSafe__factory,
 } from '../../../typechain-types';
-import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../helpers/utils';
-import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
+import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests';
 
 // Helper function for deploying MultisigFreezeGuardV1 instances using ERC1967Proxy
 async function deployMultisigFreezeGuardProxy(
@@ -460,62 +460,23 @@ describe('FreezeGuardMultisigV1', () => {
     });
   });
 
-  describe('ERC165', function () {
-    it('Should support IERC165 interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IVersion interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IFreezeGuardMultisigV1 interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IFreezeGuardMultisigV1__factory.createInterface(), [
-            IFreezeGuardBaseV1__factory.createInterface(),
-            IGuard__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IFreezeGuardBaseV1 interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IFreezeGuardBaseV1__factory.createInterface(), [
-            IGuard__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IGuard interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IGuard__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IDeploymentBlockV1 interface', async function () {
-      void expect(
-        await multisigFreezeGuard.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should not support random interface', async function () {
-      void expect(await multisigFreezeGuard.supportsInterface('0x12345678')).to.be.false;
+  describe('ERC165 supportsInterface', function () {
+    runSupportsInterfaceTests({
+      getContract: () => multisigFreezeGuard,
+      supportedInterfaceFactories: [
+        IERC165__factory,
+        IVersion__factory,
+        {
+          factory: IFreezeGuardMultisigV1__factory,
+          inheritedFactories: [IFreezeGuardBaseV1__factory, IGuard__factory],
+        },
+        {
+          factory: IFreezeGuardBaseV1__factory,
+          inheritedFactories: [IGuard__factory],
+        },
+        IGuard__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

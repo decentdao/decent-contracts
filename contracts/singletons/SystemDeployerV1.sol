@@ -4,7 +4,6 @@ pragma solidity ^0.8.30;
 import {ISystemDeployerV1} from "../interfaces/decent/singletons/ISystemDeployerV1.sol";
 import {ISafe} from "../interfaces/safe/ISafe.sol";
 import {IVotesERC20V1} from "../interfaces/decent/deployables/IVotesERC20V1.sol";
-import {IVotesERC20LockableV1} from "../interfaces/decent/deployables/IVotesERC20LockableV1.sol";
 import {IProposerAdapterERC20V1} from "../interfaces/decent/deployables/IProposerAdapterERC20V1.sol";
 import {IProposerAdapterERC721V1} from "../interfaces/decent/deployables/IProposerAdapterERC721V1.sol";
 import {IProposerAdapterHatsV1} from "../interfaces/decent/deployables/IProposerAdapterHatsV1.sol";
@@ -30,20 +29,6 @@ contract SystemDeployerV1 is
     DeploymentBlockV1NonUpgradeable,
     ERC165
 {
-    // ======================================================================
-    // STATE VARIABLES
-    // ======================================================================
-
-    address internal _systemDeployerEventEmitter;
-
-    // ======================================================================
-    // CONSTRUCTOR
-    // ======================================================================
-
-    constructor(address systemDeployerEventEmitter_) {
-        _systemDeployerEventEmitter = systemDeployerEventEmitter_;
-    }
-
     // ======================================================================
     // ISystemDeployer
     // ======================================================================
@@ -79,16 +64,6 @@ contract SystemDeployerV1 is
         return address(uint160(uint256(hash)));
     }
 
-    function systemDeployerEventEmitter()
-        public
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return _systemDeployerEventEmitter;
-    }
-
     // --- State-Changing Functions ---
 
     function deployProxy(
@@ -110,26 +85,29 @@ contract SystemDeployerV1 is
     }
 
     function setupSafe(
-        address safeProxyFactory_,
         bytes32 salt_,
-        VotesERC20Params calldata votesERC20Params_,
+        address safeProxyFactory_,
+        address systemDeployerEventEmitter_,
+        VotesERC20V1Params[] calldata votesERC20V1Params_,
         AzoriusGovernanceParams calldata azoriusGovernanceParams_,
         ModuleFractalV1Params calldata moduleFractalV1Params_,
         FreezeParams calldata freezeParams_
     ) public virtual override {
-        // create a two dimensional array to hold the new VotesERC20V1 and VotesERC20LockableV1 addresses
-        address[2][] memory allNewVotesERC20Addresses = new address[2][](2);
+        // create an array to hold the new VotesERC20V1 addresses
+        address[] memory newVotesERC20V1Addresses = new address[](
+            votesERC20V1Params_.length
+        );
 
-        _deployAllVotesERC20(
+        _deployVotesERC20V1(
             salt_,
-            votesERC20Params_,
-            allNewVotesERC20Addresses
+            votesERC20V1Params_,
+            newVotesERC20V1Addresses
         );
 
         address azoriusModuleAddress = _deployAzoriusGovernance(
             salt_,
             azoriusGovernanceParams_,
-            allNewVotesERC20Addresses
+            newVotesERC20V1Addresses
         );
 
         _deployModuleFractal(salt_, moduleFractalV1Params_);
@@ -137,13 +115,13 @@ contract SystemDeployerV1 is
         _deployFreezeContracts(salt_, freezeParams_, azoriusModuleAddress);
 
         bytes memory initData = abi.encode(
-            votesERC20Params_,
+            votesERC20V1Params_,
             azoriusGovernanceParams_,
             moduleFractalV1Params_,
             freezeParams_
         );
 
-        ISystemDeployerEventEmitterV1(_systemDeployerEventEmitter)
+        ISystemDeployerEventEmitterV1(systemDeployerEventEmitter_)
             .emitSystemDeployed(safeProxyFactory_, salt_, initData);
 
         emit SystemDeployed(safeProxyFactory_, salt_, initData);
@@ -182,7 +160,7 @@ contract SystemDeployerV1 is
     function _deployAzoriusGovernance(
         bytes32 salt_,
         AzoriusGovernanceParams calldata azoriusGovernanceParams_,
-        address[2][] memory allNewVotesERC20Addresses
+        address[] memory newVotesERC20V1Addresses
     ) internal returns (address) {
         address azoriusModuleAddress;
 
@@ -198,7 +176,7 @@ contract SystemDeployerV1 is
             address[] memory proposerAdapterAddresses = _deployProposerAdapters(
                 salt_,
                 proposerAdapterParams,
-                allNewVotesERC20Addresses
+                newVotesERC20V1Addresses
             );
 
             StrategyV1Params memory strategyV1Params = azoriusGovernanceParams_
@@ -218,7 +196,7 @@ contract SystemDeployerV1 is
                 salt_,
                 votingAdapterParams,
                 strategyProxyAddress,
-                allNewVotesERC20Addresses
+                newVotesERC20V1Addresses
             );
 
             azoriusModuleAddress = _deployModuleAzorius(
@@ -239,31 +217,10 @@ contract SystemDeployerV1 is
         return azoriusModuleAddress;
     }
 
-    function _deployAllVotesERC20(
-        bytes32 salt_,
-        VotesERC20Params memory votesERC20Params,
-        address[2][] memory allNewVotesERC20Addresses
-    ) internal {
-        VotesERC20V1Params[] memory votesERC20V1Params = votesERC20Params
-            .votesERC20V1Params;
-
-        VotesERC20LockableV1Params[]
-            memory votesERC20LockableV1Params = votesERC20Params
-                .votesERC20LockableV1Params;
-
-        _deployVotesERC20(salt_, votesERC20V1Params, allNewVotesERC20Addresses);
-
-        _deployVotesERC20Lockable(
-            salt_,
-            votesERC20LockableV1Params,
-            allNewVotesERC20Addresses
-        );
-    }
-
-    function _deployVotesERC20(
+    function _deployVotesERC20V1(
         bytes32 salt_,
         VotesERC20V1Params[] memory votesERC20V1Params,
-        address[2][] memory allNewVotesERC20Addresses
+        address[] memory newVotesERC20V1Addresses
     ) internal {
         for (uint256 i = 0; i < votesERC20V1Params.length; ) {
             VotesERC20V1Params memory votesERC20V1Param = votesERC20V1Params[i];
@@ -291,75 +248,22 @@ contract SystemDeployerV1 is
                 amount: votesERC20V1Param.safeSupply
             });
 
-            address votesERC20ProxyAddress = deployProxy(
+            address votesERC20V1ProxyAddress = deployProxy(
                 votesERC20V1Param.implementation,
-                abi.encodeWithSelector(
-                    IVotesERC20V1.initialize.selector,
-                    votesERC20V1Param.metadata,
-                    totalAllocations,
-                    address(this)
+                abi.encodeCall(
+                    IVotesERC20V1.initialize,
+                    (
+                        votesERC20V1Param.metadata,
+                        totalAllocations,
+                        address(this),
+                        votesERC20V1Param.locked,
+                        votesERC20V1Param.maxTotalSupply
+                    )
                 ),
                 salt_
             );
 
-            allNewVotesERC20Addresses[0][i] = votesERC20ProxyAddress;
-
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function _deployVotesERC20Lockable(
-        bytes32 salt_,
-        VotesERC20LockableV1Params[] memory votesERC20LockableV1Params,
-        address[2][] memory allNewVotesERC20Addresses
-    ) internal {
-        for (uint256 i = 0; i < votesERC20LockableV1Params.length; ) {
-            VotesERC20LockableV1Params
-                memory votesERC20LockableV1Param = votesERC20LockableV1Params[
-                    i
-                ];
-
-            uint256 allocationsLength = votesERC20LockableV1Param
-                .allocations
-                .length;
-
-            // create a new allocations array
-            IVotesERC20V1.Allocation[]
-                memory totalAllocations = new IVotesERC20V1.Allocation[](
-                    allocationsLength + 1
-                );
-
-            // copy the existing allocations to the new array
-            for (uint256 j = 0; j < allocationsLength; ) {
-                totalAllocations[j] = votesERC20LockableV1Param.allocations[j];
-
-                unchecked {
-                    ++j;
-                }
-            }
-
-            // create an allocation for the safe and add it to the new array
-            totalAllocations[allocationsLength] = IVotesERC20V1.Allocation({
-                to: address(this),
-                amount: votesERC20LockableV1Param.safeSupply
-            });
-
-            address votesERC20LockableProxyAddress = deployProxy(
-                votesERC20LockableV1Param.implementation,
-                abi.encodeWithSelector(
-                    IVotesERC20LockableV1.initialize.selector,
-                    votesERC20LockableV1Param.metadata,
-                    totalAllocations,
-                    address(this),
-                    votesERC20LockableV1Param.locked,
-                    votesERC20LockableV1Param.maxTotalSupply
-                ),
-                salt_
-            );
-
-            allNewVotesERC20Addresses[1][i] = votesERC20LockableProxyAddress;
+            newVotesERC20V1Addresses[i] = votesERC20V1ProxyAddress;
 
             unchecked {
                 ++i;
@@ -370,7 +274,7 @@ contract SystemDeployerV1 is
     function _deployProposerAdapters(
         bytes32 salt_,
         ProposerAdapterParams memory proposerAdapterParams,
-        address[2][] memory allNewVotesERC20Addresses
+        address[] memory newVotesERC20V1Addresses
     ) internal returns (address[] memory) {
         ProposerAdapterERC20V1Params[]
             memory proposerAdapterERC20V1Params = proposerAdapterParams
@@ -403,7 +307,7 @@ contract SystemDeployerV1 is
             salt_,
             proposerAdapterERC20V1ParamsLength,
             proposerAdapterERC20V1Params,
-            allNewVotesERC20Addresses,
+            newVotesERC20V1Addresses,
             proposerAdapterAddresses
         );
 
@@ -431,7 +335,7 @@ contract SystemDeployerV1 is
         bytes32 salt_,
         uint256 proposerAdapterERC20V1ParamsLength,
         ProposerAdapterERC20V1Params[] memory proposerAdapterERC20V1Params,
-        address[2][] memory allNewVotesERC20Addresses,
+        address[] memory newVotesERC20V1Addresses,
         address[] memory proposerAdapterAddresses
     ) internal {
         for (uint256 i = 0; i < proposerAdapterERC20V1ParamsLength; ) {
@@ -441,19 +345,13 @@ contract SystemDeployerV1 is
                 ];
 
             address tokenAddress;
+            uint256 newTokenIndex = proposerAdapterERC20V1Param.newTokenIndex;
 
             if (proposerAdapterERC20V1Param.token == address(0)) {
-                TypeTokenIndex memory index = proposerAdapterERC20V1Param.index;
-
-                tokenAddress = allNewVotesERC20Addresses[index.typeI][
-                    index.tokenI
-                ];
+                tokenAddress = newVotesERC20V1Addresses[newTokenIndex];
 
                 if (tokenAddress == address(0)) {
-                    revert VotesERC20TokenNotFoundAtIndex(
-                        index.typeI,
-                        index.tokenI
-                    );
+                    revert VotesERC20V1NotFoundAtIndex(newTokenIndex);
                 }
             } else {
                 tokenAddress = proposerAdapterERC20V1Param.token;
@@ -461,10 +359,12 @@ contract SystemDeployerV1 is
 
             proposerAdapterAddresses[i] = deployProxy(
                 proposerAdapterERC20V1Param.implementation,
-                abi.encodeWithSelector(
-                    IProposerAdapterERC20V1.initialize.selector,
-                    tokenAddress,
-                    proposerAdapterERC20V1Param.proposerThreshold
+                abi.encodeCall(
+                    IProposerAdapterERC20V1.initialize,
+                    (
+                        tokenAddress,
+                        proposerAdapterERC20V1Param.proposerThreshold
+                    )
                 ),
                 salt_
             );
@@ -492,10 +392,12 @@ contract SystemDeployerV1 is
                 proposerAdapterERC20V1ParamsLength + i
             ] = deployProxy(
                 proposerAdapterERC721V1Param.implementation,
-                abi.encodeWithSelector(
-                    IProposerAdapterERC721V1.initialize.selector,
-                    proposerAdapterERC721V1Param.token,
-                    proposerAdapterERC721V1Param.proposerThreshold
+                abi.encodeCall(
+                    IProposerAdapterERC721V1.initialize,
+                    (
+                        proposerAdapterERC721V1Param.token,
+                        proposerAdapterERC721V1Param.proposerThreshold
+                    )
                 ),
                 salt_
             );
@@ -526,10 +428,12 @@ contract SystemDeployerV1 is
                     i
             ] = deployProxy(
                 proposerAdapterHatsV1Param.implementation,
-                abi.encodeWithSelector(
-                    IProposerAdapterHatsV1.initialize.selector,
-                    proposerAdapterHatsV1Param.hatsContract,
-                    proposerAdapterHatsV1Param.whitelistedHatIds
+                abi.encodeCall(
+                    IProposerAdapterHatsV1.initialize,
+                    (
+                        proposerAdapterHatsV1Param.hatsContract,
+                        proposerAdapterHatsV1Param.whitelistedHatIds
+                    )
                 ),
                 salt_
             );
@@ -548,13 +452,15 @@ contract SystemDeployerV1 is
         return
             deployProxy(
                 strategyV1Params.implementation,
-                abi.encodeWithSelector(
-                    IStrategyV1.initialize.selector,
-                    strategyV1Params.votingPeriod,
-                    strategyV1Params.quorumThreshold,
-                    strategyV1Params.basisNumerator,
-                    proposerAdapterAddresses,
-                    strategyV1Params.lightAccountFactory
+                abi.encodeCall(
+                    IStrategyV1.initialize,
+                    (
+                        strategyV1Params.votingPeriod,
+                        strategyV1Params.quorumThreshold,
+                        strategyV1Params.basisNumerator,
+                        proposerAdapterAddresses,
+                        strategyV1Params.lightAccountFactory
+                    )
                 ),
                 salt_
             );
@@ -564,7 +470,7 @@ contract SystemDeployerV1 is
         bytes32 salt_,
         VotingAdapterParams memory votingAdapterParams,
         address strategyProxyAddress,
-        address[2][] memory allNewVotesERC20Addresses
+        address[] memory newVotesERC20V1Addresses
     ) internal returns (address[] memory) {
         VotingAdapterERC20V1Params[]
             memory votingAdapterERC20V1Params = votingAdapterParams
@@ -588,7 +494,7 @@ contract SystemDeployerV1 is
             salt_,
             votingAdapterERC20V1ParamsLength,
             votingAdapterERC20V1Params,
-            allNewVotesERC20Addresses,
+            newVotesERC20V1Addresses,
             strategyProxyAddress,
             votingAdapterAddresses
         );
@@ -609,7 +515,7 @@ contract SystemDeployerV1 is
         bytes32 salt_,
         uint256 votingAdapterERC20V1ParamsLength,
         VotingAdapterERC20V1Params[] memory votingAdapterERC20V1Params,
-        address[2][] memory allNewVotesERC20Addresses,
+        address[] memory newVotesERC20V1Addresses,
         address strategyProxyAddress,
         address[] memory votingAdapterAddresses
     ) internal {
@@ -621,16 +527,11 @@ contract SystemDeployerV1 is
             address tokenAddress;
 
             if (votingAdapterERC20V1Param.token == address(0)) {
-                TypeTokenIndex memory index = votingAdapterERC20V1Param.index;
-                tokenAddress = allNewVotesERC20Addresses[index.typeI][
-                    index.tokenI
-                ];
+                uint256 newTokenIndex = votingAdapterERC20V1Param.newTokenIndex;
+                tokenAddress = newVotesERC20V1Addresses[newTokenIndex];
 
                 if (tokenAddress == address(0)) {
-                    revert VotesERC20TokenNotFoundAtIndex(
-                        index.typeI,
-                        index.tokenI
-                    );
+                    revert VotesERC20V1NotFoundAtIndex(newTokenIndex);
                 }
             } else {
                 tokenAddress = votingAdapterERC20V1Param.token;
@@ -638,11 +539,13 @@ contract SystemDeployerV1 is
 
             votingAdapterAddresses[i] = deployProxy(
                 votingAdapterERC20V1Param.implementation,
-                abi.encodeWithSelector(
-                    IVotingAdapterERC20V1.initialize.selector,
-                    tokenAddress,
-                    strategyProxyAddress,
-                    votingAdapterERC20V1Param.weightPerToken
+                abi.encodeCall(
+                    IVotingAdapterERC20V1.initialize,
+                    (
+                        tokenAddress,
+                        strategyProxyAddress,
+                        votingAdapterERC20V1Param.weightPerToken
+                    )
                 ),
                 salt_
             );
@@ -671,11 +574,13 @@ contract SystemDeployerV1 is
                 votingAdapterERC20V1ParamsLength + i
             ] = deployProxy(
                 votingAdapterERC721V1Param.implementation,
-                abi.encodeWithSelector(
-                    IVotingAdapterERC721V1.initialize.selector,
-                    votingAdapterERC721V1Param.token,
-                    strategyProxyAddress,
-                    votingAdapterERC721V1Param.weightPerToken
+                abi.encodeCall(
+                    IVotingAdapterERC721V1.initialize,
+                    (
+                        votingAdapterERC721V1Param.token,
+                        strategyProxyAddress,
+                        votingAdapterERC721V1Param.weightPerToken
+                    )
                 ),
                 salt_
             );
@@ -694,14 +599,16 @@ contract SystemDeployerV1 is
         return
             deployProxy(
                 moduleAzoriusV1Params.implementation,
-                abi.encodeWithSelector(
-                    IModuleAzoriusV1.initialize.selector,
-                    address(this),
-                    address(this),
-                    address(this),
-                    strategyProxyAddress,
-                    moduleAzoriusV1Params.timelockPeriod,
-                    moduleAzoriusV1Params.executionPeriod
+                abi.encodeCall(
+                    IModuleAzoriusV1.initialize,
+                    (
+                        address(this),
+                        address(this),
+                        address(this),
+                        strategyProxyAddress,
+                        moduleAzoriusV1Params.timelockPeriod,
+                        moduleAzoriusV1Params.executionPeriod
+                    )
                 ),
                 salt_
             );
@@ -714,11 +621,9 @@ contract SystemDeployerV1 is
         if (moduleFractalV1Params_.implementation != address(0)) {
             address moduleFractalProxyAddress = deployProxy(
                 moduleFractalV1Params_.implementation,
-                abi.encodeWithSelector(
-                    IModuleFractalV1.initialize.selector,
-                    moduleFractalV1Params_.owner,
-                    address(this),
-                    address(this)
+                abi.encodeCall(
+                    IModuleFractalV1.initialize,
+                    (moduleFractalV1Params_.owner, address(this), address(this))
                 ),
                 salt_
             );
@@ -770,14 +675,16 @@ contract SystemDeployerV1 is
         if (freezeVotingMultisigV1Params.implementation != address(0)) {
             freezeVotingAddress = deployProxy(
                 freezeVotingMultisigV1Params.implementation,
-                abi.encodeWithSelector(
-                    IFreezeVotingMultisigV1.initialize.selector,
-                    freezeVotingMultisigV1Params.owner,
-                    freezeVotingMultisigV1Params.freezeVotesThreshold,
-                    freezeVotingMultisigV1Params.freezeProposalPeriod,
-                    freezeVotingMultisigV1Params.freezePeriod,
-                    freezeVotingMultisigV1Params.parentSafe,
-                    freezeVotingMultisigV1Params.lightAccountFactory
+                abi.encodeCall(
+                    IFreezeVotingMultisigV1.initialize,
+                    (
+                        freezeVotingMultisigV1Params.owner,
+                        freezeVotingMultisigV1Params.freezeVotesThreshold,
+                        freezeVotingMultisigV1Params.freezeProposalPeriod,
+                        freezeVotingMultisigV1Params.freezePeriod,
+                        freezeVotingMultisigV1Params.parentSafe,
+                        freezeVotingMultisigV1Params.lightAccountFactory
+                    )
                 ),
                 salt_
             );
@@ -786,14 +693,16 @@ contract SystemDeployerV1 is
         if (freezeVotingAzoriusV1Params.implementation != address(0)) {
             freezeVotingAddress = deployProxy(
                 freezeVotingAzoriusV1Params.implementation,
-                abi.encodeWithSelector(
-                    IFreezeVotingAzoriusV1.initialize.selector,
-                    freezeVotingAzoriusV1Params.owner,
-                    freezeVotingAzoriusV1Params.freezeVotesThreshold,
-                    freezeVotingAzoriusV1Params.freezeProposalPeriod,
-                    freezeVotingAzoriusV1Params.freezePeriod,
-                    freezeVotingAzoriusV1Params.parentAzorius,
-                    freezeVotingAzoriusV1Params.lightAccountFactory
+                abi.encodeCall(
+                    IFreezeVotingAzoriusV1.initialize,
+                    (
+                        freezeVotingAzoriusV1Params.owner,
+                        freezeVotingAzoriusV1Params.freezeVotesThreshold,
+                        freezeVotingAzoriusV1Params.freezeProposalPeriod,
+                        freezeVotingAzoriusV1Params.freezePeriod,
+                        freezeVotingAzoriusV1Params.parentAzorius,
+                        freezeVotingAzoriusV1Params.lightAccountFactory
+                    )
                 ),
                 salt_
             );
@@ -842,13 +751,15 @@ contract SystemDeployerV1 is
 
             address multisigFreezeGuardAddress = deployProxy(
                 freezeGuardMultisigV1Params.implementation,
-                abi.encodeWithSelector(
-                    IFreezeGuardMultisigV1.initialize.selector,
-                    freezeGuardMultisigV1Params.timelockPeriod,
-                    freezeGuardMultisigV1Params.executionPeriod,
-                    freezeGuardMultisigV1Params.owner,
-                    freezeVotingAddress,
-                    address(this)
+                abi.encodeCall(
+                    IFreezeGuardMultisigV1.initialize,
+                    (
+                        freezeGuardMultisigV1Params.timelockPeriod,
+                        freezeGuardMultisigV1Params.executionPeriod,
+                        freezeGuardMultisigV1Params.owner,
+                        freezeVotingAddress,
+                        address(this)
+                    )
                 ),
                 salt_
             );
@@ -875,10 +786,9 @@ contract SystemDeployerV1 is
 
             address azoriusFreezeGuardAddress = deployProxy(
                 freezeGuardAzoriusV1Params.implementation,
-                abi.encodeWithSelector(
-                    IFreezeGuardAzoriusV1.initialize.selector,
-                    freezeGuardAzoriusV1Params.owner,
-                    freezeVotingAddress
+                abi.encodeCall(
+                    IFreezeGuardAzoriusV1.initialize,
+                    (freezeGuardAzoriusV1Params.owner, freezeVotingAddress)
                 ),
                 salt_
             );

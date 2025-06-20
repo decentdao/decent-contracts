@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IFunctionValidator} from "../interfaces/decent/deployables/IFunctionValidator.sol";
+import {IFunctionValidator} from "../interfaces/decent/services/IFunctionValidator.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract MockValidator is IFunctionValidator, ERC165 {

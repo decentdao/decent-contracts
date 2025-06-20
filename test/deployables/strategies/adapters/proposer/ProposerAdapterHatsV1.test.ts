@@ -13,8 +13,8 @@ import {
   ProposerAdapterHatsV1,
   ProposerAdapterHatsV1__factory,
 } from '../../../../../typechain-types';
-import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../../../helpers/utils';
+import { runDeploymentBlockTests } from '../../../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../../../shared/supportsInterfaceTests';
 
 async function deployHatsProposerAdapterProxy(
   deployer: SignerWithAddress,
@@ -95,7 +95,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_1]),
       );
-      void expect(canPropose).to.be.true;
+      expect(canPropose).to.be.true;
     });
 
     it('should return false if user does not wear any whitelisted hat', async () => {
@@ -105,7 +105,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_1]),
       );
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should return false if user wears a hat that is not whitelisted', async () => {
@@ -114,7 +114,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_2]),
       );
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should return false if user wears no hats', async () => {
@@ -122,7 +122,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_1]),
       );
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should work with multiple whitelisted hats', async () => {
@@ -138,7 +138,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_2]),
       );
-      void expect(canPropose).to.be.true;
+      expect(canPropose).to.be.true;
     });
 
     it('should return false if adapter was initialized with no whitelisted hats', async () => {
@@ -153,7 +153,7 @@ describe('ProposerAdapterHatsV1', () => {
         user1.address,
         ethers.AbiCoder.defaultAbiCoder().encode(['uint256'], [HAT_ID_1]),
       );
-      void expect(canPropose).to.be.false;
+      expect(canPropose).to.be.false;
     });
 
     it('should revert if data is not a valid abi-encoded uint256', async () => {
@@ -188,11 +188,11 @@ describe('ProposerAdapterHatsV1', () => {
 
     describe('hatIdIsWhitelisted()', () => {
       it('should return true for a whitelisted hat ID', async () => {
-        void expect(await adapter.hatIdIsWhitelisted(HAT_ID_1)).to.be.true;
+        expect(await adapter.hatIdIsWhitelisted(HAT_ID_1)).to.be.true;
       });
 
       it('should return false for a non-whitelisted hat ID', async () => {
-        void expect(await adapter.hatIdIsWhitelisted(HAT_ID_2)).to.be.false;
+        expect(await adapter.hatIdIsWhitelisted(HAT_ID_2)).to.be.false;
       });
 
       it('should return false for any hat ID if initialized with no hats', async () => {
@@ -202,8 +202,8 @@ describe('ProposerAdapterHatsV1', () => {
           await mockHats.getAddress(),
           [], // empty array
         );
-        void expect(await localAdapter.hatIdIsWhitelisted(HAT_ID_1)).to.be.false;
-        void expect(await localAdapter.hatIdIsWhitelisted(HAT_ID_2)).to.be.false;
+        expect(await localAdapter.hatIdIsWhitelisted(HAT_ID_1)).to.be.false;
+        expect(await localAdapter.hatIdIsWhitelisted(HAT_ID_2)).to.be.false;
       });
     });
   });
@@ -215,46 +215,18 @@ describe('ProposerAdapterHatsV1', () => {
   });
 
   describe('ERC165 supportsInterface', () => {
-    it('should support IProposerAdapterHatsV1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IProposerAdapterHatsV1__factory.createInterface(), [
-            IProposerAdapterBaseV1__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IProposerAdapterBaseV1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IProposerAdapterBaseV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVersion', async () => {
-      void expect(
-        await adapter.supportsInterface(calculateInterfaceId(IVersion__factory.createInterface())),
-      ).to.be.true;
-    });
-
-    it('should support IERC165', async () => {
-      void expect(
-        await adapter.supportsInterface(calculateInterfaceId(IERC165__factory.createInterface())),
-      ).to.be.true;
-    });
-
-    it('should support IDeploymentBlockV1', async () => {
-      void expect(
-        await adapter.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support a random interfaceId', async () => {
-      void expect(await adapter.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => adapter,
+      supportedInterfaceFactories: [
+        {
+          factory: IProposerAdapterHatsV1__factory,
+          inheritedFactories: [IProposerAdapterBaseV1__factory],
+        },
+        IProposerAdapterBaseV1__factory,
+        IVersion__factory,
+        IERC165__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

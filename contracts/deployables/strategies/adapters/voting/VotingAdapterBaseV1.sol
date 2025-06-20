@@ -10,21 +10,42 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
     // STATE VARIABLES
     // ======================================================================
 
-    IStrategyV1 internal _strategy;
+    /// @custom:storage-location erc7201:Decent.VotingAdapterBase.main
+    struct VotingAdapterBaseStorage {
+        IStrategyV1 strategy;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.VotingAdapterBase.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant VOTING_ADAPTER_BASE_STORAGE_LOCATION =
+        0x13444dea181293cfa50cbfe292735b153109b99f6cc300533814de79e823b200;
+
+    function _getVotingAdapterBaseStorage()
+        internal
+        pure
+        returns (VotingAdapterBaseStorage storage $)
+    {
+        assembly {
+            $.slot := VOTING_ADAPTER_BASE_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // MODIFIERS
     // ======================================================================
 
     modifier onlyStrategy() {
-        if (msg.sender != address(_strategy)) revert NotStrategy();
+        VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();
+
+        if (msg.sender != address($.strategy)) revert NotStrategy();
         _;
     }
 
     modifier onlyAuthorizedFreezeVoter() {
-        if (!IStrategyV1(_strategy).isAuthorizedFreezeVoter(msg.sender)) {
+        VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();
+
+        if (!IStrategyV1($.strategy).isAuthorizedFreezeVoter(msg.sender))
             revert UnauthorizedFreezeVoter(msg.sender);
-        }
+
         _;
     }
 
@@ -39,7 +60,8 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
     function __VotingAdapterBaseV1_init(
         address strategy_
     ) internal onlyInitializing {
-        _strategy = IStrategyV1(strategy_);
+        VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();
+        $.strategy = IStrategyV1(strategy_);
     }
 
     // ======================================================================
@@ -49,6 +71,7 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
     // --- View Functions ---
 
     function strategy() public view virtual override returns (address) {
-        return address(_strategy);
+        VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();
+        return address($.strategy);
     }
 }

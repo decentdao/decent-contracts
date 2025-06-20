@@ -113,7 +113,7 @@ describe('VotingAdapterBaseV1', () => {
       const adapterVoteData = ethers.ZeroHash; // Dummy data for the adapter
 
       await expect(
-        mockStrategyContract.connect(nonStrategySigner).vote(
+        mockStrategyContract.connect(nonStrategySigner).castVote(
           proposalId,
           0, // voteType (e.g., YES)
           [
@@ -122,6 +122,7 @@ describe('VotingAdapterBaseV1', () => {
               adapterVoteData: adapterVoteData,
             },
           ],
+          0n, // lightAccountIndex
         ),
       ).to.not.be.reverted; // Primary check: the call succeeds
     });

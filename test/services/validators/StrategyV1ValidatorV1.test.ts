@@ -12,9 +12,9 @@ import {
   MockVotingStrategy__factory,
   StrategyV1ValidatorV1,
   StrategyV1ValidatorV1__factory,
-} from '../../../../typechain-types';
-import { runDeploymentBlockTests } from '../../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../../helpers/utils';
+} from '../../../typechain-types';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
 
 describe('StrategyV1ValidatorV1', function () {
   // contracts
@@ -60,16 +60,17 @@ describe('StrategyV1ValidatorV1', function () {
         await mockStrategy.getAddress(),
         wrongCalldata,
       );
-      void expect(isValid).to.be.false;
+      expect(isValid).to.be.false;
     });
 
     it('Should return true when the underlying strategy vote is valid', async function () {
       await mockStrategy.setValidStrategyVoteResult(true);
 
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         proposalId,
         voteType,
         votingAdaptersData,
+        0, // lightAccountIndex
       ]);
 
       const isValid = await validator.validateOperation(
@@ -79,16 +80,17 @@ describe('StrategyV1ValidatorV1', function () {
         calldata,
       );
 
-      void expect(isValid).to.be.true;
+      expect(isValid).to.be.true;
     });
 
     it('Should return false when the underlying strategy vote is invalid', async function () {
       await mockStrategy.setValidStrategyVoteResult(false);
 
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         proposalId,
         voteType,
         votingAdaptersData,
+        0, // lightAccountIndex
       ]);
 
       const isValid = await validator.validateOperation(
@@ -98,7 +100,7 @@ describe('StrategyV1ValidatorV1', function () {
         calldata,
       );
 
-      void expect(isValid).to.be.false;
+      expect(isValid).to.be.false;
     });
 
     it('should correctly decode and pass parameters to the strategy', async function () {
@@ -109,10 +111,11 @@ describe('StrategyV1ValidatorV1', function () {
         votingAdaptersData,
       );
 
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         proposalId,
         voteType,
         votingAdaptersData,
+        0, // lightAccountIndex
       ]);
 
       await expect(
@@ -130,7 +133,7 @@ describe('StrategyV1ValidatorV1', function () {
         await mockStrategy.getAddress(),
         calldata,
       );
-      void expect(isValid).to.be.true;
+      expect(isValid).to.be.true;
     });
 
     it('should cause a revert if the validator decodes and passes the wrong params', async function () {
@@ -144,10 +147,11 @@ describe('StrategyV1ValidatorV1', function () {
       );
 
       // But create calldata with the *wrong* proposalId
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         wrongProposalId, // encoded with 999
         voteType,
         votingAdaptersData,
+        0, // lightAccountIndex
       ]);
 
       // The validator should decode 999 and pass it to the mock.
@@ -171,10 +175,11 @@ describe('StrategyV1ValidatorV1', function () {
         votingAdaptersData,
       );
 
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         proposalId,
         wrongVoteType, // But encoded with NO (0)
         votingAdaptersData,
+        0, // lightAccountIndex
       ]);
 
       await expect(
@@ -201,10 +206,11 @@ describe('StrategyV1ValidatorV1', function () {
         votingAdaptersData, // Expecting original data
       );
 
-      const calldata = mockStrategy.interface.encodeFunctionData('vote', [
+      const calldata = mockStrategy.interface.encodeFunctionData('castVote', [
         proposalId,
         voteType,
         wrongVotingAdaptersData, // But encoded with different data
+        0, // lightAccountIndex
       ]);
 
       await expect(
@@ -218,40 +224,21 @@ describe('StrategyV1ValidatorV1', function () {
     });
   });
 
-  describe('ERC165', function () {
-    it('Should support IFunctionValidator interface', async function () {
-      const iFunctionValidatorInterfaceId = calculateInterfaceId(
-        IFunctionValidator__factory.createInterface(),
-      );
-      void expect(await validator.supportsInterface(iFunctionValidatorInterfaceId)).to.be.true;
-    });
-
-    it('Should support IVersion interface', async function () {
-      const iVersionInterfaceId = calculateInterfaceId(IVersion__factory.createInterface());
-      void expect(await validator.supportsInterface(iVersionInterfaceId)).to.be.true;
-    });
-
-    it('Should support IDeploymentBlockV1 interface', async function () {
-      const iDeploymentBlockV1InterfaceId = calculateInterfaceId(
-        IDeploymentBlockV1__factory.createInterface(),
-      );
-      void expect(await validator.supportsInterface(iDeploymentBlockV1InterfaceId)).to.be.true;
-    });
-
-    it('Should support IERC165 interface', async function () {
-      const iERC165InterfaceId = calculateInterfaceId(IERC165__factory.createInterface());
-      void expect(await validator.supportsInterface(iERC165InterfaceId)).to.be.true;
-    });
-
-    it('Should not support a random interface', async function () {
-      const randomInterfaceId = '0x12345678';
-      void expect(await validator.supportsInterface(randomInterfaceId)).to.be.false;
+  describe('ERC165 supportsInterface', function () {
+    runSupportsInterfaceTests({
+      getContract: () => validator,
+      supportedInterfaceFactories: [
+        IFunctionValidator__factory,
+        IVersion__factory,
+        IDeploymentBlockV1__factory,
+        IERC165__factory,
+      ],
     });
   });
 
   describe('Version', function () {
     it('Should return correct version', async function () {
-      void expect(await validator.version()).to.equal(1);
+      expect(await validator.version()).to.equal(1);
     });
   });
 

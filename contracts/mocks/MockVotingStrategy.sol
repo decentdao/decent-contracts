@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVotingAdapterBaseV1} from "../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
-import {VoterResolverV1} from "../deployables/strategies/VoterResolverV1.sol";
+import {LightAccountValidatorV1} from "../deployables/account-abstraction/LightAccountValidatorV1.sol";
 
-contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
+contract MockVotingStrategy is IStrategyV1, LightAccountValidatorV1 {
     struct TimestampPoints {
         uint48 startTimestamp;
         uint48 endTimestamp;
@@ -55,7 +55,7 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
         for (uint i = 0; i < proposerAdapters_.length; i++) {
             _isProposerAdapterMap[proposerAdapters_[i]] = true;
         }
-        __VoterResolverV1_init(lightAccountFactory_);
+        __LightAccountValidatorV1_init(lightAccountFactory_);
     }
 
     function initialize2(
@@ -180,12 +180,16 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
         );
     }
 
-    function vote(
+    function castVote(
         uint32 _proposalId,
         uint8 _voteType,
-        IStrategyV1.VotingAdapterVoteData[] calldata votingAdaptersData
+        IStrategyV1.VotingAdapterVoteData[] calldata votingAdaptersData,
+        uint256 lightAccountIndex_
     ) external virtual override {
-        address resolvedVoter = voter(msg.sender);
+        address resolvedLightAccountOwner = potentialLightAccountResolvedOwner(
+            msg.sender,
+            lightAccountIndex_
+        );
         ProposalVotingDetails storage proposal = proposalVotingDetailsMap[
             _proposalId
         ];
@@ -194,7 +198,7 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
             totalWeight += IVotingAdapterBaseV1(
                 votingAdaptersData[i].votingAdapter
             ).recordVote(
-                    resolvedVoter,
+                    resolvedLightAccountOwner,
                     _proposalId,
                     votingAdaptersData[i].adapterVoteData
                 );
@@ -205,7 +209,7 @@ contract MockVotingStrategy is IStrategyV1, VoterResolverV1 {
         else if (_voteType == uint8(VoteType.ABSTAIN))
             proposal.abstainVotes += totalWeight;
         emit Voted(
-            resolvedVoter,
+            resolvedLightAccountOwner,
             _proposalId,
             VoteType(_voteType),
             totalWeight

@@ -1,21 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
+import {IKYCVerifierV1} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IKYCVerifierV1} from "../../interfaces/decent/deployables/IKYCVerifierV1.sol";
-import {IZKMEVerify} from "../../interfaces/zkme/IZKMEVerify.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
-    // ======================================================================
-    // STATE VARIABLES
-    // ======================================================================
-
-    address internal _zkMeVerify;
-    address internal _cooperator;
-
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================
@@ -24,13 +16,8 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
         _disableInitializers();
     }
 
-    function initialize(
-        address zkMeVerify_,
-        address cooperator_
-    ) public virtual override initializer {
+    function initialize() public virtual override initializer {
         __DeploymentBlockV1_init();
-        _zkMeVerify = zkMeVerify_;
-        _cooperator = cooperator_;
     }
 
     // ======================================================================
@@ -39,18 +26,8 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
 
     // --- View Functions ---
 
-    function verify(
-        address account_
-    ) public view virtual override returns (bool) {
-        return IZKMEVerify(_zkMeVerify).hasApproved(_cooperator, account_);
-    }
-
-    function zkMeVerify() public view virtual override returns (address) {
-        return _zkMeVerify;
-    }
-
-    function cooperator() public view virtual override returns (address) {
-        return _cooperator;
+    function verify(address) public view virtual override returns (bool) {
+        return true;
     }
 
     // ======================================================================

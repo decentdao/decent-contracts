@@ -1,7 +1,5 @@
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import type { FunctionFragment, Interface } from 'ethers';
-import { ethers } from 'hardhat';
 
 /**
  * Calculate an interface ID from an ethers Interface object.
@@ -12,7 +10,7 @@ import { ethers } from 'hardhat';
  * @param inheritedInterfacesArray Optional array of ethers Interface objects representing base/inherited interfaces.
  * @returns The interface ID as a hex string with 0x prefix
  */
-export function calculateInterfaceId(
+function calculateInterfaceId(
   interfaceObj: Interface,
   inheritedInterfacesArray?: Interface[],
 ): string {
@@ -62,59 +60,81 @@ export function calculateInterfaceId(
   return '0x' + interfaceId.toString(16).padStart(8, '0');
 }
 
-export interface TokenTransfer {
-  addressToCheck: string;
-  token: string; // address or 'native' for ETH
-  expectedBalanceDelta: bigint; // positive for receiving, negative for sending
+/**
+ * Interface factory type that has a createInterface method
+ */
+interface InterfaceFactory {
+  createInterface(): Interface;
+  name: string;
 }
 
-// Helper function to check multiple token transfers
-export async function executeTxAndCheckBalanceDeltas(
-  tx: () => Promise<any>,
-  signer: SignerWithAddress,
-  transfers: TokenTransfer[],
-): Promise<void> {
-  // Get initial balances
-  const initialBalances = await Promise.all(
-    transfers.map(t => {
-      if (t.token === 'native') {
-        return ethers.provider.getBalance(t.addressToCheck);
-      } else {
-        return ethers
-          .getContractAt('IERC20', t.token)
-          .then(token => token.balanceOf(t.addressToCheck));
-      }
-    }),
-  );
+/**
+ * Contract that implements supportsInterface method
+ */
+interface SupportsInterfaceContract {
+  supportsInterface(interfaceId: string): Promise<boolean>;
+}
 
-  // Execute transaction
-  const txResponse = await tx();
-  const receipt = await txResponse.wait();
-  const gasSpent = BigInt(receipt!.gasUsed) * BigInt(receipt!.gasPrice);
+/**
+ * Configuration for an interface with inherited interfaces
+ */
+interface InterfaceConfig {
+  factory: InterfaceFactory;
+  inheritedFactories?: InterfaceFactory[];
+}
 
-  // Get final balances and check changes
-  for (let i = 0; i < transfers.length; i++) {
-    const transfer = transfers[i];
-    let finalBalance: bigint;
+/**
+ * Parameters for running the supportsInterface tests
+ */
+interface SupportsInterfaceTestParams {
+  /**
+   * Gets the contract instance that implements supportsInterface
+   */
+  getContract: () => SupportsInterfaceContract;
 
-    if (transfer.token === 'native') {
-      finalBalance = await ethers.provider.getBalance(transfer.addressToCheck);
-    } else {
-      const token = await ethers.getContractAt('IERC20', transfer.token);
-      finalBalance = await token.balanceOf(transfer.addressToCheck);
-    }
+  /**
+   * Array of interface factories or configurations that the contract should support
+   */
+  supportedInterfaceFactories: (InterfaceFactory | InterfaceConfig)[];
+}
 
-    const balanceChange = finalBalance - initialBalances[i];
+/**
+ * Run supportsInterface tests for a contract
+ * @param params The test parameters
+ */
+export function runSupportsInterfaceTests(params: SupportsInterfaceTestParams): void {
+  params.supportedInterfaceFactories.forEach(item => {
+    // Check if this is a simple factory or a config object
+    const isConfig = 'factory' in item;
+    const factory = isConfig ? (item as InterfaceConfig).factory : (item as InterfaceFactory);
+    const inheritedFactories = isConfig ? (item as InterfaceConfig).inheritedFactories : undefined;
 
-    // For native token, add gas spent if this is the signer
-    const actualChange =
-      transfer.token === 'native' && transfer.addressToCheck === signer.address
-        ? balanceChange + gasSpent
-        : balanceChange;
+    // Extract the interface name from the factory
+    // Since factories are ES6 classes, factory.name should give us the class name
+    const factoryName = factory.name;
 
-    expect(actualChange).to.equal(
-      transfer.expectedBalanceDelta,
-      `Token ${transfer.token} transfer check failed for ${transfer.addressToCheck}`,
-    );
-  }
+    // Remove the __factory suffix to get the interface name
+    const interfaceName = factoryName.slice(0, -9);
+
+    it(`should support ${interfaceName}`, async () => {
+      const contract = params.getContract();
+
+      // Calculate interface ID, excluding inherited interfaces if specified
+      const interfaceId = inheritedFactories
+        ? calculateInterfaceId(
+            factory.createInterface(),
+            inheritedFactories.map(f => f.createInterface()),
+          )
+        : calculateInterfaceId(factory.createInterface());
+
+      expect(await contract.supportsInterface(interfaceId)).to.be.true;
+    });
+  });
+
+  it('should not support a random interface', async () => {
+    const contract = params.getContract();
+    const randomInterfaceId = '0x12345678';
+
+    expect(await contract.supportsInterface(randomInterfaceId)).to.be.false;
+  });
 }

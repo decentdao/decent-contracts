@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {IDecentPaymasterV1} from "../../interfaces/decent/deployables/IDecentPaymasterV1.sol";
-import {IFunctionValidator} from "../../interfaces/decent/deployables/IFunctionValidator.sol";
-import {ISmartAccountValidationV1} from "../../interfaces/decent/deployables/ISmartAccountValidationV1.sol";
+import {IFunctionValidator} from "../../interfaces/decent/services/IFunctionValidator.sol";
+import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {BasePaymasterV1} from "./BasePaymasterV1.sol";
-import {SmartAccountValidationV1} from "./SmartAccountValidationV1.sol";
+import {LightAccountValidatorV1} from "./LightAccountValidatorV1.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
@@ -21,7 +21,7 @@ contract DecentPaymasterV1 is
     IDecentPaymasterV1,
     IVersion,
     BasePaymasterV1,
-    SmartAccountValidationV1,
+    LightAccountValidatorV1,
     DeploymentBlockV1,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
@@ -31,8 +31,24 @@ contract DecentPaymasterV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    mapping(address target => mapping(bytes4 selector => address validator))
-        internal _functionValidators;
+    /// @custom:storage-location erc7201:Decent.DecentPaymaster.main
+    struct DecentPaymasterStorage {
+        mapping(address target => mapping(bytes4 selector => address validator)) functionValidators;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.DecentPaymaster.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant DECENT_PAYMASTER_STORAGE_LOCATION =
+        0x9864cc6d2ebb52de6c6d593dbda2be2b4542b9f136a6d2b6285312464a440f00;
+
+    function _getDecentPaymasterStorage()
+        internal
+        pure
+        returns (DecentPaymasterStorage storage $)
+    {
+        assembly {
+            $.slot := DECENT_PAYMASTER_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -48,7 +64,7 @@ contract DecentPaymasterV1 is
         address lightAccountFactory_
     ) public virtual override initializer {
         __BasePaymasterV1_init(owner_, IEntryPoint(entryPoint_));
-        __SmartAccountValidationV1_init(lightAccountFactory_);
+        __LightAccountValidatorV1_init(lightAccountFactory_);
         __DeploymentBlockV1_init();
     }
 
@@ -72,7 +88,8 @@ contract DecentPaymasterV1 is
         address target_,
         bytes4 selector_
     ) public view virtual override returns (address) {
-        return _functionValidators[target_][selector_];
+        DecentPaymasterStorage storage $ = _getDecentPaymasterStorage();
+        return $.functionValidators[target_][selector_];
     }
 
     // --- State-Changing Functions ---
@@ -92,7 +109,9 @@ contract DecentPaymasterV1 is
             revert InvalidValidator();
         }
 
-        _functionValidators[target_][selector_] = validator_;
+        DecentPaymasterStorage storage $ = _getDecentPaymasterStorage();
+        $.functionValidators[target_][selector_] = validator_;
+
         emit FunctionValidatorSet(target_, selector_, validator_);
     }
 
@@ -100,7 +119,9 @@ contract DecentPaymasterV1 is
         address target_,
         bytes4 selector_
     ) public virtual override onlyOwner {
-        _functionValidators[target_][selector_] = address(0);
+        DecentPaymasterStorage storage $ = _getDecentPaymasterStorage();
+        $.functionValidators[target_][selector_] = address(0);
+
         emit FunctionValidatorRemoved(target_, selector_);
     }
 
@@ -123,8 +144,10 @@ contract DecentPaymasterV1 is
 
         bytes4 selector = bytes4(innerCallData);
 
+        DecentPaymasterStorage storage $ = _getDecentPaymasterStorage();
+
         // Check if function has a validator
-        address validator = _functionValidators[target][selector];
+        address validator = $.functionValidators[target][selector];
         if (validator == address(0)) {
             revert NoValidatorSet(target, selector);
         }
@@ -190,7 +213,7 @@ contract DecentPaymasterV1 is
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IDecentPaymasterV1).interfaceId ||
-            interfaceId_ == type(ISmartAccountValidationV1).interfaceId ||
+            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
             interfaceId_ == type(IPaymaster).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||

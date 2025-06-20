@@ -28,5 +28,5 @@ interface IFreezeVotingMultisigV1 {
 
     // --- State-Changing Functions ---
 
-    function castFreezeVote() external;
+    function castFreezeVote(uint256 lightAccountIndex_) external;
 }

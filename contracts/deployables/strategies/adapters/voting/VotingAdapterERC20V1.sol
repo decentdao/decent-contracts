@@ -26,13 +26,28 @@ contract VotingAdapterERC20V1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IVotes internal _token;
-    uint256 internal _weightPerToken;
-    ClockMode internal _tokenClockMode;
-    mapping(uint32 proposalId => mapping(address voter => bool hasCastedVote))
-        internal _hasCastedVoteForProposal;
-    mapping(address freezeVoteContract => mapping(uint48 freezeProposalSnapshotAndId => mapping(address voter => bool hasCastedVote)))
-        internal _hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract;
+    /// @custom:storage-location erc7201:Decent.VotingAdapterERC20.main
+    struct VotingAdapterERC20Storage {
+        IVotes token;
+        uint256 weightPerToken;
+        ClockMode tokenClockMode;
+        mapping(uint32 proposalId => mapping(address voter => bool hasCastedVote)) hasCastedVoteForProposal;
+        mapping(address freezeVoteContract => mapping(uint48 freezeProposalSnapshotAndId => mapping(address voter => bool hasCastedVote))) hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.VotingAdapterERC20.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant VOTING_ADAPTER_ERC20_STORAGE_LOCATION =
+        0xbc832af39495cff298aa9cd8cf90e3bb4881fa94888ebfa74bb336837d3bd800;
+
+    function _getVotingAdapterERC20Storage()
+        internal
+        pure
+        returns (VotingAdapterERC20Storage storage $)
+    {
+        assembly {
+            $.slot := VOTING_ADAPTER_ERC20_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -49,9 +64,11 @@ contract VotingAdapterERC20V1 is
     ) public virtual override initializer {
         __VotingAdapterBaseV1_init(strategy_);
         __DeploymentBlockV1_init();
-        _token = IVotes(token_);
-        _weightPerToken = weightPerToken_;
-        _tokenClockMode = ClockModeLib.getClockMode(token_);
+
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+        $.token = IVotes(token_);
+        $.weightPerToken = weightPerToken_;
+        $.tokenClockMode = ClockModeLib.getClockMode(token_);
     }
 
     // ======================================================================
@@ -61,11 +78,13 @@ contract VotingAdapterERC20V1 is
     // --- View Functions ---
 
     function token() public view virtual override returns (address) {
-        return address(_token);
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+        return address($.token);
     }
 
     function weightPerToken() public view virtual override returns (uint256) {
-        return _weightPerToken;
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+        return $.weightPerToken;
     }
 
     function getFreezeVoteWeight(
@@ -79,7 +98,8 @@ contract VotingAdapterERC20V1 is
         uint32 proposalId_,
         address voter_
     ) public view virtual override returns (bool) {
-        return _hasCastedVoteForProposal[proposalId_][voter_];
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+        return $.hasCastedVoteForProposal[proposalId_][voter_];
     }
 
     function hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract(
@@ -87,8 +107,10 @@ contract VotingAdapterERC20V1 is
         uint48 freezeProposalSnapshotAndId_,
         address voter_
     ) public view virtual override returns (bool) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
         return
-            _hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[
+            $.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[
                 freezeVoteContract_
             ][freezeProposalSnapshotAndId_][voter_];
     }
@@ -104,7 +126,9 @@ contract VotingAdapterERC20V1 is
         uint32 proposalId_,
         bytes calldata voteData_
     ) public view virtual override returns (uint256) {
-        if (_hasCastedVoteForProposal[proposalId_][voter_]) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
+        if ($.hasCastedVoteForProposal[proposalId_][voter_]) {
             return 0;
         }
         return _getVoteWeightDetails(voter_, proposalId_, voteData_);
@@ -115,25 +139,28 @@ contract VotingAdapterERC20V1 is
         uint32 proposalId_,
         bytes calldata
     ) public view virtual override returns (bool, uint256) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
         // check if the user has voted
-        if (_hasCastedVoteForProposal[proposalId_][voter_]) {
+        if ($.hasCastedVoteForProposal[proposalId_][voter_]) {
             return (false, 0);
         }
 
         // get the governance token
-        ERC20Votes governanceToken = ERC20Votes(address(_token));
+        ERC20Votes governanceToken = ERC20Votes(address($.token));
 
         // get the number of checkpoints for the voter
         uint32 numCheckpoints = governanceToken.numCheckpoints(voter_);
 
-        IStrategyV1.ProposalVotingDetails memory details = _strategy
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
+        IStrategyV1.ProposalVotingDetails memory details = $base
+            .strategy
             .proposalVotingDetails(proposalId_);
 
         if (details.votingEndTimestamp == 0) {
             return (false, 0); // Proposal not initialized
         }
-        uint48 startTimestamp = details.votingStartTimestamp;
-        uint48 endTimestamp = details.votingEndTimestamp;
 
         // if there are no checkpoints, user has no voting weight
         if (numCheckpoints == 0) {
@@ -151,13 +178,13 @@ contract VotingAdapterERC20V1 is
             // If this checkpoint's timestamp is after the proposal's endTimestamp,
             // it implies the current timestamp is also after endTimestamp.
             // Thus, the voting period has definitively ended, and any vote is invalid.
-            if (checkpoint._key > endTimestamp) {
+            if (checkpoint._key > details.votingEndTimestamp) {
                 return (false, 0); // Vote is invalid as the proposal has ended.
             }
 
             // If the checkpoint timestamp is less than or equal to the proposal start timestamp,
             // we've found the relevant voting weight.
-            if (checkpoint._key <= startTimestamp) {
+            if (checkpoint._key <= details.votingStartTimestamp) {
                 votingWeight = checkpoint._value;
                 break; // Exit loop once the correct checkpoint is found
             }
@@ -172,7 +199,7 @@ contract VotingAdapterERC20V1 is
         // votingWeight remains 0 in this case.
 
         // multiply votingWeight by _weightPerToken
-        votingWeight = votingWeight * _weightPerToken;
+        votingWeight = votingWeight * $.weightPerToken;
 
         // Check if the user had any voting weight at the proposal start timestamp
         if (votingWeight == 0) {
@@ -189,8 +216,10 @@ contract VotingAdapterERC20V1 is
         uint48 freezeProposalSnapshotAndId_,
         bytes calldata
     ) public virtual override onlyAuthorizedFreezeVoter returns (uint256) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
         if (
-            _hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[
+            $.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[
                 msg.sender
             ][freezeProposalSnapshotAndId_][voter_]
         ) {
@@ -206,7 +235,7 @@ contract VotingAdapterERC20V1 is
             revert NoFreezeVotingWeight();
         }
 
-        _hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[msg.sender][
+        $.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract[msg.sender][
             freezeProposalSnapshotAndId_
         ][voter_] = true;
 
@@ -225,10 +254,12 @@ contract VotingAdapterERC20V1 is
         uint32 proposalId_,
         bytes calldata voteData_
     ) public virtual override onlyStrategy returns (uint256) {
-        if (_hasCastedVoteForProposal[proposalId_][voter_]) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
+        if ($.hasCastedVoteForProposal[proposalId_][voter_]) {
             revert AlreadyVoted();
         }
-        _hasCastedVoteForProposal[proposalId_][voter_] = true;
+        $.hasCastedVoteForProposal[proposalId_][voter_] = true;
 
         uint256 weightCasted = _getVoteWeightDetails(
             voter_,
@@ -276,8 +307,10 @@ contract VotingAdapterERC20V1 is
         address voter_,
         uint48 snapshotTimepoint_
     ) internal view virtual returns (uint256) {
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+
         return
-            _token.getPastVotes(voter_, snapshotTimepoint_) * _weightPerToken;
+            $.token.getPastVotes(voter_, snapshotTimepoint_) * $.weightPerToken;
     }
 
     function _getVoteWeightDetails(
@@ -286,10 +319,16 @@ contract VotingAdapterERC20V1 is
         bytes calldata
     ) internal view virtual returns (uint256) {
         uint48 startTimepoint;
-        if (_tokenClockMode == ClockMode.Timestamp) {
-            (startTimepoint, ) = _strategy.getVotingTimestamps(proposalId_);
+
+        VotingAdapterERC20Storage storage $ = _getVotingAdapterERC20Storage();
+        VotingAdapterBaseStorage storage $base = _getVotingAdapterBaseStorage();
+
+        if ($.tokenClockMode == ClockMode.Timestamp) {
+            (startTimepoint, ) = $base.strategy.getVotingTimestamps(
+                proposalId_
+            );
         } else {
-            startTimepoint = _strategy.getVotingStartBlock(proposalId_);
+            startTimepoint = $base.strategy.getVotingStartBlock(proposalId_);
         }
 
         if (startTimepoint == 0) revert ProposalNotInitialized();

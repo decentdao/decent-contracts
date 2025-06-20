@@ -11,20 +11,23 @@ contract ConcreteFreezeVotingBaseV1 is FreezeVotingBaseV1 {
         uint32 freezePeriod_
     ) public initializer {
         __Ownable_init(owner_);
-        _freezeVotesThreshold = freezeVotesThreshold_;
-        _freezeProposalPeriod = freezeProposalPeriod_;
-        _freezePeriod = freezePeriod_;
+        FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
+        $base.freezeVotesThreshold = freezeVotesThreshold_;
+        $base.freezeProposalPeriod = freezeProposalPeriod_;
+        $base.freezePeriod = freezePeriod_;
     }
 
     function castFreezeVote() external {
         // If no freeze proposal exists yet, create one
-        if (_freezeProposalCreated == 0) {
+        FreezeVotingBaseStorage storage $base = _getFreezeVotingBaseStorage();
+        if ($base.freezeProposalCreated == 0) {
             _initializeFreezeVote();
         }
 
         // Check if proposal period has expired
         require(
-            block.timestamp <= _freezeProposalCreated + _freezeProposalPeriod,
+            block.timestamp <=
+                $base.freezeProposalCreated + $base.freezeProposalPeriod,
             "Freeze proposal period expired"
         );
 

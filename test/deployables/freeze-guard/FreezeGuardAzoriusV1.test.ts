@@ -14,9 +14,9 @@ import {
   MockFreezeVoting,
   MockFreezeVoting__factory,
 } from '../../../typechain-types';
-import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../helpers/utils';
-import { runUUPSUpgradeabilityTests } from '../../helpers/uupsUpgradeabilityTests';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
+import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests';
 
 // Helper function for deploying AzoriusFreezeGuardV1 instances using ERC1967Proxy
 async function deployAzoriusFreezeGuardProxy(
@@ -207,7 +207,7 @@ describe('FreezeGuardAzoriusV1', () => {
     });
   });
 
-  describe('ERC165', function () {
+  describe('ERC165 supportsInterface', function () {
     beforeEach(async function () {
       azoriusFreezeGuard = await deployAzoriusFreezeGuardProxy(
         proxyDeployer,
@@ -217,61 +217,22 @@ describe('FreezeGuardAzoriusV1', () => {
       );
     });
 
-    it('Should support IERC165 interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IVersion interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IFreezeGuardAzoriusV1 interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IFreezeGuardAzoriusV1__factory.createInterface(), [
-            IFreezeGuardBaseV1__factory.createInterface(),
-            IGuard__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IFreezeGuardBaseV1 interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IFreezeGuardBaseV1__factory.createInterface(), [
-            IGuard__factory.createInterface(),
-          ]),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IGuard interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IGuard__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IDeploymentBlockV1 interface', async function () {
-      void expect(
-        await azoriusFreezeGuard.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should not support random interface', async function () {
-      void expect(await azoriusFreezeGuard.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => azoriusFreezeGuard,
+      supportedInterfaceFactories: [
+        IERC165__factory,
+        IVersion__factory,
+        {
+          factory: IFreezeGuardAzoriusV1__factory,
+          inheritedFactories: [IFreezeGuardBaseV1__factory, IGuard__factory],
+        },
+        {
+          factory: IFreezeGuardBaseV1__factory,
+          inheritedFactories: [IGuard__factory],
+        },
+        IGuard__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

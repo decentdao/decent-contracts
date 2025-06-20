@@ -22,23 +22,39 @@ contract VotesERC20StakedV1 is
     DeploymentBlockV1,
     ERC165
 {
+    using SafeERC20 for IERC20;
+
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
-    using SafeERC20 for IERC20;
+    /// @custom:storage-location erc7201:Decent.VotesERC20Staked.main
+    struct VotesERC20StakedStorage {
+        IERC20 stakedToken;
+        uint256 minimumStakingPeriod;
+        uint256 totalStaked;
+        mapping(address staker => StakerData stakerData) stakerData;
+        address[] rewardsTokens;
+        mapping(address rewardsToken => RewardsTokenData rewardsTokenData) rewardsTokenDatas;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.VotesERC20Staked.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant VOTES_ERC20_STAKED_STORAGE_LOCATION =
+        0x83aa32448e81663c7ed9dd6086fc9a74efff7a034dc2ffef9e3a5d9c41ab2400;
+
+    function _getVotesERC20StakedStorage()
+        internal
+        pure
+        returns (VotesERC20StakedStorage storage $)
+    {
+        assembly {
+            $.slot := VOTES_ERC20_STAKED_STORAGE_LOCATION
+        }
+    }
 
     address internal constant NATIVE_ASSET =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint256 internal constant PRECISION = 10 ** 18;
-
-    IERC20 internal _stakedToken;
-    uint256 internal _minimumStakingPeriod;
-    uint256 internal _totalStaked;
-    mapping(address staker => StakerData stakerData) internal _stakerData;
-    address[] internal _rewardsTokens;
-    mapping(address rewardsToken => RewardsTokenData rewardsTokenData)
-        internal _rewardsTokenDatas;
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -62,9 +78,12 @@ contract VotesERC20StakedV1 is
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
         __DeploymentBlockV1_init();
-        _stakedToken = IERC20(stakedToken_);
+
         _updateMinimumStakingPeriod(minimumStakingPeriod_);
         _addRewardsTokens(rewardsTokens_);
+
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        $.stakedToken = IERC20(stakedToken_);
     }
 
     // ======================================================================
@@ -106,7 +125,8 @@ contract VotesERC20StakedV1 is
     }
 
     function stakedToken() public view virtual override returns (address) {
-        return address(_stakedToken);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return address($.stakedToken);
     }
 
     function minimumStakingPeriod()
@@ -116,11 +136,13 @@ contract VotesERC20StakedV1 is
         override
         returns (uint256)
     {
-        return _minimumStakingPeriod;
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return $.minimumStakingPeriod;
     }
 
     function totalStaked() public view virtual override returns (uint256) {
-        return _totalStaked;
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return $.totalStaked;
     }
 
     function rewardsTokens()
@@ -130,19 +152,24 @@ contract VotesERC20StakedV1 is
         override
         returns (address[] memory)
     {
-        return _rewardsTokens;
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return $.rewardsTokens;
     }
 
     function rewardsTokenData(
         address token_
     ) public view virtual override returns (uint256, uint256, uint256) {
-        if (!_rewardsTokenDatas[token_].enabled)
-            revert InvalidRewardsToken(token_);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        RewardsTokenData storage _rewardsTokenData = $.rewardsTokenDatas[
+            token_
+        ];
+
+        if (!_rewardsTokenData.enabled) revert InvalidRewardsToken(token_);
 
         return (
-            _rewardsTokenDatas[token_].rewardsRate,
-            _rewardsTokenDatas[token_].rewardsDistributed,
-            _rewardsTokenDatas[token_].rewardsClaimed
+            _rewardsTokenData.rewardsRate,
+            _rewardsTokenData.rewardsDistributed,
+            _rewardsTokenData.rewardsClaimed
         );
     }
 
@@ -153,12 +180,16 @@ contract VotesERC20StakedV1 is
         override
         returns (uint256[] memory)
     {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         uint256[] memory distributableRewards_ = new uint256[](
-            _rewardsTokens.length
+            $.rewardsTokens.length
         );
 
-        for (uint256 i = 0; i < _rewardsTokens.length; ) {
-            distributableRewards_[i] = _distributableRewards(_rewardsTokens[i]);
+        for (uint256 i = 0; i < $.rewardsTokens.length; ) {
+            distributableRewards_[i] = _distributableRewards(
+                $.rewardsTokens[i]
+            );
 
             unchecked {
                 ++i;
@@ -175,9 +206,11 @@ contract VotesERC20StakedV1 is
             rewardsTokens_.length
         );
 
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         for (uint256 i = 0; i < rewardsTokens_.length; ) {
             address token = rewardsTokens_[i];
-            if (!_rewardsTokenDatas[token].enabled)
+            if (!$.rewardsTokenDatas[token].enabled)
                 revert InvalidRewardsToken(token);
 
             distributableRewards_[i] = _distributableRewards(token);
@@ -193,35 +226,42 @@ contract VotesERC20StakedV1 is
     function stakerData(
         address staker_
     ) public view virtual override returns (uint256, uint256) {
-        return (
-            _stakerData[staker_].stakedAmount,
-            _stakerData[staker_].lastStakeTimestamp
-        );
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        StakerData storage stakerData_ = $.stakerData[staker_];
+
+        return (stakerData_.stakedAmount, stakerData_.lastStakeTimestamp);
     }
 
     function stakerRewardsData(
         address token_,
         address staker_
     ) public view virtual override returns (uint256, uint256) {
-        if (!_rewardsTokenDatas[token_].enabled)
-            revert InvalidRewardsToken(token_);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        RewardsTokenData storage rewardsTokenData_ = $.rewardsTokenDatas[
+            token_
+        ];
+
+        if (!rewardsTokenData_.enabled) revert InvalidRewardsToken(token_);
 
         return (
-            _rewardsTokenDatas[token_].stakerRewardsRates[staker_],
-            _rewardsTokenDatas[token_].stakerAccumulatedRewards[staker_]
+            rewardsTokenData_.stakerRewardsRates[staker_],
+            rewardsTokenData_.stakerAccumulatedRewards[staker_]
         );
     }
 
     function claimableRewards(
         address staker_
     ) public view virtual override returns (uint256[] memory) {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         uint256[] memory claimableRewards_ = new uint256[](
-            _rewardsTokens.length
+            $.rewardsTokens.length
         );
-        for (uint256 i = 0; i < _rewardsTokens.length; ) {
+
+        for (uint256 i = 0; i < $.rewardsTokens.length; ) {
             claimableRewards_[i] = _claimableRewards(
                 staker_,
-                _rewardsTokens[i]
+                $.rewardsTokens[i]
             );
 
             unchecked {
@@ -236,10 +276,13 @@ contract VotesERC20StakedV1 is
         address staker_,
         address[] calldata tokens_
     ) public view virtual override returns (uint256[] memory) {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         uint256[] memory claimableRewards_ = new uint256[](tokens_.length);
+
         for (uint256 i = 0; i < tokens_.length; ) {
             address token = tokens_[i];
-            if (!_rewardsTokenDatas[token].enabled)
+            if (!$.rewardsTokenDatas[token].enabled)
                 revert InvalidRewardsToken(token);
 
             claimableRewards_[i] = _claimableRewards(staker_, token);
@@ -271,41 +314,50 @@ contract VotesERC20StakedV1 is
 
         _accumulateRewards(msg.sender);
 
-        _stakerData[msg.sender].stakedAmount += amount_;
-        _stakerData[msg.sender].lastStakeTimestamp = block.timestamp;
-        _totalStaked += amount_;
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        StakerData storage stakerData_ = $.stakerData[msg.sender];
+
+        stakerData_.stakedAmount += amount_;
+        stakerData_.lastStakeTimestamp = block.timestamp;
+        $.totalStaked += amount_;
 
         _mint(msg.sender, amount_);
 
-        _stakedToken.safeTransferFrom(msg.sender, address(this), amount_);
+        $.stakedToken.safeTransferFrom(msg.sender, address(this), amount_);
 
         emit Staked(msg.sender, amount_);
     }
 
     function unstake(uint256 amount_) public virtual override {
         if (amount_ == 0) revert ZeroUnstake();
+
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        StakerData storage stakerData_ = $.stakerData[msg.sender];
+
         if (
             block.timestamp <
-            _stakerData[msg.sender].lastStakeTimestamp + _minimumStakingPeriod
+            stakerData_.lastStakeTimestamp + $.minimumStakingPeriod
         ) revert MinimumStakingPeriod();
 
         _accumulateRewards(msg.sender);
 
-        _stakerData[msg.sender].stakedAmount -= amount_;
-        _totalStaked -= amount_;
+        stakerData_.stakedAmount -= amount_;
+        $.totalStaked -= amount_;
 
         _burn(msg.sender, amount_);
 
-        _stakedToken.safeTransfer(msg.sender, amount_);
+        $.stakedToken.safeTransfer(msg.sender, amount_);
 
         emit Unstaked(msg.sender, amount_);
     }
 
     function distributeRewards() public virtual override {
-        if (_totalStaked == 0) revert ZeroStaked();
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
 
-        for (uint256 i = 0; i < _rewardsTokens.length; ) {
-            _distributeRewards(_rewardsTokens[i]);
+        if ($.totalStaked == 0) revert ZeroStaked();
+
+        for (uint256 i = 0; i < $.rewardsTokens.length; ) {
+            _distributeRewards($.rewardsTokens[i]);
 
             unchecked {
                 ++i;
@@ -316,11 +368,13 @@ contract VotesERC20StakedV1 is
     function distributeRewards(
         address[] calldata tokens_
     ) public virtual override {
-        if (_totalStaked == 0) revert ZeroStaked();
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        if ($.totalStaked == 0) revert ZeroStaked();
 
         for (uint256 i = 0; i < tokens_.length; ) {
             address token = tokens_[i];
-            if (!_rewardsTokenDatas[token].enabled)
+            if (!$.rewardsTokenDatas[token].enabled)
                 revert InvalidRewardsToken(token);
 
             _distributeRewards(token);
@@ -332,8 +386,10 @@ contract VotesERC20StakedV1 is
     }
 
     function claimRewards(address recipient_) public virtual override {
-        for (uint256 i = 0; i < _rewardsTokens.length; ) {
-            _claimRewards(msg.sender, recipient_, _rewardsTokens[i]);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        for (uint256 i = 0; i < $.rewardsTokens.length; ) {
+            _claimRewards(msg.sender, recipient_, $.rewardsTokens[i]);
 
             unchecked {
                 ++i;
@@ -345,9 +401,11 @@ contract VotesERC20StakedV1 is
         address recipient_,
         address[] calldata tokens_
     ) public virtual override {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         for (uint256 i = 0; i < tokens_.length; ) {
             address token = tokens_[i];
-            if (!_rewardsTokenDatas[token].enabled)
+            if (!$.rewardsTokenDatas[token].enabled)
                 revert InvalidRewardsToken(token);
 
             _claimRewards(msg.sender, recipient_, token);
@@ -419,7 +477,9 @@ contract VotesERC20StakedV1 is
     ) internal virtual {
         uint256 amountToClaim = _claimableRewards(_claimer, _token);
 
-        RewardsTokenData storage token = _rewardsTokenDatas[_token];
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        RewardsTokenData storage token = $.rewardsTokenDatas[_token];
 
         token.stakerAccumulatedRewards[_claimer] = 0;
         token.stakerRewardsRates[_claimer] = token.rewardsRate;
@@ -438,7 +498,9 @@ contract VotesERC20StakedV1 is
     }
 
     function _distributeRewards(address token_) internal virtual {
-        RewardsTokenData storage token = _rewardsTokenDatas[token_];
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        RewardsTokenData storage token = $.rewardsTokenDatas[token_];
 
         uint256 amountToDistribute = _distributableRewards(token_);
 
@@ -446,7 +508,7 @@ contract VotesERC20StakedV1 is
 
         uint256 newRewardsRate = token.rewardsRate +
             (amountToDistribute * PRECISION) /
-            _totalStaked;
+            $.totalStaked;
 
         token.rewardsDistributed += amountToDistribute;
         token.rewardsRate = newRewardsRate;
@@ -457,15 +519,18 @@ contract VotesERC20StakedV1 is
     function _addRewardsTokens(
         address[] calldata rewardsTokens_
     ) internal virtual {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
         for (uint256 i = 0; i < rewardsTokens_.length; ) {
-            if (_rewardsTokenDatas[rewardsTokens_[i]].enabled)
+            address token = rewardsTokens_[i];
+
+            if ($.rewardsTokenDatas[token].enabled)
                 revert DuplicateRewardsToken();
 
-            _rewardsTokens.push(rewardsTokens_[i]);
+            $.rewardsTokens.push(token);
+            $.rewardsTokenDatas[token].enabled = true;
 
-            _rewardsTokenDatas[rewardsTokens_[i]].enabled = true;
-
-            emit RewardsTokenAdded(rewardsTokens_[i]);
+            emit RewardsTokenAdded(token);
 
             unchecked {
                 ++i;
@@ -474,13 +539,15 @@ contract VotesERC20StakedV1 is
     }
 
     function _accumulateRewards(address staker_) internal virtual {
-        for (uint256 i = 0; i < _rewardsTokens.length; ) {
-            RewardsTokenData storage token = _rewardsTokenDatas[
-                _rewardsTokens[i]
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        for (uint256 i = 0; i < $.rewardsTokens.length; ) {
+            RewardsTokenData storage token = $.rewardsTokenDatas[
+                $.rewardsTokens[i]
             ];
 
             token.stakerAccumulatedRewards[staker_] +=
-                (_stakerData[staker_].stakedAmount *
+                ($.stakerData[staker_].stakedAmount *
                     (token.rewardsRate - token.stakerRewardsRates[staker_])) /
                 PRECISION;
 
@@ -495,42 +562,50 @@ contract VotesERC20StakedV1 is
     function _updateMinimumStakingPeriod(
         uint256 newMinimumStakingPeriod_
     ) internal virtual {
-        _minimumStakingPeriod = newMinimumStakingPeriod_;
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        $.minimumStakingPeriod = newMinimumStakingPeriod_;
         emit MinimumStakingPeriodUpdated(newMinimumStakingPeriod_);
     }
 
     function _distributableRewards(
         address token_
     ) internal view virtual returns (uint256) {
-        if (!_rewardsTokenDatas[token_].enabled)
-            revert InvalidRewardsToken(token_);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+
+        RewardsTokenData storage _rewardsTokenData = $.rewardsTokenDatas[
+            token_
+        ];
+
+        if (!_rewardsTokenData.enabled) revert InvalidRewardsToken(token_);
 
         uint256 thisBalance;
         if (token_ == NATIVE_ASSET) {
             thisBalance = address(this).balance;
-        } else if (token_ == address(_stakedToken)) {
+        } else if (token_ == address($.stakedToken)) {
             thisBalance =
                 IERC20(token_).balanceOf(address(this)) -
-                _totalStaked;
+                $.totalStaked;
         } else {
             thisBalance = IERC20(token_).balanceOf(address(this));
         }
 
         return
             thisBalance +
-            _rewardsTokenDatas[token_].rewardsClaimed -
-            _rewardsTokenDatas[token_].rewardsDistributed;
+            _rewardsTokenData.rewardsClaimed -
+            _rewardsTokenData.rewardsDistributed;
     }
 
     function _claimableRewards(
         address staker_,
         address token_
     ) internal view virtual returns (uint256) {
-        RewardsTokenData storage token = _rewardsTokenDatas[token_];
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        RewardsTokenData storage token = $.rewardsTokenDatas[token_];
 
         return
             token.stakerAccumulatedRewards[staker_] +
-            ((_stakerData[staker_].stakedAmount *
+            (($.stakerData[staker_].stakedAmount *
                 (token.rewardsRate - token.stakerRewardsRates[staker_])) /
                 PRECISION);
     }

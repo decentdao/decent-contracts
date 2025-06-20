@@ -149,7 +149,7 @@ describe('FreezeVotingBaseV1', () => {
 
   describe('Freeze State', () => {
     it('should not be frozen initially', async () => {
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
     });
 
     it('should not be frozen when below threshold', async () => {
@@ -158,7 +158,7 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter2).castFreezeVote();
 
       // Should not be frozen yet
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
     });
 
     it('should be frozen once threshold is met', async () => {
@@ -168,7 +168,7 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // Should now be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
     });
 
     it('should automatically unfreeze after freeze period', async () => {
@@ -178,13 +178,13 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // Should be frozen initially
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
 
       // Increase time to pass the freeze period
       await time.increase(FREEZE_PERIOD + 1);
 
       // Should no longer be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
     });
 
     it('should allow owner to unfreeze manually', async () => {
@@ -194,13 +194,13 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // Should be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
 
       // Owner unfreezes manually
       await freezeVoting.connect(owner).unfreeze();
 
       // Should no longer be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
 
       // Check that state was reset
       expect(await freezeVoting.freezeProposalCreated()).to.equal(0);
@@ -221,7 +221,7 @@ describe('FreezeVotingBaseV1', () => {
       );
 
       // Should still be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
     });
 
     it('should track freeze status across multiple proposals', async () => {
@@ -231,26 +231,26 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // DAO should be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
 
       // Owner unfreezes manually
       await freezeVoting.connect(owner).unfreeze();
 
       // DAO should not be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
 
       // Start a new proposal with not enough votes
       await freezeVoting.connect(voter1).castFreezeVote();
       await freezeVoting.connect(voter2).castFreezeVote();
 
       // DAO should not be frozen with only 2 votes
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
 
       // Add the third vote to reach threshold
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // DAO should be frozen again
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
     });
   });
 
@@ -310,7 +310,7 @@ describe('FreezeVotingBaseV1', () => {
       await freezeVoting.connect(voter3).castFreezeVote();
 
       // Should be frozen immediately after threshold is reached
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
 
       // Get the freeze activation timestamp
       const freezeActivated = await freezeVoting.freezeActivated();
@@ -319,19 +319,19 @@ describe('FreezeVotingBaseV1', () => {
       await time.increaseTo(Number(freezeActivated) + FREEZE_PERIOD - 1);
 
       // Should still be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.true;
+      expect(await freezeVoting.isFrozen()).to.be.true;
 
       // Advance time to exactly when freeze period expires
       await time.increaseTo(Number(freezeActivated) + FREEZE_PERIOD);
 
       // Should no longer be frozen at the exact expiry time
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
 
       // Advance time past freeze period
       await time.increaseTo(Number(freezeActivated) + FREEZE_PERIOD + 1);
 
       // Should no longer be frozen
-      void expect(await freezeVoting.isFrozen()).to.be.false;
+      expect(await freezeVoting.isFrozen()).to.be.false;
     });
 
     it('should handle multiple freeze activation cycles correctly', async () => {

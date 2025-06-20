@@ -1,21 +1,38 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
+import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
 import {ILightAccount} from "../../interfaces/light-account/ILightAccount.sol";
 import {ILightAccountFactory} from "../../interfaces/light-account/ILightAccountFactory.sol";
-import {ISmartAccountValidationV1} from "../../interfaces/decent/deployables/ISmartAccountValidationV1.sol";
 import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-abstract contract SmartAccountValidationV1 is
-    ISmartAccountValidationV1,
+abstract contract LightAccountValidatorV1 is
+    ILightAccountValidatorV1,
     Initializable
 {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
-    ILightAccountFactory internal _lightAccountFactory;
+    /// @custom:storage-location erc7201:Decent.LightAccountValidator.main
+    struct LightAccountValidatorStorage {
+        ILightAccountFactory lightAccountFactory;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.LightAccountValidator.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant LIGHT_ACCOUNT_VALIDATOR_STORAGE_LOCATION =
+        0xed41a089afe75bc52b13df3ad8919290164082b965c18c56b129dc0b8138e700;
+
+    function _getLightAccountValidatorStorage()
+        internal
+        pure
+        returns (LightAccountValidatorStorage storage $)
+    {
+        assembly {
+            $.slot := LIGHT_ACCOUNT_VALIDATOR_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -25,14 +42,16 @@ abstract contract SmartAccountValidationV1 is
         _disableInitializers();
     }
 
-    function __SmartAccountValidationV1_init(
+    function __LightAccountValidatorV1_init(
         address lightAccountFactory_
     ) internal onlyInitializing {
-        _lightAccountFactory = ILightAccountFactory(lightAccountFactory_);
+        LightAccountValidatorStorage
+            storage $ = _getLightAccountValidatorStorage();
+        $.lightAccountFactory = ILightAccountFactory(lightAccountFactory_);
     }
 
     // ======================================================================
-    // ISmartAccountValidationV1
+    // ILightAccountValidatorV1
     // ======================================================================
 
     // --- View Functions ---
@@ -44,20 +63,39 @@ abstract contract SmartAccountValidationV1 is
         override
         returns (address)
     {
-        return address(_lightAccountFactory);
+        LightAccountValidatorStorage
+            storage $ = _getLightAccountValidatorStorage();
+        return address($.lightAccountFactory);
+    }
+
+    function potentialLightAccountResolvedOwner(
+        address potentialLightAccount_,
+        uint256 lightAccountIndex_
+    ) public view virtual override returns (address) {
+        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(
+            potentialLightAccount_,
+            lightAccountIndex_
+        );
+
+        if (!_isValid) {
+            return potentialLightAccount_;
+        }
+
+        return _lightAccountOwner;
     }
 
     // ======================================================================
     // INTERNAL HELPERS
     // ======================================================================
 
-    function _validateSmartAccount(
-        address smartAccount_
+    function _validateLightAccount(
+        address lightAccount_,
+        uint256 lightAccountIndex_
     ) internal view virtual returns (bool, address) {
         // First check if the address has code (is a contract)
         uint256 size;
         assembly {
-            size := extcodesize(smartAccount_)
+            size := extcodesize(lightAccount_)
         }
 
         // If it's an EOA (no code), it's not a `LightAccount`
@@ -65,21 +103,24 @@ abstract contract SmartAccountValidationV1 is
             return (false, address(0));
         }
 
-        try ILightAccount(smartAccount_).owner() returns (
+        try ILightAccount(lightAccount_).owner() returns (
             address lightAccountOwner_
         ) {
+            LightAccountValidatorStorage
+                storage $ = _getLightAccountValidatorStorage();
+
             // Regenerate the expected light account address
-            address lightAccountAddress = _lightAccountFactory.getAddress(
+            address lightAccountAddress = $.lightAccountFactory.getAddress(
                 lightAccountOwner_,
-                0 // we assume that Decent App is only creating one account per user
+                lightAccountIndex_
             );
 
-            // If the given `smartAccount` address is the same as the derived
-            // `lightAccountAddress`, then we know that the `smartAccount`
+            // If the given `lightAccount` address is the same as the derived
+            // `lightAccountAddress`, then we know that the `lightAccount`
             // was created by the `LightAccountFactory` and therefore can be trusted.
-            return (lightAccountAddress == smartAccount_, lightAccountOwner_);
+            return (lightAccountAddress == lightAccount_, lightAccountOwner_);
         } catch {
-            // `smartAccount` does not implement `owner()`
+            // `lightAccount` does not implement `owner()`
             // so it's definitely not a `LightAccount`
             return (false, address(0));
         }
@@ -88,11 +129,18 @@ abstract contract SmartAccountValidationV1 is
     function _validateUserOp(
         PackedUserOperation calldata userOp_
     ) internal view virtual returns (address, address, bytes memory) {
-        (bool isValid, address lightAccountOwner) = _validateSmartAccount(
-            userOp_.sender
+        // Extract the light account index from paymaster data if present
+        uint256 lightAccountIndex = _extractLightAccountIndex(
+            userOp_.paymasterAndData
         );
-        if (!isValid) {
-            revert InvalidSmartAccount();
+
+        (bool _isValid, address _lightAccountOwner) = _validateLightAccount(
+            userOp_.sender,
+            lightAccountIndex
+        );
+
+        if (!_isValid) {
+            revert InvalidLightAccount();
         }
 
         // If we're here, we've confirmed that the sender is an actual instance of a LightAccount,
@@ -126,6 +174,22 @@ abstract contract SmartAccountValidationV1 is
             revert InvalidInnerCallDataLength();
         }
 
-        return (lightAccountOwner, target, innerCallData);
+        return (_lightAccountOwner, target, innerCallData);
+    }
+
+    function _extractLightAccountIndex(
+        bytes calldata paymasterAndData_
+    ) internal pure virtual returns (uint256) {
+        // Check if we have paymaster data beyond the standard fields
+        // Standard fields take up 52 bytes (20 + 16 + 16)
+        // 52 (standard fields) + 32 (index) = 84
+        // so if the length is >= 84, we can extract the index without an out of bounds error
+        if (paymasterAndData_.length >= 84) {
+            // The index is encoded as the first 32 bytes after the standard fields
+            return uint256(bytes32(paymasterAndData_[52:84]));
+        }
+
+        // Default to 0 for backward compatibility
+        return 0;
     }
 }

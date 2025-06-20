@@ -8,8 +8,8 @@ import {
   KeyValuePairsV1,
   KeyValuePairsV1__factory,
 } from '../../typechain-types';
-import { runDeploymentBlockTests } from '../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../helpers/utils';
+import { runDeploymentBlockTests } from '../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../shared/supportsInterfaceTests';
 
 describe('KeyValuePairsV1', function () {
   let keyValuePairs: KeyValuePairsV1;
@@ -55,37 +55,18 @@ describe('KeyValuePairsV1', function () {
 
   describe('version', function () {
     it('should return the correct version', async function () {
-      void expect(await keyValuePairs.version()).to.equal(1);
+      expect(await keyValuePairs.version()).to.equal(1);
     });
   });
 
   describe('ERC165 supportsInterface', function () {
-    it('should support IKeyValuePairs interface', async function () {
-      void expect(
-        await keyValuePairs.supportsInterface(
-          calculateInterfaceId(IKeyValuePairsV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVersion interface', async function () {
-      void expect(
-        await keyValuePairs.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IDeploymentBlockV1 interface', async function () {
-      void expect(
-        await keyValuePairs.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support a random interfaceId', async function () {
-      void expect(await keyValuePairs.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => keyValuePairs,
+      supportedInterfaceFactories: [
+        IKeyValuePairsV1__factory,
+        IVersion__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

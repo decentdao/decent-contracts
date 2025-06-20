@@ -10,8 +10,8 @@ import {
   IERC165__factory,
   IVersion__factory,
 } from '../../../typechain-types';
-import { runDeploymentBlockTests } from '../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../helpers/utils';
+import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
 
 // Helper function for deploying DecentAutonomousAdminV1 instances using ERC1967Proxy
 async function deployDecentAutonomousAdminProxy(
@@ -48,45 +48,15 @@ describe('DecentAutonomousAdminV1', function () {
     decentAutonomousAdmin = await deployDecentAutonomousAdminProxy(proxyDeployer, masterCopy);
   });
 
-  describe('ERC165', function () {
-    it('Should support IERC165 interface', async function () {
-      void expect(
-        await decentAutonomousAdmin.supportsInterface(
-          calculateInterfaceId(IERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IDecentAutonomousAdminV1 interface', async function () {
-      void expect(
-        await decentAutonomousAdmin.supportsInterface(
-          calculateInterfaceId(IDecentAutonomousAdminV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IVersion interface', async function () {
-      void expect(
-        await decentAutonomousAdmin.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('Should support IDeploymentBlockV1 interface', async function () {
-      void expect(
-        await decentAutonomousAdmin.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support random interface', async function () {
-      // Random interface id
-      const randomInterfaceId = '0x12345678';
-
-      const supported = await decentAutonomousAdmin.supportsInterface(randomInterfaceId);
-      void expect(supported).to.be.false;
+  describe('ERC165 supportsInterface', function () {
+    runSupportsInterfaceTests({
+      getContract: () => decentAutonomousAdmin,
+      supportedInterfaceFactories: [
+        IERC165__factory,
+        IDecentAutonomousAdminV1__factory,
+        IVersion__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 

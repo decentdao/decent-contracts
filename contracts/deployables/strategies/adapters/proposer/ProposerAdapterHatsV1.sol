@@ -19,9 +19,26 @@ contract ProposerAdapterHatsV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IHats internal _hatsContract;
-    uint256[] internal _whitelistedHatIds;
-    mapping(uint256 hatId => bool isWhitelisted) internal _hatIdIsWhitelisted;
+    /// @custom:storage-location erc7201:Decent.ProposerAdapterHats.main
+    struct ProposerAdapterHatsStorage {
+        IHats hatsContract;
+        uint256[] whitelistedHatIds;
+        mapping(uint256 hatId => bool isWhitelisted) hatIdIsWhitelisted;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.ProposerAdapterHats.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant PROPOSER_ADAPTER_HATS_STORAGE_LOCATION =
+        0xd7b60f4d6815f9154d4a3fad28e55995818cb5267ea0443225644719e6bb1900;
+
+    function _getProposerAdapterHatsStorage()
+        internal
+        pure
+        returns (ProposerAdapterHatsStorage storage $)
+    {
+        assembly {
+            $.slot := PROPOSER_ADAPTER_HATS_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -36,10 +53,12 @@ contract ProposerAdapterHatsV1 is
         uint256[] calldata whitelistedHatIds_
     ) public virtual override initializer {
         __DeploymentBlockV1_init();
-        _hatsContract = IHats(hatsContract_);
-        _whitelistedHatIds = whitelistedHatIds_;
+
+        ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
+        $.hatsContract = IHats(hatsContract_);
+        $.whitelistedHatIds = whitelistedHatIds_;
         for (uint256 i = 0; i < whitelistedHatIds_.length; ) {
-            _hatIdIsWhitelisted[whitelistedHatIds_[i]] = true;
+            $.hatIdIsWhitelisted[whitelistedHatIds_[i]] = true;
 
             unchecked {
                 ++i;
@@ -54,7 +73,8 @@ contract ProposerAdapterHatsV1 is
     // --- View Functions ---
 
     function hatsContract() public view virtual override returns (address) {
-        return address(_hatsContract);
+        ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
+        return address($.hatsContract);
     }
 
     function whitelistedHatIds()
@@ -64,13 +84,15 @@ contract ProposerAdapterHatsV1 is
         override
         returns (uint256[] memory)
     {
-        return _whitelistedHatIds;
+        ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
+        return $.whitelistedHatIds;
     }
 
     function hatIdIsWhitelisted(
         uint256 hatId_
     ) public view virtual override returns (bool) {
-        return _hatIdIsWhitelisted[hatId_];
+        ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
+        return $.hatIdIsWhitelisted[hatId_];
     }
 
     // ======================================================================
@@ -84,9 +106,12 @@ contract ProposerAdapterHatsV1 is
         bytes calldata data_
     ) public view virtual override returns (bool) {
         uint256 hatId = abi.decode(data_, (uint256));
+
+        ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
+
         return
-            _hatIdIsWhitelisted[hatId] &&
-            _hatsContract.isWearerOfHat(proposer_, hatId);
+            $.hatIdIsWhitelisted[hatId] &&
+            $.hatsContract.isWearerOfHat(proposer_, hatId);
     }
 
     // ======================================================================

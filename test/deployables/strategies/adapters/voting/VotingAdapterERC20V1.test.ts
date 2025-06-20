@@ -16,8 +16,8 @@ import {
   VotingAdapterERC20V1,
   VotingAdapterERC20V1__factory,
 } from '../../../../../typechain-types';
-import { runDeploymentBlockTests } from '../../../../helpers/deploymentBlockTests';
-import { calculateInterfaceId } from '../../../../helpers/utils';
+import { runDeploymentBlockTests } from '../../../../shared/deploymentBlockTests';
+import { runSupportsInterfaceTests } from '../../../../shared/supportsInterfaceTests';
 
 // Modified helper function to return deployment tx hash
 async function deployERC20AdapterProxy(
@@ -263,7 +263,7 @@ describe('VotingAdapterERC20V1', () => {
         votingStartTimestamp,
         ethers.parseUnits('10', 18),
       );
-      await mockStrategy.connect(user1Signer).vote(
+      await mockStrategy.connect(user1Signer).castVote(
         proposalId,
         0, // voteType
         [
@@ -272,6 +272,7 @@ describe('VotingAdapterERC20V1', () => {
             adapterVoteData: mockExtraData,
           },
         ],
+        0n,
       );
       const weight = await adapter.weightOf(user1Signer.address, proposalId, mockExtraData);
       expect(weight).to.equal(0);
@@ -331,7 +332,7 @@ describe('VotingAdapterERC20V1', () => {
       const expectedWeightCasted = expectedRawVotes * DEFAULT_WEIGHT_PER_TOKEN;
 
       await expect(
-        strategy.connect(voter).vote(
+        strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -340,6 +341,7 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: mockExtraData,
             },
           ],
+          0n,
         ),
       )
         .to.emit(adapter, 'VoteRecorded')
@@ -367,7 +369,7 @@ describe('VotingAdapterERC20V1', () => {
       const expectedWeightCasted = expectedRawVotes * customWeight;
 
       await expect(
-        strategy.connect(voter).vote(
+        strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -376,6 +378,7 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: mockExtraData,
             },
           ],
+          0n,
         ),
       )
         .to.emit(adapter, 'VoteRecorded')
@@ -391,7 +394,7 @@ describe('VotingAdapterERC20V1', () => {
         votingStartTimestamp,
         votingStartTimestamp + 1000,
       );
-      await strategy.connect(voter).vote(
+      await strategy.connect(voter).castVote(
         proposalId,
         0, // voteType
         [
@@ -400,9 +403,10 @@ describe('VotingAdapterERC20V1', () => {
             adapterVoteData: mockExtraData,
           },
         ],
+        0n,
       );
       await expect(
-        strategy.connect(voter).vote(
+        strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -411,6 +415,7 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: mockExtraData,
             },
           ],
+          0n,
         ),
       ).to.be.revertedWithCustomError(adapter, 'AlreadyVoted');
     });
@@ -424,7 +429,7 @@ describe('VotingAdapterERC20V1', () => {
         votingStartTimestamp,
         votingStartTimestamp + 1000,
       );
-      await strategy.connect(voter).vote(
+      await strategy.connect(voter).castVote(
         proposalId,
         0, // voteType
         [
@@ -433,6 +438,7 @@ describe('VotingAdapterERC20V1', () => {
             adapterVoteData: mockExtraData,
           },
         ],
+        0n,
       );
       const weight = await adapter.weightOf(voter.address, proposalId, mockExtraData);
       expect(weight).to.equal(0);
@@ -442,7 +448,7 @@ describe('VotingAdapterERC20V1', () => {
       await setupAdapterForRecordVote(0);
       await strategy.setVotingTimestamps(proposalId, 0, 1000);
       await expect(
-        strategy.connect(voter).vote(
+        strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -451,6 +457,7 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: mockExtraData,
             },
           ],
+          0n,
         ),
       ).to.be.revertedWithCustomError(adapter, 'ProposalNotInitialized');
     });
@@ -459,7 +466,7 @@ describe('VotingAdapterERC20V1', () => {
       await setupAdapterForRecordVote(1);
       await strategy.setVotingStartBlock(proposalId, 0);
       await expect(
-        strategy.connect(voter).vote(
+        strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -468,6 +475,7 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: mockExtraData,
             },
           ],
+          0n,
         ),
       ).to.be.revertedWithCustomError(adapter, 'ProposalNotInitialized');
     });
@@ -516,7 +524,7 @@ describe('VotingAdapterERC20V1', () => {
     describe('hasCastedVoteForProposal', () => {
       it('should return false initially', async () => {
         const hasVoted = await adapter.hasCastedVoteForProposal(proposalId, voter.address);
-        void expect(hasVoted).to.be.false;
+        expect(hasVoted).to.be.false;
       });
 
       it('should return true after recording a vote', async () => {
@@ -529,7 +537,7 @@ describe('VotingAdapterERC20V1', () => {
         );
 
         // Record a vote
-        await strategy.connect(voter).vote(
+        await strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -538,11 +546,12 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: ZERO_EXTRA_DATA,
             },
           ],
+          0n,
         );
 
         // Check the state
         const hasVoted = await adapter.hasCastedVoteForProposal(proposalId, voter.address);
-        void expect(hasVoted).to.be.true;
+        expect(hasVoted).to.be.true;
       });
 
       it('should only mark the specific proposalId/voter combination as voted', async () => {
@@ -563,7 +572,7 @@ describe('VotingAdapterERC20V1', () => {
         );
 
         // Record a vote for proposalId/voter
-        await strategy.connect(voter).vote(
+        await strategy.connect(voter).castVote(
           proposalId,
           0, // voteType
           [
@@ -572,13 +581,14 @@ describe('VotingAdapterERC20V1', () => {
               adapterVoteData: ZERO_EXTRA_DATA,
             },
           ],
+          0n,
         );
 
         // Check states
-        void expect(await adapter.hasCastedVoteForProposal(proposalId, voter.address)).to.be.true;
-        void expect(await adapter.hasCastedVoteForProposal(anotherProposalId, voter.address)).to.be
+        expect(await adapter.hasCastedVoteForProposal(proposalId, voter.address)).to.be.true;
+        expect(await adapter.hasCastedVoteForProposal(anotherProposalId, voter.address)).to.be
           .false;
-        void expect(await adapter.hasCastedVoteForProposal(proposalId, anotherVoter.address)).to.be
+        expect(await adapter.hasCastedVoteForProposal(proposalId, anotherVoter.address)).to.be
           .false;
       });
     });
@@ -607,7 +617,7 @@ describe('VotingAdapterERC20V1', () => {
           freezeProposalSnapshotAndId,
           voter.address,
         );
-        void expect(hasVoted).to.be.false;
+        expect(hasVoted).to.be.false;
       });
 
       it('should return true after recording a freeze vote', async () => {
@@ -622,7 +632,7 @@ describe('VotingAdapterERC20V1', () => {
           freezeProposalSnapshotAndId,
           voter.address,
         );
-        void expect(hasVoted).to.be.true;
+        expect(hasVoted).to.be.true;
       });
 
       it('should only mark the specific contract/proposalId/voter combination as voted', async () => {
@@ -638,7 +648,7 @@ describe('VotingAdapterERC20V1', () => {
           .recordFreezeVote(voter.address, freezeProposalSnapshotAndId, ZERO_EXTRA_DATA);
 
         // Check states - same voter, different params
-        void expect(
+        expect(
           await adapter.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract(
             freezeVoteContract.address,
             freezeProposalSnapshotAndId,
@@ -646,7 +656,7 @@ describe('VotingAdapterERC20V1', () => {
           ),
         ).to.be.true;
 
-        void expect(
+        expect(
           await adapter.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract(
             anotherFreezeVoteContract.address,
             freezeProposalSnapshotAndId,
@@ -654,7 +664,7 @@ describe('VotingAdapterERC20V1', () => {
           ),
         ).to.be.false;
 
-        void expect(
+        expect(
           await adapter.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract(
             freezeVoteContract.address,
             anotherSnapshotId,
@@ -662,7 +672,7 @@ describe('VotingAdapterERC20V1', () => {
           ),
         ).to.be.false;
 
-        void expect(
+        expect(
           await adapter.hasCastedVotePerFreezeVoteProposalPerFreezeVoteContract(
             freezeVoteContract.address,
             freezeProposalSnapshotAndId,
@@ -687,48 +697,15 @@ describe('VotingAdapterERC20V1', () => {
       erc20Adapter = adapter;
     });
 
-    it('should support IVotingAdapterERC20V1', async () => {
-      void expect(
-        await erc20Adapter.supportsInterface(
-          calculateInterfaceId(IVotingAdapterERC20V1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVotingAdapterBaseV1', async () => {
-      void expect(
-        await erc20Adapter.supportsInterface(
-          calculateInterfaceId(IVotingAdapterBaseV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IVersion', async () => {
-      void expect(
-        await erc20Adapter.supportsInterface(
-          calculateInterfaceId(IVersion__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IERC165', async () => {
-      void expect(
-        await erc20Adapter.supportsInterface(
-          calculateInterfaceId(IERC165__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should support IDeploymentBlockV1', async () => {
-      void expect(
-        await erc20Adapter.supportsInterface(
-          calculateInterfaceId(IDeploymentBlockV1__factory.createInterface()),
-        ),
-      ).to.be.true;
-    });
-
-    it('should not support a random interfaceId', async () => {
-      void expect(await erc20Adapter.supportsInterface('0x12345678')).to.be.false;
+    runSupportsInterfaceTests({
+      getContract: () => erc20Adapter,
+      supportedInterfaceFactories: [
+        IVotingAdapterERC20V1__factory,
+        IVotingAdapterBaseV1__factory,
+        IVersion__factory,
+        IERC165__factory,
+        IDeploymentBlockV1__factory,
+      ],
     });
   });
 
@@ -1010,7 +987,7 @@ describe('VotingAdapterERC20V1', () => {
         mockExtraData,
       );
 
-      void expect(isValid).to.be.false;
+      expect(isValid).to.be.false;
       expect(weight).to.equal(0);
     });
 
@@ -1035,11 +1012,11 @@ describe('VotingAdapterERC20V1', () => {
         proposalId,
         mockExtraData,
       );
-      void expect(isInitiallyValid).to.be.true;
+      expect(isInitiallyValid).to.be.true;
       expect(initialWeight).to.equal(voteWeight);
 
       // 2. Record a vote
-      await strategy.connect(voter).vote(
+      await strategy.connect(voter).castVote(
         proposalId,
         0, // voteType
         [
@@ -1048,6 +1025,7 @@ describe('VotingAdapterERC20V1', () => {
             adapterVoteData: mockExtraData,
           },
         ],
+        0n,
       );
 
       // 3. Check for FALSE after voting
@@ -1057,7 +1035,7 @@ describe('VotingAdapterERC20V1', () => {
         mockExtraData,
       );
 
-      void expect(isFinallyValid).to.be.false;
+      expect(isFinallyValid).to.be.false;
       expect(finalWeight).to.equal(0);
     });
 
@@ -1075,7 +1053,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(validWeight);
 
         // 2. Check for FALSE with no checkpoints
@@ -1085,7 +1063,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isFinallyValid).to.be.false;
+        expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
 
@@ -1102,7 +1080,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(validWeight);
 
         // 2. Check for FALSE with all checkpoints after start
@@ -1116,7 +1094,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isFinallyValid).to.be.false;
+        expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
 
@@ -1133,7 +1111,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(validWeight);
 
         // 2. Check for FALSE with a zero-vote checkpoint
@@ -1144,7 +1122,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isFinallyValid).to.be.false;
+        expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
 
@@ -1161,7 +1139,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isValid).to.be.true;
+        expect(isValid).to.be.true;
         expect(weight).to.equal(votingWeight);
       });
 
@@ -1176,7 +1154,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isValid).to.be.true;
+        expect(isValid).to.be.true;
         expect(weight).to.equal(votingWeight);
       });
 
@@ -1195,7 +1173,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isValid).to.be.true;
+        expect(isValid).to.be.true;
         expect(weight).to.equal(expectedWeight);
       });
 
@@ -1212,7 +1190,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(expectedWeight);
 
         // 2. Check for FALSE by adding an ignored checkpoint (behavior doesn't change from true)
@@ -1229,7 +1207,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isFinallyValid).to.be.true;
+        expect(isFinallyValid).to.be.true;
         expect(finalWeight).to.equal(expectedWeight);
       });
 
@@ -1246,7 +1224,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(validWeight);
 
         // 2. Check for FALSE by adding a checkpoint after the end time
@@ -1260,7 +1238,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isFinallyValid).to.be.false;
+        expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
 
@@ -1278,7 +1256,7 @@ describe('VotingAdapterERC20V1', () => {
           mockExtraData,
         );
 
-        void expect(isValid).to.be.true;
+        expect(isValid).to.be.true;
         expect(weight).to.equal(expectedRawWeight * DEFAULT_WEIGHT_PER_TOKEN);
       });
 
@@ -1305,7 +1283,7 @@ describe('VotingAdapterERC20V1', () => {
           mockExtraData,
         );
 
-        void expect(isValid).to.be.true;
+        expect(isValid).to.be.true;
         expect(weight).to.equal(votingWeight * customWeightPerToken);
       });
 
@@ -1322,7 +1300,7 @@ describe('VotingAdapterERC20V1', () => {
           proposalId,
           mockExtraData,
         );
-        void expect(isInitiallyValid).to.be.true;
+        expect(isInitiallyValid).to.be.true;
         expect(initialWeight).to.equal(votingWeight * DEFAULT_WEIGHT_PER_TOKEN);
 
         // 2. Check for FALSE with the zero-weight adapter
@@ -1342,7 +1320,7 @@ describe('VotingAdapterERC20V1', () => {
           mockExtraData,
         );
 
-        void expect(isFinallyValid).to.be.false;
+        expect(isFinallyValid).to.be.false;
         expect(finalWeight).to.equal(0);
       });
     });

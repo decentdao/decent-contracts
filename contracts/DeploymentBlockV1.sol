@@ -9,18 +9,36 @@ abstract contract DeploymentBlockV1 is Initializable, IDeploymentBlockV1 {
     // STATE VARIABLES
     // ======================================================================
 
-    uint256 internal _deploymentBlock;
+    /// @custom:storage-location erc7201:Decent.DeploymentBlock.main
+    struct DeploymentBlockStorage {
+        uint256 deploymentBlock;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.DeploymentBlock.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant DEPLOYMENT_BLOCK_STORAGE_LOCATION =
+        0x07af5ac754c2e5f80e47cd633175198c53fef8f38c1a295a987ff54fb077b600;
+
+    function _getDeploymentBlockStorage()
+        internal
+        pure
+        returns (DeploymentBlockStorage storage $)
+    {
+        assembly {
+            $.slot := DEPLOYMENT_BLOCK_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================
 
     function __DeploymentBlockV1_init() internal onlyInitializing {
-        if (_deploymentBlock != 0) {
+        DeploymentBlockStorage storage $ = _getDeploymentBlockStorage();
+        if ($.deploymentBlock != 0) {
             revert DeploymentBlockAlreadySet();
         }
 
-        _deploymentBlock = block.number;
+        $.deploymentBlock = block.number;
     }
 
     // ======================================================================
@@ -30,6 +48,7 @@ abstract contract DeploymentBlockV1 is Initializable, IDeploymentBlockV1 {
     // --- View Functions ---
 
     function deploymentBlock() public view virtual override returns (uint256) {
-        return _deploymentBlock;
+        DeploymentBlockStorage storage $ = _getDeploymentBlockStorage();
+        return $.deploymentBlock;
     }
 }

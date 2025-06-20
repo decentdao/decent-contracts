@@ -15,7 +15,24 @@ import "@account-abstraction/contracts/core/UserOperationLib.sol";
  * Validates that the postOp is called only by the entryPoint.
  */
 abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
-    IEntryPoint public entryPoint;
+    /// @custom:storage-location erc7201:Decent.BasePaymaster.main
+    struct BasePaymasterStorage {
+        IEntryPoint entryPoint;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.BasePaymaster.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant BASE_PAYMASTER_STORAGE_LOCATION =
+        0xad46a2c487d466a30553d8946911648c5925537fb9ab436a7edd0606d8258100;
+
+    function _getBasePaymasterStorage()
+        internal
+        pure
+        returns (BasePaymasterStorage storage $)
+    {
+        assembly {
+            $.slot := BASE_PAYMASTER_STORAGE_LOCATION
+        }
+    }
 
     uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET =
         UserOperationLib.PAYMASTER_VALIDATION_GAS_OFFSET;
@@ -34,7 +51,9 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
     ) internal onlyInitializing {
         __Ownable_init(_owner);
         _validateEntryPointInterface(_entryPoint);
-        entryPoint = _entryPoint;
+
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint = _entryPoint;
     }
 
     //sanity check: make sure this EntryPoint was compiled against the same
@@ -84,6 +103,14 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
     }
 
     /**
+     * Get the entry point.
+     */
+    function entryPoint() public view returns (IEntryPoint) {
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        return $.entryPoint;
+    }
+
+    /**
      * Post-operation handler.
      * (verified to be called only through the entryPoint)
      * @dev If subclass returns a non-empty context from validatePaymasterUserOp,
@@ -113,7 +140,8 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
      * Add a deposit for this paymaster, used for paying for transaction fees.
      */
     function deposit() public payable {
-        entryPoint.depositTo{value: msg.value}(address(this));
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint.depositTo{value: msg.value}(address(this));
     }
 
     /**
@@ -125,7 +153,8 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
         address payable withdrawAddress,
         uint256 amount
     ) public onlyOwner {
-        entryPoint.withdrawTo(withdrawAddress, amount);
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint.withdrawTo(withdrawAddress, amount);
     }
 
     /**
@@ -134,14 +163,16 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
      * @param unstakeDelaySec - The unstake delay for this paymaster. Can only be increased.
      */
     function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
-        entryPoint.addStake{value: msg.value}(unstakeDelaySec);
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint.addStake{value: msg.value}(unstakeDelaySec);
     }
 
     /**
      * Return current paymaster's deposit on the entryPoint.
      */
     function getDeposit() public view returns (uint256) {
-        return entryPoint.balanceOf(address(this));
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        return $.entryPoint.balanceOf(address(this));
     }
 
     /**
@@ -149,7 +180,8 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
      * The paymaster can't serve requests once unlocked, until it calls addStake again
      */
     function unlockStake() external onlyOwner {
-        entryPoint.unlockStake();
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint.unlockStake();
     }
 
     /**
@@ -158,13 +190,15 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
      * @param withdrawAddress - The address to send withdrawn value.
      */
     function withdrawStake(address payable withdrawAddress) external onlyOwner {
-        entryPoint.withdrawStake(withdrawAddress);
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        $.entryPoint.withdrawStake(withdrawAddress);
     }
 
     /**
      * Validate the call is made from a valid entrypoint
      */
     function _requireFromEntryPoint() internal virtual {
-        require(msg.sender == address(entryPoint), "Sender not EntryPoint");
+        BasePaymasterStorage storage $ = _getBasePaymasterStorage();
+        require(msg.sender == address($.entryPoint), "Sender not EntryPoint");
     }
 }

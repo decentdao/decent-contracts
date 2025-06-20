@@ -19,8 +19,25 @@ contract ProposerAdapterERC20V1 is
     // STATE VARIABLES
     // ======================================================================
 
-    IVotes internal _token;
-    uint256 internal _proposerThreshold;
+    /// @custom:storage-location erc7201:Decent.ProposerAdapterERC20.main
+    struct ProposerAdapterERC20Storage {
+        IVotes token;
+        uint256 proposerThreshold;
+    }
+
+    // EIP-7201: keccak256(abi.encode(uint256(keccak256("Decent.ProposerAdapterERC20.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant PROPOSER_ADAPTER_ERC20_STORAGE_LOCATION =
+        0xd0ff3bfab69583661d8803345254b7701c2125007ad7e3ef64473e569aca5400;
+
+    function _getProposerAdapterERC20Storage()
+        internal
+        pure
+        returns (ProposerAdapterERC20Storage storage $)
+    {
+        assembly {
+            $.slot := PROPOSER_ADAPTER_ERC20_STORAGE_LOCATION
+        }
+    }
 
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
@@ -35,8 +52,11 @@ contract ProposerAdapterERC20V1 is
         uint256 proposerThreshold_
     ) public virtual override initializer {
         __DeploymentBlockV1_init();
-        _token = IVotes(token_);
-        _proposerThreshold = proposerThreshold_;
+
+        ProposerAdapterERC20Storage
+            storage $ = _getProposerAdapterERC20Storage();
+        $.token = IVotes(token_);
+        $.proposerThreshold = proposerThreshold_;
     }
 
     // ======================================================================
@@ -46,7 +66,9 @@ contract ProposerAdapterERC20V1 is
     // --- View Functions ---
 
     function token() public view virtual override returns (address) {
-        return address(_token);
+        ProposerAdapterERC20Storage
+            storage $ = _getProposerAdapterERC20Storage();
+        return address($.token);
     }
 
     function proposerThreshold()
@@ -56,7 +78,9 @@ contract ProposerAdapterERC20V1 is
         override
         returns (uint256)
     {
-        return _proposerThreshold;
+        ProposerAdapterERC20Storage
+            storage $ = _getProposerAdapterERC20Storage();
+        return $.proposerThreshold;
     }
 
     // ======================================================================
@@ -69,7 +93,9 @@ contract ProposerAdapterERC20V1 is
         address proposer_,
         bytes calldata
     ) public view virtual override returns (bool) {
-        return _token.getVotes(proposer_) >= _proposerThreshold;
+        ProposerAdapterERC20Storage
+            storage $ = _getProposerAdapterERC20Storage();
+        return $.token.getVotes(proposer_) >= $.proposerThreshold;
     }
 
     // ======================================================================
