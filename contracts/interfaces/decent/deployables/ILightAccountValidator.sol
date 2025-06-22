@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title ILightAccountValidatorV1
+ * @title ILightAccountValidator
  * @notice Validates Light Account operations for ERC-4337 paymasters
  * @dev This interface provides validation capabilities for Light Accounts, ensuring
  * that UserOperations come from legitimate Light Accounts created by the authorized
@@ -24,7 +24,7 @@ pragma solidity ^0.8.30;
  * - Works with Light Account Factory for address derivation
  * - Supports ERC-4337 UserOperation format
  */
-interface ILightAccountValidatorV1 {
+interface ILightAccountValidator {
     // --- Errors ---
 
     /** @notice Thrown when the sender is not a valid Light Account created by the factory */

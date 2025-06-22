@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IVotingAdapterBaseV1
+ * @title IVotingAdapterBase
  * @notice Base interface for voting adapters that calculate voting weights in the Azorius governance system
  * @dev Voting adapters are responsible for determining voter eligibility and calculating voting weights
  * based on different criteria (token balances, NFT ownership, etc.). Each adapter implements its own
@@ -24,7 +24,7 @@ pragma solidity ^0.8.30;
  * - Separate from regular proposal voting, with its own weight calculation logic
  * - Enables emergency governance actions in parent-child DAO relationships
  */
-interface IVotingAdapterBaseV1 {
+interface IVotingAdapterBase {
     // --- Errors ---
 
     /** @notice Thrown when a function restricted to the strategy is called by another address */

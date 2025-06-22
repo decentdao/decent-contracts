@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
-import {LightAccountValidatorV1} from "../account-abstraction/LightAccountValidatorV1.sol";
+import {IFreezeVotingBase} from "../../interfaces/decent/deployables/IFreezeVotingBase.sol";
+import {LightAccountValidator} from "../account-abstraction/LightAccountValidator.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
- * @title FreezeVotingBaseV1
+ * @title FreezeVotingBase
  * @author Decent Labs
  * @notice Abstract base implementation for freeze voting mechanisms
- * @dev This abstract contract implements IFreezeVotingBaseV1, providing core freeze
+ * @dev This abstract contract implements IFreezeVotingBase, providing core freeze
  * voting functionality that concrete implementations can extend.
  *
  * Implementation details:
  * - Uses EIP-7201 namespaced storage pattern for upgradeability safety
- * - Inherits LightAccountValidatorV1 for gasless voting support
+ * - Inherits LightAccountValidator for gasless voting support
  * - Abstract - requires concrete implementations for specific voting logic
  * - Tracks freeze proposals with automatic expiration
  * - Implements threshold-based freeze activation
@@ -28,9 +28,9 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
  *
  * @custom:security-contact security@decentlabs.io
  */
-abstract contract FreezeVotingBaseV1 is
-    IFreezeVotingBaseV1,
-    LightAccountValidatorV1,
+abstract contract FreezeVotingBase is
+    IFreezeVotingBase,
+    LightAccountValidator,
     Ownable2StepUpgradeable
 {
     // ======================================================================
@@ -38,7 +38,7 @@ abstract contract FreezeVotingBaseV1 is
     // ======================================================================
 
     /**
-     * @notice Main storage struct for FreezeVotingBaseV1 following EIP-7201
+     * @notice Main storage struct for FreezeVotingBase following EIP-7201
      * @dev Contains all freeze voting state and configuration
      * @custom:storage-location erc7201:Decent.FreezeVotingBase.main
      */
@@ -65,7 +65,7 @@ abstract contract FreezeVotingBaseV1 is
         0x5fcea62682ddc2ee9ccbce9f3a895c9dd644ee53c86fd38cf80a135b0e525500;
 
     /**
-     * @dev Returns the storage struct for FreezeVotingBaseV1
+     * @dev Returns the storage struct for FreezeVotingBase
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
     function _getFreezeVotingBaseStorage()
@@ -96,7 +96,7 @@ abstract contract FreezeVotingBaseV1 is
      * @param freezeVotesThreshold_ Voting weight required to trigger freeze
      * @param lightAccountFactory_ Factory for gasless voting support
      */
-    function __FreezeVotingBaseV1_init(
+    function __FreezeVotingBase_init(
         address owner_,
         uint32 freezeProposalPeriod_,
         uint32 freezePeriod_,
@@ -105,7 +105,7 @@ abstract contract FreezeVotingBaseV1 is
     ) internal onlyInitializing {
         // Initialize inherited contracts
         __Ownable_init(owner_);
-        __LightAccountValidatorV1_init(lightAccountFactory_);
+        __LightAccountValidator_init(lightAccountFactory_);
 
         // Set freeze voting parameters
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
@@ -115,13 +115,13 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     // ======================================================================
-    // IFreezeVotingBaseV1
+    // IFreezeVotingBase
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezeProposalCreated()
         public
@@ -135,7 +135,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezeProposalVoteCount()
         public
@@ -149,7 +149,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezeProposalPeriod()
         public
@@ -163,7 +163,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezePeriod() public view virtual override returns (uint32) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
@@ -171,7 +171,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezeVotesThreshold()
         public
@@ -185,7 +185,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      */
     function freezeActivated() public view virtual override returns (uint48) {
         FreezeVotingBaseStorage storage $ = _getFreezeVotingBaseStorage();
@@ -193,7 +193,7 @@ abstract contract FreezeVotingBaseV1 is
     }
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      * @dev Returns true only if:
      * 1. Vote count has reached threshold
      * 2. Current time is within the freeze period
@@ -210,7 +210,7 @@ abstract contract FreezeVotingBaseV1 is
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      * @dev Resets all freeze-related state variables to allow new proposals
      */
     function unfreeze() public virtual override onlyOwner {

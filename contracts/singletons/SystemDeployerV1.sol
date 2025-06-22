@@ -18,8 +18,8 @@ import {IFreezeGuardMultisigV1} from "../interfaces/decent/deployables/IFreezeGu
 import {IFreezeGuardAzoriusV1} from "../interfaces/decent/deployables/IFreezeGuardAzoriusV1.sol";
 import {ISystemDeployerEventEmitterV1} from "../interfaces/decent/singletons/ISystemDeployerEventEmitterV1.sol";
 import {IVersion} from "../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1NonUpgradeable} from "../DeploymentBlockV1NonUpgradeable.sol";
+import {IDeploymentBlock} from "../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlockNonUpgradeable} from "../DeploymentBlockNonUpgradeable.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -59,7 +59,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract SystemDeployerV1 is
     ISystemDeployerV1,
     IVersion,
-    DeploymentBlockV1NonUpgradeable,
+    DeploymentBlockNonUpgradeable,
     ERC165
 {
     // ======================================================================
@@ -193,7 +193,7 @@ contract SystemDeployerV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports ISystemDeployerV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports ISystemDeployerV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -201,7 +201,7 @@ contract SystemDeployerV1 is
         return
             interfaceId_ == type(ISystemDeployerV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

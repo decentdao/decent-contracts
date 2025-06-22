@@ -4,10 +4,10 @@ pragma solidity ^0.8.30;
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IFreezeGuardMultisigV1} from "../../interfaces/decent/deployables/IFreezeGuardMultisigV1.sol";
 import {IFreezeGuardBaseV1} from "../../interfaces/decent/deployables/IFreezeGuardBaseV1.sol";
-import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
+import {IFreezeVotingBase} from "../../interfaces/decent/deployables/IFreezeVotingBase.sol";
 import {ISafe} from "../../interfaces/safe/ISafe.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IGuard} from "@gnosis-guild/zodiac/contracts/interfaces/IGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -42,7 +42,7 @@ contract FreezeGuardMultisigV1 is
     IVersion,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -56,7 +56,7 @@ contract FreezeGuardMultisigV1 is
      */
     struct FreezeGuardMultisigStorage {
         /** @notice The FreezeVoting contract that determines if DAO is frozen */
-        IFreezeVotingBaseV1 freezeVoting;
+        IFreezeVotingBase freezeVoting;
         /** @notice Duration transactions must wait after timelocking before execution */
         uint32 timelockPeriod;
         /** @notice Window after timelock expires during which execution is allowed */
@@ -111,7 +111,7 @@ contract FreezeGuardMultisigV1 is
         // Initialize inherited contracts
         __Ownable_init(owner_);
         __UUPSUpgradeable_init();
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         // Set timelock parameters (also emits events)
         _updateTimelockPeriod(timelockPeriod_);
@@ -119,7 +119,7 @@ contract FreezeGuardMultisigV1 is
 
         // Set contract references
         FreezeGuardMultisigStorage storage $ = _getFreezeGuardMultisigStorage();
-        $.freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
+        $.freezeVoting = IFreezeVotingBase(freezeVoting_);
         $.childGnosisSafe = ISafe(childGnosisSafe_);
     }
 
@@ -359,7 +359,7 @@ contract FreezeGuardMultisigV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IFreezeGuardMultisigV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IFreezeGuardMultisigV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -369,7 +369,7 @@ contract FreezeGuardMultisigV1 is
             interfaceId_ == type(IFreezeGuardBaseV1).interfaceId ||
             interfaceId_ == type(IGuard).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

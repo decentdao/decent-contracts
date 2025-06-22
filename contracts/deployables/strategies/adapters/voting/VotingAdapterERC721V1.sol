@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVotingAdapterERC721V1} from "../../../../interfaces/decent/deployables/IVotingAdapterERC721V1.sol";
-import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IVotingAdapterBase} from "../../../../interfaces/decent/deployables/IVotingAdapterBase.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
-import {VotingAdapterBaseV1} from "./VotingAdapterBaseV1.sol";
-import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../../../interfaces/decent/IDeploymentBlock.sol";
+import {VotingAdapterBase} from "./VotingAdapterBase.sol";
+import {DeploymentBlock} from "../../../../DeploymentBlock.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -32,8 +32,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract VotingAdapterERC721V1 is
     IVotingAdapterERC721V1,
     IVersion,
-    VotingAdapterBaseV1,
-    DeploymentBlockV1,
+    VotingAdapterBase,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -93,8 +93,8 @@ contract VotingAdapterERC721V1 is
         address strategy_,
         uint256 weightPerToken_
     ) public virtual override initializer {
-        __VotingAdapterBaseV1_init(strategy_);
-        __DeploymentBlockV1_init();
+        __VotingAdapterBase_init(strategy_);
+        __DeploymentBlock_init();
 
         VotingAdapterERC721Storage storage $ = _getVotingAdapterERC721Storage();
         $.token = IERC721(token_);
@@ -227,13 +227,13 @@ contract VotingAdapterERC721V1 is
     }
 
     // ======================================================================
-    // IVotingAdapterBaseV1
+    // IVotingAdapterBase
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IVotingAdapterBaseV1
+     * @inheritdoc IVotingAdapterBase
      * @dev Calculates voting weight based on valid NFTs owned by voter
      */
     function weightOf(
@@ -252,7 +252,7 @@ contract VotingAdapterERC721V1 is
     }
 
     /**
-     * @inheritdoc IVotingAdapterBaseV1
+     * @inheritdoc IVotingAdapterBase
      * @dev Validates that:
      * 1. Proposal exists
      * 2. All provided token IDs are valid (owned and unused)
@@ -299,7 +299,7 @@ contract VotingAdapterERC721V1 is
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IVotingAdapterBaseV1
+     * @inheritdoc IVotingAdapterBase
      * @dev Records freeze vote using provided NFT token IDs. Validates ownership and
      * prevents reuse of NFTs within the same freeze proposal. Unlike regular votes,
      * tracks usage per freeze contract to support multiple child DAOs.
@@ -366,7 +366,7 @@ contract VotingAdapterERC721V1 is
     }
 
     /**
-     * @inheritdoc IVotingAdapterBaseV1
+     * @inheritdoc IVotingAdapterBase
      * @dev Records vote using provided NFT token IDs. Validates:
      * 1. Proposal exists and is initialized
      * 2. Each NFT is owned by the voter
@@ -451,16 +451,16 @@ contract VotingAdapterERC721V1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IVotingAdapterERC721V1, IVotingAdapterBaseV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IVotingAdapterERC721V1, IVotingAdapterBase, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IVotingAdapterERC721V1).interfaceId ||
-            interfaceId_ == type(IVotingAdapterBaseV1).interfaceId ||
+            interfaceId_ == type(IVotingAdapterBase).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

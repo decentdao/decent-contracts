@@ -5,8 +5,8 @@ import {IModuleAzoriusV1} from "../../interfaces/decent/deployables/IModuleAzori
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {Transaction} from "../../interfaces/decent/Module.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {GuardableModule} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -36,7 +36,7 @@ contract ModuleAzoriusV1 is
     IModuleAzoriusV1,
     IVersion,
     GuardableModule,
-    DeploymentBlockV1,
+    DeploymentBlock,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
     ERC165
@@ -121,7 +121,7 @@ contract ModuleAzoriusV1 is
     ) public virtual override initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         // avoids onlyOwner requirement on setAvatar and setTarget
         avatar = avatar_;
@@ -548,7 +548,7 @@ contract ModuleAzoriusV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IModuleAzoriusV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IModuleAzoriusV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -556,7 +556,7 @@ contract ModuleAzoriusV1 is
         return
             interfaceId_ == type(IModuleAzoriusV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

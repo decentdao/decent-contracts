@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
+import {ILightAccountValidator} from "../../interfaces/decent/deployables/ILightAccountValidator.sol";
 import {ILightAccount} from "../../interfaces/light-account/ILightAccount.sol";
 import {ILightAccountFactory} from "../../interfaces/light-account/ILightAccountFactory.sol";
 import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
- * @title LightAccountValidatorV1
+ * @title LightAccountValidator
  * @author Decent Labs
  * @notice Abstract contract for validating Light Account operations
- * @dev This abstract contract implements ILightAccountValidatorV1, providing
+ * @dev This abstract contract implements ILightAccountValidator, providing
  * validation logic for Light Accounts in ERC-4337 UserOperations.
  *
  * Implementation details:
@@ -35,8 +35,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
  *
  * @custom:security-contact security@decentlabs.io
  */
-abstract contract LightAccountValidatorV1 is
-    ILightAccountValidatorV1,
+abstract contract LightAccountValidator is
+    ILightAccountValidator,
     Initializable
 {
     // ======================================================================
@@ -44,7 +44,7 @@ abstract contract LightAccountValidatorV1 is
     // ======================================================================
 
     /**
-     * @notice Main storage struct for LightAccountValidatorV1 following EIP-7201
+     * @notice Main storage struct for LightAccountValidator following EIP-7201
      * @dev Contains the Light Account Factory reference for validation
      * @custom:storage-location erc7201:Decent.LightAccountValidator.main
      */
@@ -61,7 +61,7 @@ abstract contract LightAccountValidatorV1 is
         0xed41a089afe75bc52b13df3ad8919290164082b965c18c56b129dc0b8138e700;
 
     /**
-     * @dev Returns the storage struct for LightAccountValidatorV1
+     * @dev Returns the storage struct for LightAccountValidator
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
     function _getLightAccountValidatorStorage()
@@ -88,7 +88,7 @@ abstract contract LightAccountValidatorV1 is
      * Sets up the Light Account Factory reference for validation.
      * @param lightAccountFactory_ The authorized Light Account Factory address
      */
-    function __LightAccountValidatorV1_init(
+    function __LightAccountValidator_init(
         address lightAccountFactory_
     ) internal onlyInitializing {
         LightAccountValidatorStorage
@@ -97,13 +97,13 @@ abstract contract LightAccountValidatorV1 is
     }
 
     // ======================================================================
-    // ILightAccountValidatorV1
+    // ILightAccountValidator
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc ILightAccountValidatorV1
+     * @inheritdoc ILightAccountValidator
      */
     function lightAccountFactory()
         public
@@ -118,7 +118,7 @@ abstract contract LightAccountValidatorV1 is
     }
 
     /**
-     * @inheritdoc ILightAccountValidatorV1
+     * @inheritdoc ILightAccountValidator
      * @dev Useful for handling addresses that could be either EOAs or Light Accounts.
      * Returns the Light Account owner if valid, otherwise returns the input address.
      */

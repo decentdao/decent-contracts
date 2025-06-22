@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {IDecentAutonomousAdminV1} from "../../interfaces/decent/deployables/IDecentAutonomousAdminV1.sol";
 import {IHatsElectionsEligibility} from "../../interfaces/hats/modules/IHatsElectionsEligibility.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -39,7 +39,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract DecentAutonomousAdminV1 is
     IDecentAutonomousAdminV1,
     IVersion,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -54,7 +54,7 @@ contract DecentAutonomousAdminV1 is
      * @inheritdoc IDecentAutonomousAdminV1
      */
     function initialize() public virtual override initializer {
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
     }
 
     // ======================================================================
@@ -114,7 +114,7 @@ contract DecentAutonomousAdminV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IDecentAutonomousAdminV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IDecentAutonomousAdminV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -122,7 +122,7 @@ contract DecentAutonomousAdminV1 is
         return
             interfaceId_ == type(IDecentAutonomousAdminV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

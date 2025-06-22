@@ -3,8 +3,8 @@ import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ConcreteFreezeVotingBaseV1,
-  ConcreteFreezeVotingBaseV1__factory,
+  ConcreteFreezeVotingBase,
+  ConcreteFreezeVotingBase__factory,
   ERC1967Proxy__factory,
 } from '../../../../typechain-types';
 
@@ -16,9 +16,9 @@ async function deployConcreteBaseFreezeVotingProxy(
   freezeVotesThreshold: number,
   freezeProposalPeriod: number,
   freezePeriod: number,
-): Promise<ConcreteFreezeVotingBaseV1> {
+): Promise<ConcreteFreezeVotingBase> {
   // Combine selector and encoded params
-  const fullInitData = ConcreteFreezeVotingBaseV1__factory.createInterface().encodeFunctionData(
+  const fullInitData = ConcreteFreezeVotingBase__factory.createInterface().encodeFunctionData(
     'initialize',
     [owner.address, freezeVotesThreshold, freezeProposalPeriod, freezePeriod],
   );
@@ -27,10 +27,10 @@ async function deployConcreteBaseFreezeVotingProxy(
   const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
 
   // Return a contract instance connected to the proxy
-  return ConcreteFreezeVotingBaseV1__factory.connect(await proxy.getAddress(), owner);
+  return ConcreteFreezeVotingBase__factory.connect(await proxy.getAddress(), owner);
 }
 
-describe('FreezeVotingBaseV1', () => {
+describe('FreezeVotingBase', () => {
   // signers
   let proxyDeployer: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -40,7 +40,7 @@ describe('FreezeVotingBaseV1', () => {
 
   // contracts
   let masterCopy: string;
-  let freezeVoting: ConcreteFreezeVotingBaseV1;
+  let freezeVoting: ConcreteFreezeVotingBase;
 
   // constants
   const FREEZE_VOTES_THRESHOLD = 3;
@@ -52,7 +52,7 @@ describe('FreezeVotingBaseV1', () => {
     [proxyDeployer, owner, voter1, voter2, voter3] = await ethers.getSigners();
 
     // Deploy implementation
-    const implementation = await new ConcreteFreezeVotingBaseV1__factory(proxyDeployer).deploy();
+    const implementation = await new ConcreteFreezeVotingBase__factory(proxyDeployer).deploy();
     masterCopy = await implementation.getAddress();
 
     // Deploy proxy
@@ -86,7 +86,7 @@ describe('FreezeVotingBaseV1', () => {
     });
 
     it('Should have initialization disabled in the implementation', async function () {
-      const implementationContract = ConcreteFreezeVotingBaseV1__factory.connect(
+      const implementationContract = ConcreteFreezeVotingBase__factory.connect(
         masterCopy,
         proxyDeployer,
       ) as any;

@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IVotesERC20StakedV1} from "../../interfaces/decent/deployables/IVotesERC20StakedV1.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -48,7 +48,7 @@ contract VotesERC20StakedV1 is
     ERC20VotesUpgradeable,
     UUPSUpgradeable,
     Ownable2StepUpgradeable,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     using SafeERC20 for IERC20;
@@ -132,7 +132,7 @@ contract VotesERC20StakedV1 is
         __ERC20Votes_init();
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         _updateMinimumStakingPeriod(minimumStakingPeriod_);
         _addRewardsTokens(rewardsTokens_);
@@ -607,7 +607,7 @@ contract VotesERC20StakedV1 is
     /**
      * @inheritdoc ERC165
      * @dev Supports IVotesERC20StakedV1, IERC20, IVotes, IVersion,
-     * IDeploymentBlockV1, and IERC165
+     * IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -617,7 +617,7 @@ contract VotesERC20StakedV1 is
             interfaceId_ == type(IERC20).interfaceId ||
             interfaceId_ == type(IVotes).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

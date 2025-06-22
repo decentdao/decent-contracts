@@ -2,13 +2,13 @@
 pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
-import {IVotingAdapterBaseV1} from "../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IVotingAdapterBase} from "../../interfaces/decent/deployables/IVotingAdapterBase.sol";
 import {IProposerAdapterBaseV1} from "../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
-import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
+import {ILightAccountValidator} from "../../interfaces/decent/deployables/ILightAccountValidator.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {LightAccountValidatorV1} from "../account-abstraction/LightAccountValidatorV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {LightAccountValidator} from "../account-abstraction/LightAccountValidator.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -32,8 +32,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract StrategyV1 is
     IStrategyV1,
     IVersion,
-    DeploymentBlockV1,
-    LightAccountValidatorV1,
+    DeploymentBlock,
+    LightAccountValidator,
     ERC165
 {
     // ======================================================================
@@ -145,8 +145,8 @@ contract StrategyV1 is
         ) revert InvalidBasisNumerator();
 
         // Initialize parent contracts
-        __LightAccountValidatorV1_init(lightAccountFactory_);
-        __DeploymentBlockV1_init();
+        __LightAccountValidator_init(lightAccountFactory_);
+        __DeploymentBlock_init();
 
         // Store voting configuration
         StrategyStorage storage $ = _getStrategyStorage();
@@ -499,7 +499,7 @@ contract StrategyV1 is
 
             // Query the adapter to validate the vote and get voting weight
             // Note: validVotingAdapterVote should NEVER return (true, 0)
-            (bool isValid, uint256 votingWeight) = IVotingAdapterBaseV1(
+            (bool isValid, uint256 votingWeight) = IVotingAdapterBase(
                 votingAdapter
             ).validVotingAdapterVote(
                     voter_,
@@ -615,7 +615,7 @@ contract StrategyV1 is
 
             // Record the vote with the adapter and get the voting weight
             // Each adapter enforces its own constraints (e.g., one vote per address for ERC20)
-            uint256 votingWeight = IVotingAdapterBaseV1(votingAdapter)
+            uint256 votingWeight = IVotingAdapterBase(votingAdapter)
                 .recordVote(
                     resolvedVoter,
                     proposalId_,
@@ -728,16 +728,16 @@ contract StrategyV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IStrategyV1, ILightAccountValidatorV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IStrategyV1, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IStrategyV1).interfaceId ||
-            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
+            interfaceId_ == type(ILightAccountValidator).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

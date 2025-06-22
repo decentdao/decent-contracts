@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IDeploymentBlockV1} from "./interfaces/decent/IDeploymentBlockV1.sol";
+import {IDeploymentBlock} from "./interfaces/decent/IDeploymentBlock.sol";
 
 /**
- * @title DeploymentBlockV1NonUpgradeable
+ * @title DeploymentBlockNonUpgradeable
  * @author Decent Labs
  * @notice Abstract implementation of deployment block tracking for non-upgradeable contracts
- * @dev This abstract contract implements IDeploymentBlockV1, providing a standard
+ * @dev This abstract contract implements IDeploymentBlock, providing a standard
  * way to record when non-upgradeable contracts are deployed.
  *
  * Implementation details:
@@ -22,20 +22,20 @@ import {IDeploymentBlockV1} from "./interfaces/decent/IDeploymentBlockV1.sol";
  * - The deployment block number is automatically set in the constructor
  * - Query deploymentBlock() to get the recorded value
  *
- * Differences from DeploymentBlockV1:
+ * Differences from DeploymentBlock:
  * - No initializer pattern - uses constructor
  * - No reinitialization concerns
  * - Simpler implementation for immutable contracts
  *
  * @custom:security-contact security@decentlabs.io
  */
-abstract contract DeploymentBlockV1NonUpgradeable is IDeploymentBlockV1 {
+abstract contract DeploymentBlockNonUpgradeable is IDeploymentBlock {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
     /**
-     * @notice Main storage struct for DeploymentBlockV1NonUpgradeable following EIP-7201
+     * @notice Main storage struct for DeploymentBlockNonUpgradeable following EIP-7201
      * @dev Stores the block number when the contract was deployed
      * @custom:storage-location erc7201:Decent.DeploymentBlockNonUpgradeable.main
      */
@@ -53,7 +53,7 @@ abstract contract DeploymentBlockV1NonUpgradeable is IDeploymentBlockV1 {
         0x75420419808cf80485ed57399dff70df3a6d545855667cf2ad8ee38294f38000;
 
     /**
-     * @dev Returns the storage struct for DeploymentBlockV1NonUpgradeable
+     * @dev Returns the storage struct for DeploymentBlockNonUpgradeable
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
     function _getDeploymentBlockNonUpgradeableStorage()
@@ -82,13 +82,13 @@ abstract contract DeploymentBlockV1NonUpgradeable is IDeploymentBlockV1 {
     }
 
     // ======================================================================
-    // IDeploymentBlockV1
+    // IDeploymentBlock
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IDeploymentBlockV1
+     * @inheritdoc IDeploymentBlock
      */
     function deploymentBlock() public view virtual override returns (uint256) {
         DeploymentBlockNonUpgradeableStorage

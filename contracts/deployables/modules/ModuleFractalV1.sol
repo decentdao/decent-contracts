@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {IModuleFractalV1} from "../../interfaces/decent/deployables/IModuleFractalV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {Transaction} from "../../interfaces/decent/Module.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {GuardableModule, Enum} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -34,7 +34,7 @@ contract ModuleFractalV1 is
     IModuleFractalV1,
     IVersion,
     GuardableModule,
-    DeploymentBlockV1,
+    DeploymentBlock,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
     ERC165
@@ -57,7 +57,7 @@ contract ModuleFractalV1 is
     ) public virtual override initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(owner_);
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         avatar = avatar_;
         target = target_;
@@ -173,7 +173,7 @@ contract ModuleFractalV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IModuleFractalV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IModuleFractalV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -181,7 +181,7 @@ contract ModuleFractalV1 is
         return
             interfaceId_ == type(IModuleFractalV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

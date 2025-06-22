@@ -4,9 +4,9 @@ pragma solidity ^0.8.30;
 import {IKYCVerifierV1} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {ICountersignV1} from "../../interfaces/decent/deployables/ICountersignV1.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {IMultisend} from "../../interfaces/safe/IMultiSend.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
@@ -44,7 +44,7 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
 contract CountersignV1 is
     ICountersignV1,
     IVersion,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165,
     Ownable2StepUpgradeable
 {
@@ -130,7 +130,7 @@ contract CountersignV1 is
         SignerInitialization[] memory signerInitializations_
     ) public virtual override initializer {
         __Ownable_init(owner_);
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         CountersignStorage storage $ = _getCountersignStorage();
         $.agreementUri = agreementUri_;
@@ -379,7 +379,7 @@ contract CountersignV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports ICountersignV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports ICountersignV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -387,7 +387,7 @@ contract CountersignV1 is
         return
             interfaceId_ == type(ICountersignV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

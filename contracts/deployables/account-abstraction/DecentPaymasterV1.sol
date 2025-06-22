@@ -3,12 +3,12 @@ pragma solidity ^0.8.30;
 
 import {IDecentPaymasterV1} from "../../interfaces/decent/deployables/IDecentPaymasterV1.sol";
 import {IFunctionValidator} from "../../interfaces/decent/services/IFunctionValidator.sol";
-import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
+import {ILightAccountValidator} from "../../interfaces/decent/deployables/ILightAccountValidator.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {BasePaymasterV1} from "./BasePaymasterV1.sol";
-import {LightAccountValidatorV1} from "./LightAccountValidatorV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {BasePaymaster} from "./BasePaymaster.sol";
+import {LightAccountValidator} from "./LightAccountValidator.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -27,8 +27,8 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  * Implementation details:
  * - Uses EIP-7201 namespaced storage pattern for upgradeability safety
  * - Implements UUPS upgradeable pattern with owner-restricted upgrades
- * - Inherits BasePaymasterV1 for core paymaster functionality
- * - Inherits LightAccountValidatorV1 for Light Account validation
+ * - Inherits BasePaymaster for core paymaster functionality
+ * - Inherits LightAccountValidator for Light Account validation
  * - Uses function validators for operation authorization
  *
  * Key responsibilities:
@@ -48,9 +48,9 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 contract DecentPaymasterV1 is
     IDecentPaymasterV1,
     IVersion,
-    BasePaymasterV1,
-    LightAccountValidatorV1,
-    DeploymentBlockV1,
+    BasePaymaster,
+    LightAccountValidator,
+    DeploymentBlock,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
     ERC165
@@ -108,9 +108,9 @@ contract DecentPaymasterV1 is
         address entryPoint_,
         address lightAccountFactory_
     ) public virtual override initializer {
-        __BasePaymasterV1_init(owner_, IEntryPoint(entryPoint_));
-        __LightAccountValidatorV1_init(lightAccountFactory_);
-        __DeploymentBlockV1_init();
+        __BasePaymaster_init(owner_, IEntryPoint(entryPoint_));
+        __LightAccountValidator_init(lightAccountFactory_);
+        __DeploymentBlock_init();
     }
 
     // ======================================================================
@@ -190,13 +190,13 @@ contract DecentPaymasterV1 is
     }
 
     // ======================================================================
-    // BasePaymasterV1
+    // BasePaymaster
     // ======================================================================
 
     // --- Internal Functions ---
 
     /**
-     * @inheritdoc BasePaymasterV1
+     * @inheritdoc BasePaymaster
      * @dev Validates user operations by checking with the configured function validator.
      * Extracts the target contract and function selector from the user operation,
      * then delegates validation to the appropriate validator contract.
@@ -297,17 +297,17 @@ contract DecentPaymasterV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IDecentPaymasterV1, ILightAccountValidatorV1, IPaymaster, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IDecentPaymasterV1, ILightAccountValidator, IPaymaster, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IDecentPaymasterV1).interfaceId ||
-            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
+            interfaceId_ == type(ILightAccountValidator).interfaceId ||
             interfaceId_ == type(IPaymaster).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

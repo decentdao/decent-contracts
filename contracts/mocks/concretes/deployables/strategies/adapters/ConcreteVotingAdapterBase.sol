@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {VotingAdapterBaseV1} from "../../../../../deployables/strategies/adapters/voting/VotingAdapterBaseV1.sol";
+import {VotingAdapterBase} from "../../../../../deployables/strategies/adapters/voting/VotingAdapterBase.sol";
 import {IStrategyV1} from "../../../../../interfaces/decent/deployables/IStrategyV1.sol";
 
-contract ConcreteVotingAdapterBaseV1 is VotingAdapterBaseV1 {
+contract ConcreteVotingAdapterBase is VotingAdapterBase {
     constructor() {
         _disableInitializers();
     }
 
     function initialize(address strategy_) external initializer {
-        __VotingAdapterBaseV1_init(strategy_);
+        __VotingAdapterBase_init(strategy_);
     }
 
     // Implement IBaseVotingAdapterV1 functions

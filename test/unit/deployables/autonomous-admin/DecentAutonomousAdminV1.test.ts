@@ -6,7 +6,7 @@ import {
   DecentAutonomousAdminV1__factory,
   ERC1967Proxy__factory,
   IDecentAutonomousAdminV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IVersion__factory,
 } from '../../../../typechain-types';
@@ -55,7 +55,7 @@ describe('DecentAutonomousAdminV1', function () {
         IERC165__factory,
         IDecentAutonomousAdminV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

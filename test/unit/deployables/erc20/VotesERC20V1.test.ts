@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
   IAccessControl__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IERC20__factory,
   IERC20Permit__factory,
@@ -979,7 +979,7 @@ describe('VotesERC20V1', () => {
         IVotesERC20V1__factory,
         IERC20Permit__factory,
         IVotes__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
         IAccessControl__factory,
       ],
     });

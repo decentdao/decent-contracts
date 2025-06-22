@@ -3,16 +3,16 @@ import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ConcreteDeploymentBlockV1,
-  ConcreteDeploymentBlockV1__factory,
+  ConcreteDeploymentBlock,
+  ConcreteDeploymentBlock__factory,
   ERC1967Proxy__factory,
 } from '../../typechain-types';
 
-describe('DeploymentBlockV1', () => {
+describe('DeploymentBlock', () => {
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
 
-  let concreteDeploymentBlock: ConcreteDeploymentBlockV1;
+  let concreteDeploymentBlock: ConcreteDeploymentBlock;
   let masterCopy: string;
   let deploymentBlockNumber: bigint;
 
@@ -21,20 +21,18 @@ describe('DeploymentBlockV1', () => {
     [deployer, owner] = await ethers.getSigners();
 
     // Deploy master copy
-    masterCopy = await (
-      await new ConcreteDeploymentBlockV1__factory(deployer).deploy()
-    ).getAddress();
+    masterCopy = await (await new ConcreteDeploymentBlock__factory(deployer).deploy()).getAddress();
 
     // Get the current block number before deployment
     const currentBlock = await ethers.provider.getBlockNumber();
 
     // Deploy proxy with initialization
     const initData =
-      ConcreteDeploymentBlockV1__factory.createInterface().encodeFunctionData('initialize');
+      ConcreteDeploymentBlock__factory.createInterface().encodeFunctionData('initialize');
     const proxy = await new ERC1967Proxy__factory(deployer).deploy(masterCopy, initData);
 
     // Connect to the proxy
-    concreteDeploymentBlock = ConcreteDeploymentBlockV1__factory.connect(
+    concreteDeploymentBlock = ConcreteDeploymentBlock__factory.connect(
       await proxy.getAddress(),
       owner,
     );
@@ -56,10 +54,7 @@ describe('DeploymentBlockV1', () => {
     });
 
     it('should have initialization disabled in the implementation', async () => {
-      const implementationContract = ConcreteDeploymentBlockV1__factory.connect(
-        masterCopy,
-        deployer,
-      );
+      const implementationContract = ConcreteDeploymentBlock__factory.connect(masterCopy, deployer);
 
       await expect(implementationContract.initialize()).to.be.revertedWithCustomError(
         implementationContract,
@@ -89,9 +84,9 @@ describe('DeploymentBlockV1', () => {
 
       // Deploy a second instance
       const initData =
-        ConcreteDeploymentBlockV1__factory.createInterface().encodeFunctionData('initialize');
+        ConcreteDeploymentBlock__factory.createInterface().encodeFunctionData('initialize');
       const proxy2 = await new ERC1967Proxy__factory(deployer).deploy(masterCopy, initData);
-      const concreteDeploymentBlock2 = ConcreteDeploymentBlockV1__factory.connect(
+      const concreteDeploymentBlock2 = ConcreteDeploymentBlock__factory.connect(
         await proxy2.getAddress(),
         owner,
       );
@@ -109,16 +104,16 @@ describe('DeploymentBlockV1', () => {
     it('should prevent changing deployment block via reinitializer', async () => {
       // Deploy master copy
       masterCopy = await (
-        await new ConcreteDeploymentBlockV1__factory(deployer).deploy()
+        await new ConcreteDeploymentBlock__factory(deployer).deploy()
       ).getAddress();
 
       // Deploy proxy with initialization
       const initData =
-        ConcreteDeploymentBlockV1__factory.createInterface().encodeFunctionData('initialize');
+        ConcreteDeploymentBlock__factory.createInterface().encodeFunctionData('initialize');
       const proxy = await new ERC1967Proxy__factory(deployer).deploy(masterCopy, initData);
 
       // Connect to the proxy
-      const contract = ConcreteDeploymentBlockV1__factory.connect(await proxy.getAddress(), owner);
+      const contract = ConcreteDeploymentBlock__factory.connect(await proxy.getAddress(), owner);
 
       // Get the initial deployment block
       const initialDeploymentBlock = await contract.deploymentBlock();

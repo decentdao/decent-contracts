@@ -44,7 +44,7 @@ async function deployLightAccountValidator(
   return ConcreteLightAccountValidator__factory.connect(await proxy.getAddress(), deployer);
 }
 
-describe('LightAccountValidatorV1', function () {
+describe('LightAccountValidator', function () {
   // contracts
   let concreteLightAccountValidator: ConcreteLightAccountValidator;
   let mockLightAccount: MockLightAccount;

@@ -13,6 +13,28 @@ This section provides comprehensive guidelines for writing NatSpec documentation
 3. **Clarity and Precision**: Documentation should be clear, accurate, and help developers understand contract usage without reading implementation
 4. **Consistent Formatting**: Follow established patterns for headers, parameters, and organization
 
+### Contract Naming Conventions
+
+#### Version Suffix Pattern
+
+The codebase follows a specific pattern for version suffixes:
+
+1. **Abstract Contracts**: Do NOT include version suffix (e.g., `BasePaymaster`, `VotingAdapterBase`, `DeploymentBlock`)
+
+   - These are never deployed directly
+   - Version changes in abstract contracts cascade to their implementations
+   - Cleaner naming without redundant versioning
+
+2. **Concrete Contracts**: DO include version suffix (e.g., `ModuleAzoriusV1`, `StrategyV1`, `DecentPaymasterV1`)
+
+   - These are deployed contracts that may need upgrades
+   - Version suffix tracks contract iterations
+   - Enables multiple versions to coexist if needed
+
+3. **Interfaces**: Follow the same pattern as their implementations
+   - Abstract contract interfaces: No version suffix (e.g., `IVotingAdapterBase`)
+   - Concrete contract interfaces: Include version suffix (e.g., `IModuleAzoriusV1`)
+
 ### Contract Categories and Documentation Patterns
 
 #### 1. Interface Contracts
@@ -43,7 +65,7 @@ Implementation contracts reference their interface and add implementation detail
 
 ```solidity
 /**
- * @title ContractNameV1
+ * @title ContractNameV1  // Note: Concrete contracts include V1 suffix
  * @author Decent Labs
  * @notice Implementation of IContractName providing [brief functional description]
  * @dev This contract implements IContractName, providing [what it does].
@@ -60,7 +82,30 @@ Implementation contracts reference their interface and add implementation detail
 
 **Important**: Do NOT duplicate the comprehensive documentation from the interface.
 
-#### 3. Standalone Contracts (No Interface)
+#### 3. Abstract Contracts
+
+Abstract contracts that provide base functionality do NOT include version suffix:
+
+```solidity
+/**
+ * @title BasePaymaster  // Note: No V1 suffix for abstract contracts
+ * @author Decent Labs
+ * @notice Abstract base contract for paymaster implementations
+ * @dev Provides core paymaster functionality that concrete implementations extend.
+ *
+ * Implementation details:
+ * - Helper methods for staking and deposits
+ * - Base validation logic
+ * - Must be extended by concrete paymaster contracts
+ *
+ * @custom:security-contact security@decentlabs.io
+ */
+abstract contract BasePaymaster is IPaymaster, OwnableUpgradeable {
+    // ...
+}
+```
+
+#### 4. Standalone Contracts (No Interface)
 
 For contracts without interfaces, include full documentation:
 

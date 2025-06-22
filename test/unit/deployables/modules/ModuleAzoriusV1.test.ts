@@ -4,8 +4,8 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IModuleAzoriusV1__factory,
   IVersion__factory,
@@ -1521,7 +1521,7 @@ describe('ModuleAzoriusV1', () => {
         IERC165__factory,
         IModuleAzoriusV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });
@@ -1572,7 +1572,7 @@ describe('ModuleAzoriusV1', () => {
     });
 
     runDeploymentBlockTests({
-      getContract: () => azorius as unknown as IDeploymentBlockV1,
+      getContract: () => azorius as unknown as IDeploymentBlock,
     });
   });
 });

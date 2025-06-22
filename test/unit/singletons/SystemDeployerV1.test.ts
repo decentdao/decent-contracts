@@ -10,7 +10,7 @@ import {
   FreezeGuardMultisigV1__factory,
   FreezeVotingAzoriusV1__factory,
   FreezeVotingMultisigV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IncompatibleStorageContract__factory,
   ISystemDeployerV1,
   ISystemDeployerV1__factory,
@@ -3865,7 +3865,7 @@ describe('SystemDeployerV1', () => {
       supportedInterfaceFactories: [
         ISystemDeployerV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
         ERC165__factory,
       ],
     });

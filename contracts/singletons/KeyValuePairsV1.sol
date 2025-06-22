@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IKeyValuePairsV1} from "../interfaces/decent/singletons/IKeyValuePairsV1.sol";
 import {IVersion} from "../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1NonUpgradeable} from "../DeploymentBlockV1NonUpgradeable.sol";
+import {IDeploymentBlock} from "../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlockNonUpgradeable} from "../DeploymentBlockNonUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -37,7 +37,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract KeyValuePairsV1 is
     IKeyValuePairsV1,
     IVersion,
-    DeploymentBlockV1NonUpgradeable,
+    DeploymentBlockNonUpgradeable,
     ERC165
 {
     // ======================================================================
@@ -85,7 +85,7 @@ contract KeyValuePairsV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IKeyValuePairsV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IKeyValuePairsV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -93,7 +93,7 @@ contract KeyValuePairsV1 is
         return
             interfaceId_ == type(IKeyValuePairsV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

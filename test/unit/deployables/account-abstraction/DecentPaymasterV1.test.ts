@@ -6,9 +6,9 @@ import {
   DecentPaymasterV1__factory,
   ERC1967Proxy__factory,
   IDecentPaymasterV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
-  ILightAccountValidatorV1__factory,
+  ILightAccountValidator__factory,
   IPaymaster__factory,
   IVersion__factory,
   MockEntryPoint,
@@ -370,8 +370,8 @@ describe('DecentPaymasterV1', function () {
         IPaymaster__factory,
         IDecentPaymasterV1__factory,
         IVersion__factory,
-        ILightAccountValidatorV1__factory,
-        IDeploymentBlockV1__factory,
+        ILightAccountValidator__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

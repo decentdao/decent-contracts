@@ -1,11 +1,11 @@
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { IDeploymentBlockV1 } from '../../../typechain-types';
+import { IDeploymentBlock } from '../../../typechain-types';
 
 /**
  * Shared test utilities for testing the DeploymentBlock functionality
- * Used by all contracts that implement IDeploymentBlockV1
+ * Used by all contracts that implement IDeploymentBlock
  */
 
 /**
@@ -13,9 +13,9 @@ import { IDeploymentBlockV1 } from '../../../typechain-types';
  */
 interface DeploymentBlockTestParams {
   /**
-   * Gets the current contract instance implementing IDeploymentBlockV1
+   * Gets the current contract instance implementing IDeploymentBlock
    */
-  getContract: () => IDeploymentBlockV1;
+  getContract: () => IDeploymentBlock;
 
   /**
    * Expected deployment block number
@@ -40,10 +40,10 @@ export function runDeploymentBlockTests(params: DeploymentBlockTestParams): void
     const deploymentBlock = await contract.deploymentBlock();
 
     // Check that deployment block is not zero
-    // Zero would indicate that __DeploymentBlockV1_init() was not called
+    // Zero would indicate that __DeploymentBlock_init() was not called
     expect(deploymentBlock).to.be.gt(
       0,
-      'Deployment block should not be zero - was __DeploymentBlockV1_init() called?',
+      'Deployment block should not be zero - was __DeploymentBlock_init() called?',
     );
   });
 

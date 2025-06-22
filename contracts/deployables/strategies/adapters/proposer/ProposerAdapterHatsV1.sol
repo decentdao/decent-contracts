@@ -5,8 +5,8 @@ import {IProposerAdapterHatsV1} from "../../../../interfaces/decent/deployables/
 import {IProposerAdapterBaseV1} from "../../../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
 import {IHats} from "../../../../interfaces/hats/IHats.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -30,7 +30,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract ProposerAdapterHatsV1 is
     IProposerAdapterHatsV1,
     IVersion,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -89,7 +89,7 @@ contract ProposerAdapterHatsV1 is
         address hatsContract_,
         uint256[] calldata whitelistedHatIds_
     ) public virtual override initializer {
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         ProposerAdapterHatsStorage storage $ = _getProposerAdapterHatsStorage();
         $.hatsContract = IHats(hatsContract_);
@@ -188,7 +188,7 @@ contract ProposerAdapterHatsV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IProposerAdapterHatsV1, IProposerAdapterBaseV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IProposerAdapterHatsV1, IProposerAdapterBaseV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -197,7 +197,7 @@ contract ProposerAdapterHatsV1 is
             interfaceId_ == type(IProposerAdapterHatsV1).interfaceId ||
             interfaceId_ == type(IProposerAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

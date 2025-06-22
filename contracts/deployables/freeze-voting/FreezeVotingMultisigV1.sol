@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
+import {IFreezeVotingBase} from "../../interfaces/decent/deployables/IFreezeVotingBase.sol";
 import {IFreezeVotingMultisigV1} from "../../interfaces/decent/deployables/IFreezeVotingMultisigV1.sol";
-import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
+import {ILightAccountValidator} from "../../interfaces/decent/deployables/ILightAccountValidator.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {ISafe} from "../../interfaces/safe/ISafe.sol";
-import {FreezeVotingBaseV1} from "./FreezeVotingBaseV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {FreezeVotingBase} from "./FreezeVotingBase.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -20,7 +20,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * Implementation details:
  * - Uses EIP-7201 namespaced storage pattern for upgradeability safety
- * - Inherits base freeze voting logic from FreezeVotingBaseV1
+ * - Inherits base freeze voting logic from FreezeVotingBase
  * - Each Safe signer gets exactly one vote (not weighted)
  * - Tracks voting status per proposal to prevent double voting
  * - Automatically creates new freeze proposals when needed
@@ -43,8 +43,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract FreezeVotingMultisigV1 is
     IFreezeVotingMultisigV1,
     IVersion,
-    FreezeVotingBaseV1,
-    DeploymentBlockV1,
+    FreezeVotingBase,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -105,14 +105,14 @@ contract FreezeVotingMultisigV1 is
         address parentSafe_,
         address lightAccountFactory_
     ) public virtual override initializer {
-        __FreezeVotingBaseV1_init(
+        __FreezeVotingBase_init(
             owner_,
             freezeProposalPeriod_,
             freezePeriod_,
             freezeVotesThreshold_,
             lightAccountFactory_
         );
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         FreezeVotingMultisigStorage
             storage $ = _getFreezeVotingMultisigStorage();
@@ -208,17 +208,17 @@ contract FreezeVotingMultisigV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IFreezeVotingMultisigV1, IFreezeVotingBaseV1, ILightAccountValidatorV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IFreezeVotingMultisigV1, IFreezeVotingBase, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IFreezeVotingMultisigV1).interfaceId ||
-            interfaceId_ == type(IFreezeVotingBaseV1).interfaceId ||
-            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
+            interfaceId_ == type(IFreezeVotingBase).interfaceId ||
+            interfaceId_ == type(ILightAccountValidator).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

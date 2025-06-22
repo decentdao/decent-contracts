@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IDeploymentBlockV1
+ * @title IDeploymentBlock
  * @notice Interface for tracking contract deployment block numbers
  * @dev This interface provides a standard way to record and query when a contract
  * was deployed. This information is useful for:
@@ -13,7 +13,7 @@ pragma solidity ^0.8.30;
  * The deployment block is set once during initialization and cannot be changed,
  * providing an immutable record of when the contract became active.
  */
-interface IDeploymentBlockV1 {
+interface IDeploymentBlock {
     // --- Errors ---
 
     /** @notice Thrown when attempting to set deployment block after it's already set */

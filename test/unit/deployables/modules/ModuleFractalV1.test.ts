@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IModuleFractalV1__factory,
   IVersion__factory,
@@ -433,7 +433,7 @@ describe('ModuleFractalV1', () => {
         IERC165__factory,
         IModuleFractalV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });
@@ -469,7 +469,7 @@ describe('ModuleFractalV1', () => {
 
   describe('Deployment Block', () => {
     runDeploymentBlockTests({
-      getContract: () => sharedFractalModule as unknown as IDeploymentBlockV1,
+      getContract: () => sharedFractalModule as unknown as IDeploymentBlock,
     });
   });
 });

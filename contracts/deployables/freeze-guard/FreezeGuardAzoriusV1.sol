@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IFreezeGuardAzoriusV1} from "../../interfaces/decent/deployables/IFreezeGuardAzoriusV1.sol";
-import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
+import {IFreezeVotingBase} from "../../interfaces/decent/deployables/IFreezeVotingBase.sol";
 import {IFreezeGuardBaseV1} from "../../interfaces/decent/deployables/IFreezeGuardBaseV1.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IGuard} from "@gnosis-guild/zodiac/contracts/interfaces/IGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -40,7 +40,7 @@ contract FreezeGuardAzoriusV1 is
     IVersion,
     Ownable2StepUpgradeable,
     UUPSUpgradeable,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -54,7 +54,7 @@ contract FreezeGuardAzoriusV1 is
      */
     struct FreezeGuardAzoriusStorage {
         /** @notice The FreezeVoting contract that determines if DAO is frozen */
-        IFreezeVotingBaseV1 freezeVoting;
+        IFreezeVotingBase freezeVoting;
     }
 
     /**
@@ -97,10 +97,10 @@ contract FreezeGuardAzoriusV1 is
     ) public virtual override initializer {
         __Ownable_init(owner_);
         __UUPSUpgradeable_init();
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         FreezeGuardAzoriusStorage storage $ = _getFreezeGuardAzoriusStorage();
-        $.freezeVoting = IFreezeVotingBaseV1(freezeVoting_);
+        $.freezeVoting = IFreezeVotingBase(freezeVoting_);
     }
 
     // ======================================================================
@@ -189,7 +189,7 @@ contract FreezeGuardAzoriusV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IFreezeGuardAzoriusV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IFreezeGuardAzoriusV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -199,7 +199,7 @@ contract FreezeGuardAzoriusV1 is
             interfaceId_ == type(IFreezeGuardBaseV1).interfaceId ||
             interfaceId_ == type(IGuard).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

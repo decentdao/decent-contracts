@@ -6,11 +6,11 @@ import {
   ERC1967Proxy__factory,
   FreezeVotingMultisigV1,
   FreezeVotingMultisigV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
-  IFreezeVotingBaseV1__factory,
+  IFreezeVotingBase__factory,
   IFreezeVotingMultisigV1__factory,
-  ILightAccountValidatorV1__factory,
+  ILightAccountValidator__factory,
   IVersion__factory,
   MockLightAccount,
   MockLightAccountFactory,
@@ -510,13 +510,13 @@ describe('FreezeVotingMultisigV1', () => {
       supportedInterfaceFactories: [
         {
           factory: IFreezeVotingMultisigV1__factory,
-          inheritedFactories: [IFreezeVotingBaseV1__factory],
+          inheritedFactories: [IFreezeVotingBase__factory],
         },
-        IFreezeVotingBaseV1__factory,
-        ILightAccountValidatorV1__factory,
+        IFreezeVotingBase__factory,
+        ILightAccountValidator__factory,
         IERC165__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

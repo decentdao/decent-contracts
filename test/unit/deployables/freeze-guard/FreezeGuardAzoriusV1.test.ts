@@ -5,7 +5,7 @@ import {
   ERC1967Proxy__factory,
   FreezeGuardAzoriusV1,
   FreezeGuardAzoriusV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IFreezeGuardAzoriusV1__factory,
   IFreezeGuardBaseV1__factory,
@@ -231,7 +231,7 @@ describe('FreezeGuardAzoriusV1', () => {
           inheritedFactories: [IGuard__factory],
         },
         IGuard__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

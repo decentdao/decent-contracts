@@ -4,9 +4,9 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
-  ILightAccountValidatorV1__factory,
+  ILightAccountValidator__factory,
   IStrategyV1__factory,
   IVersion__factory,
   MockLightAccount__factory,
@@ -1204,10 +1204,10 @@ describe('StrategyV1', () => {
       getContract: () => strategy,
       supportedInterfaceFactories: [
         IStrategyV1__factory,
-        ILightAccountValidatorV1__factory,
+        ILightAccountValidator__factory,
         IERC165__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

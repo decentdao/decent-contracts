@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotingAdapterBaseV1} from "../../../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IVotingAdapterBase} from "../../../../interfaces/decent/deployables/IVotingAdapterBase.sol";
 import {IStrategyV1} from "../../../../interfaces/decent/deployables/IStrategyV1.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
- * @title VotingAdapterBaseV1
+ * @title VotingAdapterBase
  * @author Decent Labs
  * @notice Abstract base implementation for voting adapters in the Azorius governance system
- * @dev This contract implements IVotingAdapterBaseV1, providing common functionality
+ * @dev This contract implements IVotingAdapterBase, providing common functionality
  * for all voting adapters.
  *
  * Implementation details:
@@ -21,13 +21,13 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
  *
  * @custom:security-contact security@decentlabs.io
  */
-abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
+abstract contract VotingAdapterBase is IVotingAdapterBase, Initializable {
     // ======================================================================
     // STATE VARIABLES
     // ======================================================================
 
     /**
-     * @notice Main storage struct for VotingAdapterBaseV1 following EIP-7201
+     * @notice Main storage struct for VotingAdapterBase following EIP-7201
      * @dev Contains reference to the strategy contract that manages this adapter
      * @custom:storage-location erc7201:Decent.VotingAdapterBase.main
      */
@@ -44,7 +44,7 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
         0x13444dea181293cfa50cbfe292735b153109b99f6cc300533814de79e823b200;
 
     /**
-     * @dev Returns the storage struct for VotingAdapterBaseV1
+     * @dev Returns the storage struct for VotingAdapterBase
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
      */
     function _getVotingAdapterBaseStorage()
@@ -96,11 +96,11 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
     }
 
     /**
-     * @notice Internal initializer for VotingAdapterBaseV1
+     * @notice Internal initializer for VotingAdapterBase
      * @dev Called by child contracts during their initialization
      * @param strategy_ The address of the strategy contract that will manage this adapter
      */
-    function __VotingAdapterBaseV1_init(
+    function __VotingAdapterBase_init(
         address strategy_
     ) internal onlyInitializing {
         VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();
@@ -108,13 +108,13 @@ abstract contract VotingAdapterBaseV1 is IVotingAdapterBaseV1, Initializable {
     }
 
     // ======================================================================
-    // IVotingAdapterBaseV1
+    // IVotingAdapterBase
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IVotingAdapterBaseV1
+     * @inheritdoc IVotingAdapterBase
      */
     function strategy() public view virtual override returns (address) {
         VotingAdapterBaseStorage storage $ = _getVotingAdapterBaseStorage();

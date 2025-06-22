@@ -3,14 +3,14 @@ import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ConcreteDeploymentBlockV1NonUpgradeable,
-  ConcreteDeploymentBlockV1NonUpgradeable__factory,
+  ConcreteDeploymentBlockNonUpgradeable,
+  ConcreteDeploymentBlockNonUpgradeable__factory,
 } from '../../typechain-types';
 
-describe('DeploymentBlockV1NonUpgradeable', () => {
+describe('DeploymentBlockNonUpgradeable', () => {
   let deployer: SignerWithAddress;
 
-  let concreteDeploymentBlock: ConcreteDeploymentBlockV1NonUpgradeable;
+  let concreteDeploymentBlock: ConcreteDeploymentBlockNonUpgradeable;
   let deploymentBlockNumber: bigint;
 
   beforeEach(async () => {
@@ -21,7 +21,7 @@ describe('DeploymentBlockV1NonUpgradeable', () => {
     const currentBlock = await ethers.provider.getBlockNumber();
 
     // Deploy the contract directly (no proxy needed for non-upgradeable)
-    concreteDeploymentBlock = await new ConcreteDeploymentBlockV1NonUpgradeable__factory(
+    concreteDeploymentBlock = await new ConcreteDeploymentBlockNonUpgradeable__factory(
       deployer,
     ).deploy();
 
@@ -55,7 +55,7 @@ describe('DeploymentBlockV1NonUpgradeable', () => {
       await mine(5);
 
       // Deploy a second instance
-      const concreteDeploymentBlock2 = await new ConcreteDeploymentBlockV1NonUpgradeable__factory(
+      const concreteDeploymentBlock2 = await new ConcreteDeploymentBlockNonUpgradeable__factory(
         deployer,
       ).deploy();
 

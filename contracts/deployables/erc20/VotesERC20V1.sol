@@ -6,8 +6,8 @@ import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -54,7 +54,7 @@ contract VotesERC20V1 is
     ERC20PermitUpgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -157,7 +157,7 @@ contract VotesERC20V1 is
         __ERC20Permit_init(metadata_.name);
         __ERC20Votes_init();
         __UUPSUpgradeable_init();
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
         __AccessControl_init();
 
         // Set up roles
@@ -387,7 +387,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc ERC165
      * @dev Supports IVotesERC20V1, IERC20, IERC20Permit, IVotes, IVersion,
-     * IDeploymentBlockV1, IAccessControl, and IERC165
+     * IDeploymentBlock, IAccessControl, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -404,7 +404,7 @@ contract VotesERC20V1 is
             interfaceId_ == type(IERC20Permit).interfaceId ||
             interfaceId_ == type(IVotes).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             interfaceId_ == type(IAccessControl).interfaceId ||
             super.supportsInterface(interfaceId_);
     }

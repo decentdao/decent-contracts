@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IVotingAdapterBaseV1} from "../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IVotingAdapterBase} from "../interfaces/decent/deployables/IVotingAdapterBase.sol";
 
-contract MockVotingAdapter is IVotingAdapterBaseV1 {
+contract MockVotingAdapter is IVotingAdapterBase {
     mapping(address => uint256) public weightsToReturn;
     mapping(address => mapping(uint32 => mapping(bytes32 => uint256)))
         public recordedVotesWeight;

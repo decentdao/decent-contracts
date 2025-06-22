@@ -3,14 +3,14 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  ConcreteVotingAdapterBaseV1,
-  ConcreteVotingAdapterBaseV1__factory,
+  ConcreteVotingAdapterBase,
+  ConcreteVotingAdapterBase__factory,
   ERC1967Proxy__factory,
   MockVotingStrategy,
   MockVotingStrategy__factory,
 } from '../../../../../../typechain-types';
 
-describe('VotingAdapterBaseV1', () => {
+describe('VotingAdapterBase', () => {
   let deployer: SignerWithAddress;
   let eoaStrategySigner: SignerWithAddress; // An EOA that will be designated as the strategy for some tests
   let nonStrategySigner: SignerWithAddress;
@@ -19,7 +19,7 @@ describe('VotingAdapterBaseV1', () => {
 
   async function deployImplementationFixture() {
     const [d, s, ns] = await ethers.getSigners();
-    const factory = new ConcreteVotingAdapterBaseV1__factory(d);
+    const factory = new ConcreteVotingAdapterBase__factory(d);
     const impl = await factory.deploy();
     await impl.waitForDeployment();
     return {
@@ -57,13 +57,13 @@ describe('VotingAdapterBaseV1', () => {
 
   async function deployAdapterProxy(
     strategyAddressToSet: string,
-  ): Promise<ConcreteVotingAdapterBaseV1> {
-    const factory = new ConcreteVotingAdapterBaseV1__factory(deployer);
+  ): Promise<ConcreteVotingAdapterBase> {
+    const factory = new ConcreteVotingAdapterBase__factory(deployer);
     const initData = factory.interface.encodeFunctionData('initialize', [strategyAddressToSet]);
     const proxyFactory = new ERC1967Proxy__factory(deployer);
     const proxy = await proxyFactory.deploy(concreteAdapterImplementationAddress, initData);
     await proxy.waitForDeployment();
-    return ConcreteVotingAdapterBaseV1__factory.connect(await proxy.getAddress(), deployer);
+    return ConcreteVotingAdapterBase__factory.connect(await proxy.getAddress(), deployer);
   }
 
   describe('Initialization', () => {
@@ -81,7 +81,7 @@ describe('VotingAdapterBaseV1', () => {
     });
 
     it('implementation contract should have initializers disabled', async () => {
-      const implContract = ConcreteVotingAdapterBaseV1__factory.connect(
+      const implContract = ConcreteVotingAdapterBase__factory.connect(
         concreteAdapterImplementationAddress,
         deployer,
       );
@@ -99,7 +99,7 @@ describe('VotingAdapterBaseV1', () => {
   });
 
   describe('onlyStrategy modifier', () => {
-    let adapter: ConcreteVotingAdapterBaseV1;
+    let adapter: ConcreteVotingAdapterBase;
 
     beforeEach(async () => {
       // For these tests, the adapter is initialized with the address of the deployed MockVotingStrategy contract
@@ -138,7 +138,7 @@ describe('VotingAdapterBaseV1', () => {
   });
 
   describe('onlyAuthorizedFreezeVoter modifier', () => {
-    let adapter: ConcreteVotingAdapterBaseV1;
+    let adapter: ConcreteVotingAdapterBase;
     let authorizedCaller: SignerWithAddress;
     let unauthorizedCaller: SignerWithAddress;
     const dummyVoterAddress = ethers.Wallet.createRandom().address;

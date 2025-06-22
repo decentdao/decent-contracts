@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {IFreezeVotingAzoriusV1} from "../../interfaces/decent/deployables/IFreezeVotingAzoriusV1.sol";
-import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
-import {IVotingAdapterBaseV1} from "../../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
+import {IFreezeVotingBase} from "../../interfaces/decent/deployables/IFreezeVotingBase.sol";
+import {IVotingAdapterBase} from "../../interfaces/decent/deployables/IVotingAdapterBase.sol";
 import {IModuleAzoriusV1} from "../../interfaces/decent/deployables/IModuleAzoriusV1.sol";
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {FreezeVotingBaseV1} from "./FreezeVotingBaseV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {ILightAccountValidator} from "../../interfaces/decent/deployables/ILightAccountValidator.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {FreezeVotingBase} from "./FreezeVotingBase.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -22,7 +22,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * Implementation details:
  * - Uses EIP-7201 namespaced storage pattern for upgradeability safety
- * - Inherits base freeze voting logic from FreezeVotingBaseV1
+ * - Inherits base freeze voting logic from FreezeVotingBase
  * - Integrates with parent's Azorius module for strategy/adapter validation
  * - Automatically creates new freeze proposals when needed
  * - Supports multiple voting adapters in single transaction
@@ -45,8 +45,8 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract FreezeVotingAzoriusV1 is
     IFreezeVotingAzoriusV1,
     IVersion,
-    FreezeVotingBaseV1,
-    DeploymentBlockV1,
+    FreezeVotingBase,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -107,14 +107,14 @@ contract FreezeVotingAzoriusV1 is
         address parentAzorius_,
         address lightAccountFactory_
     ) public virtual override initializer {
-        __FreezeVotingBaseV1_init(
+        __FreezeVotingBase_init(
             owner_,
             freezeProposalPeriod_,
             freezePeriod_,
             freezeVotesThreshold_,
             lightAccountFactory_
         );
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         FreezeVotingAzoriusStorage storage $ = _getFreezeVotingAzoriusStorage();
         $.parentAzorius = IModuleAzoriusV1(parentAzorius_);
@@ -198,13 +198,13 @@ contract FreezeVotingAzoriusV1 is
     }
 
     // ======================================================================
-    // FreezeVotingBaseV1
+    // FreezeVotingBase
     // ======================================================================
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IFreezeVotingBaseV1
+     * @inheritdoc IFreezeVotingBase
      * @dev Extends base unfreeze to also clear the freeze proposal strategy.
      * This ensures a fresh strategy snapshot for the next freeze proposal.
      */
@@ -237,17 +237,17 @@ contract FreezeVotingAzoriusV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IFreezeVotingAzoriusV1, IFreezeVotingBaseV1, ILightAccountValidatorV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IFreezeVotingAzoriusV1, IFreezeVotingBase, ILightAccountValidator, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
             interfaceId_ == type(IFreezeVotingAzoriusV1).interfaceId ||
-            interfaceId_ == type(IFreezeVotingBaseV1).interfaceId ||
-            interfaceId_ == type(ILightAccountValidatorV1).interfaceId ||
+            interfaceId_ == type(IFreezeVotingBase).interfaceId ||
+            interfaceId_ == type(ILightAccountValidator).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 
@@ -291,7 +291,7 @@ contract FreezeVotingAzoriusV1 is
 
             // Record vote through the adapter and accumulate weight
             // Each adapter handles its own vote validation and weight calculation
-            userVotes += IVotingAdapterBaseV1(adapterAddress).recordFreezeVote(
+            userVotes += IVotingAdapterBase(adapterAddress).recordFreezeVote(
                 voter_,
                 $base.freezeProposalCreated,
                 votingAdaptersToUse_[i].adapterVoteData

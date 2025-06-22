@@ -4,10 +4,10 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IVersion__factory,
-  IVotingAdapterBaseV1__factory,
+  IVotingAdapterBase__factory,
   IVotingAdapterERC721V1__factory,
   MockERC721,
   MockERC721__factory,
@@ -974,10 +974,10 @@ describe('VotingAdapterERC721V1', () => {
       getContract: () => erc721Adapter,
       supportedInterfaceFactories: [
         IVotingAdapterERC721V1__factory,
-        IVotingAdapterBaseV1__factory,
+        IVotingAdapterBase__factory,
         IVersion__factory,
         IERC165__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

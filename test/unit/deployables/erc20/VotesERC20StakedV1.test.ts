@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IERC20__factory,
   IVersion__factory,
@@ -334,7 +334,7 @@ describe('VotesERC20StakedV1', () => {
         IVersion__factory,
         IERC20__factory,
         IVotes__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

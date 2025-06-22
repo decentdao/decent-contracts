@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IFreezeVotingBaseV1
+ * @title IFreezeVotingBase
  * @notice Base interface for freeze voting contracts that enable parent DAOs to freeze child DAOs
  * @dev Freeze voting is a critical emergency mechanism in parent-child DAO relationships.
  * It allows token holders of a parent DAO to vote to freeze a child DAO's operations,
@@ -24,7 +24,7 @@ pragma solidity ^0.8.30;
  * This base interface defines the common freeze voting functionality shared by
  * different implementations (Azorius-based and Multisig-based parent DAOs).
  */
-interface IFreezeVotingBaseV1 {
+interface IFreezeVotingBase {
     // --- Errors ---
 
     /** @notice Thrown when attempting to cast a freeze vote with zero voting weight */

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IKYCVerifierV1__factory,
   IVersion__factory,
@@ -67,7 +67,7 @@ describe('KYCVerifierV1', () => {
         IERC165__factory,
         IKYCVerifierV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

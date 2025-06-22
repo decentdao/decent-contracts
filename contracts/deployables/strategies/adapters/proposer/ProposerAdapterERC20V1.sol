@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {IProposerAdapterERC20V1} from "../../../../interfaces/decent/deployables/IProposerAdapterERC20V1.sol";
 import {IProposerAdapterBaseV1} from "../../../../interfaces/decent/deployables/IProposerAdapterBaseV1.sol";
 import {IVersion} from "../../../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../../../DeploymentBlock.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -30,7 +30,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract ProposerAdapterERC20V1 is
     IProposerAdapterERC20V1,
     IVersion,
-    DeploymentBlockV1,
+    DeploymentBlock,
     ERC165
 {
     // ======================================================================
@@ -87,7 +87,7 @@ contract ProposerAdapterERC20V1 is
         address token_,
         uint256 proposerThreshold_
     ) public virtual override initializer {
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
 
         ProposerAdapterERC20Storage
             storage $ = _getProposerAdapterERC20Storage();
@@ -168,7 +168,7 @@ contract ProposerAdapterERC20V1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IProposerAdapterERC20V1, IProposerAdapterBaseV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IProposerAdapterERC20V1, IProposerAdapterBaseV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -177,7 +177,7 @@ contract ProposerAdapterERC20V1 is
             interfaceId_ == type(IProposerAdapterERC20V1).interfaceId ||
             interfaceId_ == type(IProposerAdapterBaseV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

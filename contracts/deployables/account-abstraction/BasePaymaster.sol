@@ -14,7 +14,7 @@ import "@account-abstraction/contracts/core/UserOperationLib.sol";
  * provides helper methods for staking.
  * Validates that the postOp is called only by the entryPoint.
  */
-abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
+abstract contract BasePaymaster is IPaymaster, OwnableUpgradeable {
     /// @custom:storage-location erc7201:Decent.BasePaymaster.main
     struct BasePaymasterStorage {
         IEntryPoint entryPoint;
@@ -45,7 +45,7 @@ abstract contract BasePaymasterV1 is IPaymaster, OwnableUpgradeable {
         _disableInitializers();
     }
 
-    function __BasePaymasterV1_init(
+    function __BasePaymaster_init(
         address _owner,
         IEntryPoint _entryPoint
     ) internal onlyInitializing {

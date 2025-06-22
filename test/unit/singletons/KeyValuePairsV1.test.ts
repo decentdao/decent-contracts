@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IKeyValuePairsV1__factory,
   IVersion__factory,
   KeyValuePairsV1,
@@ -65,7 +65,7 @@ describe('KeyValuePairsV1', function () {
       supportedInterfaceFactories: [
         IKeyValuePairsV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });

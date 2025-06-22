@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IKYCVerifierV1} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
-import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
-import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
+import {DeploymentBlock} from "../../DeploymentBlock.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**
@@ -29,7 +29,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  *
  * @custom:security-contact security@decentlabs.io
  */
-contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
+contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlock, ERC165 {
     // ======================================================================
     // CONSTRUCTOR & INITIALIZERS
     // ======================================================================
@@ -44,7 +44,7 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
      * this would also initialize KYC provider integrations and access controls.
      */
     function initialize() public virtual override initializer {
-        __DeploymentBlockV1_init();
+        __DeploymentBlock_init();
     }
 
     // ======================================================================
@@ -83,7 +83,7 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IKYCVerifierV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IKYCVerifierV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -91,7 +91,7 @@ contract KYCVerifierV1 is IKYCVerifierV1, IVersion, DeploymentBlockV1, ERC165 {
         return
             interfaceId_ == type(IKYCVerifierV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
-            interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

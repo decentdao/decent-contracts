@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../interfaces/decent/deployables/IStrategyV1.sol";
-import {IVotingAdapterBaseV1} from "../interfaces/decent/deployables/IVotingAdapterBaseV1.sol";
-import {LightAccountValidatorV1} from "../deployables/account-abstraction/LightAccountValidatorV1.sol";
+import {IVotingAdapterBase} from "../interfaces/decent/deployables/IVotingAdapterBase.sol";
+import {LightAccountValidator} from "../deployables/account-abstraction/LightAccountValidator.sol";
 
-contract MockVotingStrategy is IStrategyV1, LightAccountValidatorV1 {
+contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
     struct TimestampPoints {
         uint48 startTimestamp;
         uint48 endTimestamp;
@@ -55,7 +55,7 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidatorV1 {
         for (uint i = 0; i < proposerAdapters_.length; i++) {
             _isProposerAdapterMap[proposerAdapters_[i]] = true;
         }
-        __LightAccountValidatorV1_init(lightAccountFactory_);
+        __LightAccountValidator_init(lightAccountFactory_);
     }
 
     function initialize2(
@@ -195,7 +195,7 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidatorV1 {
         ];
         uint256 totalWeight = 0;
         for (uint i = 0; i < votingAdaptersData.length; i++) {
-            totalWeight += IVotingAdapterBaseV1(
+            totalWeight += IVotingAdapterBase(
                 votingAdaptersData[i].votingAdapter
             ).recordVote(
                     resolvedLightAccountOwner,

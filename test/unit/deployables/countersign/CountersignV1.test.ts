@@ -7,7 +7,7 @@ import {
   CountersignV1__factory,
   ERC1967Proxy__factory,
   ICountersignV1__factory,
-  IDeploymentBlockV1__factory,
+  IDeploymentBlock__factory,
   IERC165__factory,
   IVersion__factory,
   MockERC20Votes,
@@ -509,7 +509,7 @@ describe('CountersignV1', () => {
         IERC165__factory,
         ICountersignV1__factory,
         IVersion__factory,
-        IDeploymentBlockV1__factory,
+        IDeploymentBlock__factory,
       ],
     });
   });
