@@ -207,19 +207,44 @@ Update natspec doc files after modifying contracts:
 npm run docgen
 ```
 
-## Deploy Contracts to `<network>`
+## Contract Deployment
+
+Before deploying, set your unique CREATE2 salt to ensure deterministic addresses:
 
 ```shell
-npx hardhat deploy --network <network>
+npx hardhat vars set DECENT_CREATE2_SALT 0xUniqueSalt
 ```
 
-Deployed contracts can be verified on Etherscan via the following command:
+Replace `0xUniqueSalt` with your own unique salt value. This salt determines the final contract addresses when using CREATE2.
+
+To deploy all contracts to a specific network using Hardhat Ignition:
 
 ```shell
-npx hardhat verify --network {network name} {contract address}
+npx hardhat ignition deploy ignition/modules/DeployAll.ts --network <network> --strategy create2 --verify
 ```
 
-Currently, this is done manually for each contract deployed, found in `deployments/<network>/XXX.json`
+For example, to deploy to Sepolia:
+
+```shell
+npx hardhat ignition deploy ignition/modules/DeployAll.ts --network sepolia --strategy create2 --verify
+```
+
+This command will:
+
+- Deploy all contracts using CREATE2 for deterministic addresses
+- Automatically verify contracts on Etherscan (or the appropriate block explorer)
+- Store deployment artifacts in `ignition/deployments/chain-<chainId>/`
+
+The `--strategy create2` flag ensures contracts are deployed to the same addresses across all networks when using the same salt.
+
+Individual modules can also be deployed separately if needed:
+
+```shell
+npx hardhat ignition deploy ignition/modules/Deployables.ts --network <network> --strategy create2 --verify
+npx hardhat ignition deploy ignition/modules/Services.ts --network <network> --strategy create2 --verify
+npx hardhat ignition deploy ignition/modules/Singletons.ts --network <network> --strategy create2 --verify
+npx hardhat ignition deploy ignition/modules/Utilities.ts --network <network> --strategy create2 --verify
+```
 
 ## Local Hardhat deployment
 
