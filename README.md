@@ -103,11 +103,10 @@ The codebase is organized into four distinct contract categories based on deploy
 ### 3. Utilities (`contracts/utilities/`)
 
 - **Deployment**: One instance per chain
-- **Characteristics**: Temporarily attached as Safe modules during proposal execution, then detached
+- **Characteristics**: Called via delegatecall from Safe during proposal execution
 - **Purpose**: Handle dynamic logic based on blockchain state at execution time, don't hold any state
 - **Examples**:
-  - DecentHatsModuleUtils: Hats Protocol integration
-  - DecentSablierStreamManagementModule: Stream payment management
+  - UtilityRolesManagementV1: Creates and manages organizational roles (Hats Protocol + Sablier streams)
 
 ### 4. Services (`contracts/services/`)
 

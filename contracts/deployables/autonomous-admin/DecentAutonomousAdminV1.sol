@@ -23,7 +23,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * - Handles automatic hat burning and minting
  *
  * Workflow:
- * 1. DecentHatsCreationModule deploys and mints admin hat to this contract
+ * 1. UtilityRolesManagementV1 deploys and mints admin hat to this contract
  * 2. This contract becomes the admin for child role hats
  * 3. When terms expire, anyone can call triggerStartNextTerm
  * 4. Transitions happen automatically without manual intervention
