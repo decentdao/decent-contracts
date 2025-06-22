@@ -6,7 +6,9 @@ import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {Transaction} from "../../interfaces/decent/Module.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IUUPSUpgradeableExtended} from "../../interfaces/decent/IUUPSUpgradeableExtended.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {UUPSUpgradeableExtended} from "../../UUPSUpgradeableExtended.sol";
 import {GuardableModule} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -35,10 +37,10 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract ModuleAzoriusV1 is
     IModuleAzoriusV1,
     IVersion,
-    GuardableModule,
+    UUPSUpgradeableExtended,
     DeploymentBlockV1,
+    GuardableModule,
     Ownable2StepUpgradeable,
-    UUPSUpgradeable,
     ERC165
 {
     // ======================================================================
@@ -548,7 +550,7 @@ contract ModuleAzoriusV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IModuleAzoriusV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IModuleAzoriusV1, IVersion, IDeploymentBlockV1, IUUPSUpgradeableExtended, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -557,6 +559,7 @@ contract ModuleAzoriusV1 is
             interfaceId_ == type(IModuleAzoriusV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IUUPSUpgradeableExtended).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

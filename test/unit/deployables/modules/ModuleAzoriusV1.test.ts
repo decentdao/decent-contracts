@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
+import type { BaseContract } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
@@ -8,6 +9,7 @@ import {
   IDeploymentBlockV1__factory,
   IERC165__factory,
   IModuleAzoriusV1__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   MockAvatar,
   MockAvatar__factory,
@@ -17,7 +19,7 @@ import {
   MockVotingStrategy__factory,
   ModuleAzoriusV1,
   ModuleAzoriusV1__factory,
-  UUPSUpgradeable,
+  UUPSUpgradeableExtended,
 } from '../../../../typechain-types';
 import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
 import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
@@ -26,7 +28,7 @@ import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests
 // Helper functions for deploying AzoriusV1 instances using ERC1967Proxy
 async function deployAzoriusProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: ModuleAzoriusV1,
   owner: SignerWithAddress,
   avatar: string,
   target: string,
@@ -45,7 +47,10 @@ async function deployAzoriusProxy(
   ]);
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
@@ -54,7 +59,7 @@ async function deployAzoriusProxy(
 // Helper function for deploying AzoriusV1 using setUp instead of initialize
 async function deployAzoriusProxyWithSetUp(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: ModuleAzoriusV1,
   owner: SignerWithAddress,
   avatar: string,
   target: string,
@@ -71,7 +76,10 @@ async function deployAzoriusProxyWithSetUp(
   ]);
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return ModuleAzoriusV1__factory.connect(await proxy.getAddress(), owner);
@@ -86,8 +94,7 @@ describe('ModuleAzoriusV1', () => {
   let nonOwner: SignerWithAddress;
 
   // mocks and mastercopies
-  let implementation: ModuleAzoriusV1;
-  let masterCopy: string;
+  let masterCopy: ModuleAzoriusV1;
   let mockStrategy: MockVotingStrategy;
   let mockStrategyAddress: string;
 
@@ -96,8 +103,7 @@ describe('ModuleAzoriusV1', () => {
     [proxyDeployer, owner, proposer, user, nonOwner] = await ethers.getSigners();
 
     // Deploy implementation contract
-    implementation = await new ModuleAzoriusV1__factory(proxyDeployer).deploy();
-    masterCopy = await implementation.getAddress();
+    masterCopy = await new ModuleAzoriusV1__factory(proxyDeployer).deploy();
 
     // Deploy a default mock strategy for use in many tests
     mockStrategy = await new MockVotingStrategy__factory(proxyDeployer).deploy(proposer.address);
@@ -311,7 +317,10 @@ describe('ModuleAzoriusV1', () => {
       });
 
       it('Should have initialization disabled in the implementation', async function () {
-        const implementationContract = ModuleAzoriusV1__factory.connect(masterCopy, proxyDeployer);
+        const implementationContract = ModuleAzoriusV1__factory.connect(
+          await masterCopy.getAddress(),
+          proxyDeployer,
+        );
 
         await expect(
           implementationContract.initialize(
@@ -1522,6 +1531,7 @@ describe('ModuleAzoriusV1', () => {
         IModuleAzoriusV1__factory,
         IVersion__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -1545,10 +1555,11 @@ describe('ModuleAzoriusV1', () => {
 
     // Run UUPS upgradeability tests
     runUUPSUpgradeabilityTests({
-      getContract: () => azorius as unknown as UUPSUpgradeable,
+      getContract: () => azorius as unknown as UUPSUpgradeableExtended,
+      getImplementation: () => masterCopy as unknown as BaseContract,
       createNewImplementation: async () => {
         const newImplementation = await new ModuleAzoriusV1__factory(owner).deploy();
-        return newImplementation as unknown as UUPSUpgradeable;
+        return newImplementation as unknown as UUPSUpgradeableExtended;
       },
       owner: () => owner,
       nonOwner: () => nonOwner,

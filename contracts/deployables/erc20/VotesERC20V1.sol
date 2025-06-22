@@ -7,7 +7,9 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IUUPSUpgradeableExtended} from "../../interfaces/decent/IUUPSUpgradeableExtended.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {UUPSUpgradeableExtended} from "../../UUPSUpgradeableExtended.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -50,11 +52,11 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 contract VotesERC20V1 is
     IVotesERC20V1,
     IVersion,
+    UUPSUpgradeableExtended,
+    DeploymentBlockV1,
     ERC20VotesUpgradeable,
     ERC20PermitUpgradeable,
-    UUPSUpgradeable,
     AccessControlUpgradeable,
-    DeploymentBlockV1,
     ERC165
 {
     // ======================================================================
@@ -387,7 +389,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc ERC165
      * @dev Supports IVotesERC20V1, IERC20, IERC20Permit, IVotes, IVersion,
-     * IDeploymentBlockV1, IAccessControl, and IERC165
+     * IDeploymentBlockV1, IAccessControl, IUUPSUpgradeableExtended, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -406,6 +408,7 @@ contract VotesERC20V1 is
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
             interfaceId_ == type(IAccessControl).interfaceId ||
+            interfaceId_ == type(IUUPSUpgradeableExtended).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

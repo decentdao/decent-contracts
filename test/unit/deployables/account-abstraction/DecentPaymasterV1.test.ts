@@ -10,6 +10,7 @@ import {
   IERC165__factory,
   ILightAccountValidatorV1__factory,
   IPaymaster__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   MockEntryPoint,
   MockEntryPoint__factory,
@@ -41,7 +42,7 @@ interface PackedUserOperation {
 // Helper function for deploying DecentPaymasterV1 instances using ERC1967Proxy
 async function deployDecentPaymasterProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: DecentPaymasterV1,
   owner: SignerWithAddress,
   entryPoint: string,
   lightAccountFactory: string,
@@ -53,7 +54,10 @@ async function deployDecentPaymasterProxy(
   );
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return DecentPaymasterV1__factory.connect(await proxy.getAddress(), owner);
@@ -114,7 +118,7 @@ describe('DecentPaymasterV1', function () {
     // Deploy DecentPaymaster proxy
     decentPaymaster = await deployDecentPaymasterProxy(
       owner,
-      await masterCopy.getAddress(),
+      masterCopy,
       owner,
       await entryPoint.getAddress(),
       mockLightAccountFactoryAddress,
@@ -372,6 +376,7 @@ describe('DecentPaymasterV1', function () {
         IVersion__factory,
         ILightAccountValidatorV1__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -385,6 +390,7 @@ describe('DecentPaymasterV1', function () {
   describe('UUPS Upgradeability', function () {
     runUUPSUpgradeabilityTests({
       getContract: () => decentPaymaster,
+      getImplementation: () => masterCopy,
       createNewImplementation: async () => {
         const newImplementation = await new DecentPaymasterV1__factory(owner).deploy();
         return newImplementation;

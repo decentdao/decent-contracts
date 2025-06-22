@@ -6,9 +6,11 @@ import {IFunctionValidator} from "../../interfaces/decent/services/IFunctionVali
 import {ILightAccountValidatorV1} from "../../interfaces/decent/deployables/ILightAccountValidatorV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IUUPSUpgradeableExtended} from "../../interfaces/decent/IUUPSUpgradeableExtended.sol";
 import {BasePaymasterV1} from "./BasePaymasterV1.sol";
 import {LightAccountValidatorV1} from "./LightAccountValidatorV1.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {UUPSUpgradeableExtended} from "../../UUPSUpgradeableExtended.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation, IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -51,8 +53,8 @@ contract DecentPaymasterV1 is
     BasePaymasterV1,
     LightAccountValidatorV1,
     DeploymentBlockV1,
+    UUPSUpgradeableExtended,
     Ownable2StepUpgradeable,
-    UUPSUpgradeable,
     ERC165
 {
     // ======================================================================
@@ -297,7 +299,7 @@ contract DecentPaymasterV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IDecentPaymasterV1, ILightAccountValidatorV1, IPaymaster, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IDecentPaymasterV1, ILightAccountValidatorV1, IPaymaster, IVersion, IDeploymentBlockV1, IUUPSUpgradeableExtended, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -308,6 +310,7 @@ contract DecentPaymasterV1 is
             interfaceId_ == type(IPaymaster).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IUUPSUpgradeableExtended).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

@@ -1,6 +1,10 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { UUPSUpgradeable, UUPSUpgradeable__factory } from '../../../typechain-types';
+import type { BaseContract } from 'ethers';
+import {
+  UUPSUpgradeableExtended,
+  UUPSUpgradeableExtended__factory,
+} from '../../../typechain-types';
 
 /**
  * Shared test utilities for testing the UUPS upgradeability functionality
@@ -12,14 +16,19 @@ import { UUPSUpgradeable, UUPSUpgradeable__factory } from '../../../typechain-ty
  */
 interface UUPSUpgradeabilityTestParams {
   /**
+   * Gets the implementation contract
+   */
+  getImplementation: () => BaseContract;
+
+  /**
    * Gets the current contract instance implementing UUPSUpgradeable
    */
-  getContract: () => UUPSUpgradeable;
+  getContract: () => UUPSUpgradeableExtended;
 
   /**
    * Creates a new implementation of the contract
    */
-  createNewImplementation: () => Promise<UUPSUpgradeable>;
+  createNewImplementation: () => Promise<UUPSUpgradeableExtended>;
 
   /**
    * Owner account that should be allowed to upgrade
@@ -43,6 +52,19 @@ interface UUPSUpgradeabilityTestParams {
  * @param params The test parameters
  */
 export function runUUPSUpgradeabilityTests(params: UUPSUpgradeabilityTestParams): void {
+  it('should return the correct implementation address', async () => {
+    // Get implementation and its address
+    const implementation = params.getImplementation();
+    const implementationAddress = await implementation.getAddress();
+
+    // Get contract and its implementation address
+    const contract = params.getContract();
+    const proxyImplementationAddress = await contract.implementation();
+
+    // Check that the implementation address is the same as the proxy's implementation address
+    expect(proxyImplementationAddress).to.equal(implementationAddress);
+  });
+
   it('should allow the owner to authorize an upgrade', async () => {
     // Deploy a new implementation
     const newImplementation = await params.createNewImplementation();
@@ -51,7 +73,10 @@ export function runUUPSUpgradeabilityTests(params: UUPSUpgradeabilityTestParams)
     // Get contract and connect owner
     const contract = params.getContract();
     const contractAddress = await contract.getAddress();
-    const upgradeableContract = UUPSUpgradeable__factory.connect(contractAddress, params.owner());
+    const upgradeableContract = UUPSUpgradeableExtended__factory.connect(
+      contractAddress,
+      params.owner(),
+    );
 
     // Call with empty bytes for the second parameter
     // We don't check for a specific event since some implementations might emit different events,
@@ -67,7 +92,7 @@ export function runUUPSUpgradeabilityTests(params: UUPSUpgradeabilityTestParams)
     // Get contract and connect non-owner
     const contract = params.getContract();
     const contractAddress = await contract.getAddress();
-    const upgradeableContract = UUPSUpgradeable__factory.connect(
+    const upgradeableContract = UUPSUpgradeableExtended__factory.connect(
       contractAddress,
       params.nonOwner(),
     );

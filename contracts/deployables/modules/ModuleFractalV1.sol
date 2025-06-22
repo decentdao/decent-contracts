@@ -5,7 +5,9 @@ import {IModuleFractalV1} from "../../interfaces/decent/deployables/IModuleFract
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
 import {Transaction} from "../../interfaces/decent/Module.sol";
+import {IUUPSUpgradeableExtended} from "../../interfaces/decent/IUUPSUpgradeableExtended.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {UUPSUpgradeableExtended} from "../../UUPSUpgradeableExtended.sol";
 import {GuardableModule, Enum} from "@gnosis-guild/zodiac/contracts/core/GuardableModule.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -33,10 +35,10 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract ModuleFractalV1 is
     IModuleFractalV1,
     IVersion,
-    GuardableModule,
+    UUPSUpgradeableExtended,
     DeploymentBlockV1,
+    GuardableModule,
     Ownable2StepUpgradeable,
-    UUPSUpgradeable,
     ERC165
 {
     // ======================================================================
@@ -173,7 +175,7 @@ contract ModuleFractalV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IModuleFractalV1, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IModuleFractalV1, IVersion, IDeploymentBlockV1, IUUPSUpgradeableExtended, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -182,6 +184,7 @@ contract ModuleFractalV1 is
             interfaceId_ == type(IModuleFractalV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IUUPSUpgradeableExtended).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

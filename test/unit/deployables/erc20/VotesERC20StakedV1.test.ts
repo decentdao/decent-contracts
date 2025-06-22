@@ -7,6 +7,7 @@ import {
   IDeploymentBlockV1__factory,
   IERC165__factory,
   IERC20__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   IVotes__factory,
   IVotesERC20StakedV1__factory,
@@ -77,7 +78,7 @@ async function runExecuteTxAndCheckBalanceDeltasTests(
 // Helper function for deploying VotesERC20StakedV1 instances using ERC1967Proxy
 async function deployVotesERC20StakedProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: VotesERC20StakedV1,
   owner: SignerWithAddress,
   name: string,
   symbol: string,
@@ -97,7 +98,10 @@ async function deployVotesERC20StakedProxy(
   );
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return VotesERC20StakedV1__factory.connect(await proxy.getAddress(), owner);
@@ -115,7 +119,7 @@ describe('VotesERC20StakedV1', () => {
 
   // contracts
   let votesERC20Staked: VotesERC20StakedV1;
-  let masterCopy: string;
+  let masterCopy: VotesERC20StakedV1;
   let stakedToken: MockERC20Votes;
   let rewardsTokenA: MockERC20Votes;
   let rewardsTokenB: MockERC20Votes;
@@ -128,7 +132,7 @@ describe('VotesERC20StakedV1', () => {
     [proxyDeployer, owner, alice, bob, carol, nonOwner, rewardsDistributor] =
       await ethers.getSigners();
 
-    masterCopy = await (await new VotesERC20StakedV1__factory(owner).deploy()).getAddress();
+    masterCopy = await new VotesERC20StakedV1__factory(owner).deploy();
     stakedToken = await new MockERC20Votes__factory(owner).deploy();
     rewardsTokenA = await new MockERC20Votes__factory(owner).deploy();
     rewardsTokenB = await new MockERC20Votes__factory(owner).deploy();
@@ -196,7 +200,10 @@ describe('VotesERC20StakedV1', () => {
     });
 
     it('Should have initialization disabled in the implementation', async function () {
-      const implementationContract = VotesERC20StakedV1__factory.connect(masterCopy, proxyDeployer);
+      const implementationContract = VotesERC20StakedV1__factory.connect(
+        await masterCopy.getAddress(),
+        proxyDeployer,
+      );
 
       await expect(
         implementationContract.initialize(
@@ -335,6 +342,7 @@ describe('VotesERC20StakedV1', () => {
         IERC20__factory,
         IVotes__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -408,6 +416,7 @@ describe('VotesERC20StakedV1', () => {
     // Run UUPS upgradeability tests
     runUUPSUpgradeabilityTests({
       getContract: () => votesERC20Staked,
+      getImplementation: () => masterCopy,
       createNewImplementation: async () => {
         const newImplementation = await new VotesERC20StakedV1__factory(owner).deploy();
         return newImplementation;

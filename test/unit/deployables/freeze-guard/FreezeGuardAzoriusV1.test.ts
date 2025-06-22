@@ -10,6 +10,7 @@ import {
   IFreezeGuardAzoriusV1__factory,
   IFreezeGuardBaseV1__factory,
   IGuard__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   MockFreezeVoting,
   MockFreezeVoting__factory,
@@ -21,7 +22,7 @@ import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests
 // Helper function for deploying AzoriusFreezeGuardV1 instances using ERC1967Proxy
 async function deployAzoriusFreezeGuardProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: FreezeGuardAzoriusV1,
   owner: SignerWithAddress,
   freezeVoting: string,
 ): Promise<FreezeGuardAzoriusV1> {
@@ -32,7 +33,10 @@ async function deployAzoriusFreezeGuardProxy(
   );
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return FreezeGuardAzoriusV1__factory.connect(await proxy.getAddress(), owner);
@@ -51,7 +55,7 @@ describe('FreezeGuardAzoriusV1', () => {
   let nonOwner: SignerWithAddress;
 
   // contracts
-  let masterCopy: string;
+  let masterCopy: FreezeGuardAzoriusV1;
   let azoriusFreezeGuard: FreezeGuardAzoriusV1;
   let mockFreezeVoting: MockFreezeVoting;
 
@@ -60,8 +64,7 @@ describe('FreezeGuardAzoriusV1', () => {
     [proxyDeployer, owner, user, nonOwner] = await ethers.getSigners();
 
     // Deploy implementation
-    const implementation = await new FreezeGuardAzoriusV1__factory(proxyDeployer).deploy();
-    masterCopy = await implementation.getAddress();
+    masterCopy = await new FreezeGuardAzoriusV1__factory(proxyDeployer).deploy();
 
     // Deploy mock contracts
     mockFreezeVoting = await new MockFreezeVoting__factory(owner).deploy();
@@ -95,7 +98,7 @@ describe('FreezeGuardAzoriusV1', () => {
 
     it('Should have initialization disabled in the implementation', async function () {
       const implementationContract = FreezeGuardAzoriusV1__factory.connect(
-        masterCopy,
+        await masterCopy.getAddress(),
         proxyDeployer,
       );
 
@@ -232,6 +235,7 @@ describe('FreezeGuardAzoriusV1', () => {
         },
         IGuard__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -250,6 +254,7 @@ describe('FreezeGuardAzoriusV1', () => {
     // Run UUPS upgradeability tests
     runUUPSUpgradeabilityTests({
       getContract: () => azoriusFreezeGuard,
+      getImplementation: () => masterCopy,
       createNewImplementation: async () => {
         const newImplementation = await new FreezeGuardAzoriusV1__factory(owner).deploy();
         return newImplementation;

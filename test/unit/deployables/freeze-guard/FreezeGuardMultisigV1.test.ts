@@ -11,6 +11,7 @@ import {
   IFreezeGuardBaseV1__factory,
   IFreezeGuardMultisigV1__factory,
   IGuard__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   MockFreezeVoting,
   MockFreezeVoting__factory,
@@ -24,7 +25,7 @@ import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests
 // Helper function for deploying MultisigFreezeGuardV1 instances using ERC1967Proxy
 async function deployMultisigFreezeGuardProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: FreezeGuardMultisigV1,
   owner: SignerWithAddress,
   timelockPeriod: number,
   executionPeriod: number,
@@ -42,7 +43,10 @@ async function deployMultisigFreezeGuardProxy(
   ]);
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return FreezeGuardMultisigV1__factory.connect(await proxy.getAddress(), owner);
@@ -61,7 +65,7 @@ describe('FreezeGuardMultisigV1', () => {
   let nonOwner: SignerWithAddress;
 
   // contracts
-  let masterCopy: string;
+  let masterCopy: FreezeGuardMultisigV1;
   let multisigFreezeGuard: FreezeGuardMultisigV1;
   let mockFreezeVoting: MockFreezeVoting;
   let mockSafe: MockSafe;
@@ -79,8 +83,7 @@ describe('FreezeGuardMultisigV1', () => {
     [proxyDeployer, owner, user, nonOwner] = await ethers.getSigners();
 
     // Deploy implementation
-    const implementation = await new FreezeGuardMultisigV1__factory(proxyDeployer).deploy();
-    masterCopy = await implementation.getAddress();
+    masterCopy = await new FreezeGuardMultisigV1__factory(proxyDeployer).deploy();
 
     // Deploy mock contracts
     mockFreezeVoting = await new MockFreezeVoting__factory(owner).deploy();
@@ -123,7 +126,7 @@ describe('FreezeGuardMultisigV1', () => {
 
     it('Should have initialization disabled in the implementation', async function () {
       const implementationContract = FreezeGuardMultisigV1__factory.connect(
-        masterCopy,
+        await masterCopy.getAddress(),
         proxyDeployer,
       );
 
@@ -476,6 +479,7 @@ describe('FreezeGuardMultisigV1', () => {
         },
         IGuard__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -483,6 +487,7 @@ describe('FreezeGuardMultisigV1', () => {
   describe('UUPS Upgradeability', function () {
     runUUPSUpgradeabilityTests({
       getContract: () => multisigFreezeGuard,
+      getImplementation: () => masterCopy,
       createNewImplementation: async () => {
         const newImplementation = await new FreezeGuardMultisigV1__factory(owner).deploy();
         return newImplementation;

@@ -7,7 +7,9 @@ import {IFreezeGuardBaseV1} from "../../interfaces/decent/deployables/IFreezeGua
 import {IFreezeVotingBaseV1} from "../../interfaces/decent/deployables/IFreezeVotingBaseV1.sol";
 import {ISafe} from "../../interfaces/safe/ISafe.sol";
 import {IDeploymentBlockV1} from "../../interfaces/decent/IDeploymentBlockV1.sol";
+import {IUUPSUpgradeableExtended} from "../../interfaces/decent/IUUPSUpgradeableExtended.sol";
 import {DeploymentBlockV1} from "../../DeploymentBlockV1.sol";
+import {UUPSUpgradeableExtended} from "../../UUPSUpgradeableExtended.sol";
 import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IGuard} from "@gnosis-guild/zodiac/contracts/interfaces/IGuard.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -40,8 +42,8 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
 contract FreezeGuardMultisigV1 is
     IFreezeGuardMultisigV1,
     IVersion,
+    UUPSUpgradeableExtended,
     Ownable2StepUpgradeable,
-    UUPSUpgradeable,
     DeploymentBlockV1,
     ERC165
 {
@@ -359,7 +361,7 @@ contract FreezeGuardMultisigV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IFreezeGuardMultisigV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlockV1, and IERC165
+     * @dev Supports IFreezeGuardMultisigV1, IFreezeGuardBaseV1, IGuard, IVersion, IDeploymentBlockV1, IUUPSUpgradeableExtended, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -370,6 +372,7 @@ contract FreezeGuardMultisigV1 is
             interfaceId_ == type(IGuard).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlockV1).interfaceId ||
+            interfaceId_ == type(IUUPSUpgradeableExtended).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 

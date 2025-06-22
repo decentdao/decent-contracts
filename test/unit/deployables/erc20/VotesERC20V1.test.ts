@@ -10,6 +10,7 @@ import {
   IERC165__factory,
   IERC20__factory,
   IERC20Permit__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   IVotes__factory,
   IVotesERC20V1__factory,
@@ -23,6 +24,7 @@ import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests
 // Helper function for deploying VotesERC20V1 instances using ERC1967Proxy
 async function deployVotesERC20Proxy(
   proxyDeployer: SignerWithAddress,
+  implementation: VotesERC20V1,
   owner: SignerWithAddress,
   locked: boolean,
   maxTotalSupply: bigint,
@@ -51,10 +53,11 @@ async function deployVotesERC20Proxy(
     maxTotalSupply,
   ]);
 
-  const implementation = await new VotesERC20V1__factory(proxyDeployer).deploy();
-
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return VotesERC20V1__factory.connect(await proxy.getAddress(), owner);
@@ -63,6 +66,7 @@ async function deployVotesERC20Proxy(
 describe('VotesERC20V1', () => {
   // signers
   let proxyDeployer: SignerWithAddress;
+  let implementation: VotesERC20V1;
   let owner: SignerWithAddress;
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
@@ -83,12 +87,15 @@ describe('VotesERC20V1', () => {
     // Get signers
     [proxyDeployer, owner, alice, bob, carol, nonOwner, tokenHolder, tokenRecipient, spender] =
       await ethers.getSigners();
+
+    implementation = await new VotesERC20V1__factory(proxyDeployer).deploy();
   });
 
   describe('Initialization', () => {
     it('should initialize with correct name and symbol', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -112,6 +119,7 @@ describe('VotesERC20V1', () => {
 
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -132,6 +140,7 @@ describe('VotesERC20V1', () => {
     it('should handle empty allocation arrays', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -147,6 +156,7 @@ describe('VotesERC20V1', () => {
     it('should initialize with locked set to false', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -162,6 +172,7 @@ describe('VotesERC20V1', () => {
     it('should initialize with locked set to true', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         true,
         ethers.parseEther('2100'),
@@ -177,6 +188,7 @@ describe('VotesERC20V1', () => {
     it('should initialize with maxTotalSupply set to 2100', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -192,6 +204,7 @@ describe('VotesERC20V1', () => {
     it('should initialize with DEFAULT_ADMIN_ROLE, MINTER_ROLE, TRANSFER_FROM_ROLE set to owner', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -209,6 +222,7 @@ describe('VotesERC20V1', () => {
     it('should not allow reinitialization', async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -250,6 +264,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           ethers.parseEther('2100'),
@@ -304,6 +319,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           ethers.parseEther('2100'),
@@ -363,6 +379,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async () => {
       proxy = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         locked,
         maxTotalSupply,
@@ -426,6 +443,7 @@ describe('VotesERC20V1', () => {
         beforeEach(async () => {
           proxy = await deployVotesERC20Proxy(
             proxyDeployer,
+            implementation,
             owner,
             locked,
             ethers.parseEther('2100'),
@@ -490,6 +508,7 @@ describe('VotesERC20V1', () => {
         beforeEach(async () => {
           proxy = await deployVotesERC20Proxy(
             proxyDeployer,
+            implementation,
             owner,
             locked,
             ethers.parseEther('2100'),
@@ -549,6 +568,7 @@ describe('VotesERC20V1', () => {
         beforeEach(async () => {
           proxy = await deployVotesERC20Proxy(
             proxyDeployer,
+            implementation,
             owner,
             locked,
             ethers.parseEther('2100'),
@@ -621,6 +641,7 @@ describe('VotesERC20V1', () => {
         beforeEach(async () => {
           proxy = await deployVotesERC20Proxy(
             proxyDeployer,
+            implementation,
             owner,
             locked,
             ethers.parseEther('2100'),
@@ -719,6 +740,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           maxTotalSupply,
@@ -787,6 +809,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           ethers.parseEther('2100'),
@@ -846,6 +869,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           ethers.parseEther('2100'),
@@ -891,6 +915,7 @@ describe('VotesERC20V1', () => {
       beforeEach(async () => {
         proxy = await deployVotesERC20Proxy(
           proxyDeployer,
+          implementation,
           owner,
           locked,
           ethers.parseEther('2100'),
@@ -941,6 +966,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -960,6 +986,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async function () {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -981,6 +1008,7 @@ describe('VotesERC20V1', () => {
         IVotes__factory,
         IDeploymentBlockV1__factory,
         IAccessControl__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -989,6 +1017,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async () => {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -1033,6 +1062,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async function () {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),
@@ -1046,6 +1076,7 @@ describe('VotesERC20V1', () => {
     // Run UUPS upgradeability tests
     runUUPSUpgradeabilityTests({
       getContract: () => votesERC20,
+      getImplementation: () => implementation,
       createNewImplementation: async () => {
         const newImplementation = await new VotesERC20V1__factory(owner).deploy();
         return newImplementation;
@@ -1059,6 +1090,7 @@ describe('VotesERC20V1', () => {
     beforeEach(async function () {
       votesERC20 = await deployVotesERC20Proxy(
         proxyDeployer,
+        implementation,
         owner,
         false,
         ethers.parseEther('2100'),

@@ -1,5 +1,6 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
+import type { BaseContract } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
@@ -7,6 +8,7 @@ import {
   IDeploymentBlockV1__factory,
   IERC165__factory,
   IModuleFractalV1__factory,
+  IUUPSUpgradeableExtended__factory,
   IVersion__factory,
   MockAvatar,
   MockAvatar__factory,
@@ -14,7 +16,7 @@ import {
   MockERC20Votes__factory,
   ModuleFractalV1,
   ModuleFractalV1__factory,
-  UUPSUpgradeable,
+  UUPSUpgradeableExtended,
 } from '../../../../typechain-types';
 import { runDeploymentBlockTests } from '../../shared/deploymentBlockTests';
 import { runSupportsInterfaceTests } from '../../shared/supportsInterfaceTests';
@@ -23,7 +25,7 @@ import { runUUPSUpgradeabilityTests } from '../../shared/uupsUpgradeabilityTests
 // Helper functions for deploying FractalModuleV1 instances using ERC1967Proxy
 async function deployFractalModuleProxy(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: ModuleFractalV1,
   owner: SignerWithAddress,
   avatar: string,
   target: string,
@@ -36,7 +38,10 @@ async function deployFractalModuleProxy(
   ]);
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return ModuleFractalV1__factory.connect(await proxy.getAddress(), owner);
@@ -45,7 +50,7 @@ async function deployFractalModuleProxy(
 // Helper function for deploying using setUp instead of initialize
 async function deployFractalModuleProxyWithSetUp(
   proxyDeployer: SignerWithAddress,
-  implementation: string,
+  implementation: ModuleFractalV1,
   owner: SignerWithAddress,
   avatar: string,
   target: string,
@@ -59,7 +64,10 @@ async function deployFractalModuleProxyWithSetUp(
   ]);
 
   // Deploy the proxy with the implementation
-  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(implementation, fullInitData);
+  const proxy = await new ERC1967Proxy__factory(proxyDeployer).deploy(
+    await implementation.getAddress(),
+    fullInitData,
+  );
 
   // Return a contract instance connected to the proxy
   return ModuleFractalV1__factory.connect(await proxy.getAddress(), owner);
@@ -73,7 +81,7 @@ describe('ModuleFractalV1', () => {
   let user: SignerWithAddress;
 
   // mocks and mastercopies
-  let masterCopy: string;
+  let masterCopy: ModuleFractalV1;
   let mockToken: MockERC20Votes;
 
   // Shared fractalModule instance for deployment block tests
@@ -84,8 +92,7 @@ describe('ModuleFractalV1', () => {
     [proxyDeployer, owner, nonOwner, user] = await ethers.getSigners();
 
     // Deploy implementation contract
-    const implementation = await new ModuleFractalV1__factory(proxyDeployer).deploy();
-    masterCopy = await implementation.getAddress();
+    masterCopy = await new ModuleFractalV1__factory(proxyDeployer).deploy();
     mockToken = await new MockERC20Votes__factory(proxyDeployer).deploy();
   });
 
@@ -434,6 +441,7 @@ describe('ModuleFractalV1', () => {
         IModuleFractalV1__factory,
         IVersion__factory,
         IDeploymentBlockV1__factory,
+        IUUPSUpgradeableExtended__factory,
       ],
     });
   });
@@ -457,10 +465,11 @@ describe('ModuleFractalV1', () => {
 
     // Run UUPS upgradeability tests
     runUUPSUpgradeabilityTests({
-      getContract: () => fractalModule as unknown as UUPSUpgradeable,
+      getContract: () => fractalModule as unknown as UUPSUpgradeableExtended,
+      getImplementation: () => masterCopy as unknown as BaseContract,
       createNewImplementation: async () => {
         const newImplementation = await new ModuleFractalV1__factory(owner).deploy();
-        return newImplementation as unknown as UUPSUpgradeable;
+        return newImplementation as unknown as UUPSUpgradeableExtended;
       },
       owner: () => owner,
       nonOwner: () => nonOwner,
