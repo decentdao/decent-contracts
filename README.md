@@ -107,7 +107,7 @@ The codebase is organized into four distinct contract categories based on deploy
 - **Purpose**: Handle dynamic logic based on blockchain state at execution time, don't hold any state
 - **Examples**:
   - DecentHatsModuleUtils: Hats Protocol integration
-  - DecentSablierStreamManagementModule: Stream payment management
+  - DecentSablierStreamManagementModuleV1: Stream payment management
 
 ### 4. Services (`contracts/services/`)
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {DecentHatsModuleUtils} from "../../../utilities/DecentHatsModuleUtils.sol";
 
 /**
- * @title IDecentHatsModificationModule
+ * @title IDecentHatsModificationModuleV1
  * @notice Utility module for adding new roles to an existing Hats Protocol tree
  * @dev This module provides functionality to create additional role hats within an
  * existing organizational structure. Unlike the creation module, this assumes a
@@ -35,7 +35,7 @@ import {DecentHatsModuleUtils} from "../../../utilities/DecentHatsModuleUtils.so
  * - Prevents concurrent role creation proposals
  * - Ensures proper stream recipient setup
  */
-interface IDecentHatsModificationModule {
+interface IDecentHatsModificationModuleV1 {
     // --- State-Changing Functions ---
 
     /**

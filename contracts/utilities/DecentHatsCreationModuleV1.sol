@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IDecentHatsCreationModule} from "../interfaces/decent/utilities/IDecentHatsCreationModule.sol";
+import {IDecentHatsCreationModuleV1} from "../interfaces/decent/utilities/IDecentHatsCreationModuleV1.sol";
 import {IDecentAutonomousAdminV1} from "../interfaces/decent/deployables/IDecentAutonomousAdminV1.sol";
 import {ISystemDeployerV1} from "../interfaces/decent/singletons/ISystemDeployerV1.sol";
 import {IKeyValuePairsV1} from "../interfaces/decent/singletons/IKeyValuePairsV1.sol";
@@ -23,10 +23,10 @@ interface IHatsExtended is IHats {
 }
 
 /**
- * @title DecentHatsCreationModule
+ * @title DecentHatsCreationModuleV1
  * @author Decent Labs
  * @notice Implementation of Hats tree creation for DAOs with payment streams
- * @dev This contract implements IDecentHatsCreationModule, providing a complete
+ * @dev This contract implements IDecentHatsCreationModuleV1, providing a complete
  * solution for creating organizational structures from scratch.
  *
  * Implementation details:
@@ -52,18 +52,18 @@ interface IHatsExtended is IHats {
  *
  * @custom:security-contact security@decentlabs.io
  */
-contract DecentHatsCreationModule is
-    IDecentHatsCreationModule,
+contract DecentHatsCreationModuleV1 is
+    IDecentHatsCreationModuleV1,
     DecentHatsModuleUtils
 {
     // ======================================================================
-    // IDecentHatsCreationModule
+    // IDecentHatsCreationModuleV1
     // ======================================================================
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IDecentHatsCreationModule
+     * @inheritdoc IDecentHatsCreationModuleV1
      * @dev Creates a complete organizational structure in one transaction.
      * The top hat is minted to the calling Safe, establishing ownership.
      * An autonomous admin is deployed to manage the admin hat for automated operations.

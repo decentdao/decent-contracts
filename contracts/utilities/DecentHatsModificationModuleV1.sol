@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IDecentHatsModificationModule} from "../interfaces/decent/utilities/IDecentHatsModificationModule.sol";
+import {IDecentHatsModificationModuleV1} from "../interfaces/decent/utilities/IDecentHatsModificationModuleV1.sol";
 import {DecentHatsModuleUtils} from "./DecentHatsModuleUtils.sol";
 
 /**
- * @title DecentHatsModificationModule
+ * @title DecentHatsModificationModuleV1
  * @author Decent Labs
  * @notice Implementation for adding roles to existing Hats Protocol trees
- * @dev This contract implements IDecentHatsModificationModule, providing
+ * @dev This contract implements IDecentHatsModificationModuleV1, providing
  * functionality to expand existing organizational structures.
  *
  * Implementation details:
@@ -31,18 +31,18 @@ import {DecentHatsModuleUtils} from "./DecentHatsModuleUtils.sol";
  *
  * @custom:security-contact security@decentlabs.io
  */
-contract DecentHatsModificationModule is
-    IDecentHatsModificationModule,
+contract DecentHatsModificationModuleV1 is
+    IDecentHatsModificationModuleV1,
     DecentHatsModuleUtils
 {
     // ======================================================================
-    // IDecentHatsModificationModule
+    // IDecentHatsModificationModuleV1
     // ======================================================================
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IDecentHatsModificationModule
+     * @inheritdoc IDecentHatsModificationModuleV1
      * @dev Simply delegates to the inherited _processRoleHats function from
      * DecentHatsModuleUtils, which handles all the complex logic for creating
      * roles with payment streams.

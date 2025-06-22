@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IDecentSablierStreamManagementModule
+ * @title IDecentSablierStreamManagementModuleV1
  * @notice Utility module for managing Sablier payment streams
  * @dev This module provides functionality to manage Sablier V2 streams, particularly
  * for withdrawing funds from streams owned by Hat smart accounts and cancelling
@@ -31,7 +31,7 @@ pragma solidity ^0.8.30;
  * - Validates stream status before operations
  * - Temporary module pattern prevents persistent access
  */
-interface IDecentSablierStreamManagementModule {
+interface IDecentSablierStreamManagementModuleV1 {
     // --- State-Changing Functions ---
 
     /**

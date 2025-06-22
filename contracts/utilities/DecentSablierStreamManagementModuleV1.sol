@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IDecentSablierStreamManagementModule} from "../interfaces/decent/utilities/IDecentSablierStreamManagementModule.sol";
+import {IDecentSablierStreamManagementModuleV1} from "../interfaces/decent/utilities/IDecentSablierStreamManagementModuleV1.sol";
 import {Lockup} from "../interfaces/sablier/types/DataTypes.sol";
 import {ISablierV2Lockup} from "../interfaces/sablier/ISablierV2Lockup.sol";
 import {IERC6551Executable} from "../interfaces/erc6551/IERC6551Executable.sol";
@@ -9,10 +9,10 @@ import {Enum} from "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 import {IAvatar} from "@gnosis-guild/zodiac/contracts/interfaces/IAvatar.sol";
 
 /**
- * @title DecentSablierStreamManagementModule
+ * @title DecentSablierStreamManagementModuleV1
  * @author Decent Labs
  * @notice Implementation of Sablier stream management utilities
- * @dev This contract implements IDecentSablierStreamManagementModule, providing
+ * @dev This contract implements IDecentSablierStreamManagementModuleV1, providing
  * stream management functionality for DAOs using Sablier V2.
  *
  * Implementation details:
@@ -35,17 +35,17 @@ import {IAvatar} from "@gnosis-guild/zodiac/contracts/interfaces/IAvatar.sol";
  *
  * @custom:security-contact security@decentlabs.io
  */
-contract DecentSablierStreamManagementModule is
-    IDecentSablierStreamManagementModule
+contract DecentSablierStreamManagementModuleV1 is
+    IDecentSablierStreamManagementModuleV1
 {
     // ======================================================================
-    // IDecentSablierStreamManagementModule
+    // IDecentSablierStreamManagementModuleV1
     // ======================================================================
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IDecentSablierStreamManagementModule
+     * @inheritdoc IDecentSablierStreamManagementModuleV1
      * @dev Executes a nested call: Safe -> Hat Account -> Sablier.
      * Returns silently if no funds are available to withdraw, preventing
      * proposal failures due to timing issues.
@@ -84,7 +84,7 @@ contract DecentSablierStreamManagementModule is
     }
 
     /**
-     * @inheritdoc IDecentSablierStreamManagementModule
+     * @inheritdoc IDecentSablierStreamManagementModuleV1
      * @dev Only cancels streams in PENDING or STREAMING status.
      * Returns silently for other statuses to prevent proposal failures.
      * The Safe must be the stream sender to cancel.

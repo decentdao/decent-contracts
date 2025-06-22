@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IDecentHatsModuleUtils} from "./IDecentHatsModuleUtils.sol";
 
 /**
- * @title IDecentHatsCreationModule
+ * @title IDecentHatsCreationModuleV1
  * @notice Utility module for creating complete Hats Protocol trees with roles and payment streams
  * @dev This module extends DecentHatsModuleUtils to provide a complete solution for creating
  * organizational structures from scratch. It handles the creation of top hats, admin hats,
@@ -31,7 +31,7 @@ import {IDecentHatsModuleUtils} from "./IDecentHatsModuleUtils.sol";
  * - Setting up compensation structures for contributors
  * - Establishing governance hierarchies
  */
-interface IDecentHatsCreationModule {
+interface IDecentHatsCreationModuleV1 {
     // --- Structs ---
 
     /**
