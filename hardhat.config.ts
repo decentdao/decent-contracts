@@ -1,3 +1,4 @@
+import '@nomicfoundation/hardhat-ignition-ethers';
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-verify';
 import { HardhatUserConfig, vars } from 'hardhat/config';
@@ -77,6 +78,16 @@ const config: HardhatUserConfig = {
   },
   docgen: {
     pages: 'files',
+  },
+  ignition: {
+    strategyConfig: {
+      create2: {
+        salt: vars.get(
+          'DECENT_CREATE2_SALT',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+      },
+    },
   },
 };
 
