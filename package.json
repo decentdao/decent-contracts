@@ -1,10 +1,10 @@
 {
-  "name": "@fractal-framework/fractal-contracts",
-  "version": "1.4.2",
+  "name": "@decentdao/decent-contracts",
+  "version": "2.0.0",
   "files": [
     "publish",
     "contracts",
-    "!contracts/mock"
+    "!contracts/mocks"
   ],
   "main": "publish/index.js",
   "repository": {
@@ -23,11 +23,11 @@
     "prepublishOnly": "./scripts/prepublish.sh"
   },
   "description": "A Safe Zodiac Module framework",
-  "homepage": "https://github.com/decentdao/fractal-contracts/blob/develop/README.md",
-  "author": "fractal-contributors",
-  "license": "MIT",
+  "homepage": "https://github.com/decentdao/decent-contracts/blob/develop/README.md",
+  "author": "decent-contributors",
+  "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/decentdao/fractal-contracts/issues"
+    "url": "https://github.com/decentdao/decent-contracts/issues"
   },
   "dependencies": {
     "@account-abstraction/contracts": "^0.7.0",
