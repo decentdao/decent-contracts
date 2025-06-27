@@ -16,6 +16,9 @@ import {
 } from "../../DeploymentBlockInitializable.sol";
 import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
 import {
+    IAccessControl
+} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import {
     IAccessControlEnumerable
 } from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -425,7 +428,7 @@ contract VotesERC20V1 is
     /**
      * @inheritdoc ERC165
      * @dev Supports IVotesERC20V1, IERC20, IERC20Permit, IVotes, IVersion,
-     * IDeploymentBlock, IAccessControl, and IERC165
+     * IDeploymentBlock, IAccessControlEnumerable, IAccessControl, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
@@ -444,6 +447,7 @@ contract VotesERC20V1 is
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlock).interfaceId ||
             interfaceId_ == type(IAccessControlEnumerable).interfaceId ||
+            interfaceId_ == type(IAccessControl).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

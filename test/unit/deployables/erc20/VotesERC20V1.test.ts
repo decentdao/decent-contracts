@@ -5,6 +5,7 @@ import type { ContractTransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
+  IAccessControl__factory,
   IAccessControlEnumerable__factory,
   IDeploymentBlock__factory,
   IERC165__factory,
@@ -1013,7 +1014,11 @@ describe('VotesERC20V1', () => {
         IERC20Permit__factory,
         IVotes__factory,
         IDeploymentBlock__factory,
-        IAccessControlEnumerable__factory,
+        IAccessControl__factory,
+        {
+          factory: IAccessControlEnumerable__factory,
+          inheritedFactories: [IAccessControl__factory],
+        },
       ],
     });
   });
