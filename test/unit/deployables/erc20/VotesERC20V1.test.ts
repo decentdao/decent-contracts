@@ -956,13 +956,19 @@ describe('VotesERC20V1', () => {
     });
 
     it('can get all members info of the tranfer role', async () => {
-      expect(await proxy.getRoleMembers(TRANSFER_FROM_ROLE)).to.deep.equal([owner.address,'0x0000000000000000000000000000000000000000', alice.address]);
+      expect(await proxy.getRoleMembers(TRANSFER_FROM_ROLE)).to.deep.equal([
+        owner.address,
+        '0x0000000000000000000000000000000000000000',
+        alice.address,
+      ]);
       expect(await proxy.getRoleMemberCount(TRANSFER_FROM_ROLE)).to.equal(3);
       expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 0)).to.equal(owner.address);
-      expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 1)).to.equal('0x0000000000000000000000000000000000000000');
+      expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 1)).to.equal(
+        '0x0000000000000000000000000000000000000000',
+      );
       expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 2)).to.equal(alice.address);
     });
-  })
+  });
 
   describe('Version', () => {
     beforeEach(async () => {
