@@ -16,8 +16,8 @@ import {
 } from "../../DeploymentBlockInitializable.sol";
 import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
 import {
-    IAccessControl
-} from "@openzeppelin/contracts/access/IAccessControl.sol";
+    IAccessControlEnumerable
+} from "@openzeppelin/contracts/access/extensions/IAccessControlEnumerable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {
     ERC20Upgradeable
@@ -38,8 +38,8 @@ import {
     UUPSUpgradeable
 } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {
-    AccessControlUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+    AccessControlEnumerableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 
 /**
  * @title VotesERC20V1
@@ -76,7 +76,7 @@ contract VotesERC20V1 is
     ERC20VotesUpgradeable,
     ERC20PermitUpgradeable,
     UUPSUpgradeable,
-    AccessControlUpgradeable,
+    AccessControlEnumerableUpgradeable,
     DeploymentBlockInitializable,
     InitializerEventEmitter,
     ERC165
@@ -433,7 +433,7 @@ contract VotesERC20V1 is
         public
         view
         virtual
-        override(AccessControlUpgradeable, ERC165)
+        override(AccessControlEnumerableUpgradeable, ERC165)
         returns (bool)
     {
         return
@@ -443,7 +443,7 @@ contract VotesERC20V1 is
             interfaceId_ == type(IVotes).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlock).interfaceId ||
-            interfaceId_ == type(IAccessControl).interfaceId ||
+            interfaceId_ == type(IAccessControlEnumerable).interfaceId ||
             super.supportsInterface(interfaceId_);
     }
 }

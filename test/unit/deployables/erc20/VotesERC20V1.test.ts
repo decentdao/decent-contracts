@@ -5,7 +5,7 @@ import type { ContractTransactionResponse } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
-  IAccessControl__factory,
+  IAccessControlEnumerable__factory,
   IDeploymentBlock__factory,
   IERC165__factory,
   IERC20__factory,
@@ -938,6 +938,32 @@ describe('VotesERC20V1', () => {
     });
   });
 
+  describe('AccessControlEnumerable functions', () => {
+    let proxy: VotesERC20V1;
+
+    beforeEach(async () => {
+      proxy = await deployVotesERC20Proxy(
+        proxyDeployer,
+        owner,
+        true,
+        ethers.parseEther('2100'),
+        'Test',
+        'TEST',
+        [],
+        [],
+      );
+      await proxy.connect(owner).grantRole(TRANSFER_FROM_ROLE, alice.address);
+    });
+
+    it('can get all members info of the tranfer role', async () => {
+      expect(await proxy.getRoleMembers(TRANSFER_FROM_ROLE)).to.deep.equal([owner.address,'0x0000000000000000000000000000000000000000', alice.address]);
+      expect(await proxy.getRoleMemberCount(TRANSFER_FROM_ROLE)).to.equal(3);
+      expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 0)).to.equal(owner.address);
+      expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 1)).to.equal('0x0000000000000000000000000000000000000000');
+      expect(await proxy.getRoleMember(TRANSFER_FROM_ROLE, 2)).to.equal(alice.address);
+    });
+  })
+
   describe('Version', () => {
     beforeEach(async () => {
       votesERC20 = await deployVotesERC20Proxy(
@@ -981,7 +1007,7 @@ describe('VotesERC20V1', () => {
         IERC20Permit__factory,
         IVotes__factory,
         IDeploymentBlock__factory,
-        IAccessControl__factory,
+        IAccessControlEnumerable__factory,
       ],
     });
   });
