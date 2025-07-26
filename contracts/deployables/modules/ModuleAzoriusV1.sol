@@ -469,7 +469,13 @@ contract ModuleAzoriusV1 is
         proposal.executionPeriod = $.executionPeriod;
 
         // Step 4: Initialize voting period in the strategy contract
-        $.strategy.initializeProposal($.totalProposalCount);
+        // For backward compatibility, use the first authorized voting type as default
+        // In the future, this should be passed as a parameter to submitProposal
+        address[] memory votingTypes = $.strategy.authorizedVotingTypes();
+        require(votingTypes.length > 0, "No authorized voting types");
+
+        // Use SimpleVotingType config by default (empty bytes for default basis)
+        $.strategy.initializeProposal($.totalProposalCount, votingTypes[0], "");
 
         // Step 5: Emit event with full proposal details for indexing
         emit ProposalCreated(

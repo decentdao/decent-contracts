@@ -196,7 +196,7 @@ contract FreezeVotingAzoriusV1 is
     function castFreezeVote(
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse_,
         uint256 lightAccountIndex_
-    ) public virtual override {
+    ) external virtual override {
         // Step 1: Resolve the actual voter (handles Light Account case)
         address resolvedVoter = potentialLightAccountResolvedOwner(
             msg.sender,

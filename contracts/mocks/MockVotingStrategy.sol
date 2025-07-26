@@ -14,13 +14,20 @@ import {
 } from "../deployables/account-abstraction/LightAccountValidator.sol";
 
 contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
+    // Temporary enum for mock compatibility
+    enum VoteType {
+        NO,
+        YES,
+        ABSTAIN
+    }
     struct TimestampPoints {
         uint48 startTimestamp;
         uint48 endTimestamp;
     }
 
     address public mockStrategyAdmin;
-    mapping(uint32 => ProposalVotingDetails) public proposalVotingDetailsMap;
+    mapping(uint32 => IStrategyV1.ProposalVotingDetails)
+        public proposalVotingDetailsMap;
     mapping(uint32 => uint48) public votingStartTimestampsMap;
     mapping(uint32 => uint48) public votingEndTimestampsMap;
     mapping(uint32 => uint32) public votingStartBlocksMap;
@@ -169,16 +176,20 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
         return votingStartBlocksMap[proposalId];
     }
 
-    function initializeProposal(uint32 proposalId) external virtual override {
-        ProposalVotingDetails storage proposal = proposalVotingDetailsMap[
-            proposalId
-        ];
+    function initializeProposal(
+        uint32 proposalId,
+        address votingType_,
+        bytes calldata votingConfig_
+    ) external virtual override {
+        IStrategyV1.ProposalVotingDetails
+            storage proposal = proposalVotingDetailsMap[proposalId];
 
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(
             block.timestamp + _mockVotingPeriod
         );
         proposal.votingStartBlock = uint32(block.number);
+        proposal.votingType = votingType_; // Mock just stores it
 
         votingStartTimestampsMap[proposalId] = proposal.votingStartTimestamp;
         votingEndTimestampsMap[proposalId] = proposal.votingEndTimestamp;
@@ -193,31 +204,29 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
 
     function castVote(
         uint32 _proposalId,
-        uint8 _voteType,
+        bytes calldata voteData,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData,
         uint256 lightAccountIndex_
     ) external virtual override {
+        uint8 _voteType = abi.decode(voteData, (uint8)); // Decode for mock
         address resolvedLightAccountOwner = potentialLightAccountResolvedOwner(
             msg.sender,
             lightAccountIndex_
         );
-        ProposalVotingDetails storage proposal = proposalVotingDetailsMap[
-            _proposalId
-        ];
+        IStrategyV1.ProposalVotingDetails
+            storage proposal = proposalVotingDetailsMap[_proposalId];
         uint256 totalWeight = 0;
         // Mock implementation - just add a fixed weight per config
         for (uint i = 0; i < votingConfigsData.length; i++) {
             totalWeight += 100; // Fixed weight for testing
         }
-        if (_voteType == uint8(VoteType.YES)) proposal.yesVotes += totalWeight;
-        else if (_voteType == uint8(VoteType.NO))
-            proposal.noVotes += totalWeight;
-        else if (_voteType == uint8(VoteType.ABSTAIN))
-            proposal.abstainVotes += totalWeight;
-        emit Voted(
+        // Mock doesn't actually store votes in the new system
+        // The voting type would handle this
+        emit VoteCast(
             resolvedLightAccountOwner,
             _proposalId,
-            VoteType(_voteType),
+            address(0), // voting type not implemented in mock
+            abi.encode(_voteType),
             totalWeight
         );
     }
@@ -324,15 +333,11 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
     function validStrategyVote(
         address,
         uint32 proposalId_,
-        uint8 voteType_,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
     ) external view override returns (bool) {
         if (_shouldCheckExpectedParams) {
             if (proposalId_ != _expected_proposalId) {
                 revert("Mismatched proposalId");
-            }
-            if (voteType_ != _expected_voteType) {
-                revert("Mismatched voteType");
             }
             if (
                 keccak256(abi.encode(votingConfigsData_)) !=
@@ -342,5 +347,53 @@ contract MockVotingStrategy is IStrategyV1, LightAccountValidator {
             }
         }
         return _validStrategyVoteToReturn;
+    }
+
+    // New methods for arbitrary voting types
+    mapping(address => bool) internal _authorizedVotingTypes;
+    address[] internal _authorizedVotingTypesList;
+    mapping(uint32 => address) internal _proposalVotingTypes;
+
+    function addAuthorizedVotingType(
+        address votingType_
+    ) external virtual override {
+        _authorizedVotingTypes[votingType_] = true;
+        _authorizedVotingTypesList.push(votingType_);
+    }
+
+    function removeAuthorizedVotingType(
+        address votingType_
+    ) external virtual override {
+        _authorizedVotingTypes[votingType_] = false;
+    }
+
+    function isAuthorizedVotingType(
+        address votingType_
+    ) external view virtual override returns (bool) {
+        return _authorizedVotingTypes[votingType_];
+    }
+
+    function authorizedVotingTypes()
+        external
+        view
+        virtual
+        override
+        returns (address[] memory)
+    {
+        return _authorizedVotingTypesList;
+    }
+
+    function proposalVotingType(
+        uint32 proposalId_
+    ) external view virtual override returns (address) {
+        return _proposalVotingTypes[proposalId_];
+    }
+
+    function getWinningOptions(
+        uint32
+    ) external pure virtual override returns (bytes32[] memory) {
+        bytes32[] memory winners = new bytes32[](1);
+        winners[0] = bytes32(uint256(1)); // Mock always returns YES as winner
+        return winners;
     }
 }

@@ -3,7 +3,8 @@ pragma solidity ^0.8.30;
 
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {
-    IVotingTypes
+    IVotingTypes,
+    IVotingType
 } from "../../interfaces/decent/deployables/IVotingTypes.sol";
 import {
     IVotingWeightV1
@@ -73,7 +74,7 @@ contract StrategyV1 is
         /** @notice Numerator for basis calculation (denominator is 1,000,000) */
         uint256 basisNumerator;
         /** @notice Mapping from proposal ID to voting details and tallies */
-        mapping(uint32 proposalId => ProposalVotingDetails proposalVotingDetails) proposalVotingDetails;
+        mapping(uint32 proposalId => IStrategyV1.ProposalVotingDetails proposalVotingDetails) proposalVotingDetails;
         /** @notice Array of configured voting configurations */
         IVotingTypes.VotingConfig[] votingConfigs;
         /** @notice Array of configured proposer adapter addresses */
@@ -86,6 +87,12 @@ contract StrategyV1 is
         address[] authorizedFreezeVotersArray;
         /** @notice Tracks if someone tried to vote after voting period ended */
         mapping(uint32 proposalId => bool voteCastedAfterVotingPeriodEnded) voteCastedAfterVotingPeriodEnded;
+        /** @notice Array of authorized voting type contracts */
+        address[] authorizedVotingTypes;
+        /** @notice Quick lookup for valid voting types */
+        mapping(address votingType => bool isAuthorized) isAuthorizedVotingType;
+        /** @notice Voting type used for each proposal */
+        mapping(uint32 proposalId => address votingType) proposalVotingType;
     }
 
     /**
@@ -260,7 +267,13 @@ contract StrategyV1 is
      */
     function proposalVotingDetails(
         uint32 proposalId
-    ) public view virtual override returns (ProposalVotingDetails memory) {
+    )
+        public
+        view
+        virtual
+        override
+        returns (IStrategyV1.ProposalVotingDetails memory)
+    {
         StrategyStorage storage $ = _getStrategyStorage();
         return $.proposalVotingDetails[proposalId];
     }
@@ -328,60 +341,60 @@ contract StrategyV1 is
 
     /**
      * @inheritdoc IStrategyV1
-     * @dev Calculates quorum based on YES + ABSTAIN votes. NO votes do not contribute to quorum.
+     * @dev Delegates quorum calculation to the voting type contract
      */
     function isQuorumMet(
         uint32 proposalId_
     ) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[proposalId_];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
-        uint256 totalVotesForQuorum = proposal.yesVotes + proposal.abstainVotes;
-        return totalVotesForQuorum >= $.quorumThreshold;
+        IVotingType votingType = IVotingType(proposal.votingType);
+        (, bool passed, ) = votingType.finalizeResults(
+            proposalId_,
+            $.quorumThreshold
+        );
+        return passed;
     }
 
     /**
      * @inheritdoc IStrategyV1
-     * @dev Uses integer multiplication to avoid division precision loss.
-     * Formula: yesVotes * BASIS_DENOMINATOR > (yesVotes + noVotes) * basisNumerator
+     * @dev Delegates basis calculation to the voting type contract
      */
     function isBasisMet(
         uint32 _proposalId
     ) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            _proposalId
-        ];
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[_proposalId];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
         }
 
-        return
-            (proposal.yesVotes * BASIS_DENOMINATOR) >
-            ((proposal.yesVotes + proposal.noVotes) * $.basisNumerator);
+        IVotingType votingType = IVotingType(proposal.votingType);
+        (, bool passed, ) = votingType.finalizeResults(
+            _proposalId,
+            $.quorumThreshold
+        );
+        return passed;
     }
 
     /**
      * @inheritdoc IStrategyV1
-     * @dev A proposal must meet all three conditions to pass:
-     * 1. Voting period has ended (current timestamp > votingEndTimestamp)
-     * 2. Quorum is met (YES + ABSTAIN votes >= quorumThreshold)
-     * 3. Basis is met (YES votes exceed required percentage of YES + NO votes)
+     * @dev A proposal passes if voting has ended and the voting type determines it passed
      */
     function isPassed(
         uint32 _proposalId
     ) public view virtual override returns (bool) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            _proposalId
-        ];
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[_proposalId];
 
         if (proposal.votingEndTimestamp == 0) {
             revert ProposalNotInitialized();
@@ -391,7 +404,12 @@ contract StrategyV1 is
             return false;
         }
 
-        return isQuorumMet(_proposalId) && isBasisMet(_proposalId);
+        IVotingType votingType = IVotingType(proposal.votingType);
+        (, bool passed, ) = votingType.finalizeResults(
+            _proposalId,
+            $.quorumThreshold
+        );
+        return passed;
     }
 
     /**
@@ -422,9 +440,8 @@ contract StrategyV1 is
         uint32 proposalId_
     ) public view virtual override returns (uint48, uint48) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage details = $
+            .proposalVotingDetails[proposalId_];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
         return (details.votingStartTimestamp, details.votingEndTimestamp);
     }
@@ -436,9 +453,8 @@ contract StrategyV1 is
         uint32 proposalId_
     ) public view virtual override returns (uint32) {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage details = $
+            .proposalVotingDetails[proposalId_];
         if (details.votingEndTimestamp == 0) revert ProposalNotInitialized();
         return details.votingStartBlock;
     }
@@ -481,7 +497,6 @@ contract StrategyV1 is
      *
      * Validation checks:
      * - Proposal exists and is still active
-     * - Vote type is valid (NO=0, YES=1, ABSTAIN=2)
      * - All voting configs are valid
      * - Voter has voting weight > 0
      * - Voter hasn't already voted with these configs
@@ -489,7 +504,6 @@ contract StrategyV1 is
     function validStrategyVote(
         address voter_,
         uint32 proposalId_,
-        uint8 voteType_,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
     ) public view virtual override returns (bool) {
         // Early return if no voting configs provided
@@ -500,9 +514,8 @@ contract StrategyV1 is
         StrategyStorage storage $ = _getStrategyStorage();
 
         // Step 1: Verify proposal exists by checking for initialized voting details
-        ProposalVotingDetails storage details = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage details = $
+            .proposalVotingDetails[proposalId_];
 
         // Proposal doesn't exist if voting end timestamp is zero
         if (details.votingEndTimestamp == 0) {
@@ -515,9 +528,8 @@ contract StrategyV1 is
             return false;
         }
 
-        // Step 3: Validate vote type is within valid enum range
-        // VoteType enum: NO=0, YES=1, ABSTAIN=2
-        if (voteType_ > 2) {
+        // Step 3: Check if voting type is set
+        if (details.votingType == address(0)) {
             return false;
         }
 
@@ -578,21 +590,29 @@ contract StrategyV1 is
     /**
      * @inheritdoc IStrategyV1
      * @dev Sets voting timestamps based on current block time and configured voting period.
-     * Resets all vote counts to zero, allowing proposals to be re-initialized if needed.
+     * Initializes the voting type contract for this proposal.
      */
     function initializeProposal(
-        uint32 proposalId_
+        uint32 proposalId_,
+        address votingType_,
+        bytes calldata votingConfig_
     ) public virtual override onlyStrategyAdmin {
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[proposalId_];
         proposal.votingStartTimestamp = uint48(block.timestamp);
         proposal.votingEndTimestamp = uint48(block.timestamp + $.votingPeriod);
         proposal.votingStartBlock = uint32(block.number);
-        proposal.yesVotes = 0;
-        proposal.noVotes = 0;
-        proposal.abstainVotes = 0;
+        proposal.votingType = votingType_;
+
+        // Validate and set voting type
+        if (!$.isAuthorizedVotingType[votingType_]) {
+            revert UnauthorizedVotingType();
+        }
+        $.proposalVotingType[proposalId_] = votingType_;
+
+        // Initialize proposal in the voting type contract
+        IVotingType(votingType_).initializeProposal(proposalId_, votingConfig_);
 
         emit ProposalInitialized(
             proposalId_,
@@ -612,7 +632,7 @@ contract StrategyV1 is
      */
     function castVote(
         uint32 proposalId_,
-        uint8 voteType_,
+        bytes calldata voteData_,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_,
         uint256 lightAccountIndex_
     ) public virtual override {
@@ -629,9 +649,8 @@ contract StrategyV1 is
         );
 
         StrategyStorage storage $ = _getStrategyStorage();
-        ProposalVotingDetails storage proposal = $.proposalVotingDetails[
-            proposalId_
-        ];
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[proposalId_];
 
         // Step 2: Verify the proposal has been initialized
         if (proposal.votingEndTimestamp == 0) {
@@ -651,66 +670,33 @@ contract StrategyV1 is
         }
 
         // Step 4: Process votes through each config and accumulate voting weights
-        uint256 totalWeightForThisVoteTransaction = 0;
+        uint256 totalWeightForThisVoteTransaction = _processVotingConfigs(
+            $,
+            proposalId_,
+            resolvedVoter,
+            proposal.votingStartTimestamp,
+            votingConfigsData_
+        );
 
-        for (uint256 i = 0; i < votingConfigsData_.length; ) {
-            IVotingTypes.VotingConfigVoteData
-                memory configData = votingConfigsData_[i];
+        // Step 5: Process vote through voting type
+        IVotingType votingType = IVotingType(proposal.votingType);
+        (bool isValid, ) = votingType.processVote(
+            proposalId_,
+            resolvedVoter,
+            totalWeightForThisVoteTransaction,
+            voteData_
+        );
 
-            // Verify the config index is valid
-            if (configData.configIndex >= $.votingConfigs.length) {
-                revert InvalidVotingConfig(configData.configIndex);
-            }
-
-            IVotingTypes.VotingConfig memory config = $.votingConfigs[
-                configData.configIndex
-            ];
-
-            // Calculate voting weight and get processed data
-            (
-                uint256 votingWeight,
-                bytes memory processedData
-            ) = IVotingWeightV1(config.votingWeight).calculateWeight(
-                    resolvedVoter,
-                    proposal.votingStartTimestamp,
-                    configData.voteData
-                );
-
-            // Ensure valid voting weight
-            if (votingWeight == 0) {
-                revert NoVotingWeight(configData.configIndex);
-            }
-
-            // Record the vote to prevent double voting
-            IVoteTrackerV1(config.voteTracker).recordVote(
-                proposalId_,
-                resolvedVoter,
-                processedData
-            );
-
-            totalWeightForThisVoteTransaction += votingWeight;
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        // Step 5: Update vote tallies based on vote type
-        if (voteType_ == uint8(VoteType.YES)) {
-            proposal.yesVotes += totalWeightForThisVoteTransaction;
-        } else if (voteType_ == uint8(VoteType.NO)) {
-            proposal.noVotes += totalWeightForThisVoteTransaction;
-        } else if (voteType_ == uint8(VoteType.ABSTAIN)) {
-            proposal.abstainVotes += totalWeightForThisVoteTransaction;
-        } else {
-            revert InvalidVoteType();
+        if (!isValid) {
+            revert InvalidVote();
         }
 
         // Step 6: Emit voting event with aggregated weight
-        emit Voted(
+        emit VoteCast(
             resolvedVoter,
             proposalId_,
-            VoteType(voteType_),
+            address(votingType),
+            voteData_,
             totalWeightForThisVoteTransaction
         );
     }
@@ -766,6 +752,165 @@ contract StrategyV1 is
         $.authorizedFreezeVotersMapping[freezeVoterContract_] = false;
 
         emit FreezeVoterAuthorizationChanged(freezeVoterContract_, false);
+    }
+
+    /**
+     * @dev Internal function to process voting configs and calculate total weight
+     * @param $ Storage pointer
+     * @param proposalId_ The proposal ID
+     * @param resolvedVoter The resolved voter address
+     * @param votingStartTimestamp The voting start timestamp
+     * @param votingConfigsData_ The voting configs data
+     * @return totalWeight The total voting weight accumulated
+     */
+    function _processVotingConfigs(
+        StrategyStorage storage $,
+        uint32 proposalId_,
+        address resolvedVoter,
+        uint48 votingStartTimestamp,
+        IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
+    ) internal returns (uint256 totalWeight) {
+        for (uint256 i = 0; i < votingConfigsData_.length; ) {
+            IVotingTypes.VotingConfigVoteData
+                memory configData = votingConfigsData_[i];
+
+            // Verify the config index is valid
+            if (configData.configIndex >= $.votingConfigs.length) {
+                revert InvalidVotingConfig(configData.configIndex);
+            }
+
+            IVotingTypes.VotingConfig memory config = $.votingConfigs[
+                configData.configIndex
+            ];
+
+            // Calculate voting weight and get processed data
+            (
+                uint256 votingWeight,
+                bytes memory processedData
+            ) = IVotingWeightV1(config.votingWeight).calculateWeight(
+                    resolvedVoter,
+                    votingStartTimestamp,
+                    configData.voteData
+                );
+
+            // Ensure valid voting weight
+            if (votingWeight == 0) {
+                revert NoVotingWeight(configData.configIndex);
+            }
+
+            // Record the vote to prevent double voting
+            IVoteTrackerV1(config.voteTracker).recordVote(
+                proposalId_,
+                resolvedVoter,
+                processedData
+            );
+
+            totalWeight += votingWeight;
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function addAuthorizedVotingType(
+        address votingType_
+    ) public virtual override onlyStrategyAdmin {
+        if (votingType_ == address(0)) revert InvalidAddress();
+
+        StrategyStorage storage $ = _getStrategyStorage();
+
+        if (!$.isAuthorizedVotingType[votingType_]) {
+            $.authorizedVotingTypes.push(votingType_);
+        }
+        $.isAuthorizedVotingType[votingType_] = true;
+
+        emit VotingTypeAuthorizationChanged(votingType_, true);
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function removeAuthorizedVotingType(
+        address votingType_
+    ) public virtual override onlyStrategyAdmin {
+        if (votingType_ == address(0)) revert InvalidAddress();
+
+        StrategyStorage storage $ = _getStrategyStorage();
+
+        if ($.isAuthorizedVotingType[votingType_]) {
+            for (uint256 i = 0; i < $.authorizedVotingTypes.length; ) {
+                if ($.authorizedVotingTypes[i] == votingType_) {
+                    $.authorizedVotingTypes[i] = $.authorizedVotingTypes[
+                        $.authorizedVotingTypes.length - 1
+                    ];
+                    $.authorizedVotingTypes.pop();
+                    break;
+                }
+                unchecked {
+                    ++i;
+                }
+            }
+        }
+        $.isAuthorizedVotingType[votingType_] = false;
+
+        emit VotingTypeAuthorizationChanged(votingType_, false);
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function isAuthorizedVotingType(
+        address votingType_
+    ) public view virtual override returns (bool) {
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.isAuthorizedVotingType[votingType_];
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function authorizedVotingTypes()
+        public
+        view
+        virtual
+        override
+        returns (address[] memory)
+    {
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.authorizedVotingTypes;
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function proposalVotingType(
+        uint32 proposalId_
+    ) public view virtual override returns (address) {
+        StrategyStorage storage $ = _getStrategyStorage();
+        return $.proposalVotingType[proposalId_];
+    }
+
+    /**
+     * @inheritdoc IStrategyV1
+     */
+    function getWinningOptions(
+        uint32 proposalId_
+    ) public view virtual override returns (bytes32[] memory) {
+        StrategyStorage storage $ = _getStrategyStorage();
+        IStrategyV1.ProposalVotingDetails storage proposal = $
+            .proposalVotingDetails[proposalId_];
+
+        IVotingType votingType = IVotingType(proposal.votingType);
+        (bytes32[] memory winningOptions, , ) = votingType.finalizeResults(
+            proposalId_,
+            $.quorumThreshold
+        );
+
+        return winningOptions;
     }
 
     // ======================================================================

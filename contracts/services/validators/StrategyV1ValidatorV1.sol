@@ -6,7 +6,8 @@ import {
 } from "../../interfaces/decent/services/IFunctionValidator.sol";
 import {IStrategyV1} from "../../interfaces/decent/deployables/IStrategyV1.sol";
 import {
-    IVotingTypes
+    IVotingTypes,
+    IVotingType
 } from "../../interfaces/decent/deployables/IVotingTypes.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
@@ -67,28 +68,37 @@ contract StrategyV1ValidatorV1 is
         address strategy_,
         bytes calldata callData_
     ) public view virtual override returns (bool) {
-        // confirm here that the calldata selector is correct: `castVote(uint32,uint8,(address,bytes)[],uint256)`
+        // confirm here that the calldata selector is correct: `castVote(uint32,bytes,(uint32,bytes)[],uint256)`
         if (bytes4(callData_) != IStrategyV1.castVote.selector) {
             return false;
         }
 
         // Decode vote parameters from callData
-        // castVote(uint32 proposalId_, uint8 voteType_, (tuple(uint256,bytes))[] votingConfigsData_, uint256 lightAccountIndex_)
+        // castVote(uint32 proposalId_, bytes voteData_, (tuple(uint32,bytes))[] votingConfigsData_, uint256 lightAccountIndex_)
         (
             uint32 proposalId,
-            uint8 voteType,
+            bytes memory voteData,
             IVotingTypes.VotingConfigVoteData[] memory votingConfigsData,
 
         ) = abi.decode(
                 callData_[4:], // skip selector
-                (uint32, uint8, IVotingTypes.VotingConfigVoteData[], uint256)
+                (uint32, bytes, IVotingTypes.VotingConfigVoteData[], uint256)
             );
+
+        // Get the voting type for this proposal
+        address votingType = IStrategyV1(strategy_).proposalVotingType(
+            proposalId
+        );
+
+        // Check if voter has already voted using the voting type contract
+        if (IVotingType(votingType).hasVoted(proposalId, lightAccountOwner_)) {
+            return false;
+        }
 
         return
             IStrategyV1(strategy_).validStrategyVote(
                 lightAccountOwner_,
                 proposalId,
-                voteType,
                 votingConfigsData
             );
     }

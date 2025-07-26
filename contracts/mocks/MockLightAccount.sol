@@ -38,7 +38,7 @@ contract MockLightAccount is ILightAccount {
         // When strategy.vote is called, msg.sender from StrategyV1's perspective will be address(this)
         strategy.castVote(
             proposalId,
-            voteType,
+            abi.encode(voteType), // Convert to bytes for new interface
             votingConfigsData,
             lightAccountIndex
         );

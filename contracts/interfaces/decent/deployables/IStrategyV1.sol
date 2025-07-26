@@ -22,9 +22,9 @@ import {IVotingTypes} from "./IVotingTypes.sol";
  * - Freeze voter authorization for emergency governance
  *
  * Voting mechanics:
- * - Supports YES, NO, and ABSTAIN votes
- * - Quorum calculation: YES + ABSTAIN votes must meet threshold
- * - Basis calculation: YES votes must exceed required percentage of YES + NO votes
+ * - Supports pluggable voting types through the IVotingType interface
+ * - Quorum calculation is handled by voting type contracts
+ * - Result determination is delegated to voting type contracts
  * - Voting constraints are configuration-specific (e.g., ERC20 configs typically allow one vote per address,
  *   while ERC721 configs allow one vote per NFT, enabling multiple votes from the same address)
  *
@@ -57,8 +57,11 @@ interface IStrategyV1 {
     /** @notice Thrown when a voting config returns zero voting weight for a voter */
     error NoVotingWeight(uint256 configIndex);
 
-    /** @notice Thrown when an invalid vote type is provided (not 0=NO, 1=YES, 2=ABSTAIN) */
-    error InvalidVoteType();
+    /** @notice Thrown when an invalid vote is cast (determined by voting type contract) */
+    error InvalidVote();
+
+    /** @notice Thrown when attempting to use an unauthorized voting type */
+    error UnauthorizedVotingType();
 
     /** @notice Thrown when accessing a proposal that hasn't been initialized */
     error ProposalNotInitialized();
@@ -72,38 +75,18 @@ interface IStrategyV1 {
     // --- Structs ---
 
     /**
-     * @notice Stores voting state and tallies for a specific proposal
+     * @notice Stores voting state for a specific proposal
      * @param votingStartTimestamp Unix timestamp when voting begins
      * @param votingEndTimestamp Unix timestamp when voting ends (start + votingPeriod)
      * @param votingStartBlock Block number when voting begins (for snapshot purposes)
-     * @param yesVotes Total weight of YES votes cast
-     * @param noVotes Total weight of NO votes cast
-     * @param abstainVotes Total weight of ABSTAIN votes cast
+     * @param votingType Address of the voting type contract handling this proposal
+     * @dev All vote-specific state (tallies, voter records, etc.) is stored in the voting type contract
      */
     struct ProposalVotingDetails {
         uint48 votingStartTimestamp;
         uint48 votingEndTimestamp;
         uint32 votingStartBlock;
-        uint256 yesVotes;
-        uint256 noVotes;
-        uint256 abstainVotes;
-    }
-
-    // --- Enums ---
-
-    /**
-     * @notice Represents the type of vote being cast
-     * @dev Vote types affect proposal outcomes differently:
-     *
-     * Values:
-     * - NO: Vote against the proposal (counts toward basis calculation)
-     * - YES: Vote in favor of the proposal (counts toward quorum and basis)
-     * - ABSTAIN: Neither for nor against (counts toward quorum only)
-     */
-    enum VoteType {
-        NO,
-        YES,
-        ABSTAIN
+        address votingType;
     }
 
     // --- Events ---
@@ -112,14 +95,16 @@ interface IStrategyV1 {
      * @notice Emitted when a vote is successfully cast
      * @param voter The address that cast the vote (or Light Account owner)
      * @param proposalId The proposal being voted on
-     * @param voteType The type of vote cast (NO, YES, or ABSTAIN)
-     * @param totalWeightCastedInTx Total voting weight used across all adapters in this transaction
+     * @param votingType The voting type contract that processed this vote
+     * @param voteData The vote data (format depends on voting type)
+     * @param totalWeightCasted Total voting weight used across all adapters in this transaction
      */
-    event Voted(
+    event VoteCast(
         address indexed voter,
         uint32 indexed proposalId,
-        VoteType voteType,
-        uint256 totalWeightCastedInTx
+        address indexed votingType,
+        bytes voteData,
+        uint256 totalWeightCasted
     );
 
     /**
@@ -151,6 +136,16 @@ interface IStrategyV1 {
      * @param proposalId The proposal that had its voting period end
      */
     event VotingPeriodEnded(uint32 indexed proposalId);
+
+    /**
+     * @notice Emitted when a voting type contract is added or removed
+     * @param votingType The voting type contract address
+     * @param isAuthorized Whether the contract is now authorized
+     */
+    event VotingTypeAuthorizationChanged(
+        address indexed votingType,
+        bool isAuthorized
+    );
 
     // --- Initializer Functions ---
 
@@ -371,14 +366,12 @@ interface IStrategyV1 {
      * @dev Useful for UI validation before submitting transactions
      * @param voter_ The address that would cast the vote
      * @param proposalId_ The proposal to vote on
-     * @param voteType_ The type of vote (0=NO, 1=YES, 2=ABSTAIN)
      * @param votingConfigsData_ Array of voting configs and their data
      * @return isValid True if the vote configuration is valid
      */
     function validStrategyVote(
         address voter_,
         uint32 proposalId_,
-        uint8 voteType_,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_
     ) external view returns (bool isValid);
 
@@ -387,37 +380,38 @@ interface IStrategyV1 {
     /**
      * @notice Initializes voting parameters for a new proposal
      * @dev Only callable by the strategy admin (typically Azorius module).
-     * Sets the voting start/end times and start block. Can be called multiple
-     * times for the same proposal to reset voting.
+     * Sets the voting start/end times, start block, and voting type.
      * @param proposalId_ The proposal to initialize
+     * @param votingType_ Address of the voting type contract to use
+     * @param votingConfig_ Configuration data specific to the voting type
      * @custom:access Restricted to strategyAdmin
      * @custom:emits ProposalInitialized with voting period details
      */
-    function initializeProposal(uint32 proposalId_) external;
+    function initializeProposal(
+        uint32 proposalId_,
+        address votingType_,
+        bytes calldata votingConfig_
+    ) external;
 
     /**
      * @notice Casts a vote on an active proposal
      * @dev Aggregates voting weight from multiple voting configurations in a single transaction.
      * Supports Light Account voting through account abstraction.
-     * Each configuration enforces its own voting constraints (e.g., ERC20 configs may limit
-     * one vote per address, while ERC721 configs allow one vote per NFT).
-     * The same address can call castVote multiple times if using different voting
-     * credentials (e.g., different NFTs) that the configurations consider valid.
+     * The vote data format and validation rules depend on the voting type contract.
      * @param proposalId_ The proposal to vote on
-     * @param voteType_ Type of vote: 0=NO, 1=YES, 2=ABSTAIN
+     * @param voteData_ Vote data in format expected by the voting type
      * @param votingConfigsData_ Array of voting configs to use with their specific data
      * @param lightAccountIndex_ Index for Light Account resolution (0 for direct voting)
      * @custom:throws ProposalNotInitialized if proposal doesn't exist
      * @custom:throws ProposalNotActive if voting period has ended
-     * @custom:throws InvalidVoteType if voteType_ > 2
      * @custom:throws InvalidVotingConfig if config index is out of bounds
      * @custom:throws NoVotingWeight if config returns zero weight
-     * @custom:emits Voted with voter address and total weight used
+     * @custom:emits VoteCast with voter address and vote details
      * @custom:emits VotingPeriodEnded if voting after period (before reverting)
      */
     function castVote(
         uint32 proposalId_,
-        uint8 voteType_,
+        bytes calldata voteData_,
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsData_,
         uint256 lightAccountIndex_
     ) external;
@@ -442,4 +436,61 @@ interface IStrategyV1 {
      * @custom:emits FreezeVoterAuthorizationChanged with isAuthorized=false
      */
     function removeAuthorizedFreezeVoter(address freezeVoterContract_) external;
+
+    /**
+     * @notice Adds a voting type contract to the authorized list
+     * @dev Only callable by strategy admin. Voting types must implement IVotingType.
+     * @param votingType_ The voting type contract to authorize
+     * @custom:access Restricted to strategyAdmin
+     * @custom:throws InvalidAddress if votingType_ is address(0)
+     * @custom:emits VotingTypeAuthorizationChanged with isAuthorized=true
+     */
+    function addAuthorizedVotingType(address votingType_) external;
+
+    /**
+     * @notice Removes a voting type contract from the authorized list
+     * @dev Only callable by strategy admin.
+     * @param votingType_ The voting type contract to remove
+     * @custom:access Restricted to strategyAdmin
+     * @custom:throws InvalidAddress if votingType_ is address(0)
+     * @custom:emits VotingTypeAuthorizationChanged with isAuthorized=false
+     */
+    function removeAuthorizedVotingType(address votingType_) external;
+
+    /**
+     * @notice Checks if a voting type is authorized
+     * @param votingType_ The voting type contract to check
+     * @return isAuthorized True if the voting type is authorized
+     */
+    function isAuthorizedVotingType(
+        address votingType_
+    ) external view returns (bool isAuthorized);
+
+    /**
+     * @notice Returns all authorized voting type contracts
+     * @return authorizedVotingTypes Array of authorized voting type addresses
+     */
+    function authorizedVotingTypes()
+        external
+        view
+        returns (address[] memory authorizedVotingTypes);
+
+    /**
+     * @notice Returns the voting type address for a specific proposal
+     * @param proposalId_ The proposal to query
+     * @return votingType The voting type contract handling this proposal
+     */
+    function proposalVotingType(
+        uint32 proposalId_
+    ) external view returns (address votingType);
+
+    /**
+     * @notice Returns the winning options for a proposal
+     * @dev Queries the voting type contract for results
+     * @param proposalId_ The proposal to query
+     * @return winningOptions Array of winning option IDs (format depends on voting type)
+     */
+    function getWinningOptions(
+        uint32 proposalId_
+    ) external view returns (bytes32[] memory winningOptions);
 }

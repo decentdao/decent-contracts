@@ -158,7 +158,7 @@ contract FreezeVotingStandaloneV1 is
      */
     function initialize2(
         IVotingTypes.VotingConfig[] calldata votingConfigs_
-    ) public virtual override reinitializer(2) {
+    ) external virtual override reinitializer(2) {
         FreezeVotingStandaloneStorage
             storage $ = _getFreezeVotingStandaloneStorage();
 
@@ -260,7 +260,7 @@ contract FreezeVotingStandaloneV1 is
     function castFreezeVote(
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse_,
         uint256 lightAccountIndex_
-    ) public virtual override {
+    ) external virtual override {
         // Check if already frozen
         if (isFrozen()) revert AlreadyFrozen();
 
@@ -293,7 +293,7 @@ contract FreezeVotingStandaloneV1 is
     function castUnfreezeVote(
         IVotingTypes.VotingConfigVoteData[] calldata votingConfigsToUse_,
         uint256 lightAccountIndex_
-    ) public virtual override {
+    ) external virtual override {
         FreezeVotingStandaloneStorage
             storage $ = _getFreezeVotingStandaloneStorage();
 
