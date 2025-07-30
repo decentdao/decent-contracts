@@ -556,10 +556,7 @@ contract PublicSaleV1 is
                 saleTokenAmount
             );
 
-            emit FailedSaleOwnerSettled(
-                msg.sender,
-                saleTokenAmount
-            );
+            emit FailedSaleOwnerSettled(msg.sender, saleTokenAmount);
         } else {
             revert SaleNotEnded();
         }

@@ -80,7 +80,6 @@ interface DeployTestSaleOptions {
   maximumTotalCommitment?: bigint;
   minimumTotalCommitment?: bigint;
   commitmentToken?: string;
-  decreaseCommitmentFee?: bigint;
   protocolFee?: bigint;
   minimumCommitment?: bigint;
   maximumCommitment?: bigint;
@@ -110,9 +109,6 @@ async function deployTestSale(
       minimumTotalCommitment: options.minimumTotalCommitment,
     }),
     ...(options.commitmentToken && { commitmentToken: options.commitmentToken }),
-    ...(options.decreaseCommitmentFee !== undefined && {
-      decreaseCommitmentFee: options.decreaseCommitmentFee,
-    }),
     ...(options.protocolFee !== undefined && { protocolFee: options.protocolFee }),
     ...(options.minimumCommitment && { minimumCommitment: options.minimumCommitment }),
     ...(options.maximumCommitment && { maximumCommitment: options.maximumCommitment }),
@@ -245,7 +241,6 @@ describe('PublicSaleV1', () => {
       minimumTotalCommitment: ethers.parseEther('10000'),
       maximumTotalCommitment: ethers.parseEther('100000'),
       saleTokenPrice: ethers.parseEther('0.1'), // 0.1 commitment token per sale token
-      decreaseCommitmentFee: ethers.parseEther('0.1'), // 10%
       protocolFee: ethers.parseEther('0.02'), // 2%
     };
 
@@ -275,9 +270,6 @@ describe('PublicSaleV1', () => {
         defaultParams.maximumTotalCommitment,
       );
       expect(await publicSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
-      expect(await publicSale.decreaseCommitmentFee()).to.equal(
-        defaultParams.decreaseCommitmentFee,
-      );
       expect(await publicSale.protocolFee()).to.equal(defaultParams.protocolFee);
 
       // Verify sale tokens were transferred to the contract
@@ -335,18 +327,6 @@ describe('PublicSaleV1', () => {
       await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidTotalCommitmentAmounts',
-      );
-    });
-
-    it('should revert when decreaseCommitmentFee > TEST_CONSTANTS.PRECISION', async () => {
-      const invalidParams = {
-        ...defaultParams,
-        decreaseCommitmentFee: TEST_CONSTANTS.PRECISION + 1n,
-      };
-
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
-        'InvalidDecreaseCommitmentFee',
       );
     });
 
@@ -747,145 +727,6 @@ describe('PublicSaleV1', () => {
     });
   });
 
-  describe('Commitment Decrease', () => {
-    beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
-      await moveToSaleStart(publicSale);
-
-      // Setup alice with commitment tokens and an initial commitment
-      await mintAndApproveCommitmentTokens(
-        commitmentToken,
-        publicSale,
-        [alice],
-        [ethers.parseEther('10000')],
-      );
-      await publicSale
-        .connect(alice)
-        .increaseCommitmentERC20(ethers.parseEther('1000'), ethers.getBytes('0x'), 0n);
-    });
-
-    it('should allow partial decrease that stays above minimumCommitment', async () => {
-      const decreaseAmount = ethers.parseEther('500');
-      const expectedFee =
-        (BigInt(decreaseAmount) * BigInt(defaultParams.decreaseCommitmentFee)) /
-        TEST_CONSTANTS.PRECISION;
-      const expectedReceived = BigInt(decreaseAmount) - expectedFee;
-
-      const initialBalance = await commitmentToken.balanceOf(alice.address);
-
-      await expect(publicSale.connect(alice).decreaseCommitment(decreaseAmount, alice.address))
-        .to.emit(publicSale, 'CommitmentDecreased')
-        .withArgs(alice.address, decreaseAmount);
-
-      expect(await publicSale.commitments(alice.address)).to.equal(ethers.parseEther('500'));
-      expect(await publicSale.totalCommitments()).to.equal(ethers.parseEther('500'));
-      expect(await publicSale.collectedDecreaseCommitmentFees()).to.equal(expectedFee);
-      expect(await commitmentToken.balanceOf(alice.address)).to.equal(
-        BigInt(initialBalance) + expectedReceived,
-      );
-    });
-
-    it('should allow full decrease to exactly 0', async () => {
-      const fullAmount = await publicSale.commitments(alice.address);
-      const expectedFee =
-        (BigInt(fullAmount) * BigInt(defaultParams.decreaseCommitmentFee)) /
-        TEST_CONSTANTS.PRECISION;
-
-      await publicSale.connect(alice).decreaseCommitment(fullAmount, alice.address);
-
-      expect(await publicSale.commitments(alice.address)).to.equal(0);
-      expect(await publicSale.totalCommitments()).to.equal(0);
-      expect(await publicSale.collectedDecreaseCommitmentFees()).to.equal(expectedFee);
-    });
-
-    it('should handle different fee percentages correctly', async () => {
-      // Test with 0% fee
-      const zeroFeeSale = await deployTestSale(
-        deployer,
-        saleToken,
-        saleTokenHolder,
-        defaultParams,
-        {
-          decreaseCommitmentFee: 0n,
-          startOffset: 60,
-        },
-      );
-      await moveToSaleStart(zeroFeeSale);
-
-      await mintAndApproveCommitmentTokens(
-        commitmentToken,
-        zeroFeeSale,
-        [alice],
-        [ethers.parseEther('10000')],
-      );
-      await zeroFeeSale
-        .connect(alice)
-        .increaseCommitmentERC20(ethers.parseEther('1000'), ethers.getBytes('0x'), 0n);
-
-      const decreaseAmount = ethers.parseEther('500');
-      await zeroFeeSale.connect(alice).decreaseCommitment(decreaseAmount, alice.address);
-
-      expect(await zeroFeeSale.collectedDecreaseCommitmentFees()).to.equal(0);
-    });
-
-    it('should revert when sale is not active', async () => {
-      const freshSale = await deployTestSale(
-        deployer,
-        saleToken,
-        saleTokenHolder,
-        defaultParams,
-        {},
-      );
-      // Sale hasn't started yet
-
-      await expect(
-        freshSale.connect(alice).decreaseCommitment(ethers.parseEther('100'), alice.address),
-      ).to.be.revertedWithCustomError(freshSale, 'SaleNotActive');
-    });
-
-    it('should revert when decreaseAmount is 0', async () => {
-      await expect(
-        publicSale.connect(alice).decreaseCommitment(0, alice.address),
-      ).to.be.revertedWithCustomError(publicSale, 'ZeroAmount');
-    });
-
-    it('should revert when decrease > users commitment', async () => {
-      const tooMuch = BigInt(await publicSale.commitments(alice.address)) + ethers.parseEther('1');
-      await expect(
-        publicSale.connect(alice).decreaseCommitment(tooMuch, alice.address),
-      ).to.be.revertedWithCustomError(publicSale, 'DecreaseAmountExceedsCommitment');
-    });
-
-    it('should revert when remaining would be < minimumCommitment (unless going to 0)', async () => {
-      // Try to decrease to just below minimum
-      const currentCommitment = await publicSale.commitments(alice.address);
-      const decreaseToJustBelowMin =
-        BigInt(currentCommitment) -
-        BigInt(defaultParams.minimumCommitment) +
-        ethers.parseEther('1');
-
-      await expect(
-        publicSale.connect(alice).decreaseCommitment(decreaseToJustBelowMin, alice.address),
-      ).to.be.revertedWithCustomError(publicSale, 'MinimumCommitment');
-    });
-
-    it('should send funds to specified recipient address', async () => {
-      const decreaseAmount = ethers.parseEther('500');
-      const expectedFee =
-        (BigInt(decreaseAmount) * BigInt(defaultParams.decreaseCommitmentFee)) /
-        TEST_CONSTANTS.PRECISION;
-      const expectedReceived = BigInt(decreaseAmount) - expectedFee;
-
-      const initialBobBalance = await commitmentToken.balanceOf(bob.address);
-
-      await publicSale.connect(alice).decreaseCommitment(decreaseAmount, bob.address);
-
-      expect(await commitmentToken.balanceOf(bob.address)).to.equal(
-        BigInt(initialBobBalance) + expectedReceived,
-      );
-    });
-  });
-
   describe('User Settlement - Success Case', () => {
     beforeEach(async () => {
       publicSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
@@ -1167,7 +1008,7 @@ describe('PublicSaleV1', () => {
       publicSale = await deployPublicSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
-      // Setup failed sale with some decrease commitment fees
+      // Setup failed sale
       await commitmentToken.mint(alice.address, ethers.parseEther('1000'));
       await commitmentToken
         .connect(alice)
@@ -1177,7 +1018,6 @@ describe('PublicSaleV1', () => {
       await publicSale
         .connect(alice)
         .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n);
-      await publicSale.connect(alice).decreaseCommitment(ethers.parseEther('50'), alice.address);
 
       // Move to end of sale
       await time.increaseTo(Number(defaultParams.saleEndTimestamp) + 1);
@@ -1185,27 +1025,10 @@ describe('PublicSaleV1', () => {
 
     it('should return all sale tokens and collected fees', async () => {
       const saleTokenBalance = await saleToken.balanceOf(await publicSale.getAddress());
-      const collectedFees = await publicSale.collectedDecreaseCommitmentFees();
 
       await expect(publicSale.connect(owner).ownerSettle())
         .to.emit(publicSale, 'FailedSaleOwnerSettled')
-        .withArgs(owner.address, saleTokenBalance, collectedFees);
-
-      expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(saleTokenBalance);
-      expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(collectedFees);
-    });
-
-    it('should handle case with no decrease fees collected', async () => {
-      // Deploy fresh sale that fails without any decreases
-      const freshSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
-        startOffset: 100,
-        endOffset: 1000,
-      });
-      await moveToSaleEnd(freshSale);
-
-      const saleTokenBalance = await saleToken.balanceOf(await freshSale.getAddress());
-
-      await freshSale.connect(owner).ownerSettle();
+        .withArgs(owner.address, saleTokenBalance);
 
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(saleTokenBalance);
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(0);
@@ -1323,25 +1146,6 @@ describe('PublicSaleV1', () => {
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
     });
-
-    it('should not require KYC for decreasing commitment and settling', async () => {
-      await kycVerifier.setVerify(true);
-      await publicSale
-        .connect(alice)
-        .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n);
-
-      // Now disable KYC
-      await kycVerifier.setVerify(false);
-
-      // Decrease should work
-      await expect(
-        publicSale.connect(alice).decreaseCommitment(ethers.parseEther('50'), alice.address),
-      ).to.not.be.reverted;
-
-      // Move to end and settle should work
-      await time.increaseTo(Number(defaultParams.saleEndTimestamp) + 1);
-      await expect(publicSale.connect(alice).settle(alice.address)).to.not.be.reverted;
-    });
   });
 
   describe('Access Control', () => {
@@ -1400,28 +1204,6 @@ describe('PublicSaleV1', () => {
       expect(await ethers.provider.getBalance(await nativeSale.getAddress())).to.equal(
         BigInt(initialBalance) + BigInt(commitAmount),
       );
-    });
-
-    it('should refund ETH correctly on decrease', async () => {
-      await moveToSaleStart(nativeSale);
-
-      await nativeSale
-        .connect(alice)
-        .increaseCommitmentNative(ethers.getBytes('0x'), 0n, { value: ethers.parseEther('100') });
-
-      const initialAliceBalance = await ethers.provider.getBalance(alice.address);
-      const decreaseAmount = ethers.parseEther('50');
-      const expectedFee =
-        (BigInt(decreaseAmount) * BigInt(defaultParams.decreaseCommitmentFee)) /
-        TEST_CONSTANTS.PRECISION;
-      const expectedReceived = BigInt(decreaseAmount) - expectedFee;
-
-      const tx = await nativeSale.connect(alice).decreaseCommitment(decreaseAmount, alice.address);
-      const receipt = await tx.wait();
-      const gasUsed = BigInt(receipt!.gasUsed) * BigInt(receipt!.gasPrice);
-
-      const finalAliceBalance = await ethers.provider.getBalance(alice.address);
-      expect(finalAliceBalance).to.equal(BigInt(initialAliceBalance) + expectedReceived - gasUsed);
     });
   });
 
@@ -1576,12 +1358,8 @@ describe('PublicSaleV1', () => {
         defaultParams.maximumTotalCommitment,
       );
       expect(await publicSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
-      expect(await publicSale.decreaseCommitmentFee()).to.equal(
-        defaultParams.decreaseCommitmentFee,
-      );
       expect(await publicSale.protocolFee()).to.equal(defaultParams.protocolFee);
       expect(await publicSale.totalCommitments()).to.equal(0);
-      expect(await publicSale.collectedDecreaseCommitmentFees()).to.equal(0);
       expect(await publicSale.commitments(alice.address)).to.equal(0);
       expect(await publicSale.settled(alice.address)).to.be.false;
     });
@@ -1633,7 +1411,6 @@ describe('PublicSaleV1 - Shared Tests', () => {
       minimumTotalCommitment: ethers.parseEther('10000'),
       maximumTotalCommitment: ethers.parseEther('100000'),
       saleTokenPrice: ethers.parseEther('0.1'),
-      decreaseCommitmentFee: ethers.parseEther('0.1'),
       protocolFee: ethers.parseEther('0.02'),
     };
 
@@ -1683,7 +1460,6 @@ describe('PublicSaleV1 - Shared Tests', () => {
           minimumTotalCommitment: ethers.parseEther('10000'),
           maximumTotalCommitment: ethers.parseEther('100000'),
           saleTokenPrice: ethers.parseEther('0.1'),
-          decreaseCommitmentFee: ethers.parseEther('0.1'),
           protocolFee: ethers.parseEther('0.02'),
         };
 
@@ -1716,7 +1492,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
         // Use the saved params to ensure timestamps match
         return ethers.AbiCoder.defaultAbiCoder().encode(
           [
-            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address owner, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 decreaseCommitmentFee, uint256 protocolFee)',
+            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address owner, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 protocolFee)',
           ],
           [savedInitParams],
         );
