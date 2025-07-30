@@ -61,10 +61,8 @@ contract PublicSaleV1 is
         uint256 minimumTotalCommitment;
         uint256 maximumTotalCommitment;
         uint256 saleTokenPrice;
-        uint256 decreaseCommitmentFee;
         uint256 protocolFee;
         uint256 totalCommitments;
-        uint256 collectedDecreaseCommitmentFees;
         mapping(address account => uint256 commitmentAmount) commitments;
         mapping(address account => bool settled) settled;
     }
@@ -152,9 +150,6 @@ contract PublicSaleV1 is
         if (params_.minimumTotalCommitment > params_.maximumTotalCommitment)
             revert InvalidTotalCommitmentAmounts();
 
-        if (params_.decreaseCommitmentFee > PRECISION)
-            revert InvalidDecreaseCommitmentFee();
-
         if (params_.protocolFee > PRECISION) revert InvalidProtocolFee();
 
         __InitializerEventEmitter_init(abi.encode(params_));
@@ -175,7 +170,6 @@ contract PublicSaleV1 is
         $.minimumTotalCommitment = params_.minimumTotalCommitment;
         $.maximumTotalCommitment = params_.maximumTotalCommitment;
         $.saleTokenPrice = params_.saleTokenPrice;
-        $.decreaseCommitmentFee = params_.decreaseCommitmentFee;
         $.protocolFee = params_.protocolFee;
 
         uint256 saleTokenEscrowAmount = (params_.maximumTotalCommitment *
@@ -378,20 +372,6 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function decreaseCommitmentFee()
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
-        return $.decreaseCommitmentFee;
-    }
-
-    /**
-     * @inheritdoc IPublicSaleV1
-     */
     function protocolFee() external view virtual override returns (uint256) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
         return $.protocolFee;
@@ -409,20 +389,6 @@ contract PublicSaleV1 is
     {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
         return $.totalCommitments;
-    }
-
-    /**
-     * @inheritdoc IPublicSaleV1
-     */
-    function collectedDecreaseCommitmentFees()
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
-        return $.collectedDecreaseCommitmentFees;
     }
 
     /**
@@ -496,47 +462,6 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function decreaseCommitment(
-        uint256 decreaseAmount_,
-        address recipient_
-    ) public virtual override {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
-
-        if (saleState() != SaleState.ACTIVE) revert SaleNotActive();
-
-        if (decreaseAmount_ == 0) revert ZeroAmount();
-
-        if (decreaseAmount_ > $.commitments[msg.sender])
-            revert DecreaseAmountExceedsCommitment();
-
-        // throw error if caller's commitment will be less than minimum commitment,
-        // unless commitment will be zeroed out
-        if (
-            $.commitments[msg.sender] - decreaseAmount_ < $.minimumCommitment &&
-            $.commitments[msg.sender] != decreaseAmount_
-        ) {
-            revert MinimumCommitment();
-        }
-
-        uint256 _decreaseCommitmentFee = (decreaseAmount_ *
-            $.decreaseCommitmentFee) / PRECISION;
-
-        // update state
-        $.commitments[msg.sender] -= decreaseAmount_;
-        $.totalCommitments -= decreaseAmount_;
-        $.collectedDecreaseCommitmentFees += _decreaseCommitmentFee;
-
-        uint256 receivedAmount = decreaseAmount_ - _decreaseCommitmentFee;
-
-        // transfer commitment token to msg.sender
-        _transferTokenOrNative($.commitmentToken, recipient_, receivedAmount);
-
-        emit CommitmentDecreased(msg.sender, decreaseAmount_);
-    }
-
-    /**
-     * @inheritdoc IPublicSaleV1
-     */
     function settle(address recipient_) public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
@@ -601,7 +526,7 @@ contract PublicSaleV1 is
                 PRECISION;
             uint256 saleProceeds = commitmentTokenAmount - _protocolFee;
 
-            // send (commitments + decrease commitment fees - protocol fee) to saleProceedsReceiver
+            // send (commitments - protocol fee) to saleProceedsReceiver
             _transferTokenOrNative(
                 $.commitmentToken,
                 $.saleProceedsReceiver,
@@ -631,20 +556,9 @@ contract PublicSaleV1 is
                 saleTokenAmount
             );
 
-            // transfer collected decrease commitment fees to saleProceedsReceiver
-            uint256 _collectedDecreaseCommitmentFees = $
-                .collectedDecreaseCommitmentFees;
-
-            _transferTokenOrNative(
-                $.commitmentToken,
-                $.saleProceedsReceiver,
-                _collectedDecreaseCommitmentFees
-            );
-
             emit FailedSaleOwnerSettled(
                 msg.sender,
-                saleTokenAmount,
-                _collectedDecreaseCommitmentFees
+                saleTokenAmount
             );
         } else {
             revert SaleNotEnded();
