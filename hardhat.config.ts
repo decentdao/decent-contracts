@@ -16,12 +16,15 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        // 0.8.19 compiler is only used for the VotingTokenLockupPlans contract,
+        // which is only used for testing purposes.
         version: '0.8.19',
         settings: {
           optimizer: {
             enabled: true,
             runs: 200,
           },
+          viaIR: true,
         },
       },
     ],
