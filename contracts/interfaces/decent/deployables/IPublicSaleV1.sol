@@ -9,7 +9,7 @@ pragma solidity ^0.8.30;
  * - Minimum and maximum commitment amounts per user
  * - Minimum and maximum total commitment amounts for the sale
  * - KYC verification requirement
- * - Configurable fees for decreasing commitments and protocol
+ * - Configurable protocol fee and receiver
  * - Support for both native assets (ETH) and ERC20 tokens as payment
  */
 interface IPublicSaleV1 {
@@ -56,11 +56,6 @@ interface IPublicSaleV1 {
     error AlreadySettled();
 
     /**
-     * @notice Thrown when decrease amount exceeds user's current commitment
-     */
-    error DecreaseAmountExceedsCommitment();
-
-    /**
      * @notice Thrown when remaining commitment would be below minimum (unless going to zero)
      */
     error MinimumCommitment();
@@ -79,11 +74,6 @@ interface IPublicSaleV1 {
      * @notice Thrown when an amount parameter is zero
      */
     error ZeroAmount();
-
-    /**
-     * @notice Thrown when decrease commitment fee exceeds 100% (PRECISION)
-     */
-    error InvalidDecreaseCommitmentFee();
 
     /**
      * @notice Thrown when user attempts to settle with zero commitment
@@ -118,7 +108,6 @@ interface IPublicSaleV1 {
      * @param minimumTotalCommitment Minimum total commitments for successful sale
      * @param maximumTotalCommitment Maximum total commitments allowed
      * @param saleTokenPrice Price per sale token in commitment token units (with PRECISION decimals)
-     * @param decreaseCommitmentFee Fee percentage for decreasing commitment (with PRECISION decimals)
      * @param protocolFee Fee percentage taken from proceeds (with PRECISION decimals)
      */
     struct InitializerParams {
@@ -136,7 +125,6 @@ interface IPublicSaleV1 {
         uint256 minimumTotalCommitment;
         uint256 maximumTotalCommitment;
         uint256 saleTokenPrice;
-        uint256 decreaseCommitmentFee;
         uint256 protocolFee;
     }
 
@@ -164,13 +152,6 @@ interface IPublicSaleV1 {
      * @param amount Amount of commitment increase
      */
     event CommitmentIncreased(address indexed account, uint256 amount);
-
-    /**
-     * @notice Emitted when a user decreases their commitment
-     * @param account Address of the user
-     * @param amount Amount of commitment decrease (before fees)
-     */
-    event CommitmentDecreased(address indexed account, uint256 amount);
 
     /**
      * @notice Emitted when a user settles after successful sale
@@ -212,12 +193,10 @@ interface IPublicSaleV1 {
      * @notice Emitted when owner settles after failed sale
      * @param owner Address of the contract owner
      * @param saleTokenAmount Amount of sale tokens returned
-     * @param decreaseCommitmentFees Amount of collected fees returned
      */
     event FailedSaleOwnerSettled(
         address indexed owner,
-        uint256 saleTokenAmount,
-        uint256 decreaseCommitmentFees
+        uint256 saleTokenAmount
     );
 
     // --- Initializer Functions ---
@@ -315,12 +294,6 @@ interface IPublicSaleV1 {
     function saleTokenPrice() external view returns (uint256 price);
 
     /**
-     * @notice Returns the fee for decreasing commitment
-     * @return fee Fee percentage (with PRECISION decimals)
-     */
-    function decreaseCommitmentFee() external view returns (uint256 fee);
-
-    /**
      * @notice Returns the protocol fee
      * @return fee Fee percentage (with PRECISION decimals)
      */
@@ -331,15 +304,6 @@ interface IPublicSaleV1 {
      * @return total Total commitment amount
      */
     function totalCommitments() external view returns (uint256 total);
-
-    /**
-     * @notice Returns the collected decrease commitment fees
-     * @return fees Total fees collected
-     */
-    function collectedDecreaseCommitmentFees()
-        external
-        view
-        returns (uint256 fees);
 
     /**
      * @notice Returns a user's commitment amount
@@ -381,17 +345,6 @@ interface IPublicSaleV1 {
         uint256 increaseAmount_,
         bytes calldata verifyingSignature_,
         uint48 signatureExpiration_
-    ) external;
-
-    /**
-     * @notice Decreases commitment and sends funds to recipient
-     * @param decreaseAmount_ Amount to decrease commitment by
-     * @param recipient_ Address to receive the commitment tokens
-     * @dev Fee is deducted from the decrease amount
-     */
-    function decreaseCommitment(
-        uint256 decreaseAmount_,
-        address recipient_
     ) external;
 
     /**
