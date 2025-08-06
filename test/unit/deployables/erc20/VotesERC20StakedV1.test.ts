@@ -36,7 +36,10 @@ async function runExecuteTxAndCheckBalanceDeltasTests(
       if (t.token === 'native') {
         return ethers.provider.getBalance(t.addressToCheck);
       } else {
-        const token = await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', t.token);
+        const token = await ethers.getContractAt(
+          '@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20',
+          t.token,
+        );
         const balance = await token.balanceOf(t.addressToCheck);
         return balance;
       }
@@ -56,7 +59,10 @@ async function runExecuteTxAndCheckBalanceDeltasTests(
     if (transfer.token === 'native') {
       finalBalance = await ethers.provider.getBalance(transfer.addressToCheck);
     } else {
-      const token = await ethers.getContractAt('@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20', transfer.token);
+      const token = await ethers.getContractAt(
+        '@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20',
+        transfer.token,
+      );
       finalBalance = await token.balanceOf(transfer.addressToCheck);
     }
 

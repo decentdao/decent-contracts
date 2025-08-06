@@ -10,6 +10,9 @@ import {
     IKYCVerifierV1
 } from "../../interfaces/decent/services/IKYCVerifierV1.sol";
 import {
+    IVotingTokenLockupPlans
+} from "../../interfaces/hedgey/IVotingTokenLockupPlans.sol";
+import {
     DeploymentBlockInitializable
 } from "../../DeploymentBlockInitializable.sol";
 import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
@@ -63,6 +66,7 @@ contract PublicSaleV1 is
         uint256 saleTokenPrice;
         uint256 protocolFee;
         uint256 totalCommitments;
+        HedgeyLockupParams hedgeyLockupParams;
         mapping(address account => uint256 commitmentAmount) commitments;
         mapping(address account => bool settled) settled;
     }
@@ -156,6 +160,18 @@ contract PublicSaleV1 is
         __Ownable_init(params_.owner);
         __DeploymentBlockInitializable_init();
 
+        // if hedgey lockup is enabled, validate the params
+        if (params_.hedgeyLockupParams.enabled) {
+            _validateHedgeyParams(
+                (params_.minimumCommitment * PRECISION) /
+                    params_.saleTokenPrice,
+                params_.hedgeyLockupParams.start,
+                params_.hedgeyLockupParams.cliff,
+                params_.hedgeyLockupParams.rate,
+                params_.hedgeyLockupParams.period
+            );
+        }
+
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
         $.saleStartTimestamp = params_.saleStartTimestamp;
@@ -171,6 +187,7 @@ contract PublicSaleV1 is
         $.maximumTotalCommitment = params_.maximumTotalCommitment;
         $.saleTokenPrice = params_.saleTokenPrice;
         $.protocolFee = params_.protocolFee;
+        $.hedgeyLockupParams = params_.hedgeyLockupParams;
 
         uint256 saleTokenEscrowAmount = (params_.maximumTotalCommitment *
             PRECISION) / params_.saleTokenPrice;
@@ -474,14 +491,34 @@ contract PublicSaleV1 is
         SaleState state = saleState();
 
         if (state == SaleState.SUCCEEDED) {
-            // send the caller their purchased sale tokens
             uint256 saleTokenAmount = ($.commitments[msg.sender] * PRECISION) /
                 $.saleTokenPrice;
 
-            IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
+            if ($.hedgeyLockupParams.enabled) {
+                // create hedgey lockup plan for the caller
+                IVotingTokenLockupPlans(
+                    $.hedgeyLockupParams.votingTokenLockupPlans
+                ).createPlan(
+                        msg.sender,
+                        $.saleToken,
+                        saleTokenAmount,
+                        $.hedgeyLockupParams.start,
+                        $.hedgeyLockupParams.cliff,
+                        $.hedgeyLockupParams.rate,
+                        $.hedgeyLockupParams.period
+                    );
+            } else {
+                // send the caller their purchased sale tokens
+                IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
 
-            emit SuccessfulSaleSettled(msg.sender, recipient_, saleTokenAmount);
+                emit SuccessfulSaleSettled(
+                    msg.sender,
+                    recipient_,
+                    saleTokenAmount
+                );
+            }
         } else if (state == SaleState.FAILED) {
+            // refund the caller their commitment tokens
             uint256 commitmentTokenAmount = $.commitments[msg.sender];
 
             _transferTokenOrNative(
@@ -598,6 +635,40 @@ contract PublicSaleV1 is
     // ======================================================================
     // INTERNAL HELPERS
     // ======================================================================
+
+    /**
+     * @notice Validates Hedgey vesting parameters and calculates end time
+     * @dev Ensures all parameters create a valid vesting schedule
+     * @param start_ Start time of vesting
+     * @param cliff_ Absolute cliff time
+     * @param amount_ Total amount to vest
+     * @param rate_ Amount vested per period
+     * @param period_ Duration of each vesting period
+     * @custom:throws InvalidAmount if amount is zero
+     * @custom:throws InvalidRate if rate is zero
+     * @custom:throws RateExceedsAmount if rate is greater than amount
+     * @custom:throws InvalidPeriod if period is zero
+     * @custom:throws CliffExceedsEnd if cliff time exceeds vesting end time
+     */
+    function _validateHedgeyParams(
+        uint256 amount_,
+        uint256 start_,
+        uint256 cliff_,
+        uint256 rate_,
+        uint256 period_
+    ) internal pure {
+        if (amount_ == 0) revert InvalidAmount();
+        if (rate_ == 0) revert InvalidRate();
+        if (rate_ > amount_) revert RateExceedsAmount();
+        if (period_ == 0) revert InvalidPeriod();
+
+        // Calculate vesting end time
+        uint256 end = (amount_ % rate_ == 0)
+            ? (amount_ / rate_) * period_ + start_
+            : ((amount_ / rate_) * period_) + period_ + start_;
+
+        if (cliff_ > end) revert CliffExceedsEnd();
+    }
 
     /**
      * @notice Transfers tokens or native assets to a recipient
