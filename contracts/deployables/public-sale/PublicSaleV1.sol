@@ -495,11 +495,17 @@ contract PublicSaleV1 is
                 $.saleTokenPrice;
 
             if ($.hedgeyLockupParams.enabled) {
+                // approve hedgey lockup plan to transfer the sale token
+                IERC20($.saleToken).approve(
+                    $.hedgeyLockupParams.votingTokenLockupPlans,
+                    saleTokenAmount
+                );
+
                 // create hedgey lockup plan for the caller
                 IVotingTokenLockupPlans(
                     $.hedgeyLockupParams.votingTokenLockupPlans
                 ).createPlan(
-                        msg.sender,
+                        recipient_,
                         $.saleToken,
                         saleTokenAmount,
                         $.hedgeyLockupParams.start,
