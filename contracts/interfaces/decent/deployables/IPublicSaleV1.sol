@@ -393,7 +393,10 @@ interface IPublicSaleV1 {
      * @notice Returns the Hedgey lockup rate
      * @return ratePercentage Rate of percentage of tokens that vest per period
      */
-    function hedgeyLockupRatePercentage() external view returns (uint256 ratePercentage);
+    function hedgeyLockupRatePercentage()
+        external
+        view
+        returns (uint256 ratePercentage);
 
     /**
      * @notice Returns the Hedgey lockup period
@@ -405,7 +408,10 @@ interface IPublicSaleV1 {
      * @notice Returns the Hedgey voting token lockup plans contract address
      * @return votingTokenLockupPlans Address of the VotingTokenLockupPlans contract
      */
-    function hedgeyVotingTokenLockupPlans() external view returns (address votingTokenLockupPlans);
+    function hedgeyVotingTokenLockupPlans()
+        external
+        view
+        returns (address votingTokenLockupPlans);
 
     // --- State-Changing Functions ---
 

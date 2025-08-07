@@ -188,7 +188,7 @@ async function expectSaleState(sale: PublicSaleV1, expectedState: SaleState): Pr
 
 function getLockupPlanCreatedEvent(
   receipt: any,
-  votingTokenLockupPlans: VotingTokenLockupPlans
+  votingTokenLockupPlans: VotingTokenLockupPlans,
 ): any | null {
   const planCreatedEvent = receipt?.logs?.find((log: any) => {
     try {
@@ -210,7 +210,7 @@ function getLockupPlanCreatedEvent(
       cliff: parsedEvent?.args?.[5],
       end: parsedEvent?.args?.[6],
       rate: parsedEvent?.args?.[7],
-      period: parsedEvent?.args?.[8]
+      period: parsedEvent?.args?.[8],
     };
   }
 
@@ -258,7 +258,10 @@ describe('PublicSaleV1', () => {
     kycVerifier = await MockKYCVerifierFactory.deploy();
 
     // Deploy Hedgey VotingTokenLockupPlans contract
-    votingTokenLockupPlans = await new VotingTokenLockupPlans__factory(deployer).deploy('VotingTokenLockupPlans', 'VTLP');
+    votingTokenLockupPlans = await new VotingTokenLockupPlans__factory(deployer).deploy(
+      'VotingTokenLockupPlans',
+      'VTLP',
+    );
 
     // Mint tokens to sale token holder
     await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1000000'));
@@ -318,12 +321,20 @@ describe('PublicSaleV1', () => {
       );
       expect(await publicSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
       expect(await publicSale.protocolFee()).to.equal(defaultParams.protocolFee);
-      expect(await publicSale.hedgeyLockupEnabled()).to.equal(defaultParams.hedgeyLockupParams.enabled);
+      expect(await publicSale.hedgeyLockupEnabled()).to.equal(
+        defaultParams.hedgeyLockupParams.enabled,
+      );
       expect(await publicSale.hedgeyLockupStart()).to.equal(defaultParams.hedgeyLockupParams.start);
       expect(await publicSale.hedgeyLockupCliff()).to.equal(defaultParams.hedgeyLockupParams.cliff);
-      expect(await publicSale.hedgeyLockupRatePercentage()).to.equal(defaultParams.hedgeyLockupParams.ratePercentage);
-      expect(await publicSale.hedgeyLockupPeriod()).to.equal(defaultParams.hedgeyLockupParams.period);
-      expect(await publicSale.hedgeyVotingTokenLockupPlans()).to.equal(defaultParams.hedgeyLockupParams.votingTokenLockupPlans);
+      expect(await publicSale.hedgeyLockupRatePercentage()).to.equal(
+        defaultParams.hedgeyLockupParams.ratePercentage,
+      );
+      expect(await publicSale.hedgeyLockupPeriod()).to.equal(
+        defaultParams.hedgeyLockupParams.period,
+      );
+      expect(await publicSale.hedgeyVotingTokenLockupPlans()).to.equal(
+        defaultParams.hedgeyLockupParams.votingTokenLockupPlans,
+      );
 
       // Verify sale tokens were transferred to the contract
       const expectedSaleTokenAmount =
@@ -402,14 +413,16 @@ describe('PublicSaleV1', () => {
         hedgeyLockupParams: {
           enabled: true,
           start: BigInt(currentTime),
-          cliff: BigInt(currentTime + 1_000_000), 
+          cliff: BigInt(currentTime + 1_000_000),
           ratePercentage: 0, // Invalid: rate cannot be zero
           period: 10_000,
           votingTokenLockupPlans: await votingTokenLockupPlans.getAddress(),
         },
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidHedgeyParams)).to.be.revertedWithCustomError(
+      await expect(
+        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidRate',
       );
@@ -430,7 +443,9 @@ describe('PublicSaleV1', () => {
         },
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidHedgeyParams)).to.be.revertedWithCustomError(
+      await expect(
+        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidHedgeyNativeAsset',
       );
@@ -450,7 +465,9 @@ describe('PublicSaleV1', () => {
         },
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidHedgeyParams)).to.be.revertedWithCustomError(
+      await expect(
+        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'RateExceedsAmount',
       );
@@ -470,7 +487,9 @@ describe('PublicSaleV1', () => {
         },
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidHedgeyParams)).to.be.revertedWithCustomError(
+      await expect(
+        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidPeriod',
       );
@@ -490,7 +509,9 @@ describe('PublicSaleV1', () => {
         },
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidHedgeyParams)).to.be.revertedWithCustomError(
+      await expect(
+        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
         PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'CliffExceedsEnd',
       );
@@ -887,7 +908,7 @@ describe('PublicSaleV1', () => {
 
     beforeEach(async () => {
       lockupStartTime = await time.latest();
-      
+
       const hedgeyParams = {
         ...defaultParams,
         hedgeyLockupParams: {
@@ -944,26 +965,32 @@ describe('PublicSaleV1', () => {
 
       // Get initial balances
       const initialSaleTokenBalance = await saleToken.balanceOf(await hedgeySale.getAddress());
-      const initialHedgeyBalance = await saleToken.balanceOf(await votingTokenLockupPlans.getAddress());
+      const initialHedgeyBalance = await saleToken.balanceOf(
+        await votingTokenLockupPlans.getAddress(),
+      );
 
       // Capture the PlanCreated event from the Hedgey contract
       const tx = await hedgeySale.connect(alice).settle(alice.address);
       const receipt = await tx.wait();
-      
+
       // Extract and log the PlanCreated event
-      const lockupPlanId = (getLockupPlanCreatedEvent(receipt, votingTokenLockupPlans)).planId;
-      
+      const lockupPlanId = getLockupPlanCreatedEvent(receipt, votingTokenLockupPlans).planId;
+
       const lockupPlan = await votingTokenLockupPlans.plans(lockupPlanId);
-      
+
       expect(lockupPlan.token).to.equal(await saleToken.getAddress());
       expect(lockupPlan.amount).to.equal(expectedSaleTokens);
       expect(lockupPlan.start).to.equal(BigInt(lockupStartTime));
       expect(lockupPlan.cliff).to.equal(BigInt(lockupStartTime + 1_000_000));
       expect(lockupPlan.period).to.equal(BigInt(10_000));
-      expect(lockupPlan.rate).to.equal(expectedSaleTokens * ethers.parseEther('0.0025') / TEST_CONSTANTS.PRECISION);
+      expect(lockupPlan.rate).to.equal(
+        (expectedSaleTokens * ethers.parseEther('0.0025')) / TEST_CONSTANTS.PRECISION,
+      );
 
       // verify correct end time
-      expect(await votingTokenLockupPlans.planEnd(lockupPlanId)).to.equal(BigInt(lockupStartTime + 4_000_000));
+      expect(await votingTokenLockupPlans.planEnd(lockupPlanId)).to.equal(
+        BigInt(lockupStartTime + 4_000_000),
+      );
 
       // Verify sale tokens were transferred to Hedgey contract
       expect(await saleToken.balanceOf(await hedgeySale.getAddress())).to.equal(
@@ -986,10 +1013,16 @@ describe('PublicSaleV1', () => {
         (BigInt(aliceCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
       const bobExpectedSaleTokens =
         (BigInt(bobCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-      
+
       // Settle and get lockup plan IDs
-      const aliceLockupPlanId = (getLockupPlanCreatedEvent((await (await hedgeySale.connect(alice).settle(alice.address)).wait()), votingTokenLockupPlans)).planId;
-      const bobLockupPlanId = (getLockupPlanCreatedEvent((await (await hedgeySale.connect(bob).settle(bob.address)).wait()), votingTokenLockupPlans)).planId;
+      const aliceLockupPlanId = getLockupPlanCreatedEvent(
+        await (await hedgeySale.connect(alice).settle(alice.address)).wait(),
+        votingTokenLockupPlans,
+      ).planId;
+      const bobLockupPlanId = getLockupPlanCreatedEvent(
+        await (await hedgeySale.connect(bob).settle(bob.address)).wait(),
+        votingTokenLockupPlans,
+      ).planId;
 
       // Get lockup plan objects
       const aliceLockupPlan = await votingTokenLockupPlans.plans(aliceLockupPlanId);
@@ -1009,8 +1042,12 @@ describe('PublicSaleV1', () => {
       expect(bobLockupPlan.period).to.equal(BigInt(10_000));
 
       // verify correct end time
-      expect(await votingTokenLockupPlans.planEnd(aliceLockupPlanId)).to.equal(BigInt(lockupStartTime + 4_000_000));
-      expect(await votingTokenLockupPlans.planEnd(bobLockupPlanId)).to.equal(BigInt(lockupStartTime + 4_000_000));
+      expect(await votingTokenLockupPlans.planEnd(aliceLockupPlanId)).to.equal(
+        BigInt(lockupStartTime + 4_000_000),
+      );
+      expect(await votingTokenLockupPlans.planEnd(bobLockupPlanId)).to.equal(
+        BigInt(lockupStartTime + 4_000_000),
+      );
     });
 
     it('should emit SuccessfulSaleSettled event when Hedgey is enabled', async () => {
