@@ -115,6 +115,11 @@ interface IPublicSaleV1 {
      */
     error InvalidCommitmentToken();
 
+    /**
+     * @notice Thrown when using attempting to setup hedgey lockup with native asset as commitment token
+     */
+    error InvalidHedgeyNativeAsset();
+
     // --- Structs ---
 
     /**
@@ -122,7 +127,7 @@ interface IPublicSaleV1 {
      * @param enabled Whether to use hedgey lockup plan
      * @param start the start date of the lockup plan, unix time
      * @param cliff a cliff date which is a discrete date where tokens are not unlocked until this date, and then vest in a large single chunk on the cliff date
-     * @param rate the amount of tokens that vest in a single period
+     * @param ratePercentage the percentage of the total token amount that vest in a single period
      * @param period the amount of time in between each unlock time stamp, in seconds. A period of 1 means that tokens vest every second in a 'streaming' style.
      * @param votingTokenLockupPlans the address of the voting token lockup plans contract
      */
@@ -130,7 +135,7 @@ interface IPublicSaleV1 {
         bool enabled;
         uint256 start;
         uint256 cliff;
-        uint256 rate;
+        uint256 ratePercentage;
         uint256 period;
         address votingTokenLockupPlans;
     }
@@ -365,6 +370,42 @@ interface IPublicSaleV1 {
      * @return hasSettled True if settled, false otherwise
      */
     function settled(address account_) external view returns (bool hasSettled);
+
+    /**
+     * @notice Returns whether Hedgey lockup is enabled
+     * @return enabled True if Hedgey lockup is enabled, false otherwise
+     */
+    function hedgeyLockupEnabled() external view returns (bool enabled);
+
+    /**
+     * @notice Returns the Hedgey lockup start time
+     * @return start Start time of the lockup plan
+     */
+    function hedgeyLockupStart() external view returns (uint256 start);
+
+    /**
+     * @notice Returns the Hedgey lockup cliff time
+     * @return cliff Cliff time of the lockup plan
+     */
+    function hedgeyLockupCliff() external view returns (uint256 cliff);
+
+    /**
+     * @notice Returns the Hedgey lockup rate
+     * @return ratePercentage Rate of percentage of tokens that vest per period
+     */
+    function hedgeyLockupRatePercentage() external view returns (uint256 ratePercentage);
+
+    /**
+     * @notice Returns the Hedgey lockup period
+     * @return period Duration of each vesting period in seconds
+     */
+    function hedgeyLockupPeriod() external view returns (uint256 period);
+
+    /**
+     * @notice Returns the Hedgey voting token lockup plans contract address
+     * @return votingTokenLockupPlans Address of the VotingTokenLockupPlans contract
+     */
+    function hedgeyVotingTokenLockupPlans() external view returns (address votingTokenLockupPlans);
 
     // --- State-Changing Functions ---
 

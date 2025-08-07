@@ -162,12 +162,18 @@ contract PublicSaleV1 is
 
         // if hedgey lockup is enabled, validate the params
         if (params_.hedgeyLockupParams.enabled) {
+            if (params_.commitmentToken == NATIVE_ASSET)
+                revert InvalidHedgeyNativeAsset();
+
+            uint256 minimumLockupAmount = (params_.minimumCommitment *
+                PRECISION) / params_.saleTokenPrice;
+
             _validateHedgeyParams(
-                (params_.minimumCommitment * PRECISION) /
-                    params_.saleTokenPrice,
+                minimumLockupAmount,
                 params_.hedgeyLockupParams.start,
                 params_.hedgeyLockupParams.cliff,
-                params_.hedgeyLockupParams.rate,
+                (minimumLockupAmount *
+                    params_.hedgeyLockupParams.ratePercentage) / PRECISION,
                 params_.hedgeyLockupParams.period
             );
         }
@@ -428,6 +434,90 @@ contract PublicSaleV1 is
         return $.settled[account_];
     }
 
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyLockupEnabled()
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.enabled;
+    }
+
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyLockupStart()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.start;
+    }
+
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyLockupCliff()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.cliff;
+    }
+
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyLockupRatePercentage()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.ratePercentage;
+    }
+
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyLockupPeriod()
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.period;
+    }
+
+    /**
+     * @inheritdoc IPublicSaleV1
+     */
+    function hedgeyVotingTokenLockupPlans()
+        external
+        view
+        virtual
+        override
+        returns (address)
+    {
+        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        return $.hedgeyLockupParams.votingTokenLockupPlans;
+    }
+
     // --- State-Changing Functions ---
 
     /**
@@ -491,6 +581,8 @@ contract PublicSaleV1 is
         SaleState state = saleState();
 
         if (state == SaleState.SUCCEEDED) {
+            // sale succeeded
+
             uint256 saleTokenAmount = ($.commitments[msg.sender] * PRECISION) /
                 $.saleTokenPrice;
 
@@ -510,21 +602,18 @@ contract PublicSaleV1 is
                         saleTokenAmount,
                         $.hedgeyLockupParams.start,
                         $.hedgeyLockupParams.cliff,
-                        $.hedgeyLockupParams.rate,
+                        (saleTokenAmount *
+                            $.hedgeyLockupParams.ratePercentage) / PRECISION,
                         $.hedgeyLockupParams.period
                     );
             } else {
                 // send the caller their purchased sale tokens
                 IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
-
-                emit SuccessfulSaleSettled(
-                    msg.sender,
-                    recipient_,
-                    saleTokenAmount
-                );
             }
+
+            emit SuccessfulSaleSettled(msg.sender, recipient_, saleTokenAmount);
         } else if (state == SaleState.FAILED) {
-            // refund the caller their commitment tokens
+            // sale failed, refund the caller their commitment tokens
             uint256 commitmentTokenAmount = $.commitments[msg.sender];
 
             _transferTokenOrNative(
