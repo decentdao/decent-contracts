@@ -1771,7 +1771,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
             enabled: false,
             start: 0,
             cliff: 0,
-            rate: 0,
+            ratePercentage: 0,
             period: 0,
             votingTokenLockupPlans: ethers.ZeroAddress,
           },
@@ -1806,7 +1806,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
         // Use the saved params to ensure timestamps match
         return ethers.AbiCoder.defaultAbiCoder().encode(
           [
-            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address owner, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 protocolFee)',
+            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address owner, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 protocolFee, tuple(bool enabled, uint256 start, uint256 cliff, uint256 ratePercentage, uint256 period, address votingTokenLockupPlans) hedgeyLockupParams)',
           ],
           [savedInitParams],
         );
