@@ -428,29 +428,6 @@ describe('PublicSaleV1', () => {
       );
     });
 
-    it('should revert when Hedgey lockup is enabled with native asset as commitment token', async () => {
-      const currentTime = await time.latest();
-      const invalidHedgeyParams = {
-        ...defaultParams,
-        commitmentToken: TEST_CONSTANTS.NATIVE_ASSET,
-        hedgeyLockupParams: {
-          enabled: true,
-          start: BigInt(currentTime),
-          cliff: BigInt(currentTime + 1_000_000),
-          ratePercentage: ethers.parseEther('0.0025'),
-          period: 10_000,
-          votingTokenLockupPlans: await votingTokenLockupPlans.getAddress(),
-        },
-      };
-
-      await expect(
-        deployPublicSaleProxy(deployer, invalidHedgeyParams),
-      ).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
-        'InvalidHedgeyNativeAsset',
-      );
-    });
-
     it('should revert when Hedgey lockup rate exceeds amount', async () => {
       const currentTime = await time.latest();
       const invalidHedgeyParams = {

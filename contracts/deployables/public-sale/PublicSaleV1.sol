@@ -162,9 +162,6 @@ contract PublicSaleV1 is
 
         // if hedgey lockup is enabled, validate the params
         if (params_.hedgeyLockupParams.enabled) {
-            if (params_.commitmentToken == NATIVE_ASSET)
-                revert InvalidHedgeyNativeAsset();
-
             uint256 minimumLockupAmount = (params_.minimumCommitment *
                 PRECISION) / params_.saleTokenPrice;
 

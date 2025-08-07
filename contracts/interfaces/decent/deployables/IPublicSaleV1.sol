@@ -115,11 +115,6 @@ interface IPublicSaleV1 {
      */
     error InvalidCommitmentToken();
 
-    /**
-     * @notice Thrown when using attempting to setup hedgey lockup with native asset as commitment token
-     */
-    error InvalidHedgeyNativeAsset();
-
     // --- Structs ---
 
     /**
