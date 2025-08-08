@@ -19,9 +19,6 @@ import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -36,8 +33,7 @@ contract PublicSaleV1 is
     IVersion,
     DeploymentBlockInitializable,
     InitializerEventEmitter,
-    ERC165,
-    Ownable2StepUpgradeable
+    ERC165
 {
     using SafeERC20 for IERC20;
 
@@ -157,7 +153,6 @@ contract PublicSaleV1 is
         if (params_.protocolFee > PRECISION) revert InvalidProtocolFee();
 
         __InitializerEventEmitter_init(abi.encode(params_));
-        __Ownable_init(params_.owner);
         __DeploymentBlockInitializable_init();
 
         // if hedgey lockup is enabled, validate the params
@@ -632,7 +627,7 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function ownerSettle() public virtual override onlyOwner {
+    function ownerSettle() public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
         if ($.ownerSettled) revert AlreadySettled();

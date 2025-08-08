@@ -271,7 +271,6 @@ describe('PublicSaleV1', () => {
     defaultParams = {
       saleStartTimestamp: BigInt(currentTime + 3600), // 1 hour from now
       saleEndTimestamp: BigInt(currentTime + 86400), // 24 hours from now
-      owner: owner.address,
       saleTokenHolder: saleTokenHolder.address,
       commitmentToken: await commitmentToken.getAddress(),
       saleToken: await saleToken.getAddress(),
@@ -305,7 +304,6 @@ describe('PublicSaleV1', () => {
       // Verify all parameters are set correctly
       expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
       expect(await publicSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
-      expect(await publicSale.owner()).to.equal(defaultParams.owner);
       expect(await publicSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
       expect(await publicSale.saleToken()).to.equal(defaultParams.saleToken);
       expect(await publicSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
@@ -1307,11 +1305,8 @@ describe('PublicSaleV1', () => {
       );
     });
 
-    it('should revert when non-owner tries to settle', async () => {
-      await expect(publicSale.connect(alice).ownerSettle()).to.be.revertedWithCustomError(
-        publicSale,
-        'OwnableUnauthorizedAccount',
-      );
+    it('should allow anyone to settle', async () => {
+      await expect(publicSale.connect(alice).ownerSettle()).to.not.be.reverted;
     });
   });
 
@@ -1457,34 +1452,6 @@ describe('PublicSaleV1', () => {
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
-    });
-  });
-
-  describe('Access Control', () => {
-    beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
-      await time.increaseTo(Number(defaultParams.saleEndTimestamp) + 1);
-    });
-
-    it('should only allow owner to call ownerSettle', async () => {
-      await expect(publicSale.connect(alice).ownerSettle()).to.be.revertedWithCustomError(
-        publicSale,
-        'OwnableUnauthorizedAccount',
-      );
-
-      await expect(publicSale.connect(owner).ownerSettle()).to.not.be.reverted;
-    });
-
-    it('should allow ownership transfer using Ownable2Step pattern', async () => {
-      // Start transfer
-      await publicSale.connect(owner).transferOwnership(alice.address);
-      expect(await publicSale.owner()).to.equal(owner.address);
-      expect(await publicSale.pendingOwner()).to.equal(alice.address);
-
-      // Accept transfer
-      await publicSale.connect(alice).acceptOwnership();
-      expect(await publicSale.owner()).to.equal(alice.address);
-      expect(await publicSale.pendingOwner()).to.equal(ethers.ZeroAddress);
     });
   });
 
@@ -1681,7 +1648,6 @@ describe('PublicSaleV1', () => {
 // Run shared test suites
 describe('PublicSaleV1 - Shared Tests', () => {
   let deployer: SignerWithAddress;
-  let owner: SignerWithAddress;
   let saleProceedsReceiver: SignerWithAddress;
   let protocolFeeReceiver: SignerWithAddress;
   let saleTokenHolder: SignerWithAddress;
@@ -1692,7 +1658,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
   let defaultParams: IPublicSaleV1.InitializerParamsStruct;
 
   beforeEach(async () => {
-    [deployer, owner, saleProceedsReceiver, protocolFeeReceiver, saleTokenHolder] =
+    [deployer, saleProceedsReceiver, protocolFeeReceiver, saleTokenHolder] =
       await ethers.getSigners();
 
     // Deploy mock contracts
@@ -1708,10 +1674,9 @@ describe('PublicSaleV1 - Shared Tests', () => {
 
     // Setup default parameters
     const currentTime = await time.latest();
-    defaultParams = {
+      defaultParams = {
       saleStartTimestamp: currentTime + 3600,
       saleEndTimestamp: currentTime + 86400,
-      owner: owner.address,
       saleTokenHolder: saleTokenHolder.address,
       commitmentToken: await commitmentToken.getAddress(),
       saleToken: await saleToken.getAddress(),
@@ -1768,7 +1733,6 @@ describe('PublicSaleV1 - Shared Tests', () => {
         const initParams = {
           saleStartTimestamp: currentTime + 3600,
           saleEndTimestamp: currentTime + 86400,
-          owner: owner.address,
           saleTokenHolder: saleTokenHolder.address,
           commitmentToken: await commitmentToken.getAddress(),
           saleToken: await saleToken.getAddress(),
@@ -1820,7 +1784,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
         // Use the saved params to ensure timestamps match
         return ethers.AbiCoder.defaultAbiCoder().encode(
           [
-            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address owner, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 protocolFee, tuple(bool enabled, uint256 start, uint256 cliff, uint256 ratePercentage, uint256 period, address votingTokenLockupPlans) hedgeyLockupParams)',
+            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 protocolFee, tuple(bool enabled, uint256 start, uint256 cliff, uint256 ratePercentage, uint256 period, address votingTokenLockupPlans) hedgeyLockupParams)',
           ],
           [savedInitParams],
         );
