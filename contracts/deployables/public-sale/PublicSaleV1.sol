@@ -561,7 +561,7 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function settle(address recipient_) public virtual override {
+    function buyerSettle(address recipient_) public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
         if ($.settled[msg.sender]) revert AlreadySettled();
@@ -603,7 +603,11 @@ contract PublicSaleV1 is
                 IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
             }
 
-            emit SuccessfulSaleSettled(msg.sender, recipient_, saleTokenAmount);
+            emit SuccessfulSaleBuyerSettled(
+                msg.sender,
+                recipient_,
+                saleTokenAmount
+            );
         } else if (state == SaleState.FAILED) {
             // sale failed, refund the caller their commitment tokens
             uint256 commitmentTokenAmount = $.commitments[msg.sender];
@@ -614,7 +618,7 @@ contract PublicSaleV1 is
                 commitmentTokenAmount
             );
 
-            emit FailedSaleSettled(
+            emit FailedSaleBuyerSettled(
                 msg.sender,
                 recipient_,
                 commitmentTokenAmount

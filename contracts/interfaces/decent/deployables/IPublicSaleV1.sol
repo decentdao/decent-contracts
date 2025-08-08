@@ -202,7 +202,7 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the sale tokens
      * @param saleTokenAmount Amount of sale tokens received
      */
-    event SuccessfulSaleSettled(
+    event SuccessfulSaleBuyerSettled(
         address indexed account,
         address indexed recipient,
         uint256 saleTokenAmount
@@ -214,7 +214,7 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the refunded commitment
      * @param commitmentTokenAmount Amount of commitment tokens refunded
      */
-    event FailedSaleSettled(
+    event FailedSaleBuyerSettled(
         address indexed account,
         address indexed recipient,
         uint256 commitmentTokenAmount
@@ -433,11 +433,11 @@ interface IPublicSaleV1 {
     ) external;
 
     /**
-     * @notice Settles user's commitment after sale ends
+     * @notice Buyer settles user's commitment after sale ends
      * @param recipient_ Address to receive tokens (sale tokens if successful, commitment tokens if failed)
      * @dev Can only be called after sale has ended
      */
-    function settle(address recipient_) external;
+    function buyerSettle(address recipient_) external;
 
     /**
      * @notice Seller settles sale proceeds and fees

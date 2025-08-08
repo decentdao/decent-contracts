@@ -945,7 +945,7 @@ describe('PublicSaleV1', () => {
       );
 
       // Capture the PlanCreated event from the Hedgey contract
-      const tx = await hedgeySale.connect(alice).settle(alice.address);
+      const tx = await hedgeySale.connect(alice).buyerSettle(alice.address);
       const receipt = await tx.wait();
 
       // Extract and log the PlanCreated event
@@ -991,11 +991,11 @@ describe('PublicSaleV1', () => {
 
       // Settle and get lockup plan IDs
       const aliceLockupPlanId = getLockupPlanCreatedEvent(
-        await (await hedgeySale.connect(alice).settle(alice.address)).wait(),
+        await (await hedgeySale.connect(alice).buyerSettle(alice.address)).wait(),
         votingTokenLockupPlans,
       ).planId;
       const bobLockupPlanId = getLockupPlanCreatedEvent(
-        await (await hedgeySale.connect(bob).settle(bob.address)).wait(),
+        await (await hedgeySale.connect(bob).buyerSettle(bob.address)).wait(),
         votingTokenLockupPlans,
       ).planId;
 
@@ -1025,14 +1025,14 @@ describe('PublicSaleV1', () => {
       );
     });
 
-    it('should emit SuccessfulSaleSettled event when Hedgey is enabled', async () => {
+    it('should emit SuccessfulSaleBuyerSettled event when Hedgey is enabled', async () => {
       const commitment = await hedgeySale.commitments(alice.address);
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
       // The event should not be emitted when Hedgey lockup is enabled
-      await expect(hedgeySale.connect(alice).settle(alice.address))
-        .to.emit(hedgeySale, 'SuccessfulSaleSettled')
+      await expect(hedgeySale.connect(alice).buyerSettle(alice.address))
+        .to.emit(hedgeySale, 'SuccessfulSaleBuyerSettled')
         .withArgs(alice.address, alice.address, expectedSaleTokens);
     });
   });
@@ -1081,8 +1081,8 @@ describe('PublicSaleV1', () => {
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await expect(publicSale.connect(alice).settle(alice.address))
-        .to.emit(publicSale, 'SuccessfulSaleSettled')
+      await expect(publicSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
         .withArgs(alice.address, alice.address, expectedSaleTokens);
 
       expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokens);
@@ -1094,7 +1094,7 @@ describe('PublicSaleV1', () => {
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await publicSale.connect(alice).settle(alice.address);
+      await publicSale.connect(alice).buyerSettle(alice.address);
       expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokens);
     });
 
@@ -1103,7 +1103,7 @@ describe('PublicSaleV1', () => {
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await publicSale.connect(alice).settle(bob.address);
+      await publicSale.connect(alice).buyerSettle(bob.address);
 
       expect(await saleToken.balanceOf(bob.address)).to.equal(expectedSaleTokens);
       expect(await saleToken.balanceOf(alice.address)).to.equal(0);
@@ -1111,9 +1111,9 @@ describe('PublicSaleV1', () => {
     });
 
     it('should revert when user settles twice', async () => {
-      await publicSale.connect(alice).settle(alice.address);
+      await publicSale.connect(alice).buyerSettle(alice.address);
 
-      await expect(publicSale.connect(alice).settle(alice.address)).to.be.revertedWithCustomError(
+      await expect(publicSale.connect(alice).buyerSettle(alice.address)).to.be.revertedWithCustomError(
         publicSale,
         'AlreadySettled',
       );
@@ -1121,7 +1121,7 @@ describe('PublicSaleV1', () => {
 
     it('should revert when user has no commitment', async () => {
       await expect(
-        publicSale.connect(nonCommitter).settle(nonCommitter.address),
+        publicSale.connect(nonCommitter).buyerSettle(nonCommitter.address),
       ).to.be.revertedWithCustomError(publicSale, 'ZeroCommitment');
     });
 
@@ -1143,7 +1143,7 @@ describe('PublicSaleV1', () => {
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
 
-      await expect(activeSale.connect(alice).settle(alice.address)).to.be.revertedWithCustomError(
+      await expect(activeSale.connect(alice).buyerSettle(alice.address)).to.be.revertedWithCustomError(
         activeSale,
         'SaleNotEnded',
       );
@@ -1172,8 +1172,8 @@ describe('PublicSaleV1', () => {
       const commitment = await publicSale.commitments(alice.address);
       const initialBalance = await commitmentToken.balanceOf(alice.address);
 
-      await expect(publicSale.connect(alice).settle(alice.address))
-        .to.emit(publicSale, 'FailedSaleSettled')
+      await expect(publicSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(publicSale, 'FailedSaleBuyerSettled')
         .withArgs(alice.address, alice.address, commitment);
 
       expect(await commitmentToken.balanceOf(alice.address)).to.equal(initialBalance + commitment);
@@ -1181,14 +1181,14 @@ describe('PublicSaleV1', () => {
     });
 
     it('should not transfer any sale tokens when sale fails', async () => {
-      await publicSale.connect(alice).settle(alice.address);
+      await publicSale.connect(alice).buyerSettle(alice.address);
       expect(await saleToken.balanceOf(alice.address)).to.equal(0);
     });
 
     it('should allow settlement to different recipient for refund', async () => {
       const commitment = await publicSale.commitments(alice.address);
 
-      await publicSale.connect(alice).settle(bob.address);
+      await publicSale.connect(alice).buyerSettle(bob.address);
 
       expect(await commitmentToken.balanceOf(bob.address)).to.equal(commitment);
       expect(await commitmentToken.balanceOf(alice.address)).to.equal(
@@ -1241,7 +1241,7 @@ describe('PublicSaleV1', () => {
         (BigInt(totalBalance) * BigInt(defaultParams.protocolFee)) / TEST_CONSTANTS.PRECISION;
       const saleProceedsAmount = BigInt(totalBalance) - protocolFeeAmount;
 
-      await expect((publicSale as any).connect(seller).sellerSettle())
+      await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
         .withArgs(seller.address, saleProceedsAmount, protocolFeeAmount);
 
@@ -1251,7 +1251,7 @@ describe('PublicSaleV1', () => {
       expect(await commitmentToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         protocolFeeAmount,
       );
-      expect(await (publicSale as any).sellerSettled()).to.be.true;
+      expect(await publicSale.sellerSettled()).to.be.true;
     });
 
     it('should handle different protocol fee percentages', async () => {
@@ -1289,7 +1289,7 @@ describe('PublicSaleV1', () => {
       const protocolFeeAmount =
         (totalBalance * ethers.parseEther('0.1')) / TEST_CONSTANTS.PRECISION;
 
-      await (customSale as any).connect(seller).sellerSettle();
+      await customSale.connect(seller).sellerSettle();
 
       expect(await commitmentToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         protocolFeeAmount,
@@ -1297,16 +1297,16 @@ describe('PublicSaleV1', () => {
     });
 
     it('should revert when owner settles twice', async () => {
-      await (publicSale as any).connect(seller).sellerSettle();
+      await publicSale.connect(seller).sellerSettle();
 
-      await expect((publicSale as any).connect(seller).sellerSettle()).to.be.revertedWithCustomError(
+      await expect(publicSale.connect(seller).sellerSettle()).to.be.revertedWithCustomError(
         publicSale,
         'AlreadySettled',
       );
     });
 
     it('should allow anyone to settle', async () => {
-      await expect((publicSale as any).connect(alice).sellerSettle()).to.not.be.reverted;
+      await expect(publicSale.connect(alice).sellerSettle()).to.not.be.reverted;
     });
   });
 
@@ -1333,7 +1333,7 @@ describe('PublicSaleV1', () => {
     it('should return all sale tokens and collected fees', async () => {
       const saleTokenBalance = await saleToken.balanceOf(await publicSale.getAddress());
 
-      await expect((publicSale as any).connect(seller).sellerSettle())
+      await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'FailedSaleSellerSettled')
         .withArgs(seller.address, saleTokenBalance);
 
@@ -1417,7 +1417,7 @@ describe('PublicSaleV1', () => {
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / ethers.parseEther('0.000001');
 
-      await extremeSale.connect(alice).settle(alice.address);
+      await extremeSale.connect(alice).buyerSettle(alice.address);
 
       expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokens);
     });
@@ -1598,8 +1598,8 @@ describe('PublicSaleV1', () => {
       const expectedSaleTokens =
         (BigInt(aliceCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await expect(publicSale.connect(alice).settle(alice.address))
-        .to.emit(publicSale, 'SuccessfulSaleSettled')
+      await expect(publicSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
         .withArgs(alice.address, alice.address, expectedSaleTokens);
 
       // Owner settlement
@@ -1608,7 +1608,7 @@ describe('PublicSaleV1', () => {
         (BigInt(totalBalance) * BigInt(defaultParams.protocolFee)) / TEST_CONSTANTS.PRECISION;
       const saleProceedsAmount = BigInt(totalBalance) - protocolFeeAmount;
 
-      await expect((publicSale as any).connect(seller).sellerSettle())
+      await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
         .withArgs(seller.address, saleProceedsAmount, protocolFeeAmount);
     });
@@ -1620,7 +1620,7 @@ describe('PublicSaleV1', () => {
     });
 
     it('should return all correct values from view functions', async () => {
-      expect(await (publicSale as any).sellerSettled()).to.be.false;
+      expect(await publicSale.sellerSettled()).to.be.false;
       expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
       expect(await publicSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
       expect(await publicSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
