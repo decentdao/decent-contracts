@@ -209,6 +209,19 @@ interface IPublicSaleV1 {
     );
 
     /**
+     * @notice Emitted when a user settles after successful sale
+     * @param account Address of the user
+     * @param recipient Address receiving the sale tokens
+     * @param saleTokenAmount Amount of sale tokens received
+     */
+    event SuccessfulSaleBuyerSettledHedgey(
+        address indexed account,
+        address indexed recipient,
+        uint256 saleTokenAmount,
+        uint256 indexed hedgeyLockupPlanId
+    );
+
+    /**
      * @notice Emitted when a user settles after failed sale
      * @param account Address of the user
      * @param recipient Address receiving the refunded commitment

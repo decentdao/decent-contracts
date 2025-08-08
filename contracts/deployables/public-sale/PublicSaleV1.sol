@@ -586,7 +586,7 @@ contract PublicSaleV1 is
                 );
 
                 // create hedgey lockup plan for the caller
-                IVotingTokenLockupPlans(
+                uint256 hedgeyLockupPlanId = IVotingTokenLockupPlans(
                     $.hedgeyLockupParams.votingTokenLockupPlans
                 ).createPlan(
                         recipient_,
@@ -598,16 +598,23 @@ contract PublicSaleV1 is
                             $.hedgeyLockupParams.ratePercentage) / PRECISION,
                         $.hedgeyLockupParams.period
                     );
+
+                emit SuccessfulSaleBuyerSettledHedgey(
+                    msg.sender,
+                    recipient_,
+                    saleTokenAmount,
+                    hedgeyLockupPlanId
+                );
             } else {
                 // send the caller their purchased sale tokens
                 IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
-            }
 
-            emit SuccessfulSaleBuyerSettled(
-                msg.sender,
-                recipient_,
-                saleTokenAmount
-            );
+                emit SuccessfulSaleBuyerSettled(
+                    msg.sender,
+                    recipient_,
+                    saleTokenAmount
+                );
+            }
         } else if (state == SaleState.FAILED) {
             // sale failed, refund the caller their commitment tokens
             uint256 commitmentTokenAmount = $.commitments[msg.sender];

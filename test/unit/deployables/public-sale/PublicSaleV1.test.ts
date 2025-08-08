@@ -1025,15 +1025,34 @@ describe('PublicSaleV1', () => {
       );
     });
 
-    it('should emit SuccessfulSaleBuyerSettled event when Hedgey is enabled', async () => {
+    it('should emit SuccessfulSaleBuyerSettledHedgey event when Hedgey is enabled', async () => {
       const commitment = await hedgeySale.commitments(alice.address);
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
       // The event should not be emitted when Hedgey lockup is enabled
-      await expect(hedgeySale.connect(alice).buyerSettle(alice.address))
-        .to.emit(hedgeySale, 'SuccessfulSaleBuyerSettled')
-        .withArgs(alice.address, alice.address, expectedSaleTokens);
+      const tx2 = await hedgeySale.connect(alice).buyerSettle(alice.address);
+      const receipt2 = await tx2.wait();
+
+      // Read plan id from Hedgey PlanCreated
+      const planCreated = getLockupPlanCreatedEvent(receipt2, votingTokenLockupPlans);
+      const planId = planCreated?.planId;
+
+      // Find SuccessfulSaleBuyerSettledHedgey event emitted by PublicSale
+      const saleLog = (receipt2?.logs ?? []).find((l: any) => {
+        try {
+          const parsed = hedgeySale.interface.parseLog(l);
+          return parsed?.name === 'SuccessfulSaleBuyerSettledHedgey';
+        } catch {
+          return false;
+        }
+      });
+      const parsed = saleLog ? hedgeySale.interface.parseLog(saleLog) : null;
+      expect(parsed).to.not.equal(null);
+      expect(parsed?.args?.[0]).to.equal(alice.address);
+      expect(parsed?.args?.[1]).to.equal(alice.address);
+      expect(parsed?.args?.[2]).to.equal(expectedSaleTokens);
+      expect(parsed?.args?.[3]).to.equal(planId);
     });
   });
 
@@ -1113,10 +1132,9 @@ describe('PublicSaleV1', () => {
     it('should revert when user settles twice', async () => {
       await publicSale.connect(alice).buyerSettle(alice.address);
 
-      await expect(publicSale.connect(alice).buyerSettle(alice.address)).to.be.revertedWithCustomError(
-        publicSale,
-        'AlreadySettled',
-      );
+      await expect(
+        publicSale.connect(alice).buyerSettle(alice.address),
+      ).to.be.revertedWithCustomError(publicSale, 'AlreadySettled');
     });
 
     it('should revert when user has no commitment', async () => {
@@ -1143,10 +1161,9 @@ describe('PublicSaleV1', () => {
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
 
-      await expect(activeSale.connect(alice).buyerSettle(alice.address)).to.be.revertedWithCustomError(
-        activeSale,
-        'SaleNotEnded',
-      );
+      await expect(
+        activeSale.connect(alice).buyerSettle(alice.address),
+      ).to.be.revertedWithCustomError(activeSale, 'SaleNotEnded');
     });
   });
 
@@ -1674,7 +1691,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
 
     // Setup default parameters
     const currentTime = await time.latest();
-      defaultParams = {
+    defaultParams = {
       saleStartTimestamp: currentTime + 3600,
       saleEndTimestamp: currentTime + 86400,
       saleTokenHolder: saleTokenHolder.address,
