@@ -219,7 +219,7 @@ function getLockupPlanCreatedEvent(
 
 describe('PublicSaleV1', () => {
   let deployer: SignerWithAddress;
-  let owner: SignerWithAddress;
+  let seller: SignerWithAddress;
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
   let charlie: SignerWithAddress;
@@ -239,7 +239,7 @@ describe('PublicSaleV1', () => {
   beforeEach(async () => {
     [
       deployer,
-      owner,
+      seller,
       alice,
       bob,
       charlie,
@@ -1241,9 +1241,9 @@ describe('PublicSaleV1', () => {
         (BigInt(totalBalance) * BigInt(defaultParams.protocolFee)) / TEST_CONSTANTS.PRECISION;
       const saleProceedsAmount = BigInt(totalBalance) - protocolFeeAmount;
 
-      await expect(publicSale.connect(owner).ownerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleOwnerSettled')
-        .withArgs(owner.address, saleProceedsAmount, protocolFeeAmount);
+      await expect((publicSale as any).connect(seller).sellerSettle())
+        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+        .withArgs(seller.address, saleProceedsAmount, protocolFeeAmount);
 
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(
         saleProceedsAmount,
@@ -1251,7 +1251,7 @@ describe('PublicSaleV1', () => {
       expect(await commitmentToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         protocolFeeAmount,
       );
-      expect(await publicSale.ownerSettled()).to.be.true;
+      expect(await (publicSale as any).sellerSettled()).to.be.true;
     });
 
     it('should handle different protocol fee percentages', async () => {
@@ -1289,7 +1289,7 @@ describe('PublicSaleV1', () => {
       const protocolFeeAmount =
         (totalBalance * ethers.parseEther('0.1')) / TEST_CONSTANTS.PRECISION;
 
-      await customSale.connect(owner).ownerSettle();
+      await (customSale as any).connect(seller).sellerSettle();
 
       expect(await commitmentToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         protocolFeeAmount,
@@ -1297,16 +1297,16 @@ describe('PublicSaleV1', () => {
     });
 
     it('should revert when owner settles twice', async () => {
-      await publicSale.connect(owner).ownerSettle();
+      await (publicSale as any).connect(seller).sellerSettle();
 
-      await expect(publicSale.connect(owner).ownerSettle()).to.be.revertedWithCustomError(
+      await expect((publicSale as any).connect(seller).sellerSettle()).to.be.revertedWithCustomError(
         publicSale,
         'AlreadySettled',
       );
     });
 
     it('should allow anyone to settle', async () => {
-      await expect(publicSale.connect(alice).ownerSettle()).to.not.be.reverted;
+      await expect((publicSale as any).connect(alice).sellerSettle()).to.not.be.reverted;
     });
   });
 
@@ -1333,9 +1333,9 @@ describe('PublicSaleV1', () => {
     it('should return all sale tokens and collected fees', async () => {
       const saleTokenBalance = await saleToken.balanceOf(await publicSale.getAddress());
 
-      await expect(publicSale.connect(owner).ownerSettle())
-        .to.emit(publicSale, 'FailedSaleOwnerSettled')
-        .withArgs(owner.address, saleTokenBalance);
+      await expect((publicSale as any).connect(seller).sellerSettle())
+        .to.emit(publicSale, 'FailedSaleSellerSettled')
+        .withArgs(seller.address, saleTokenBalance);
 
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(saleTokenBalance);
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(0);
@@ -1608,9 +1608,9 @@ describe('PublicSaleV1', () => {
         (BigInt(totalBalance) * BigInt(defaultParams.protocolFee)) / TEST_CONSTANTS.PRECISION;
       const saleProceedsAmount = BigInt(totalBalance) - protocolFeeAmount;
 
-      await expect(publicSale.connect(owner).ownerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleOwnerSettled')
-        .withArgs(owner.address, saleProceedsAmount, protocolFeeAmount);
+      await expect((publicSale as any).connect(seller).sellerSettle())
+        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+        .withArgs(seller.address, saleProceedsAmount, protocolFeeAmount);
     });
   });
 
@@ -1620,7 +1620,7 @@ describe('PublicSaleV1', () => {
     });
 
     it('should return all correct values from view functions', async () => {
-      expect(await publicSale.ownerSettled()).to.be.false;
+      expect(await (publicSale as any).sellerSettled()).to.be.false;
       expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
       expect(await publicSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
       expect(await publicSale.commitmentToken()).to.equal(defaultParams.commitmentToken);

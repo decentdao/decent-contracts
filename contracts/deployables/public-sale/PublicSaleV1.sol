@@ -47,7 +47,7 @@ contract PublicSaleV1 is
      * @custom:storage-location erc7201:Decent.PublicSale.main
      */
     struct PublicSaleStorage {
-        bool ownerSettled;
+        bool sellerSettled;
         uint48 saleStartTimestamp;
         uint48 saleEndTimestamp;
         address commitmentToken;
@@ -229,9 +229,9 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function ownerSettled() external view virtual override returns (bool) {
+    function sellerSettled() external view virtual override returns (bool) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
-        return $.ownerSettled;
+        return $.sellerSettled;
     }
 
     /**
@@ -627,12 +627,12 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function ownerSettle() public virtual override {
+    function sellerSettle() public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
-        if ($.ownerSettled) revert AlreadySettled();
+        if ($.sellerSettled) revert AlreadySettled();
 
-        $.ownerSettled = true;
+        $.sellerSettled = true;
 
         SaleState state = saleState();
 
@@ -664,7 +664,7 @@ contract PublicSaleV1 is
                 _protocolFee
             );
 
-            emit SuccessfulSaleOwnerSettled(
+            emit SuccessfulSaleSellerSettled(
                 msg.sender,
                 saleProceeds,
                 _protocolFee
@@ -680,7 +680,7 @@ contract PublicSaleV1 is
                 saleTokenAmount
             );
 
-            emit FailedSaleOwnerSettled(msg.sender, saleTokenAmount);
+            emit FailedSaleSellerSettled(msg.sender, saleTokenAmount);
         } else {
             revert SaleNotEnded();
         }

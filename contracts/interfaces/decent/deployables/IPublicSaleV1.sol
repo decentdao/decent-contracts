@@ -221,24 +221,24 @@ interface IPublicSaleV1 {
     );
 
     /**
-     * @notice Emitted when owner settlement is performed after successful sale
-     * @param caller Address that called ownerSettle
+     * @notice Emitted when seller settlement is performed after successful sale
+     * @param caller Address that called sellerSettle
      * @param saleProceeds Amount sent to saleProceedsReceiver
      * @param protocolFee Amount sent to protocolFeeReceiver
      */
-    event SuccessfulSaleOwnerSettled(
+    event SuccessfulSaleSellerSettled(
         address indexed caller,
         uint256 saleProceeds,
         uint256 protocolFee
     );
 
     /**
-     * @notice Emitted when owner settlement is performed after failed sale
-     * @param caller Address that called ownerSettle
+     * @notice Emitted when seller settlement is performed after failed sale
+     * @param seller Address that called sellerSettle
      * @param saleTokenAmount Amount of sale tokens returned
      */
-    event FailedSaleOwnerSettled(
-        address indexed caller,
+    event FailedSaleSellerSettled(
+        address indexed seller,
         uint256 saleTokenAmount
     );
 
@@ -259,10 +259,10 @@ interface IPublicSaleV1 {
     function saleState() external view returns (SaleState state);
 
     /**
-     * @notice Returns whether the owner has settled
-     * @return settled True if owner has settled, false otherwise
+     * @notice Returns whether the seller has settled
+     * @return settled True if seller has settled, false otherwise
      */
-    function ownerSettled() external view returns (bool settled);
+    function sellerSettled() external view returns (bool settled);
 
     /**
      * @notice Returns the sale start timestamp
@@ -440,8 +440,8 @@ interface IPublicSaleV1 {
     function settle(address recipient_) external;
 
     /**
-     * @notice Settle sale proceeds and fees
+     * @notice Seller settles sale proceeds and fees
      * @dev Can be called by anyone after sale has ended
      */
-    function ownerSettle() external;
+    function sellerSettle() external;
 }
