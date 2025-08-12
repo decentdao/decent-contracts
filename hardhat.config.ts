@@ -15,9 +15,9 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      {
-        // 0.8.19 compiler is only used for the VotingTokenLockupPlans contract,
-        // which is only used for testing purposes.
+    ],
+    overrides: {
+      'contracts/mocks/hedgey/VotingTokenLockupPlans.sol': {
         version: '0.8.19',
         settings: {
           optimizer: {
@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
           viaIR: true,
         },
       },
-    ],
+    },
   },
   networks: {
     sepolia: {
