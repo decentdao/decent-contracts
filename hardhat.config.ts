@@ -16,6 +16,18 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    overrides: {
+      'contracts/mocks/hedgey/VotingTokenLockupPlans.sol': {
+        version: '0.8.19',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+        },
+      },
+    },
   },
   networks: {
     sepolia: {

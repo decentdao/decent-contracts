@@ -51,6 +51,31 @@ interface IPublicSaleV1 {
     error SaleNotEnded();
 
     /**
+     * @notice Thrown when Hedgey vesting amount is zero
+     */
+    error InvalidAmount();
+
+    /**
+     * @notice Thrown when Hedgey vesting rate is zero
+     */
+    error InvalidRate();
+
+    /**
+     * @notice Thrown when Hedgey vesting rate exceeds amount
+     */
+    error RateExceedsAmount();
+
+    /**
+     * @notice Thrown when Hedgey vesting period is zero
+     */
+    error InvalidPeriod();
+
+    /**
+     * @notice Thrown when Hedgey vesting cliff exceeds end time
+     */
+    error CliffExceedsEnd();
+
+    /**
      * @notice Thrown when attempting to settle an already settled account
      */
     error AlreadySettled();
@@ -93,6 +118,24 @@ interface IPublicSaleV1 {
     // --- Structs ---
 
     /**
+     * @notice Parameters for initializing hedgey lockup plan
+     * @param enabled Whether to use hedgey lockup plan
+     * @param start the start date of the lockup plan, unix time
+     * @param cliff a cliff date which is a discrete date where tokens are not unlocked until this date, and then vest in a large single chunk on the cliff date
+     * @param ratePercentage the percentage of the total token amount that vest in a single period
+     * @param period the amount of time in between each unlock time stamp, in seconds. A period of 1 means that tokens vest every second in a 'streaming' style.
+     * @param votingTokenLockupPlans the address of the voting token lockup plans contract
+     */
+    struct HedgeyLockupParams {
+        bool enabled;
+        uint256 start;
+        uint256 cliff;
+        uint256 ratePercentage;
+        uint256 period;
+        address votingTokenLockupPlans;
+    }
+
+    /**
      * @notice Parameters for initializing the public sale contract
      * @param saleStartTimestamp Unix timestamp when the sale begins
      * @param saleEndTimestamp Unix timestamp when the sale ends
@@ -109,6 +152,7 @@ interface IPublicSaleV1 {
      * @param maximumTotalCommitment Maximum total commitments allowed
      * @param saleTokenPrice Price per sale token in commitment token units (with PRECISION decimals)
      * @param protocolFee Fee percentage taken from proceeds (with PRECISION decimals)
+     * @param hedgeyLockupParams Parameters for initializing hedgey lockup plan
      */
     struct InitializerParams {
         uint48 saleStartTimestamp;
@@ -126,6 +170,7 @@ interface IPublicSaleV1 {
         uint256 maximumTotalCommitment;
         uint256 saleTokenPrice;
         uint256 protocolFee;
+        HedgeyLockupParams hedgeyLockupParams;
     }
 
     // --- Enums ---
@@ -320,6 +365,48 @@ interface IPublicSaleV1 {
      * @return hasSettled True if settled, false otherwise
      */
     function settled(address account_) external view returns (bool hasSettled);
+
+    /**
+     * @notice Returns whether Hedgey lockup is enabled
+     * @return enabled True if Hedgey lockup is enabled, false otherwise
+     */
+    function hedgeyLockupEnabled() external view returns (bool enabled);
+
+    /**
+     * @notice Returns the Hedgey lockup start time
+     * @return start Start time of the lockup plan
+     */
+    function hedgeyLockupStart() external view returns (uint256 start);
+
+    /**
+     * @notice Returns the Hedgey lockup cliff time
+     * @return cliff Cliff time of the lockup plan
+     */
+    function hedgeyLockupCliff() external view returns (uint256 cliff);
+
+    /**
+     * @notice Returns the Hedgey lockup rate
+     * @return ratePercentage Rate of percentage of tokens that vest per period
+     */
+    function hedgeyLockupRatePercentage()
+        external
+        view
+        returns (uint256 ratePercentage);
+
+    /**
+     * @notice Returns the Hedgey lockup period
+     * @return period Duration of each vesting period in seconds
+     */
+    function hedgeyLockupPeriod() external view returns (uint256 period);
+
+    /**
+     * @notice Returns the Hedgey voting token lockup plans contract address
+     * @return votingTokenLockupPlans Address of the VotingTokenLockupPlans contract
+     */
+    function hedgeyVotingTokenLockupPlans()
+        external
+        view
+        returns (address votingTokenLockupPlans);
 
     // --- State-Changing Functions ---
 

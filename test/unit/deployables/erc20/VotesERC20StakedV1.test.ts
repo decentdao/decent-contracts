@@ -5,8 +5,8 @@ import { ethers } from 'hardhat';
 import {
   ERC1967Proxy__factory,
   IDeploymentBlock__factory,
-  IERC165__factory,
   IERC20__factory,
+  IERC165__factory,
   IVersion__factory,
   IVotes__factory,
   IVotesERC20StakedV1__factory,
@@ -36,7 +36,10 @@ async function runExecuteTxAndCheckBalanceDeltasTests(
       if (t.token === 'native') {
         return ethers.provider.getBalance(t.addressToCheck);
       } else {
-        const token = await ethers.getContractAt('IERC20', t.token);
+        const token = await ethers.getContractAt(
+          '@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20',
+          t.token,
+        );
         const balance = await token.balanceOf(t.addressToCheck);
         return balance;
       }
@@ -56,7 +59,10 @@ async function runExecuteTxAndCheckBalanceDeltasTests(
     if (transfer.token === 'native') {
       finalBalance = await ethers.provider.getBalance(transfer.addressToCheck);
     } else {
-      const token = await ethers.getContractAt('IERC20', transfer.token);
+      const token = await ethers.getContractAt(
+        '@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20',
+        transfer.token,
+      );
       finalBalance = await token.balanceOf(transfer.addressToCheck);
     }
 
@@ -302,9 +308,9 @@ describe('VotesERC20StakedV1', () => {
         IERC165__factory,
         IVotesERC20StakedV1__factory,
         IVersion__factory,
-        IERC20__factory,
         IVotes__factory,
         IDeploymentBlock__factory,
+        IERC20__factory,
       ],
     });
   });
