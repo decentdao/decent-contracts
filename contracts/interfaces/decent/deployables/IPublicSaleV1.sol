@@ -139,7 +139,6 @@ interface IPublicSaleV1 {
      * @notice Parameters for initializing the public sale contract
      * @param saleStartTimestamp Unix timestamp when the sale begins
      * @param saleEndTimestamp Unix timestamp when the sale ends
-     * @param owner Address that will own the contract and can call ownerSettle
      * @param saleTokenHolder Address holding the sale tokens to be distributed
      * @param commitmentToken Address of the token users commit (use NATIVE_ASSET constant for ETH)
      * @param saleToken Address of the token being sold
@@ -157,7 +156,6 @@ interface IPublicSaleV1 {
     struct InitializerParams {
         uint48 saleStartTimestamp;
         uint48 saleEndTimestamp;
-        address owner;
         address saleTokenHolder;
         address commitmentToken;
         address saleToken;
@@ -204,10 +202,23 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the sale tokens
      * @param saleTokenAmount Amount of sale tokens received
      */
-    event SuccessfulSaleSettled(
+    event SuccessfulSaleBuyerSettled(
         address indexed account,
         address indexed recipient,
         uint256 saleTokenAmount
+    );
+
+    /**
+     * @notice Emitted when a user settles after successful sale
+     * @param account Address of the user
+     * @param recipient Address receiving the sale tokens
+     * @param saleTokenAmount Amount of sale tokens received
+     */
+    event SuccessfulSaleBuyerSettledHedgey(
+        address indexed account,
+        address indexed recipient,
+        uint256 saleTokenAmount,
+        uint256 indexed hedgeyLockupPlanId
     );
 
     /**
@@ -216,31 +227,31 @@ interface IPublicSaleV1 {
      * @param recipient Address receiving the refunded commitment
      * @param commitmentTokenAmount Amount of commitment tokens refunded
      */
-    event FailedSaleSettled(
+    event FailedSaleBuyerSettled(
         address indexed account,
         address indexed recipient,
         uint256 commitmentTokenAmount
     );
 
     /**
-     * @notice Emitted when owner settles after successful sale
-     * @param owner Address of the contract owner
+     * @notice Emitted when seller settlement is performed after successful sale
+     * @param caller Address that called sellerSettle
      * @param saleProceeds Amount sent to saleProceedsReceiver
      * @param protocolFee Amount sent to protocolFeeReceiver
      */
-    event SuccessfulSaleOwnerSettled(
-        address indexed owner,
+    event SuccessfulSaleSellerSettled(
+        address indexed caller,
         uint256 saleProceeds,
         uint256 protocolFee
     );
 
     /**
-     * @notice Emitted when owner settles after failed sale
-     * @param owner Address of the contract owner
+     * @notice Emitted when seller settlement is performed after failed sale
+     * @param seller Address that called sellerSettle
      * @param saleTokenAmount Amount of sale tokens returned
      */
-    event FailedSaleOwnerSettled(
-        address indexed owner,
+    event FailedSaleSellerSettled(
+        address indexed seller,
         uint256 saleTokenAmount
     );
 
@@ -261,10 +272,10 @@ interface IPublicSaleV1 {
     function saleState() external view returns (SaleState state);
 
     /**
-     * @notice Returns whether the owner has settled
-     * @return settled True if owner has settled, false otherwise
+     * @notice Returns whether the seller has settled
+     * @return settled True if seller has settled, false otherwise
      */
-    function ownerSettled() external view returns (bool settled);
+    function sellerSettled() external view returns (bool settled);
 
     /**
      * @notice Returns the sale start timestamp
@@ -435,15 +446,15 @@ interface IPublicSaleV1 {
     ) external;
 
     /**
-     * @notice Settles user's commitment after sale ends
+     * @notice Buyer settles user's commitment after sale ends
      * @param recipient_ Address to receive tokens (sale tokens if successful, commitment tokens if failed)
      * @dev Can only be called after sale has ended
      */
-    function settle(address recipient_) external;
+    function buyerSettle(address recipient_) external;
 
     /**
-     * @notice Owner settles the sale proceeds and fees
-     * @dev Can only be called by owner after sale has ended
+     * @notice Seller settles sale proceeds and fees
+     * @dev Can be called by anyone after sale has ended
      */
-    function ownerSettle() external;
+    function sellerSettle() external;
 }

@@ -19,9 +19,6 @@ import {InitializerEventEmitter} from "../../InitializerEventEmitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {
-    Ownable2StepUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -36,8 +33,7 @@ contract PublicSaleV1 is
     IVersion,
     DeploymentBlockInitializable,
     InitializerEventEmitter,
-    ERC165,
-    Ownable2StepUpgradeable
+    ERC165
 {
     using SafeERC20 for IERC20;
 
@@ -51,7 +47,7 @@ contract PublicSaleV1 is
      * @custom:storage-location erc7201:Decent.PublicSale.main
      */
     struct PublicSaleStorage {
-        bool ownerSettled;
+        bool sellerSettled;
         uint48 saleStartTimestamp;
         uint48 saleEndTimestamp;
         address commitmentToken;
@@ -157,7 +153,6 @@ contract PublicSaleV1 is
         if (params_.protocolFee > PRECISION) revert InvalidProtocolFee();
 
         __InitializerEventEmitter_init(abi.encode(params_));
-        __Ownable_init(params_.owner);
         __DeploymentBlockInitializable_init();
 
         // if hedgey lockup is enabled, validate the params
@@ -234,9 +229,9 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function ownerSettled() external view virtual override returns (bool) {
+    function sellerSettled() external view virtual override returns (bool) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
-        return $.ownerSettled;
+        return $.sellerSettled;
     }
 
     /**
@@ -566,7 +561,7 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function settle(address recipient_) public virtual override {
+    function buyerSettle(address recipient_) public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
         if ($.settled[msg.sender]) revert AlreadySettled();
@@ -591,7 +586,7 @@ contract PublicSaleV1 is
                 );
 
                 // create hedgey lockup plan for the caller
-                IVotingTokenLockupPlans(
+                uint256 hedgeyLockupPlanId = IVotingTokenLockupPlans(
                     $.hedgeyLockupParams.votingTokenLockupPlans
                 ).createPlan(
                         recipient_,
@@ -603,12 +598,23 @@ contract PublicSaleV1 is
                             $.hedgeyLockupParams.ratePercentage) / PRECISION,
                         $.hedgeyLockupParams.period
                     );
+
+                emit SuccessfulSaleBuyerSettledHedgey(
+                    msg.sender,
+                    recipient_,
+                    saleTokenAmount,
+                    hedgeyLockupPlanId
+                );
             } else {
                 // send the caller their purchased sale tokens
                 IERC20($.saleToken).safeTransfer(recipient_, saleTokenAmount);
-            }
 
-            emit SuccessfulSaleSettled(msg.sender, recipient_, saleTokenAmount);
+                emit SuccessfulSaleBuyerSettled(
+                    msg.sender,
+                    recipient_,
+                    saleTokenAmount
+                );
+            }
         } else if (state == SaleState.FAILED) {
             // sale failed, refund the caller their commitment tokens
             uint256 commitmentTokenAmount = $.commitments[msg.sender];
@@ -619,7 +625,7 @@ contract PublicSaleV1 is
                 commitmentTokenAmount
             );
 
-            emit FailedSaleSettled(
+            emit FailedSaleBuyerSettled(
                 msg.sender,
                 recipient_,
                 commitmentTokenAmount
@@ -632,12 +638,12 @@ contract PublicSaleV1 is
     /**
      * @inheritdoc IPublicSaleV1
      */
-    function ownerSettle() public virtual override onlyOwner {
+    function sellerSettle() public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
 
-        if ($.ownerSettled) revert AlreadySettled();
+        if ($.sellerSettled) revert AlreadySettled();
 
-        $.ownerSettled = true;
+        $.sellerSettled = true;
 
         SaleState state = saleState();
 
@@ -669,7 +675,7 @@ contract PublicSaleV1 is
                 _protocolFee
             );
 
-            emit SuccessfulSaleOwnerSettled(
+            emit SuccessfulSaleSellerSettled(
                 msg.sender,
                 saleProceeds,
                 _protocolFee
@@ -685,7 +691,7 @@ contract PublicSaleV1 is
                 saleTokenAmount
             );
 
-            emit FailedSaleOwnerSettled(msg.sender, saleTokenAmount);
+            emit FailedSaleSellerSettled(msg.sender, saleTokenAmount);
         } else {
             revert SaleNotEnded();
         }
