@@ -209,14 +209,6 @@ function getLockupPlanCreatedEvent(
     const parsedEvent = votingTokenLockupPlans.interface.parseLog(planCreatedEvent);
     return {
       planId: parsedEvent?.args?.[0],
-      recipient: parsedEvent?.args?.[1],
-      token: parsedEvent?.args?.[2],
-      amount: parsedEvent?.args?.[3],
-      start: parsedEvent?.args?.[4],
-      cliff: parsedEvent?.args?.[5],
-      end: parsedEvent?.args?.[6],
-      rate: parsedEvent?.args?.[7],
-      period: parsedEvent?.args?.[8],
     };
   }
 
