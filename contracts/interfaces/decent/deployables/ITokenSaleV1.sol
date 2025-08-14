@@ -470,5 +470,3 @@ interface ITokenSaleV1 {
      */
     function sellerSettle() external;
 }
-
-

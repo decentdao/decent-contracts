@@ -55,7 +55,7 @@ async function deployTokenSaleProxy(
     BigInt(params.saleTokenPrice);
 
   // Deploy implementation
-  const publicSaleImplementation = await new TokenSaleV1__factory(deployer).deploy();
+  const tokenSaleImplementation = await new TokenSaleV1__factory(deployer).deploy();
   const proxyFactory = new ERC1967Proxy__factory(deployer);
 
   // Calculate proxy address before deployment
@@ -65,12 +65,12 @@ async function deployTokenSaleProxy(
   // Approve the proxy address
   await saleToken.connect(saleTokenHolder).approve(proxyAddress, saleTokenAmount);
 
-  const initializeCalldata = publicSaleImplementation.interface.encodeFunctionData('initialize', [
+  const initializeCalldata = tokenSaleImplementation.interface.encodeFunctionData('initialize', [
     params,
   ]);
 
   const proxy = await proxyFactory.deploy(
-    await publicSaleImplementation.getAddress(),
+    await tokenSaleImplementation.getAddress(),
     initializeCalldata,
   );
 
@@ -234,7 +234,7 @@ describe('TokenSaleV1', () => {
   let saleTokenHolder: SignerWithAddress;
   let nonCommitter: SignerWithAddress;
 
-  let publicSale: TokenSaleV1;
+  let tokenSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
   let kycVerifier: MockKYCVerifier;
@@ -306,41 +306,41 @@ describe('TokenSaleV1', () => {
 
   describe('Proxy Deployment & Initialization', () => {
     it('should deploy and initialize properly with valid parameters', async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
 
       // Verify all parameters are set correctly
-      expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
-      expect(await publicSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
-      expect(await publicSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
-      expect(await publicSale.saleToken()).to.equal(defaultParams.saleToken);
-      expect(await publicSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
-      expect(await publicSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
-      expect(await publicSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
-      expect(await publicSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
-      expect(await publicSale.maximumCommitment()).to.equal(defaultParams.maximumCommitment);
-      expect(await publicSale.minimumTotalCommitment()).to.equal(
+      expect(await tokenSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
+      expect(await tokenSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
+      expect(await tokenSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
+      expect(await tokenSale.saleToken()).to.equal(defaultParams.saleToken);
+      expect(await tokenSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
+      expect(await tokenSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
+      expect(await tokenSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
+      expect(await tokenSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
+      expect(await tokenSale.maximumCommitment()).to.equal(defaultParams.maximumCommitment);
+      expect(await tokenSale.minimumTotalCommitment()).to.equal(
         defaultParams.minimumTotalCommitment,
       );
-      expect(await publicSale.maximumTotalCommitment()).to.equal(
+      expect(await tokenSale.maximumTotalCommitment()).to.equal(
         defaultParams.maximumTotalCommitment,
       );
-      expect(await publicSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
-      expect(await publicSale.commitmentTokenProtocolFee()).to.equal(
+      expect(await tokenSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
+      expect(await tokenSale.commitmentTokenProtocolFee()).to.equal(
         defaultParams.commitmentTokenProtocolFee,
       );
-      expect(await publicSale.saleTokenProtocolFee()).to.equal(defaultParams.saleTokenProtocolFee);
-      expect(await publicSale.hedgeyLockupEnabled()).to.equal(
+      expect(await tokenSale.saleTokenProtocolFee()).to.equal(defaultParams.saleTokenProtocolFee);
+      expect(await tokenSale.hedgeyLockupEnabled()).to.equal(
         defaultParams.hedgeyLockupParams.enabled,
       );
-      expect(await publicSale.hedgeyLockupStart()).to.equal(defaultParams.hedgeyLockupParams.start);
-      expect(await publicSale.hedgeyLockupCliff()).to.equal(defaultParams.hedgeyLockupParams.cliff);
-      expect(await publicSale.hedgeyLockupRatePercentage()).to.equal(
+      expect(await tokenSale.hedgeyLockupStart()).to.equal(defaultParams.hedgeyLockupParams.start);
+      expect(await tokenSale.hedgeyLockupCliff()).to.equal(defaultParams.hedgeyLockupParams.cliff);
+      expect(await tokenSale.hedgeyLockupRatePercentage()).to.equal(
         defaultParams.hedgeyLockupParams.ratePercentage,
       );
-      expect(await publicSale.hedgeyLockupPeriod()).to.equal(
+      expect(await tokenSale.hedgeyLockupPeriod()).to.equal(
         defaultParams.hedgeyLockupParams.period,
       );
-      expect(await publicSale.hedgeyVotingTokenLockupPlans()).to.equal(
+      expect(await tokenSale.hedgeyVotingTokenLockupPlans()).to.equal(
         defaultParams.hedgeyLockupParams.votingTokenLockupPlans,
       );
 
@@ -350,7 +350,7 @@ describe('TokenSaleV1', () => {
           (TEST_CONSTANTS.PRECISION + BigInt(defaultParams.saleTokenProtocolFee))) /
         BigInt(defaultParams.saleTokenPrice);
 
-      expect(await saleToken.balanceOf(await publicSale.getAddress())).to.equal(
+      expect(await saleToken.balanceOf(await tokenSale.getAddress())).to.equal(
         expectedSaleTokenAmount,
       );
     });
@@ -517,10 +517,10 @@ describe('TokenSaleV1', () => {
     });
 
     it('should prevent double initialization', async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
 
-      await expect(publicSale.initialize(defaultParams)).to.be.revertedWithCustomError(
-        publicSale,
+      await expect(tokenSale.initialize(defaultParams)).to.be.revertedWithCustomError(
+        tokenSale,
         'InvalidInitialization',
       );
     });
@@ -528,16 +528,16 @@ describe('TokenSaleV1', () => {
 
   describe('Sale State Transitions', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should return NOT_STARTED when block.timestamp < saleStartTimestamp', async () => {
-      await expectSaleState(publicSale, SaleState.NOT_STARTED);
+      await expectSaleState(tokenSale, SaleState.NOT_STARTED);
     });
 
     it('should return ACTIVE when sale is ongoing', async () => {
-      await moveToSaleStart(publicSale);
-      await expectSaleState(publicSale, SaleState.ACTIVE);
+      await moveToSaleStart(tokenSale);
+      await expectSaleState(tokenSale, SaleState.ACTIVE);
     });
 
     it('should return SUCCEEDED when totalCommitments >= maximumTotalCommitment', async () => {
@@ -571,29 +571,29 @@ describe('TokenSaleV1', () => {
     });
 
     it('should return SUCCEEDED when sale ended and totalCommitments >= minimumTotalCommitment', async () => {
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Setup initial commitments
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [BigInt(defaultParams.minimumTotalCommitment), BigInt(defaultParams.maximumCommitment)],
       );
 
       // Alice commits minimum per user
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
 
       // Bob commits the rest
-      await publicSale
+      await tokenSale
         .connect(bob)
         .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
 
       // Reach minimum total commitment
       await reachMinimumTotalCommitment(
-        publicSale,
+        tokenSale,
         commitmentToken,
         BigInt(defaultParams.minimumTotalCommitment),
         BigInt(defaultParams.maximumCommitment),
@@ -604,59 +604,59 @@ describe('TokenSaleV1', () => {
       );
 
       // Move past sale end
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
 
-      await expectSaleState(publicSale, SaleState.SUCCEEDED);
+      await expectSaleState(tokenSale, SaleState.SUCCEEDED);
     });
 
     it('should return FAILED when sale ended and totalCommitments < minimumTotalCommitment', async () => {
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Commit less than minimum total
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice],
         [BigInt(defaultParams.minimumCommitment)],
       );
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
 
       // Move past sale end
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
 
-      await expectSaleState(publicSale, SaleState.FAILED);
+      await expectSaleState(tokenSale, SaleState.FAILED);
     });
 
     it('should handle edge case at exact saleStartTimestamp', async () => {
       await time.increaseTo(Number(defaultParams.saleStartTimestamp) - 1);
-      await expectSaleState(publicSale, SaleState.NOT_STARTED);
+      await expectSaleState(tokenSale, SaleState.NOT_STARTED);
 
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
-      await expectSaleState(publicSale, SaleState.ACTIVE);
+      await expectSaleState(tokenSale, SaleState.ACTIVE);
     });
 
     it('should handle edge case at exact saleEndTimestamp', async () => {
       await time.increaseTo(defaultParams.saleEndTimestamp);
       // Still active at exact end timestamp if not enough commitments
-      await expectSaleState(publicSale, SaleState.ACTIVE);
+      await expectSaleState(tokenSale, SaleState.ACTIVE);
 
       await time.increaseTo(Number(defaultParams.saleEndTimestamp) + 1);
       // Failed after end timestamp with no commitments
-      await expectSaleState(publicSale, SaleState.FAILED);
+      await expectSaleState(tokenSale, SaleState.FAILED);
     });
   });
 
   describe('Commitment Increase - ERC20 Token', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
-      await moveToSaleStart(publicSale);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
+      await moveToSaleStart(tokenSale);
 
       // Setup commitment tokens for test accounts
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [ethers.parseEther('10000'), ethers.parseEther('10000')],
       );
@@ -665,42 +665,42 @@ describe('TokenSaleV1', () => {
     it('should allow first commitment by user', async () => {
       const commitAmount = ethers.parseEther('100');
       await expect(
-        publicSale.connect(alice).increaseCommitmentERC20(commitAmount, ethers.getBytes('0x'), 0n),
+        tokenSale.connect(alice).increaseCommitmentERC20(commitAmount, ethers.getBytes('0x'), 0n),
       )
-        .to.emit(publicSale, 'CommitmentIncreased')
+        .to.emit(tokenSale, 'CommitmentIncreased')
         .withArgs(alice.address, commitAmount);
 
-      expect(await publicSale.commitments(alice.address)).to.equal(commitAmount);
-      expect(await publicSale.totalCommitments()).to.equal(commitAmount);
+      expect(await tokenSale.commitments(alice.address)).to.equal(commitAmount);
+      expect(await tokenSale.totalCommitments()).to.equal(commitAmount);
     });
 
     it('should allow increasing existing commitment', async () => {
       const firstCommit = ethers.parseEther('100');
       const secondCommit = ethers.parseEther('200');
 
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(firstCommit, ethers.getBytes('0x'), 0n);
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(secondCommit, ethers.getBytes('0x'), 0n);
 
-      expect(await publicSale.commitments(alice.address)).to.equal(firstCommit + secondCommit);
-      expect(await publicSale.totalCommitments()).to.equal(firstCommit + secondCommit);
+      expect(await tokenSale.commitments(alice.address)).to.equal(firstCommit + secondCommit);
+      expect(await tokenSale.totalCommitments()).to.equal(firstCommit + secondCommit);
     });
 
     it('should allow commitment that reaches exactly minimumCommitment', async () => {
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
-      expect(await publicSale.commitments(alice.address)).to.equal(defaultParams.minimumCommitment);
+      expect(await tokenSale.commitments(alice.address)).to.equal(defaultParams.minimumCommitment);
     });
 
     it('should allow commitment that reaches exactly maximumCommitment', async () => {
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
-      expect(await publicSale.commitments(alice.address)).to.equal(defaultParams.maximumCommitment);
+      expect(await tokenSale.commitments(alice.address)).to.equal(defaultParams.maximumCommitment);
     });
 
     it('should allow commitment that makes totalCommitments reach exactly maximumTotalCommitment', async () => {
@@ -767,16 +767,16 @@ describe('TokenSaleV1', () => {
       await time.increaseTo(Number(defaultParams.saleEndTimestamp) + 1);
 
       await expect(
-        publicSale
+        tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(publicSale, 'SaleNotActive');
+      ).to.be.revertedWithCustomError(tokenSale, 'SaleNotActive');
     });
 
     it('should revert when increaseAmount is 0', async () => {
       await expect(
-        publicSale.connect(alice).increaseCommitmentERC20(0, ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(publicSale, 'ZeroAmount');
+        tokenSale.connect(alice).increaseCommitmentERC20(0, ethers.getBytes('0x'), 0n),
+      ).to.be.revertedWithCustomError(tokenSale, 'ZeroAmount');
     });
 
     it('should revert when increase would exceed maximumTotalCommitment', async () => {
@@ -822,22 +822,22 @@ describe('TokenSaleV1', () => {
     it('should revert when new commitment < minimumCommitment', async () => {
       const tooSmall = BigInt(defaultParams.minimumCommitment) - ethers.parseEther('1');
       await expect(
-        publicSale.connect(alice).increaseCommitmentERC20(tooSmall, ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(publicSale, 'MinimumCommitment');
+        tokenSale.connect(alice).increaseCommitmentERC20(tooSmall, ethers.getBytes('0x'), 0n),
+      ).to.be.revertedWithCustomError(tokenSale, 'MinimumCommitment');
     });
 
     it('should revert when new commitment > maximumCommitment per user', async () => {
       const tooMuch = BigInt(defaultParams.maximumCommitment) + ethers.parseEther('1');
       await expect(
-        publicSale.connect(alice).increaseCommitmentERC20(tooMuch, ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(publicSale, 'MaximumCommitment');
+        tokenSale.connect(alice).increaseCommitmentERC20(tooMuch, ethers.getBytes('0x'), 0n),
+      ).to.be.revertedWithCustomError(tokenSale, 'MaximumCommitment');
     });
 
     it('should revert when KYC verification fails', async () => {
       await kycVerifier.setVerify(false);
 
       await expect(
-        publicSale
+        tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
@@ -1063,7 +1063,7 @@ describe('TokenSaleV1', () => {
       const planCreated = getLockupPlanCreatedEvent(receipt2, votingTokenLockupPlans);
       const planId = planCreated?.planId;
 
-      // Find SuccessfulSaleBuyerSettledHedgey event emitted by PublicSale
+      // Find SuccessfulSaleBuyerSettledHedgey event emitted by TokenSale
       const saleLog = (receipt2?.logs ?? []).find((l: any) => {
         try {
           const parsed = hedgeySale.interface.parseLog(l);
@@ -1083,30 +1083,30 @@ describe('TokenSaleV1', () => {
 
   describe('User Settlement - Success Case without Hedgey Lockup', () => {
     beforeEach(async () => {
-      publicSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
+      tokenSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
         startOffset: 60,
       });
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Setup commitments
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [ethers.parseEther('50000'), ethers.parseEther('50000')],
       );
 
       // Make enough commitments to succeed
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
-      await publicSale
+      await tokenSale
         .connect(bob)
         .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
 
       // Reach minimum total commitment
       await reachMinimumTotalCommitment(
-        publicSale,
+        tokenSale,
         commitmentToken,
         BigInt(defaultParams.minimumTotalCommitment),
         BigInt(defaultParams.maximumCommitment),
@@ -1117,46 +1117,46 @@ describe('TokenSaleV1', () => {
       );
 
       // Move to end of sale
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
     });
 
     it('should allow user to settle and receive sale tokens directly', async () => {
-      const commitment = await publicSale.commitments(alice.address);
+      const commitment = await tokenSale.commitments(alice.address);
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await expect(publicSale.connect(alice).buyerSettle(alice.address))
-        .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
+      await expect(tokenSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(tokenSale, 'SuccessfulSaleBuyerSettled')
         .withArgs(alice.address, alice.address, expectedSaleTokens);
 
       expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokens);
-      expect(await publicSale.settled(alice.address)).to.be.true;
+      expect(await tokenSale.settled(alice.address)).to.be.true;
     });
 
     it('should allow settlement to different recipient address', async () => {
-      const commitment = await publicSale.commitments(alice.address);
+      const commitment = await tokenSale.commitments(alice.address);
       const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await publicSale.connect(alice).buyerSettle(bob.address);
+      await tokenSale.connect(alice).buyerSettle(bob.address);
 
       expect(await saleToken.balanceOf(bob.address)).to.equal(expectedSaleTokens);
       expect(await saleToken.balanceOf(alice.address)).to.equal(0);
-      expect(await publicSale.settled(alice.address)).to.be.true;
+      expect(await tokenSale.settled(alice.address)).to.be.true;
     });
 
     it('should revert when user settles twice', async () => {
-      await publicSale.connect(alice).buyerSettle(alice.address);
+      await tokenSale.connect(alice).buyerSettle(alice.address);
 
       await expect(
-        publicSale.connect(alice).buyerSettle(alice.address),
-      ).to.be.revertedWithCustomError(publicSale, 'AlreadySettled');
+        tokenSale.connect(alice).buyerSettle(alice.address),
+      ).to.be.revertedWithCustomError(tokenSale, 'AlreadySettled');
     });
 
     it('should revert when user has no commitment', async () => {
       await expect(
-        publicSale.connect(nonCommitter).buyerSettle(nonCommitter.address),
-      ).to.be.revertedWithCustomError(publicSale, 'ZeroCommitment');
+        tokenSale.connect(nonCommitter).buyerSettle(nonCommitter.address),
+      ).to.be.revertedWithCustomError(tokenSale, 'ZeroCommitment');
     });
 
     it('should revert when sale is still active', async () => {
@@ -1185,15 +1185,15 @@ describe('TokenSaleV1', () => {
 
   describe('User Settlement - Failure Case', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       // Setup minimal commitments (not enough to succeed)
       await commitmentToken.mint(alice.address, ethers.parseEther('100'));
       await commitmentToken
         .connect(alice)
-        .approve(await publicSale.getAddress(), ethers.parseEther('100'));
-      await publicSale
+        .approve(await tokenSale.getAddress(), ethers.parseEther('100'));
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
 
@@ -1202,26 +1202,26 @@ describe('TokenSaleV1', () => {
     });
 
     it('should refund exact commitment amount when sale fails', async () => {
-      const commitment = await publicSale.commitments(alice.address);
+      const commitment = await tokenSale.commitments(alice.address);
       const initialBalance = await commitmentToken.balanceOf(alice.address);
 
-      await expect(publicSale.connect(alice).buyerSettle(alice.address))
-        .to.emit(publicSale, 'FailedSaleBuyerSettled')
+      await expect(tokenSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(tokenSale, 'FailedSaleBuyerSettled')
         .withArgs(alice.address, alice.address, commitment);
 
       expect(await commitmentToken.balanceOf(alice.address)).to.equal(initialBalance + commitment);
-      expect(await publicSale.settled(alice.address)).to.be.true;
+      expect(await tokenSale.settled(alice.address)).to.be.true;
     });
 
     it('should not transfer any sale tokens when sale fails', async () => {
-      await publicSale.connect(alice).buyerSettle(alice.address);
+      await tokenSale.connect(alice).buyerSettle(alice.address);
       expect(await saleToken.balanceOf(alice.address)).to.equal(0);
     });
 
     it('should allow settlement to different recipient for refund', async () => {
-      const commitment = await publicSale.commitments(alice.address);
+      const commitment = await tokenSale.commitments(alice.address);
 
-      await publicSale.connect(alice).buyerSettle(bob.address);
+      await tokenSale.connect(alice).buyerSettle(bob.address);
 
       expect(await commitmentToken.balanceOf(bob.address)).to.equal(commitment);
       expect(await commitmentToken.balanceOf(alice.address)).to.equal(
@@ -1232,29 +1232,29 @@ describe('TokenSaleV1', () => {
 
   describe('Owner Settlement - Success Case', () => {
     beforeEach(async () => {
-      publicSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
+      tokenSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
         startOffset: 60,
       });
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Setup successful sale
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [ethers.parseEther('50000'), ethers.parseEther('50000')],
       );
 
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.minimumCommitment, ethers.getBytes('0x'), 0n);
-      await publicSale
+      await tokenSale
         .connect(bob)
         .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
 
       // Reach minimum total commitment
       await reachMinimumTotalCommitment(
-        publicSale,
+        tokenSale,
         commitmentToken,
         BigInt(defaultParams.minimumTotalCommitment),
         BigInt(defaultParams.maximumCommitment),
@@ -1265,16 +1265,16 @@ describe('TokenSaleV1', () => {
       );
 
       // Move to end of sale
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
     });
 
     it('should distribute proceeds and protocol fees correctly', async () => {
-      const totalCommitments = await publicSale.totalCommitments();
+      const totalCommitments = await tokenSale.totalCommitments();
       const commitmentTokenProtocolFeeAmount =
         (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
       const commitmentTokenAmountToSeller = totalCommitments - commitmentTokenProtocolFeeAmount;
-      const saleTokenTotalBalance = await saleToken.balanceOf(await publicSale.getAddress());
+      const saleTokenTotalBalance = await saleToken.balanceOf(await tokenSale.getAddress());
 
       const saleTokenSold =
         (BigInt(totalCommitments) * TEST_CONSTANTS.PRECISION) /
@@ -1287,8 +1287,8 @@ describe('TokenSaleV1', () => {
       const leftoverSaleTokenAmount =
         saleTokenTotalBalance - saleTokenSold - saleTokenProtocolFeeAmount;
 
-      await expect(publicSale.connect(seller).sellerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+      await expect(tokenSale.connect(seller).sellerSettle())
+        .to.emit(tokenSale, 'SuccessfulSaleSellerSettled')
         .withArgs(
           seller.address,
           commitmentTokenProtocolFeeAmount,
@@ -1309,7 +1309,7 @@ describe('TokenSaleV1', () => {
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
       );
-      expect(await publicSale.sellerSettled()).to.be.true;
+      expect(await tokenSale.sellerSettled()).to.be.true;
     });
 
     it('should handle different protocol fee percentages', async () => {
@@ -1364,32 +1364,32 @@ describe('TokenSaleV1', () => {
     });
 
     it('should revert when owner settles twice', async () => {
-      await publicSale.connect(seller).sellerSettle();
+      await tokenSale.connect(seller).sellerSettle();
 
-      await expect(publicSale.connect(seller).sellerSettle()).to.be.revertedWithCustomError(
-        publicSale,
+      await expect(tokenSale.connect(seller).sellerSettle()).to.be.revertedWithCustomError(
+        tokenSale,
         'AlreadySettled',
       );
     });
 
     it('should allow anyone to settle', async () => {
-      await expect(publicSale.connect(alice).sellerSettle()).to.not.be.reverted;
+      await expect(tokenSale.connect(alice).sellerSettle()).to.not.be.reverted;
     });
   });
 
   describe('Owner Settlement - Failure Case', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       // Setup failed sale
       await commitmentToken.mint(alice.address, ethers.parseEther('1000'));
       await commitmentToken
         .connect(alice)
-        .approve(await publicSale.getAddress(), ethers.parseEther('1000'));
+        .approve(await tokenSale.getAddress(), ethers.parseEther('1000'));
       await kycVerifier.setVerify(true);
 
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n);
 
@@ -1398,10 +1398,10 @@ describe('TokenSaleV1', () => {
     });
 
     it('should return all sale tokens and collected fees', async () => {
-      const saleTokenBalance = await saleToken.balanceOf(await publicSale.getAddress());
+      const saleTokenBalance = await saleToken.balanceOf(await tokenSale.getAddress());
 
-      await expect(publicSale.connect(seller).sellerSettle())
-        .to.emit(publicSale, 'FailedSaleSellerSettled')
+      await expect(tokenSale.connect(seller).sellerSettle())
+        .to.emit(tokenSale, 'FailedSaleSellerSettled')
         .withArgs(seller.address, saleTokenBalance);
 
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(saleTokenBalance);
@@ -1411,37 +1411,37 @@ describe('TokenSaleV1', () => {
 
   describe('Full Settlement - Success Case - Minimum total commitment', () => {
     beforeEach(async () => {
-      publicSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
+      tokenSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
         startOffset: 60,
         minimumTotalCommitment: ethers.parseEther('1000'),
       });
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Setup successful sale
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [ethers.parseEther('50000'), ethers.parseEther('50000')],
       );
 
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(ethers.parseEther('250'), ethers.getBytes('0x'), 0n);
-      await publicSale
+      await tokenSale
         .connect(bob)
         .increaseCommitmentERC20(ethers.parseEther('750'), ethers.getBytes('0x'), 0n);
 
       // Move to end of sale
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
     });
 
     it('should distribute proceeds and protocol fees correctly', async () => {
-      const totalCommitments = await publicSale.totalCommitments();
-      const escrowedSaleTokenAmount = await saleToken.balanceOf(await publicSale.getAddress());
+      const totalCommitments = await tokenSale.totalCommitments();
+      const escrowedSaleTokenAmount = await saleToken.balanceOf(await tokenSale.getAddress());
 
-      await publicSale.connect(alice).buyerSettle(alice.address);
-      await publicSale.connect(bob).buyerSettle(bob.address);
+      await tokenSale.connect(alice).buyerSettle(alice.address);
+      await tokenSale.connect(bob).buyerSettle(bob.address);
 
       const aliceExpectedSaleTokens =
         (BigInt(ethers.parseEther('250')) * TEST_CONSTANTS.PRECISION) /
@@ -1469,8 +1469,8 @@ describe('TokenSaleV1', () => {
       const leftoverSaleTokenAmount =
         escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
-      await expect(publicSale.connect(seller).sellerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+      await expect(tokenSale.connect(seller).sellerSettle())
+        .to.emit(tokenSale, 'SuccessfulSaleSellerSettled')
         .withArgs(
           seller.address,
           commitmentTokenProtocolFeeAmount,
@@ -1491,48 +1491,48 @@ describe('TokenSaleV1', () => {
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
       );
-      expect(await publicSale.sellerSettled()).to.be.true;
+      expect(await tokenSale.sellerSettled()).to.be.true;
 
-      // all users have settled, verify that public sale has no remaining commitment or sale tokens
-      expect(await saleToken.balanceOf(await publicSale.getAddress())).to.equal(0);
-      expect(await commitmentToken.balanceOf(await publicSale.getAddress())).to.equal(0);
+      // all users have settled, verify that token sale has no remaining commitment or sale tokens
+      expect(await saleToken.balanceOf(await tokenSale.getAddress())).to.equal(0);
+      expect(await commitmentToken.balanceOf(await tokenSale.getAddress())).to.equal(0);
     });
   });
 
   describe('Full Settlement - Success Case - Maximum total commitment', () => {
     beforeEach(async () => {
-      publicSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
+      tokenSale = await deployTestSale(deployer, saleToken, saleTokenHolder, defaultParams, {
         startOffset: 60,
         minimumTotalCommitment: ethers.parseEther('1000'),
         maximumTotalCommitment: ethers.parseEther('2000'),
       });
-      await moveToSaleStart(publicSale);
+      await moveToSaleStart(tokenSale);
 
       // Setup successful sale
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice, bob],
         [ethers.parseEther('50000'), ethers.parseEther('50000')],
       );
 
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(ethers.parseEther('1000'), ethers.getBytes('0x'), 0n);
-      await publicSale
+      await tokenSale
         .connect(bob)
         .increaseCommitmentERC20(ethers.parseEther('1000'), ethers.getBytes('0x'), 0n);
 
       // Move to end of sale
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
     });
 
     it('should distribute proceeds and protocol fees correctly', async () => {
-      const totalCommitments = await publicSale.totalCommitments();
-      const escrowedSaleTokenAmount = await saleToken.balanceOf(await publicSale.getAddress());
+      const totalCommitments = await tokenSale.totalCommitments();
+      const escrowedSaleTokenAmount = await saleToken.balanceOf(await tokenSale.getAddress());
 
-      await publicSale.connect(alice).buyerSettle(alice.address);
-      await publicSale.connect(bob).buyerSettle(bob.address);
+      await tokenSale.connect(alice).buyerSettle(alice.address);
+      await tokenSale.connect(bob).buyerSettle(bob.address);
 
       const aliceExpectedSaleTokens =
         (BigInt(ethers.parseEther('1000')) * TEST_CONSTANTS.PRECISION) /
@@ -1560,8 +1560,8 @@ describe('TokenSaleV1', () => {
       const leftoverSaleTokenAmount =
         escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
-      await expect(publicSale.connect(seller).sellerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+      await expect(tokenSale.connect(seller).sellerSettle())
+        .to.emit(tokenSale, 'SuccessfulSaleSellerSettled')
         .withArgs(
           seller.address,
           commitmentTokenProtocolFeeAmount,
@@ -1582,30 +1582,30 @@ describe('TokenSaleV1', () => {
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
       );
-      expect(await publicSale.sellerSettled()).to.be.true;
+      expect(await tokenSale.sellerSettled()).to.be.true;
 
-      // all users have settled, verify that public sale has no remaining commitment or sale tokens
-      expect(await saleToken.balanceOf(await publicSale.getAddress())).to.equal(0);
-      expect(await commitmentToken.balanceOf(await publicSale.getAddress())).to.equal(0);
+      // all users have settled, verify that token sale has no remaining commitment or sale tokens
+      expect(await saleToken.balanceOf(await tokenSale.getAddress())).to.equal(0);
+      expect(await commitmentToken.balanceOf(await tokenSale.getAddress())).to.equal(0);
     });
   });
 
   describe('KYC Verification', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       await commitmentToken.mint(alice.address, ethers.parseEther('1000'));
       await commitmentToken
         .connect(alice)
-        .approve(await publicSale.getAddress(), ethers.parseEther('1000'));
+        .approve(await tokenSale.getAddress(), ethers.parseEther('1000'));
     });
 
     it('should allow commitment increases when KYC verification passes', async () => {
       await kycVerifier.setVerify(true);
 
       await expect(
-        publicSale
+        tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
       ).to.not.be.reverted;
@@ -1615,7 +1615,7 @@ describe('TokenSaleV1', () => {
       await kycVerifier.setVerify(false);
 
       await expect(
-        publicSale
+        tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
@@ -1655,7 +1655,7 @@ describe('TokenSaleV1', () => {
 
   describe('Edge Cases & Security', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should handle race to reach maximumTotalCommitment', async () => {
@@ -1717,62 +1717,62 @@ describe('TokenSaleV1', () => {
 
   describe('Event Emission', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
-      await moveToSaleStart(publicSale);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
+      await moveToSaleStart(tokenSale);
     });
 
     it('should emit CommitmentIncreased with correct parameters', async () => {
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice],
         [ethers.parseEther('1000')],
       );
 
       const amount = ethers.parseEther('100');
       await expect(
-        publicSale.connect(alice).increaseCommitmentERC20(amount, ethers.getBytes('0x'), 0n),
+        tokenSale.connect(alice).increaseCommitmentERC20(amount, ethers.getBytes('0x'), 0n),
       )
-        .to.emit(publicSale, 'CommitmentIncreased')
+        .to.emit(tokenSale, 'CommitmentIncreased')
         .withArgs(alice.address, amount);
     });
 
     it('should emit all settlement events correctly', async () => {
-      const escrowedSaleTokenAmount = await saleToken.balanceOf(await publicSale.getAddress());
+      const escrowedSaleTokenAmount = await saleToken.balanceOf(await tokenSale.getAddress());
 
       // Setup successful sale - need multiple users
       await mintAndApproveCommitmentTokens(
         commitmentToken,
-        publicSale,
+        tokenSale,
         [alice],
         [BigInt(defaultParams.maximumCommitment)],
       );
-      await publicSale
+      await tokenSale
         .connect(alice)
         .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
 
       // Reach minimum total commitment
       await reachMinimumTotalCommitment(
-        publicSale,
+        tokenSale,
         commitmentToken,
         BigInt(defaultParams.minimumTotalCommitment),
         BigInt(defaultParams.maximumCommitment),
         [{ user: alice, amount: BigInt(defaultParams.maximumCommitment) }],
       );
 
-      await moveToSaleEnd(publicSale);
+      await moveToSaleEnd(tokenSale);
 
       // User settlement
-      const aliceCommitment = await publicSale.commitments(alice.address);
+      const aliceCommitment = await tokenSale.commitments(alice.address);
       const aliceExpectedSaleTokens =
         (BigInt(aliceCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      await expect(publicSale.connect(alice).buyerSettle(alice.address))
-        .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
+      await expect(tokenSale.connect(alice).buyerSettle(alice.address))
+        .to.emit(tokenSale, 'SuccessfulSaleBuyerSettled')
         .withArgs(alice.address, alice.address, aliceExpectedSaleTokens);
 
       // Owner settlement
-      const totalCommitments = await publicSale.totalCommitments();
+      const totalCommitments = await tokenSale.totalCommitments();
       const commitmentTokenProtocolFeeAmount =
         (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
@@ -1786,8 +1786,8 @@ describe('TokenSaleV1', () => {
       const leftoverSaleTokenAmount =
         escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
-      await expect(publicSale.connect(seller).sellerSettle())
-        .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
+      await expect(tokenSale.connect(seller).sellerSettle())
+        .to.emit(tokenSale, 'SuccessfulSaleSellerSettled')
         .withArgs(
           seller.address,
           commitmentTokenProtocolFeeAmount,
@@ -1800,34 +1800,34 @@ describe('TokenSaleV1', () => {
 
   describe('View Functions', () => {
     beforeEach(async () => {
-      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+      tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should return all correct values from view functions', async () => {
-      expect(await publicSale.sellerSettled()).to.be.false;
-      expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
-      expect(await publicSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
-      expect(await publicSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
-      expect(await publicSale.saleToken()).to.equal(defaultParams.saleToken);
-      expect(await publicSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
-      expect(await publicSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
-      expect(await publicSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
-      expect(await publicSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
-      expect(await publicSale.maximumCommitment()).to.equal(defaultParams.maximumCommitment);
-      expect(await publicSale.minimumTotalCommitment()).to.equal(
+      expect(await tokenSale.sellerSettled()).to.be.false;
+      expect(await tokenSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
+      expect(await tokenSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
+      expect(await tokenSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
+      expect(await tokenSale.saleToken()).to.equal(defaultParams.saleToken);
+      expect(await tokenSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
+      expect(await tokenSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
+      expect(await tokenSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
+      expect(await tokenSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
+      expect(await tokenSale.maximumCommitment()).to.equal(defaultParams.maximumCommitment);
+      expect(await tokenSale.minimumTotalCommitment()).to.equal(
         defaultParams.minimumTotalCommitment,
       );
-      expect(await publicSale.maximumTotalCommitment()).to.equal(
+      expect(await tokenSale.maximumTotalCommitment()).to.equal(
         defaultParams.maximumTotalCommitment,
       );
-      expect(await publicSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
-      expect(await publicSale.commitmentTokenProtocolFee()).to.equal(
+      expect(await tokenSale.saleTokenPrice()).to.equal(defaultParams.saleTokenPrice);
+      expect(await tokenSale.commitmentTokenProtocolFee()).to.equal(
         defaultParams.commitmentTokenProtocolFee,
       );
-      expect(await publicSale.saleTokenProtocolFee()).to.equal(defaultParams.saleTokenProtocolFee);
-      expect(await publicSale.totalCommitments()).to.equal(0);
-      expect(await publicSale.commitments(alice.address)).to.equal(0);
-      expect(await publicSale.settled(alice.address)).to.be.false;
+      expect(await tokenSale.saleTokenProtocolFee()).to.equal(defaultParams.saleTokenProtocolFee);
+      expect(await tokenSale.totalCommitments()).to.equal(0);
+      expect(await tokenSale.commitments(alice.address)).to.equal(0);
+      expect(await tokenSale.settled(alice.address)).to.be.false;
     });
   });
 });
@@ -1838,7 +1838,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
   let saleProceedsReceiver: SignerWithAddress;
   let protocolFeeReceiver: SignerWithAddress;
   let saleTokenHolder: SignerWithAddress;
-  let publicSale: TokenSaleV1;
+  let tokenSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
   let kycVerifier: MockKYCVerifier;
@@ -1891,12 +1891,12 @@ describe('TokenSaleV1 - Shared Tests', () => {
     await kycVerifier.setVerify(true);
 
     // Deploy the contract
-    publicSale = await deployTokenSaleProxy(deployer, defaultParams);
+    tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
   });
 
   describe('Deployment Block', () => {
     runDeploymentBlockTests({
-      getContract: () => publicSale,
+      getContract: () => tokenSale,
     });
   });
 
@@ -1984,7 +1984,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
 
   describe('Supports Interface', () => {
     runSupportsInterfaceTests({
-      getContract: () => publicSale,
+      getContract: () => tokenSale,
       supportedInterfaceFactories: [
         IERC165__factory,
         ITokenSaleV1__factory,
