@@ -3,15 +3,15 @@ import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import {
-  PublicSaleV1,
-  PublicSaleV1__factory,
+  TokenSaleV1,
+  TokenSaleV1__factory,
   ERC1967Proxy__factory,
   MockERC20,
   MockERC20__factory,
   MockKYCVerifier,
   MockKYCVerifier__factory,
-  IPublicSaleV1,
-  IPublicSaleV1__factory,
+  ITokenSaleV1,
+  ITokenSaleV1__factory,
   IVersion__factory,
   IDeploymentBlock__factory,
   IERC165__factory,
@@ -40,10 +40,10 @@ enum SaleState {
 }
 
 // Helper Functions
-async function deployPublicSaleProxy(
+async function deployTokenSaleProxy(
   deployer: SignerWithAddress,
-  params: IPublicSaleV1.InitializerParamsStruct,
-): Promise<PublicSaleV1> {
+  params: ITokenSaleV1.InitializerParamsStruct,
+): Promise<TokenSaleV1> {
   // Get saleToken and saleTokenHolder from params
   const saleToken = MockERC20__factory.connect(params.saleToken as string, deployer);
   const saleTokenHolder = await ethers.getSigner(params.saleTokenHolder as string);
@@ -55,7 +55,7 @@ async function deployPublicSaleProxy(
     BigInt(params.saleTokenPrice);
 
   // Deploy implementation
-  const publicSaleImplementation = await new PublicSaleV1__factory(deployer).deploy();
+  const publicSaleImplementation = await new TokenSaleV1__factory(deployer).deploy();
   const proxyFactory = new ERC1967Proxy__factory(deployer);
 
   // Calculate proxy address before deployment
@@ -74,7 +74,7 @@ async function deployPublicSaleProxy(
     initializeCalldata,
   );
 
-  return PublicSaleV1__factory.connect(await proxy.getAddress(), deployer);
+  return TokenSaleV1__factory.connect(await proxy.getAddress(), deployer);
 }
 
 interface DeployTestSaleOptions {
@@ -88,16 +88,16 @@ interface DeployTestSaleOptions {
   minimumCommitment?: bigint;
   maximumCommitment?: bigint;
   saleTokenPrice?: bigint;
-  hedgeyLockupParams?: IPublicSaleV1.HedgeyLockupParamsStruct;
+  hedgeyLockupParams?: ITokenSaleV1.HedgeyLockupParamsStruct;
 }
 
 async function deployTestSale(
   deployer: SignerWithAddress,
   saleToken: MockERC20,
   saleTokenHolder: SignerWithAddress,
-  baseParams: IPublicSaleV1.InitializerParamsStruct,
+  baseParams: ITokenSaleV1.InitializerParamsStruct,
   options: DeployTestSaleOptions = {},
-): Promise<PublicSaleV1> {
+): Promise<TokenSaleV1> {
   const currentTime = await time.latest();
   const params = {
     ...baseParams,
@@ -131,12 +131,12 @@ async function deployTestSale(
     BigInt(params.saleTokenPrice);
   await saleToken.mint(saleTokenHolder.address, requiredSaleTokens);
 
-  return deployPublicSaleProxy(deployer, params);
+  return deployTokenSaleProxy(deployer, params);
 }
 
 async function mintAndApproveCommitmentTokens(
   commitmentToken: MockERC20,
-  sale: PublicSaleV1,
+  sale: TokenSaleV1,
   users: SignerWithAddress[],
   amounts: bigint[],
 ): Promise<void> {
@@ -148,7 +148,7 @@ async function mintAndApproveCommitmentTokens(
 }
 
 async function reachMinimumTotalCommitment(
-  sale: PublicSaleV1,
+  sale: TokenSaleV1,
   commitmentToken: MockERC20,
   minimumTotalCommitment: bigint,
   maximumCommitment: bigint,
@@ -178,17 +178,17 @@ async function reachMinimumTotalCommitment(
   }
 }
 
-async function moveToSaleEnd(sale: PublicSaleV1): Promise<void> {
+async function moveToSaleEnd(sale: TokenSaleV1): Promise<void> {
   const endTimestamp = await sale.saleEndTimestamp();
   await time.increaseTo(Number(endTimestamp) + 1);
 }
 
-async function moveToSaleStart(sale: PublicSaleV1): Promise<void> {
+async function moveToSaleStart(sale: TokenSaleV1): Promise<void> {
   const startTimestamp = await sale.saleStartTimestamp();
   await time.increaseTo(Number(startTimestamp));
 }
 
-async function expectSaleState(sale: PublicSaleV1, expectedState: SaleState): Promise<void> {
+async function expectSaleState(sale: TokenSaleV1, expectedState: SaleState): Promise<void> {
   expect(await sale.saleState()).to.equal(BigInt(expectedState));
 }
 
@@ -223,7 +223,7 @@ function getLockupPlanCreatedEvent(
   return null;
 }
 
-describe('PublicSaleV1', () => {
+describe('TokenSaleV1', () => {
   let deployer: SignerWithAddress;
   let seller: SignerWithAddress;
   let alice: SignerWithAddress;
@@ -234,13 +234,13 @@ describe('PublicSaleV1', () => {
   let saleTokenHolder: SignerWithAddress;
   let nonCommitter: SignerWithAddress;
 
-  let publicSale: PublicSaleV1;
+  let publicSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
   let kycVerifier: MockKYCVerifier;
   let votingTokenLockupPlans: VotingTokenLockupPlans; // Hedgey contract
 
-  let defaultParams: IPublicSaleV1.InitializerParamsStruct;
+  let defaultParams: ITokenSaleV1.InitializerParamsStruct;
 
   beforeEach(async () => {
     [
@@ -306,7 +306,7 @@ describe('PublicSaleV1', () => {
 
   describe('Proxy Deployment & Initialization', () => {
     it('should deploy and initialize properly with valid parameters', async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
 
       // Verify all parameters are set correctly
       expect(await publicSale.saleStartTimestamp()).to.equal(defaultParams.saleStartTimestamp);
@@ -361,8 +361,8 @@ describe('PublicSaleV1', () => {
         saleStartTimestamp: BigInt(defaultParams.saleEndTimestamp) + 1n,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidSaleTimestamps',
       );
     });
@@ -374,8 +374,8 @@ describe('PublicSaleV1', () => {
         saleStartTimestamp: currentTime - 1,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidSaleStartTimestamp',
       );
     });
@@ -386,8 +386,8 @@ describe('PublicSaleV1', () => {
         minimumCommitment: BigInt(defaultParams.maximumCommitment) + 1n,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidCommitmentAmounts',
       );
     });
@@ -398,8 +398,8 @@ describe('PublicSaleV1', () => {
         minimumTotalCommitment: BigInt(defaultParams.maximumTotalCommitment) + 1n,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidTotalCommitmentAmounts',
       );
     });
@@ -410,8 +410,8 @@ describe('PublicSaleV1', () => {
         commitmentTokenProtocolFee: TEST_CONSTANTS.PRECISION + 1n,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidProtocolFee',
       );
     });
@@ -422,8 +422,8 @@ describe('PublicSaleV1', () => {
         saleTokenProtocolFee: TEST_CONSTANTS.PRECISION + 1n,
       };
 
-      await expect(deployPublicSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+      await expect(deployTokenSaleProxy(deployer, invalidParams)).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidProtocolFee',
       );
     });
@@ -443,9 +443,9 @@ describe('PublicSaleV1', () => {
       };
 
       await expect(
-        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+        deployTokenSaleProxy(deployer, invalidHedgeyParams),
       ).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidRate',
       );
     });
@@ -465,9 +465,9 @@ describe('PublicSaleV1', () => {
       };
 
       await expect(
-        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+        deployTokenSaleProxy(deployer, invalidHedgeyParams),
       ).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'RateExceedsAmount',
       );
     });
@@ -487,9 +487,9 @@ describe('PublicSaleV1', () => {
       };
 
       await expect(
-        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+        deployTokenSaleProxy(deployer, invalidHedgeyParams),
       ).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'InvalidPeriod',
       );
     });
@@ -509,15 +509,15 @@ describe('PublicSaleV1', () => {
       };
 
       await expect(
-        deployPublicSaleProxy(deployer, invalidHedgeyParams),
+        deployTokenSaleProxy(deployer, invalidHedgeyParams),
       ).to.be.revertedWithCustomError(
-        PublicSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
         'CliffExceedsEnd',
       );
     });
 
     it('should prevent double initialization', async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
 
       await expect(publicSale.initialize(defaultParams)).to.be.revertedWithCustomError(
         publicSale,
@@ -528,7 +528,7 @@ describe('PublicSaleV1', () => {
 
   describe('Sale State Transitions', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should return NOT_STARTED when block.timestamp < saleStartTimestamp', async () => {
@@ -650,7 +650,7 @@ describe('PublicSaleV1', () => {
 
   describe('Commitment Increase - ERC20 Token', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
       await moveToSaleStart(publicSale);
 
       // Setup commitment tokens for test accounts
@@ -845,11 +845,11 @@ describe('PublicSaleV1', () => {
   });
 
   describe('Commitment Increase - Native Asset (ETH)', () => {
-    let nativeSale: PublicSaleV1;
+    let nativeSale: TokenSaleV1;
 
     beforeEach(async () => {
       const nativeParams = { ...defaultParams, commitmentToken: TEST_CONSTANTS.NATIVE_ASSET };
-      nativeSale = await deployPublicSaleProxy(deployer, nativeParams);
+      nativeSale = await deployTokenSaleProxy(deployer, nativeParams);
       await moveToSaleStart(nativeSale);
     });
 
@@ -902,7 +902,7 @@ describe('PublicSaleV1', () => {
   });
 
   describe('User Settlement - Success Case with Hedgey Lockup', () => {
-    let hedgeySale: PublicSaleV1;
+    let hedgeySale: TokenSaleV1;
     let lockupStartTime: number;
 
     beforeEach(async () => {
@@ -1185,7 +1185,7 @@ describe('PublicSaleV1', () => {
 
   describe('User Settlement - Failure Case', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       // Setup minimal commitments (not enough to succeed)
@@ -1379,7 +1379,7 @@ describe('PublicSaleV1', () => {
 
   describe('Owner Settlement - Failure Case', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       // Setup failed sale
@@ -1592,7 +1592,7 @@ describe('PublicSaleV1', () => {
 
   describe('KYC Verification', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
 
       await commitmentToken.mint(alice.address, ethers.parseEther('1000'));
@@ -1623,14 +1623,14 @@ describe('PublicSaleV1', () => {
   });
 
   describe('Native Asset Handling', () => {
-    let nativeSale: PublicSaleV1;
+    let nativeSale: TokenSaleV1;
 
     beforeEach(async () => {
       const nativeParams = {
         ...defaultParams,
         commitmentToken: TEST_CONSTANTS.NATIVE_ASSET,
       };
-      nativeSale = await deployPublicSaleProxy(deployer, nativeParams);
+      nativeSale = await deployTokenSaleProxy(deployer, nativeParams);
     });
 
     it('should verify NATIVE_ASSET constant is correct', async () => {
@@ -1655,7 +1655,7 @@ describe('PublicSaleV1', () => {
 
   describe('Edge Cases & Security', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should handle race to reach maximumTotalCommitment', async () => {
@@ -1717,7 +1717,7 @@ describe('PublicSaleV1', () => {
 
   describe('Event Emission', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
       await moveToSaleStart(publicSale);
     });
 
@@ -1800,7 +1800,7 @@ describe('PublicSaleV1', () => {
 
   describe('View Functions', () => {
     beforeEach(async () => {
-      publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+      publicSale = await deployTokenSaleProxy(deployer, defaultParams);
     });
 
     it('should return all correct values from view functions', async () => {
@@ -1833,16 +1833,16 @@ describe('PublicSaleV1', () => {
 });
 
 // Run shared test suites
-describe('PublicSaleV1 - Shared Tests', () => {
+describe('TokenSaleV1 - Shared Tests', () => {
   let deployer: SignerWithAddress;
   let saleProceedsReceiver: SignerWithAddress;
   let protocolFeeReceiver: SignerWithAddress;
   let saleTokenHolder: SignerWithAddress;
-  let publicSale: PublicSaleV1;
+  let publicSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
   let kycVerifier: MockKYCVerifier;
-  let defaultParams: IPublicSaleV1.InitializerParamsStruct;
+  let defaultParams: ITokenSaleV1.InitializerParamsStruct;
 
   beforeEach(async () => {
     [deployer, saleProceedsReceiver, protocolFeeReceiver, saleTokenHolder] =
@@ -1891,7 +1891,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
     await kycVerifier.setVerify(true);
 
     // Deploy the contract
-    publicSale = await deployPublicSaleProxy(deployer, defaultParams);
+    publicSale = await deployTokenSaleProxy(deployer, defaultParams);
   });
 
   describe('Deployment Block', () => {
@@ -1909,9 +1909,9 @@ describe('PublicSaleV1 - Shared Tests', () => {
     });
 
     runInitializerEventEmitterTests({
-      contractFactory: PublicSaleV1__factory,
+      contractFactory: TokenSaleV1__factory,
       masterCopy: async () => {
-        const impl = await new PublicSaleV1__factory(testDeployer).deploy();
+        const impl = await new TokenSaleV1__factory(testDeployer).deploy();
         return await impl.getAddress();
       },
       deployer: () => testDeployer,
@@ -1987,7 +1987,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
       getContract: () => publicSale,
       supportedInterfaceFactories: [
         IERC165__factory,
-        IPublicSaleV1__factory,
+        ITokenSaleV1__factory,
         IVersion__factory,
         IDeploymentBlock__factory,
       ],

@@ -13,7 +13,7 @@ pragma solidity ^0.8.30;
  * - checkVerify view function that returns a boolean indicating if a signature is valid
  *
  * Usage:
- * - CountersignV1 and PublicSaleV1 use this to verify signers before accepting signatures
+ * - CountersignV1 and TokenSaleV1 use this to verify signers before accepting signatures
  *
  * Security:
  * - Verification logic is critical for compliance

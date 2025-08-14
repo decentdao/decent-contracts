@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IPublicSaleV1
-} from "../../interfaces/decent/deployables/IPublicSaleV1.sol";
+import {ITokenSaleV1} from "../../interfaces/decent/deployables/ITokenSaleV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {
@@ -23,13 +21,13 @@ import {
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * @title PublicSaleV1
+ * @title TokenSaleV1
  * @notice Implementation of a public token sale with KYC verification
  * @dev Supports time-based token sales with configurable parameters
  * @custom:security-contact security@decent-dao.org
  */
-contract PublicSaleV1 is
-    IPublicSaleV1,
+contract TokenSaleV1 is
+    ITokenSaleV1,
     IVersion,
     DeploymentBlockInitializable,
     InitializerEventEmitter,
@@ -42,7 +40,7 @@ contract PublicSaleV1 is
     // ======================================================================
 
     /**
-     * @notice Main storage struct for PublicSaleV1 following EIP-7201
+     * @notice Main storage struct for TokenSaleV1 following EIP-7201
      * @dev Contains all agreement configuration and signer state
      * @custom:storage-location erc7201:Decent.PublicSale.main
      */
@@ -76,9 +74,9 @@ contract PublicSaleV1 is
         0x2954b43716f55c3a12eeb02cbe9a8c7ed7e82022cc9255428b4df142a8f4fa00;
 
     /**
-     * @dev Returns the storage struct for PublicSaleV1
+     * @dev Returns the storage struct for TokenSaleV1
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
-     * @return $ The storage struct for PublicSaleV1
+     * @return $ The storage struct for TokenSaleV1
      */
     function _getPublicSaleStorage()
         internal
@@ -134,7 +132,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function initialize(
         InitializerParams memory params_
@@ -207,13 +205,13 @@ contract PublicSaleV1 is
     }
 
     // ======================================================================
-    // IPublicSaleV1
+    // ITokenSaleV1
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleState() public view virtual override returns (SaleState) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -235,7 +233,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function sellerSettled() external view virtual override returns (bool) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -243,7 +241,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleStartTimestamp()
         external
@@ -257,7 +255,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleEndTimestamp()
         external
@@ -271,7 +269,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitmentToken()
         external
@@ -285,7 +283,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleToken() external view virtual override returns (address) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -293,7 +291,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function kycVerifier() external view virtual override returns (address) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -301,7 +299,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleProceedsReceiver()
         external
@@ -315,7 +313,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function protocolFeeReceiver()
         external
@@ -329,7 +327,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function minimumCommitment()
         external
@@ -343,7 +341,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function maximumCommitment()
         external
@@ -357,7 +355,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function minimumTotalCommitment()
         external
@@ -371,7 +369,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function maximumTotalCommitment()
         external
@@ -385,7 +383,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleTokenPrice() external view virtual override returns (uint256) {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -393,7 +391,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitmentTokenProtocolFee()
         external
@@ -407,7 +405,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleTokenProtocolFee()
         external
@@ -420,7 +418,7 @@ contract PublicSaleV1 is
         return $.saleTokenProtocolFee;
     }
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function totalCommitments()
         external
@@ -434,7 +432,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitments(
         address account_
@@ -444,7 +442,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function settled(
         address account_
@@ -454,7 +452,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupEnabled()
         external
@@ -468,7 +466,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupStart()
         external
@@ -482,7 +480,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupCliff()
         external
@@ -496,7 +494,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupRatePercentage()
         external
@@ -510,7 +508,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupPeriod()
         external
@@ -524,7 +522,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyVotingTokenLockupPlans()
         external
@@ -540,7 +538,7 @@ contract PublicSaleV1 is
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function increaseCommitmentNative(
         bytes calldata verifyingSignature_,
@@ -560,7 +558,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function increaseCommitmentERC20(
         uint256 increaseAmount_,
@@ -586,7 +584,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function buyerSettle(address recipient_) public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -662,7 +660,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function sellerSettle() public virtual override {
         PublicSaleStorage storage $ = _getPublicSaleStorage();
@@ -774,13 +772,13 @@ contract PublicSaleV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IPublicSaleV1, IVersion, IDeploymentBlock, and IERC165
+     * @dev Supports ITokenSaleV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
-            interfaceId_ == type(IPublicSaleV1).interfaceId ||
+            interfaceId_ == type(ITokenSaleV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
@@ -882,3 +880,5 @@ contract PublicSaleV1 is
         emit CommitmentIncreased(account_, increaseAmount_);
     }
 }
+
+
