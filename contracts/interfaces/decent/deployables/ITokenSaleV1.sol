@@ -3,12 +3,12 @@ pragma solidity ^0.8.30;
 
 /**
  * @title ITokenSaleV1
- * @notice Interface for a public token sale contract with KYC verification
+ * @notice Interface for a public token sale contract with signature-based verification
  * @dev Implements a time-based token sale with configurable parameters including:
  * - Sale duration with start and end timestamps
  * - Minimum and maximum commitment amounts per user
  * - Minimum and maximum total commitment amounts for the sale
- * - KYC verification requirement
+ * - Verification requirement via external verifier
  * - Configurable protocol fee and receiver
  * - Support for both native assets (ETH) and ERC20 tokens as payment
  */
@@ -142,7 +142,7 @@ interface ITokenSaleV1 {
      * @param saleTokenHolder Address holding the sale tokens to be distributed
      * @param commitmentToken Address of the token users commit (use NATIVE_ASSET constant for ETH)
      * @param saleToken Address of the token being sold
-     * @param kycVerifier Address of the KYC verification contract
+     * @param kycVerifier Address of the verification contract
      * @param saleProceedsReceiver Address that receives sale proceeds
      * @param protocolFeeReceiver Address that receives protocol fees
      * @param minimumCommitment Minimum commitment amount per user
@@ -308,8 +308,8 @@ interface ITokenSaleV1 {
     function saleToken() external view returns (address token);
 
     /**
-     * @notice Returns the KYC verifier address
-     * @return verifier Address of the KYC verification contract
+     * @notice Returns the verifier address
+     * @return verifier Address of the verification contract
      */
     function kycVerifier() external view returns (address verifier);
 

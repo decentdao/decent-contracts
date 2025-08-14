@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IKYCVerifierV1
-} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
+import {IVerifierV1} from "../../interfaces/decent/services/IVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {
     ICountersignV1
@@ -344,7 +342,7 @@ contract CountersignV1 is
         }
 
         // Check 4: Verify KYC status through external verifier
-        IKYCVerifierV1($.kycVerifier).verify(
+         IVerifierV1($.kycVerifier).verify(
             msg.sender,
             signatureExpiration_,
             verifyingSignature_

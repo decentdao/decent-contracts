@@ -6,9 +6,7 @@ import {
 } from "../../interfaces/decent/deployables/ITokenSaleV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
-import {
-    IKYCVerifierV1
-} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
+import {IVerifierV1} from "../../interfaces/decent/services/IVerifierV1.sol";
 import {
     IVotingTokenLockupPlans
 } from "../../interfaces/hedgey/IVotingTokenLockupPlans.sol";
@@ -113,7 +111,7 @@ contract TokenSaleV1 is
         uint48 signatureExpiration_
     ) {
         TokenSaleStorage storage $ = _getTokenSaleStorage();
-        IKYCVerifierV1($.kycVerifier).verify(
+        IVerifierV1($.kycVerifier).verify(
             msg.sender,
             signatureExpiration_,
             verifyingSignature_
