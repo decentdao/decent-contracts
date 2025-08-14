@@ -192,10 +192,13 @@ contract PublicSaleV1 is
         $.saleTokenProtocolFee = params_.saleTokenProtocolFee;
         $.hedgeyLockupParams = params_.hedgeyLockupParams;
 
+        // calculate the amount of sale tokens for this contract to escrow
+        // this is the maximum amount of sale tokens that can be sold plus the sale token protocol fee
         uint256 saleTokenEscrowAmount = (params_.maximumTotalCommitment *
-            PRECISION) / params_.saleTokenPrice;
+            (PRECISION + params_.saleTokenProtocolFee)) /
+            params_.saleTokenPrice;
 
-        // transfer sale token from holder to this contract
+        // transfer sale tokens from holder to this contract
         IERC20(params_.saleToken).safeTransferFrom(
             params_.saleTokenHolder,
             address(this),
@@ -597,10 +600,9 @@ contract PublicSaleV1 is
         SaleState state = saleState();
 
         if (state == SaleState.SUCCEEDED) {
-            // calculate the amount of sale tokens to transfer to the recipient,
-            // subtracting out the sale token protocol fee
-            uint256 saleTokenAmount = ($.commitments[msg.sender] *
-                (PRECISION - $.saleTokenProtocolFee)) / $.saleTokenPrice;
+            // calculate the amount of sale tokens purchased by the buyer
+            uint256 saleTokenAmount = ($.commitments[msg.sender] * PRECISION) /
+                $.saleTokenPrice;
 
             if ($.hedgeyLockupParams.enabled) {
                 // approve hedgey lockup plan to transfer the sale token
@@ -713,13 +715,17 @@ contract PublicSaleV1 is
                 saleTokenProtocolFeeAmount
             );
 
-            uint256 unsoldSaleTokenAmount = (($.maximumTotalCommitment -
-                $.totalCommitments) * PRECISION) / $.saleTokenPrice;
+            uint256 saleTokenEscrowAmount = ($.maximumTotalCommitment *
+                (PRECISION + $.saleTokenProtocolFee)) / $.saleTokenPrice;
+
+            uint256 leftoverSaleTokenAmount = saleTokenEscrowAmount -
+                saleTokenSold -
+                saleTokenProtocolFeeAmount;
 
             // send unsold sale tokens to saleProceedsReceiver
             IERC20($.saleToken).safeTransfer(
                 $.saleProceedsReceiver,
-                unsoldSaleTokenAmount
+                leftoverSaleTokenAmount
             );
 
             emit SuccessfulSaleSellerSettled(
@@ -727,10 +733,11 @@ contract PublicSaleV1 is
                 commitmentTokenProtocolFeeAmount,
                 commitmentTokenAmountToSeller,
                 saleTokenProtocolFeeAmount,
-                unsoldSaleTokenAmount
+                leftoverSaleTokenAmount
             );
         } else if (state == SaleState.FAILED) {
             // transfer entire balance of sale tokens to saleProceedsReceiver
+            // no protocol fees taken on failed sale
             uint256 saleTokenAmount = IERC20($.saleToken).balanceOf(
                 address(this)
             );

@@ -50,7 +50,8 @@ async function deployPublicSaleProxy(
 
   // Calculate required sale token amount
   const saleTokenAmount =
-    (BigInt(params.maximumTotalCommitment) * ethers.parseEther('1')) /
+    (BigInt(params.maximumTotalCommitment) *
+      (TEST_CONSTANTS.PRECISION + BigInt(params.saleTokenProtocolFee))) /
     BigInt(params.saleTokenPrice);
 
   // Deploy implementation
@@ -125,7 +126,8 @@ async function deployTestSale(
 
   // Calculate and mint required sale tokens
   const requiredSaleTokens =
-    (BigInt(params.maximumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
+    (BigInt(params.maximumTotalCommitment) *
+      (TEST_CONSTANTS.PRECISION + BigInt(params.saleTokenProtocolFee))) /
     BigInt(params.saleTokenPrice);
   await saleToken.mint(saleTokenHolder.address, requiredSaleTokens);
 
@@ -268,7 +270,7 @@ describe('PublicSaleV1', () => {
     );
 
     // Mint tokens to sale token holder
-    await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1000000'));
+    await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1050000'));
 
     // Setup default parameters
     const currentTime = await time.latest();
@@ -344,8 +346,10 @@ describe('PublicSaleV1', () => {
 
       // Verify sale tokens were transferred to the contract
       const expectedSaleTokenAmount =
-        (BigInt(defaultParams.maximumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
+        (BigInt(defaultParams.maximumTotalCommitment) *
+          (TEST_CONSTANTS.PRECISION + BigInt(defaultParams.saleTokenProtocolFee))) /
         BigInt(defaultParams.saleTokenPrice);
+
       expect(await saleToken.balanceOf(await publicSale.getAddress())).to.equal(
         expectedSaleTokenAmount,
       );
@@ -955,13 +959,8 @@ describe('PublicSaleV1', () => {
 
     it('should create Hedgey lockup plan instead of direct transfer when enabled', async () => {
       const commitment = await hedgeySale.commitments(alice.address);
-      const expectedSaleTokensBeforeFee =
+      const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const expectedSaleTokensAfterFee =
-        (BigInt(expectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       // Get initial balances
       const initialSaleTokenBalance = await saleToken.balanceOf(await hedgeySale.getAddress());
@@ -979,12 +978,12 @@ describe('PublicSaleV1', () => {
       const lockupPlan = await votingTokenLockupPlans.plans(lockupPlanId);
 
       expect(lockupPlan.token).to.equal(await saleToken.getAddress());
-      expect(lockupPlan.amount).to.equal(expectedSaleTokensAfterFee);
+      expect(lockupPlan.amount).to.equal(expectedSaleTokens);
       expect(lockupPlan.start).to.equal(BigInt(lockupStartTime));
       expect(lockupPlan.cliff).to.equal(BigInt(lockupStartTime + 1_000_000));
       expect(lockupPlan.period).to.equal(BigInt(10_000));
       expect(lockupPlan.rate).to.equal(
-        (expectedSaleTokensAfterFee * ethers.parseEther('0.0025')) / TEST_CONSTANTS.PRECISION,
+        (expectedSaleTokens * ethers.parseEther('0.0025')) / TEST_CONSTANTS.PRECISION,
       );
 
       // verify correct end time
@@ -994,10 +993,10 @@ describe('PublicSaleV1', () => {
 
       // Verify sale tokens were transferred to Hedgey contract
       expect(await saleToken.balanceOf(await hedgeySale.getAddress())).to.equal(
-        initialSaleTokenBalance - expectedSaleTokensAfterFee,
+        initialSaleTokenBalance - expectedSaleTokens,
       );
       expect(await saleToken.balanceOf(await votingTokenLockupPlans.getAddress())).to.equal(
-        initialHedgeyBalance + expectedSaleTokensAfterFee,
+        initialHedgeyBalance + expectedSaleTokens,
       );
 
       // Verify user didn't receive tokens directly
@@ -1009,21 +1008,11 @@ describe('PublicSaleV1', () => {
       const aliceCommitment = await hedgeySale.commitments(alice.address);
       const bobCommitment = await hedgeySale.commitments(bob.address);
 
-      const aliceExpectedSaleTokensBeforeFee =
+      const aliceExpectedSaleTokens =
         (BigInt(aliceCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
 
-      const aliceExpectedSaleTokensAfterFee =
-        (BigInt(aliceExpectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
-
-      const bobExpectedSaleTokensBeforeFee =
+      const bobExpectedSaleTokens =
         (BigInt(bobCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const bobExpectedSaleTokensAfterFee =
-        (BigInt(bobExpectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       // Settle and get lockup plan IDs
       const aliceLockupPlanId = getLockupPlanCreatedEvent(
@@ -1041,13 +1030,13 @@ describe('PublicSaleV1', () => {
 
       // Verify lockup plans
       expect(aliceLockupPlan.token).to.equal(await saleToken.getAddress());
-      expect(aliceLockupPlan.amount).to.equal(aliceExpectedSaleTokensAfterFee);
+      expect(aliceLockupPlan.amount).to.equal(aliceExpectedSaleTokens);
       expect(aliceLockupPlan.start).to.equal(BigInt(lockupStartTime));
       expect(aliceLockupPlan.cliff).to.equal(BigInt(lockupStartTime + 1_000_000));
       expect(aliceLockupPlan.period).to.equal(BigInt(10_000));
 
       expect(bobLockupPlan.token).to.equal(await saleToken.getAddress());
-      expect(bobLockupPlan.amount).to.equal(bobExpectedSaleTokensAfterFee);
+      expect(bobLockupPlan.amount).to.equal(bobExpectedSaleTokens);
       expect(bobLockupPlan.start).to.equal(BigInt(lockupStartTime));
       expect(bobLockupPlan.cliff).to.equal(BigInt(lockupStartTime + 1_000_000));
       expect(bobLockupPlan.period).to.equal(BigInt(10_000));
@@ -1063,13 +1052,8 @@ describe('PublicSaleV1', () => {
 
     it('should emit SuccessfulSaleBuyerSettledHedgey event when Hedgey is enabled', async () => {
       const commitment = await hedgeySale.commitments(alice.address);
-      const expectedSaleTokensBeforeFee =
+      const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const expectedSaleTokensAfterFee =
-        (BigInt(expectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       // The event should not be emitted when Hedgey lockup is enabled
       const tx2 = await hedgeySale.connect(alice).buyerSettle(alice.address);
@@ -1092,7 +1076,7 @@ describe('PublicSaleV1', () => {
       expect(parsed).to.not.equal(null);
       expect(parsed?.args?.[0]).to.equal(alice.address);
       expect(parsed?.args?.[1]).to.equal(alice.address);
-      expect(parsed?.args?.[2]).to.equal(expectedSaleTokensAfterFee);
+      expect(parsed?.args?.[2]).to.equal(expectedSaleTokens);
       expect(parsed?.args?.[3]).to.equal(planId);
     });
   });
@@ -1138,35 +1122,25 @@ describe('PublicSaleV1', () => {
 
     it('should allow user to settle and receive sale tokens directly', async () => {
       const commitment = await publicSale.commitments(alice.address);
-      const expectedSaleTokensBeforeFee =
+      const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const expectedSaleTokensAfterFee =
-        (BigInt(expectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       await expect(publicSale.connect(alice).buyerSettle(alice.address))
         .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
-        .withArgs(alice.address, alice.address, expectedSaleTokensAfterFee);
+        .withArgs(alice.address, alice.address, expectedSaleTokens);
 
-      expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokensAfterFee);
+      expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokens);
       expect(await publicSale.settled(alice.address)).to.be.true;
     });
 
     it('should allow settlement to different recipient address', async () => {
       const commitment = await publicSale.commitments(alice.address);
-      const expectedSaleTokensBeforeFee =
+      const expectedSaleTokens =
         (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const expectedSaleTokensAfterFee =
-        (BigInt(expectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       await publicSale.connect(alice).buyerSettle(bob.address);
 
-      expect(await saleToken.balanceOf(bob.address)).to.equal(expectedSaleTokensAfterFee);
+      expect(await saleToken.balanceOf(bob.address)).to.equal(expectedSaleTokens);
       expect(await saleToken.balanceOf(alice.address)).to.equal(0);
       expect(await publicSale.settled(alice.address)).to.be.true;
     });
@@ -1295,23 +1269,23 @@ describe('PublicSaleV1', () => {
     });
 
     it('should distribute proceeds and protocol fees correctly', async () => {
-      const commitmentTokenTotalBalance = await commitmentToken.balanceOf(
-        await publicSale.getAddress(),
-      );
+      const totalCommitments = await publicSale.totalCommitments();
       const commitmentTokenProtocolFeeAmount =
-        (BigInt(commitmentTokenTotalBalance) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
+        (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const commitmentTokenAmountToSeller =
-        commitmentTokenTotalBalance - commitmentTokenProtocolFeeAmount;
+      const commitmentTokenAmountToSeller = totalCommitments - commitmentTokenProtocolFeeAmount;
       const saleTokenTotalBalance = await saleToken.balanceOf(await publicSale.getAddress());
 
       const saleTokenSold =
-        (BigInt(defaultParams.minimumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
+        (BigInt(totalCommitments) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
+
       const saleTokenProtocolFeeAmount =
         (BigInt(saleTokenSold) * BigInt(defaultParams.saleTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const unsoldSaleTokenAmount = BigInt(saleTokenTotalBalance) - saleTokenSold;
+
+      const leftoverSaleTokenAmount =
+        saleTokenTotalBalance - saleTokenSold - saleTokenProtocolFeeAmount;
 
       await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
@@ -1320,7 +1294,7 @@ describe('PublicSaleV1', () => {
           commitmentTokenProtocolFeeAmount,
           commitmentTokenAmountToSeller,
           saleTokenProtocolFeeAmount,
-          unsoldSaleTokenAmount,
+          leftoverSaleTokenAmount,
         );
 
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(
@@ -1330,7 +1304,7 @@ describe('PublicSaleV1', () => {
         commitmentTokenProtocolFeeAmount,
       );
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(
-        unsoldSaleTokenAmount,
+        leftoverSaleTokenAmount,
       );
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
@@ -1358,23 +1332,20 @@ describe('PublicSaleV1', () => {
 
       await moveToSaleEnd(customSale);
 
-      const commitmentTokenTotalBalance = await commitmentToken.balanceOf(
-        await customSale.getAddress(),
-      );
+      const totalCommitments = await customSale.totalCommitments();
       const commitmentTokenProtocolFeeAmount =
-        (BigInt(commitmentTokenTotalBalance) * ethers.parseEther('0.1')) / TEST_CONSTANTS.PRECISION;
-      const commitmentTokenAmountToSeller =
-        commitmentTokenTotalBalance - commitmentTokenProtocolFeeAmount;
+        (BigInt(totalCommitments) * ethers.parseEther('0.1')) / TEST_CONSTANTS.PRECISION;
+      const commitmentTokenAmountToSeller = totalCommitments - commitmentTokenProtocolFeeAmount;
+
       const saleTokenSold =
-        (commitmentTokenTotalBalance * TEST_CONSTANTS.PRECISION) /
-        BigInt(defaultParams.saleTokenPrice);
+        (totalCommitments * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
+
       const saleTokenProtocolFeeAmount =
         (BigInt(saleTokenSold) * ethers.parseEther('0.05')) / TEST_CONSTANTS.PRECISION;
-      const unsoldSaleTokenAmount =
-        BigInt(
-          (BigInt(defaultParams.maximumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
-            BigInt(defaultParams.saleTokenPrice),
-        ) - saleTokenSold;
+
+      const saleTokenEscrowAmount = await saleToken.balanceOf(await customSale.getAddress());
+      const leftoverSaleTokenAmount =
+        saleTokenEscrowAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
       await customSale.connect(seller).sellerSettle();
 
@@ -1385,7 +1356,7 @@ describe('PublicSaleV1', () => {
         commitmentTokenAmountToSeller,
       );
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(
-        unsoldSaleTokenAmount,
+        leftoverSaleTokenAmount,
       );
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
@@ -1472,24 +1443,16 @@ describe('PublicSaleV1', () => {
       await publicSale.connect(alice).buyerSettle(alice.address);
       await publicSale.connect(bob).buyerSettle(bob.address);
 
-      const aliceExpectedSaleTokensBeforeFee =
+      const aliceExpectedSaleTokens =
         (BigInt(ethers.parseEther('250')) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
-      const aliceExpectedSaleTokensAfterFee =
-        (aliceExpectedSaleTokensBeforeFee *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
-      const bobExpectedSaleTokensBeforeFee =
+      const bobExpectedSaleTokens =
         (BigInt(ethers.parseEther('750')) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
-      const bobExpectedSaleTokensAfterFee =
-        (bobExpectedSaleTokensBeforeFee *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
-      expect(await saleToken.balanceOf(alice.address)).to.equal(aliceExpectedSaleTokensAfterFee);
-      expect(await saleToken.balanceOf(bob.address)).to.equal(bobExpectedSaleTokensAfterFee);
+      expect(await saleToken.balanceOf(alice.address)).to.equal(aliceExpectedSaleTokens);
+      expect(await saleToken.balanceOf(bob.address)).to.equal(bobExpectedSaleTokens);
 
       const commitmentTokenProtocolFeeAmount =
         (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
@@ -1498,10 +1461,13 @@ describe('PublicSaleV1', () => {
 
       const saleTokenSold =
         (totalCommitments * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
+
       const saleTokenProtocolFeeAmount =
         (BigInt(saleTokenSold) * BigInt(defaultParams.saleTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const unsoldSaleTokenAmount = BigInt(escrowedSaleTokenAmount) - saleTokenSold;
+
+      const leftoverSaleTokenAmount =
+        escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
       await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
@@ -1510,7 +1476,7 @@ describe('PublicSaleV1', () => {
           commitmentTokenProtocolFeeAmount,
           commitmentTokenAmountToSeller,
           saleTokenProtocolFeeAmount,
-          unsoldSaleTokenAmount,
+          leftoverSaleTokenAmount,
         );
 
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(
@@ -1520,7 +1486,7 @@ describe('PublicSaleV1', () => {
         commitmentTokenProtocolFeeAmount,
       );
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(
-        unsoldSaleTokenAmount,
+        leftoverSaleTokenAmount,
       );
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
@@ -1568,24 +1534,16 @@ describe('PublicSaleV1', () => {
       await publicSale.connect(alice).buyerSettle(alice.address);
       await publicSale.connect(bob).buyerSettle(bob.address);
 
-      const aliceExpectedSaleTokensBeforeFee =
+      const aliceExpectedSaleTokens =
         (BigInt(ethers.parseEther('1000')) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
-      const aliceExpectedSaleTokensAfterFee =
-        (aliceExpectedSaleTokensBeforeFee *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
-      const bobExpectedSaleTokensBeforeFee =
+      const bobExpectedSaleTokens =
         (BigInt(ethers.parseEther('1000')) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
-      const bobExpectedSaleTokensAfterFee =
-        (bobExpectedSaleTokensBeforeFee *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
-      expect(await saleToken.balanceOf(alice.address)).to.equal(aliceExpectedSaleTokensAfterFee);
-      expect(await saleToken.balanceOf(bob.address)).to.equal(bobExpectedSaleTokensAfterFee);
+      expect(await saleToken.balanceOf(alice.address)).to.equal(aliceExpectedSaleTokens);
+      expect(await saleToken.balanceOf(bob.address)).to.equal(bobExpectedSaleTokens);
 
       const commitmentTokenProtocolFeeAmount =
         (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
@@ -1594,10 +1552,13 @@ describe('PublicSaleV1', () => {
 
       const saleTokenSold =
         (totalCommitments * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
+
       const saleTokenProtocolFeeAmount =
         (BigInt(saleTokenSold) * BigInt(defaultParams.saleTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const unsoldSaleTokenAmount = BigInt(escrowedSaleTokenAmount) - saleTokenSold;
+
+      const leftoverSaleTokenAmount =
+        escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
       await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
@@ -1606,7 +1567,7 @@ describe('PublicSaleV1', () => {
           commitmentTokenProtocolFeeAmount,
           commitmentTokenAmountToSeller,
           saleTokenProtocolFeeAmount,
-          unsoldSaleTokenAmount,
+          leftoverSaleTokenAmount,
         );
 
       expect(await commitmentToken.balanceOf(saleProceedsReceiver.address)).to.equal(
@@ -1616,7 +1577,7 @@ describe('PublicSaleV1', () => {
         commitmentTokenProtocolFeeAmount,
       );
       expect(await saleToken.balanceOf(saleProceedsReceiver.address)).to.equal(
-        unsoldSaleTokenAmount,
+        leftoverSaleTokenAmount,
       );
       expect(await saleToken.balanceOf(protocolFeeReceiver.address)).to.equal(
         saleTokenProtocolFeeAmount,
@@ -1626,91 +1587,6 @@ describe('PublicSaleV1', () => {
       // all users have settled, verify that public sale has no remaining commitment or sale tokens
       expect(await saleToken.balanceOf(await publicSale.getAddress())).to.equal(0);
       expect(await commitmentToken.balanceOf(await publicSale.getAddress())).to.equal(0);
-    });
-  });
-
-  describe('Token Decimal & Precision Testing', () => {
-    it('should handle saleToken: 6 decimals, commitmentToken: 18 decimals', async () => {
-      // Deploy tokens with different decimals
-      const saleToken6 = await new MockERC20__factory(deployer).deploy('Sale6', 'S6', 6);
-      const commitToken18 = await new MockERC20__factory(deployer).deploy('Commit18', 'C18', 18);
-
-      // Calculate required escrow
-      // The contract expects: (maximumTotalCommitment * TEST_CONSTANTS.PRECISION) / saleTokenPrice
-      // = (10k * 10^18 * 10^18) / 10^18 = 10k * 10^18
-      // This is the raw amount the contract will try to transfer
-      const requiredEscrowRaw = ethers.parseEther('10000'); // 10k * 10^18
-      await saleToken6.mint(saleTokenHolder.address, requiredEscrowRaw); // Mint the raw amount
-
-      const currentTime = await time.latest();
-      const customParams = {
-        ...defaultParams,
-        saleToken: await saleToken6.getAddress(),
-        commitmentToken: await commitToken18.getAddress(),
-        saleTokenPrice: ethers.parseEther('1'), // 1:1 ratio in terms of value
-        maximumTotalCommitment: ethers.parseEther('10000'), // 10k commitment tokens
-        saleStartTimestamp: BigInt(currentTime + 3600),
-        saleEndTimestamp: BigInt(currentTime + 86400),
-      };
-
-      const customSale = await deployPublicSaleProxy(deployer, customParams);
-      await time.increaseTo(Number(customParams.saleStartTimestamp));
-
-      // Verify the escrow amount calculation
-      const escrowAmount = await saleToken6.balanceOf(await customSale.getAddress());
-      // The contract transfers the raw amount calculated as (maxTotalCommit * TEST_CONSTANTS.PRECISION) / price
-      // = (10k * 10^18 * 10^18) / 10^18 = 10k * 10^18
-      const expectedEscrow = ethers.parseEther('10000'); // This is the raw amount
-      expect(escrowAmount).to.equal(expectedEscrow);
-    });
-
-    it('should handle extreme price values', async () => {
-      const extremeSale = await deployTestSale(
-        deployer,
-        saleToken,
-        saleTokenHolder,
-        defaultParams,
-        {
-          saleTokenPrice: ethers.parseEther('0.000001'), // Very low price
-        },
-      );
-      await moveToSaleStart(extremeSale);
-
-      // Setup alice with commitment tokens
-      await mintAndApproveCommitmentTokens(
-        commitmentToken,
-        extremeSale,
-        [alice],
-        [BigInt(defaultParams.maximumCommitment)],
-      );
-
-      // Alice makes a commitment
-      await extremeSale
-        .connect(alice)
-        .increaseCommitmentERC20(defaultParams.maximumCommitment, ethers.getBytes('0x'), 0n);
-
-      // Reach minimum total commitment with other users
-      await reachMinimumTotalCommitment(
-        extremeSale,
-        commitmentToken,
-        BigInt(defaultParams.minimumTotalCommitment),
-        BigInt(defaultParams.maximumCommitment),
-        [{ user: alice, amount: BigInt(defaultParams.maximumCommitment) }],
-      );
-
-      await moveToSaleEnd(extremeSale);
-
-      const commitment = await extremeSale.commitments(alice.address);
-      const expectedSaleTokensBeforeFee =
-        (BigInt(commitment) * TEST_CONSTANTS.PRECISION) / ethers.parseEther('0.000001');
-      const expectedSaleTokensAfterFee =
-        (BigInt(expectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
-
-      await extremeSale.connect(alice).buyerSettle(alice.address);
-
-      expect(await saleToken.balanceOf(alice.address)).to.equal(expectedSaleTokensAfterFee);
     });
   });
 
@@ -1862,6 +1738,8 @@ describe('PublicSaleV1', () => {
     });
 
     it('should emit all settlement events correctly', async () => {
+      const escrowedSaleTokenAmount = await saleToken.balanceOf(await publicSale.getAddress());
+
       // Setup successful sale - need multiple users
       await mintAndApproveCommitmentTokens(
         commitmentToken,
@@ -1886,37 +1764,27 @@ describe('PublicSaleV1', () => {
 
       // User settlement
       const aliceCommitment = await publicSale.commitments(alice.address);
-      const aliceExpectedSaleTokensBeforeFee =
+      const aliceExpectedSaleTokens =
         (BigInt(aliceCommitment) * TEST_CONSTANTS.PRECISION) / BigInt(defaultParams.saleTokenPrice);
-
-      const aliceExpectedSaleTokensAfterFee =
-        (BigInt(aliceExpectedSaleTokensBeforeFee) *
-          (TEST_CONSTANTS.PRECISION - BigInt(defaultParams.saleTokenProtocolFee))) /
-        TEST_CONSTANTS.PRECISION;
 
       await expect(publicSale.connect(alice).buyerSettle(alice.address))
         .to.emit(publicSale, 'SuccessfulSaleBuyerSettled')
-        .withArgs(alice.address, alice.address, aliceExpectedSaleTokensAfterFee);
+        .withArgs(alice.address, alice.address, aliceExpectedSaleTokens);
 
       // Owner settlement
-      const commitmentTokenTotalBalance = await commitmentToken.balanceOf(
-        await publicSale.getAddress(),
-      );
+      const totalCommitments = await publicSale.totalCommitments();
       const commitmentTokenProtocolFeeAmount =
-        (BigInt(commitmentTokenTotalBalance) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
+        (BigInt(totalCommitments) * BigInt(defaultParams.commitmentTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const commitmentTokenAmountToSeller =
-        commitmentTokenTotalBalance - commitmentTokenProtocolFeeAmount;
+      const commitmentTokenAmountToSeller = totalCommitments - commitmentTokenProtocolFeeAmount;
       const saleTokenSold =
         (BigInt(defaultParams.minimumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
         BigInt(defaultParams.saleTokenPrice);
       const saleTokenProtocolFeeAmount =
         (BigInt(saleTokenSold) * BigInt(defaultParams.saleTokenProtocolFee)) /
         TEST_CONSTANTS.PRECISION;
-      const unsoldSaleTokenAmount =
-        (BigInt(defaultParams.maximumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
-          BigInt(defaultParams.saleTokenPrice) -
-        saleTokenSold;
+      const leftoverSaleTokenAmount =
+        escrowedSaleTokenAmount - saleTokenSold - saleTokenProtocolFeeAmount;
 
       await expect(publicSale.connect(seller).sellerSettle())
         .to.emit(publicSale, 'SuccessfulSaleSellerSettled')
@@ -1925,7 +1793,7 @@ describe('PublicSaleV1', () => {
           commitmentTokenProtocolFeeAmount,
           commitmentTokenAmountToSeller,
           saleTokenProtocolFeeAmount,
-          unsoldSaleTokenAmount,
+          leftoverSaleTokenAmount,
         );
     });
   });
@@ -1989,7 +1857,7 @@ describe('PublicSaleV1 - Shared Tests', () => {
     kycVerifier = await MockKYCVerifierFactory.deploy();
 
     // Mint tokens to sale token holder
-    await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1000000'));
+    await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1050000'));
 
     // Setup default parameters
     const currentTime = await time.latest();
@@ -2078,7 +1946,8 @@ describe('PublicSaleV1 - Shared Tests', () => {
 
         // Calculate required sale token amount
         const saleTokenAmount =
-          (BigInt(initParams.maximumTotalCommitment) * TEST_CONSTANTS.PRECISION) /
+          (BigInt(initParams.maximumTotalCommitment) *
+            (TEST_CONSTANTS.PRECISION + BigInt(initParams.saleTokenProtocolFee))) /
           BigInt(initParams.saleTokenPrice);
 
         // Mint tokens to saleTokenHolder

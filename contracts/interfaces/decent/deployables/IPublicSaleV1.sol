@@ -241,14 +241,14 @@ interface IPublicSaleV1 {
      * @param commitmentTokenProtocolFeeAmount Commitment token amount taken as protocol fee
      * @param commitmentTokenAmountToSeller Commitment token amount sent to saleProceedsReceiver
      * @param saleTokenProtocolFeeAmount Sale tokena amount taken as protocol fee
-     * @param unsoldSaleTokenAmount Sale token amount sent to saleProceedsReceiver
+     * @param leftoverSaleTokenAmount Sale token amount leftover after sale
      */
     event SuccessfulSaleSellerSettled(
         address indexed caller,
         uint256 commitmentTokenProtocolFeeAmount,
         uint256 commitmentTokenAmountToSeller,
         uint256 saleTokenProtocolFeeAmount,
-        uint256 unsoldSaleTokenAmount
+        uint256 leftoverSaleTokenAmount
     );
 
     /**
