@@ -37,9 +37,9 @@ describe('VerifierV1', () => {
 
   describe('Ownership', function () {
     it('should allow owner to update signer', async function () {
-      expect(await verifier.signer()).to.equal(verifierSigner.address);
+      expect(await verifier.getFunction('signer')()).to.equal(verifierSigner.address);
       await verifier.connect(owner).updateSigner(alice.address);
-      expect(await verifier.signer()).to.equal(alice.address);
+      expect(await verifier.getFunction('signer')()).to.equal(alice.address);
     });
 
     it('should prevent non-owners from calling owner-only functions', async function () {
@@ -77,7 +77,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       // Shouldn't revert
       await expect(
@@ -117,7 +121,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       expect(
         await verifier.checkVerify(
@@ -156,7 +164,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       expect(
         await verifier.checkVerify(
@@ -232,7 +244,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await expect(
         verifier.connect(alice).verify(alice.address, signatureExpiration, verifyingSignature),
@@ -266,7 +282,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await expect(
         verifier
@@ -303,7 +323,11 @@ describe('VerifierV1', () => {
         nonce: wrongNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await expect(
         verifier
@@ -339,7 +363,11 @@ describe('VerifierV1', () => {
         nonce: initialNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await verifier
         .connect(mockOperatingContract)
@@ -377,7 +405,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await verifier
         .connect(mockOperatingContract)
@@ -418,7 +450,11 @@ describe('VerifierV1', () => {
         nonce: currentNonce,
       };
 
-      const verifyingSignature = await verifier.signTypedData(domain, types, verificationMessage);
+      const verifyingSignature = await verifierSigner.signTypedData(
+        domain,
+        types,
+        verificationMessage,
+      );
 
       await expect(
         verifier

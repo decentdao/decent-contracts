@@ -8,8 +8,8 @@ import {
   ERC1967Proxy__factory,
   MockERC20,
   MockERC20__factory,
-  MockKYCVerifier,
-  MockKYCVerifier__factory,
+  MockVerifier,
+  MockVerifier__factory,
   ITokenSaleV1,
   ITokenSaleV1__factory,
   IVersion__factory,
@@ -229,7 +229,7 @@ describe('TokenSaleV1', () => {
   let tokenSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
-  let kycVerifier: MockKYCVerifier;
+  let verifier: MockVerifier;
   let votingTokenLockupPlans: VotingTokenLockupPlans; // Hedgey contract
 
   let defaultParams: ITokenSaleV1.InitializerParamsStruct;
@@ -249,11 +249,11 @@ describe('TokenSaleV1', () => {
 
     // Deploy mock contracts
     const MockERC20Factory = new MockERC20__factory(deployer);
-    const MockKYCVerifierFactory = new MockKYCVerifier__factory(deployer);
+    const MockVerifierFactory = new MockVerifier__factory(deployer);
 
     saleToken = await MockERC20Factory.deploy('Sale Token', 'SALE', 18);
     commitmentToken = await MockERC20Factory.deploy('Commitment Token', 'COMMIT', 18);
-    kycVerifier = await MockKYCVerifierFactory.deploy();
+    verifier = await MockVerifierFactory.deploy();
 
     // Deploy Hedgey VotingTokenLockupPlans contract
     votingTokenLockupPlans = await new VotingTokenLockupPlans__factory(deployer).deploy(
@@ -272,7 +272,7 @@ describe('TokenSaleV1', () => {
       saleTokenHolder: saleTokenHolder.address,
       commitmentToken: await commitmentToken.getAddress(),
       saleToken: await saleToken.getAddress(),
-      kycVerifier: await kycVerifier.getAddress(),
+      verifier: await verifier.getAddress(),
       saleProceedsReceiver: saleProceedsReceiver.address,
       protocolFeeReceiver: protocolFeeReceiver.address,
       minimumCommitment: ethers.parseEther('10'),
@@ -292,8 +292,8 @@ describe('TokenSaleV1', () => {
       },
     };
 
-    // Enable KYC for test accounts
-    await kycVerifier.setVerify(true);
+    // Enable verification for test accounts
+    await verifier.setVerify(true);
   });
 
   describe('Proxy Deployment & Initialization', () => {
@@ -305,7 +305,7 @@ describe('TokenSaleV1', () => {
       expect(await tokenSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
       expect(await tokenSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
       expect(await tokenSale.saleToken()).to.equal(defaultParams.saleToken);
-      expect(await tokenSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
+      expect(await tokenSale.verifier()).to.equal(defaultParams.verifier);
       expect(await tokenSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
       expect(await tokenSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
       expect(await tokenSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
@@ -825,14 +825,14 @@ describe('TokenSaleV1', () => {
       ).to.be.revertedWithCustomError(tokenSale, 'MaximumCommitment');
     });
 
-    it('should revert when KYC verification fails', async () => {
-      await kycVerifier.setVerify(false);
+    it('should revert when verification fails', async () => {
+      await verifier.setVerify(false);
 
       await expect(
         tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
+      ).to.be.revertedWithCustomError(verifier, 'InvalidSignature');
     });
   });
 
@@ -1379,7 +1379,7 @@ describe('TokenSaleV1', () => {
       await commitmentToken
         .connect(alice)
         .approve(await tokenSale.getAddress(), ethers.parseEther('1000'));
-      await kycVerifier.setVerify(true);
+      await verifier.setVerify(true);
 
       await tokenSale
         .connect(alice)
@@ -1582,7 +1582,7 @@ describe('TokenSaleV1', () => {
     });
   });
 
-  describe('KYC Verification', () => {
+  describe('Verification', () => {
     beforeEach(async () => {
       tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
       await time.increaseTo(Number(defaultParams.saleStartTimestamp));
@@ -1593,8 +1593,8 @@ describe('TokenSaleV1', () => {
         .approve(await tokenSale.getAddress(), ethers.parseEther('1000'));
     });
 
-    it('should allow commitment increases when KYC verification passes', async () => {
-      await kycVerifier.setVerify(true);
+    it('should allow commitment increases when verification passes', async () => {
+      await verifier.setVerify(true);
 
       await expect(
         tokenSale
@@ -1603,14 +1603,14 @@ describe('TokenSaleV1', () => {
       ).to.not.be.reverted;
     });
 
-    it('should block commitment increases when KYC fails', async () => {
-      await kycVerifier.setVerify(false);
+    it('should block commitment increases when verification fails', async () => {
+      await verifier.setVerify(false);
 
       await expect(
         tokenSale
           .connect(alice)
           .increaseCommitmentERC20(ethers.parseEther('100'), ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(kycVerifier, 'InvalidSignature');
+      ).to.be.revertedWithCustomError(verifier, 'InvalidSignature');
     });
   });
 
@@ -1801,7 +1801,7 @@ describe('TokenSaleV1', () => {
       expect(await tokenSale.saleEndTimestamp()).to.equal(defaultParams.saleEndTimestamp);
       expect(await tokenSale.commitmentToken()).to.equal(defaultParams.commitmentToken);
       expect(await tokenSale.saleToken()).to.equal(defaultParams.saleToken);
-      expect(await tokenSale.kycVerifier()).to.equal(defaultParams.kycVerifier);
+      expect(await tokenSale.verifier()).to.equal(defaultParams.verifier);
       expect(await tokenSale.saleProceedsReceiver()).to.equal(defaultParams.saleProceedsReceiver);
       expect(await tokenSale.protocolFeeReceiver()).to.equal(defaultParams.protocolFeeReceiver);
       expect(await tokenSale.minimumCommitment()).to.equal(defaultParams.minimumCommitment);
@@ -1833,7 +1833,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
   let tokenSale: TokenSaleV1;
   let saleToken: MockERC20;
   let commitmentToken: MockERC20;
-  let kycVerifier: MockKYCVerifier;
+  let verifier: MockVerifier;
   let defaultParams: ITokenSaleV1.InitializerParamsStruct;
 
   beforeEach(async () => {
@@ -1842,11 +1842,11 @@ describe('TokenSaleV1 - Shared Tests', () => {
 
     // Deploy mock contracts
     const MockERC20Factory = new MockERC20__factory(deployer);
-    const MockKYCVerifierFactory = new MockKYCVerifier__factory(deployer);
+    const MockVerifierFactory = new MockVerifier__factory(deployer);
 
     saleToken = await MockERC20Factory.deploy('Sale Token', 'SALE', 18);
     commitmentToken = await MockERC20Factory.deploy('Commitment Token', 'COMMIT', 18);
-    kycVerifier = await MockKYCVerifierFactory.deploy();
+    verifier = await MockVerifierFactory.deploy();
 
     // Mint tokens to sale token holder
     await saleToken.mint(saleTokenHolder.address, ethers.parseEther('1050000'));
@@ -1859,7 +1859,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
       saleTokenHolder: saleTokenHolder.address,
       commitmentToken: await commitmentToken.getAddress(),
       saleToken: await saleToken.getAddress(),
-      kycVerifier: await kycVerifier.getAddress(),
+      verifier: await verifier.getAddress(),
       saleProceedsReceiver: saleProceedsReceiver.address,
       protocolFeeReceiver: protocolFeeReceiver.address,
       minimumCommitment: ethers.parseEther('10'),
@@ -1879,8 +1879,8 @@ describe('TokenSaleV1 - Shared Tests', () => {
       },
     };
 
-    // Enable KYC
-    await kycVerifier.setVerify(true);
+    // Enable verification
+    await verifier.setVerify(true);
 
     // Deploy the contract
     tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
@@ -1916,7 +1916,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
           saleTokenHolder: saleTokenHolder.address,
           commitmentToken: await commitmentToken.getAddress(),
           saleToken: await saleToken.getAddress(),
-          kycVerifier: await kycVerifier.getAddress(),
+          verifier: await verifier.getAddress(),
           saleProceedsReceiver: saleProceedsReceiver.address,
           protocolFeeReceiver: protocolFeeReceiver.address,
           minimumCommitment: ethers.parseEther('10'),
@@ -1966,7 +1966,7 @@ describe('TokenSaleV1 - Shared Tests', () => {
         // Use the saved params to ensure timestamps match
         return ethers.AbiCoder.defaultAbiCoder().encode(
           [
-            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address saleTokenHolder, address commitmentToken, address saleToken, address kycVerifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 commitmentTokenProtocolFee, uint256 saleTokenProtocolFee, tuple(bool enabled, uint256 start, uint256 cliff, uint256 ratePercentage, uint256 period, address votingTokenLockupPlans) hedgeyLockupParams)',
+            'tuple(uint48 saleStartTimestamp, uint48 saleEndTimestamp, address saleTokenHolder, address commitmentToken, address saleToken, address verifier, address saleProceedsReceiver, address protocolFeeReceiver, uint256 minimumCommitment, uint256 maximumCommitment, uint256 minimumTotalCommitment, uint256 maximumTotalCommitment, uint256 saleTokenPrice, uint256 commitmentTokenProtocolFee, uint256 saleTokenProtocolFee, tuple(bool enabled, uint256 start, uint256 cliff, uint256 ratePercentage, uint256 period, address votingTokenLockupPlans) hedgeyLockupParams)',
           ],
           [savedInitParams],
         );

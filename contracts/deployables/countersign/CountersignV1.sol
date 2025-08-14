@@ -20,13 +20,13 @@ import {
 /**
  * @title CountersignV1
  * @author Decent Labs
- * @notice Implementation of multi-party agreement system with KYC verification
+ * @notice Implementation of multi-party agreement system with offchain verification
  * @dev This contract implements ICountersignV1, facilitating agreements that require
  * multiple parties to sign and execute conditional transactions.
  *
  * Implementation details:
  * - Uses EIP-7201 namespaced storage pattern for upgradeability safety
- * - Integrates with external KYC verifier for compliance
+ * - Integrates with external verifier for compliance
  * - Supports weighted voting with configurable thresholds
  * - Two-phase execution: initial execution and follow-up executions
  * - Uses delegatecall to MultiSend for transaction execution
@@ -34,7 +34,7 @@ import {
  *
  * Agreement lifecycle:
  * 1. Initialize with signers, weights, deadlines, and transactions
- * 2. Signers sign during signing period (KYC verification required)
+ * 2. Signers sign during signing period (verification required)
  * 3. After signing deadline, execute if minimum weight met
  * 4. Initial execution runs pre-execution and all signed signer transactions
  * 5. Follow-up executions can retry failed non-required signer transactions
@@ -42,7 +42,7 @@ import {
  * Security model:
  * - Required signers must all sign and execute successfully
  * - Non-required signers can fail without blocking execution
- * - KYC verification prevents unauthorized signatures
+ * - Verification prevents unauthorized signatures
  * - Time-bounded signing and execution periods
  * - Owner-only execution after signing period
  *
@@ -70,8 +70,8 @@ contract CountersignV1 is
         bool initialExecutionComplete;
         /** @notice URI pointing to the agreement document (e.g., IPFS hash) */
         string agreementUri;
-        /** @notice Address of the KYC verifier contract for signature validation */
-        address kycVerifier;
+        /** @notice Address of the verifier contract for signature validation */
+        address verifier;
         /** @notice Timestamp after which no more signatures are accepted */
         uint48 signingDeadline;
         /** @notice Timestamp after which execution is no longer allowed */
@@ -123,7 +123,7 @@ contract CountersignV1 is
      * @inheritdoc ICountersignV1
      * @dev Sets up the complete agreement structure including:
      * - Agreement parameters and deadlines
-     * - KYC verifier and MultiSend references
+     * - Verifier and MultiSend references
      * - Pre-execution transactions
      * - All signer configurations with their weights and transactions
      * Execution deadline must be after signing deadline.
@@ -131,7 +131,7 @@ contract CountersignV1 is
     function initialize(
         address owner_,
         string memory agreementUri_,
-        address kycVerifier_,
+        address verifier_,
         uint48 signingDeadline_,
         uint48 executionDeadline_,
         address multisend_,
@@ -143,7 +143,7 @@ contract CountersignV1 is
             abi.encode(
                 owner_,
                 agreementUri_,
-                kycVerifier_,
+                verifier_,
                 signingDeadline_,
                 executionDeadline_,
                 multisend_,
@@ -157,7 +157,7 @@ contract CountersignV1 is
 
         CountersignStorage storage $ = _getCountersignStorage();
         $.agreementUri = agreementUri_;
-        $.kycVerifier = kycVerifier_;
+        $.verifier = verifier_;
         $.signingDeadline = signingDeadline_;
         $.executionDeadline = executionDeadline_;
         $.multisend = multisend_;
@@ -221,9 +221,9 @@ contract CountersignV1 is
     /**
      * @inheritdoc ICountersignV1
      */
-    function kycVerifier() public view virtual override returns (address) {
+    function verifier() public view virtual override returns (address) {
         CountersignStorage storage $ = _getCountersignStorage();
-        return $.kycVerifier;
+        return $.verifier;
     }
 
     /**
@@ -315,7 +315,7 @@ contract CountersignV1 is
 
     /**
      * @inheritdoc ICountersignV1
-     * @dev Validates signer eligibility and KYC status before recording signature.
+     * @dev Validates signer eligibility and verification status before recording signature.
      * Updates signer state and timestamp upon successful signature.
      */
     function sign(
@@ -341,8 +341,8 @@ contract CountersignV1 is
             revert SignerAlreadySigned();
         }
 
-        // Check 4: Verify KYC status through external verifier
-         IVerifierV1($.kycVerifier).verify(
+        // Check 4: Verify status through external verifier
+        IVerifierV1($.verifier).verify(
             msg.sender,
             signatureExpiration_,
             verifyingSignature_

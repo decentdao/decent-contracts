@@ -4,8 +4,8 @@ import { vars } from 'hardhat/config';
 export default buildModule('Services', m => {
   // Deploy VerifierV1 (general-purpose verifier)
   const verifierV1 = m.contract('VerifierV1', [
-    vars.get('KYC_VERIFIER_OWNER'),
-    vars.get('KYC_VERIFIER_VERIFIER'),
+    vars.get('VERIFIER_OWNER'),
+    vars.get('VERIFIER_VERIFIER'),
   ]);
 
   // Deploy StrategyV1ValidatorV1

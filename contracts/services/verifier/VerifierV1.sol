@@ -171,9 +171,7 @@ contract VerifierV1 is
     /**
      * @inheritdoc IVerifierV1
      */
-    function updateSigner(
-        address signer_
-    ) public virtual override onlyOwner {
+    function updateSigner(address signer_) public virtual override onlyOwner {
         _signer = signer_;
 
         emit SignerUpdated(signer_);

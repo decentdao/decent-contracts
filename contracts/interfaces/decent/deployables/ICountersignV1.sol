@@ -161,9 +161,9 @@ interface ICountersignV1 {
     /**
      * @notice Returns the address of the verifier contract
      * @dev This contract validates signer signatures against verification requirements
-     * @return kycVerifier The verifier contract address
+     * @return verifier The verifier contract address
      */
-    function kycVerifier() external view returns (address kycVerifier);
+    function verifier() external view returns (address verifier);
 
     /**
      * @notice Returns the deadline for signers to sign the agreement
@@ -249,7 +249,7 @@ interface ICountersignV1 {
      * @dev Caller must be in the signers list and pass verifier checks.
      * Can only be called during the signing period (before signingDeadline).
      * Each signer can only sign once.
-     * @param verifyingSignature_ The verifier signature attesting to KYC status
+     * @param verifyingSignature_ The verifier signature attesting to verification status
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @custom:throws InvalidSigner if caller is not a valid signer
      * @custom:throws SigningDeadlineElapsed if past the signing deadline

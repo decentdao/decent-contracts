@@ -26,7 +26,7 @@ The codebase is organized into four distinct categories based on deployment patt
 4. **Services** (`contracts/services/`)
    - One instance per chain
    - Stateless, referenced by multiple DAO deployable contracts
-   - Examples: StrategyV1ValidatorV1, KYCVerifierV1
+   - Examples: StrategyV1ValidatorV1, VerifierV1
 
 ## Project Planning Workflow
 
