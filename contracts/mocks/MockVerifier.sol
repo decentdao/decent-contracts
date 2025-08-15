@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {IKYCVerifierV1} from "../interfaces/decent/services/IKYCVerifierV1.sol";
+import {IVerifierV1} from "../interfaces/decent/services/IVerifierV1.sol";
 import {IVersion} from "../interfaces/decent/deployables/IVersion.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract MockKYCVerifier is IKYCVerifierV1, IVersion, ERC165 {
+contract MockVerifier is IVerifierV1, IVersion, ERC165 {
     bool internal _verify;
 
     constructor() {
@@ -18,13 +18,13 @@ contract MockKYCVerifier is IKYCVerifierV1, IVersion, ERC165 {
         _verify = verify_;
     }
 
-    function updateVerifier(address) public virtual override {}
+    function updateSigner(address) public virtual override {}
 
     function verify(address, uint48, bytes calldata) public virtual override {
         if (!_verify) revert InvalidSignature();
     }
 
-    function verifier() public view virtual override returns (address) {
+    function signer() public view virtual override returns (address) {
         return address(0);
     }
 
@@ -49,7 +49,7 @@ contract MockKYCVerifier is IKYCVerifierV1, IVersion, ERC165 {
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
-            interfaceId_ == type(IKYCVerifierV1).interfaceId ||
+            interfaceId_ == type(IVerifierV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             super.supportsInterface(interfaceId_);
     }

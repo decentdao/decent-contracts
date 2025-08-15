@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {
-    IKYCVerifierV1
-} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
+import {IVerifierV1} from "../../interfaces/decent/services/IVerifierV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {
@@ -18,11 +16,10 @@ import {
 } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /**
- * @title KYCVerifierV1
+ * @title VerifierV1
  * @author Decent Labs
- * @notice KYC verification service using EIP-712 signature verification
- * @dev This contract implements IKYCVerifierV1, providing KYC verification
- * through cryptographic signature verification.
+ * @notice General-purpose verification service using EIP-712 signature verification
+ * @dev Implements IVerifierV1 for flexible verification
  *
  * Implementation details:
  * - Uses EIP-712 structured data signing for verification
@@ -38,8 +35,8 @@ import {
  *
  * @custom:security-contact security@decentlabs.io
  */
-contract KYCVerifierV1 is
-    IKYCVerifierV1,
+contract VerifierV1 is
+    IVerifierV1,
     IVersion,
     DeploymentBlockNonInitializable,
     ERC165,
@@ -50,7 +47,7 @@ contract KYCVerifierV1 is
     // STATE VARIABLES
     // ======================================================================
 
-    address private _verifier;
+    address private _signer;
 
     mapping(address account => uint256 nonce) private _nonces;
 
@@ -65,26 +62,26 @@ contract KYCVerifierV1 is
 
     constructor(
         address owner_,
-        address verifier_
-    ) EIP712("KYCVerifier", "1") Ownable(owner_) {
-        _verifier = verifier_;
+        address signer_
+    ) EIP712("Verifier", "1") Ownable(owner_) {
+        _signer = signer_;
     }
 
     // ======================================================================
-    // IKYCVerifier
+    // IVerifier
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IKYCVerifierV1
+     * @inheritdoc IVerifierV1
      */
-    function verifier() public view virtual override returns (address) {
-        return _verifier;
+    function signer() public view virtual override returns (address) {
+        return _signer;
     }
 
     /**
-     * @inheritdoc IKYCVerifierV1
+     * @inheritdoc IVerifierV1
      */
     function nonce(
         address account_
@@ -93,7 +90,7 @@ contract KYCVerifierV1 is
     }
 
     /**
-     * @inheritdoc IKYCVerifierV1
+     * @inheritdoc IVerifierV1
      */
     function checkVerify(
         address operator_,
@@ -119,15 +116,15 @@ contract KYCVerifierV1 is
                     )
                 ),
                 signature_
-            ) == _verifier;
+            ) == _signer;
     }
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IKYCVerifierV1
-     * @dev Verifies KYC status using EIP-712 signature verification. The signature
-     * must be provided by the authorized verifier address to confirm KYC compliance.
+     * @inheritdoc IVerifierV1
+     * @dev Verifies account status using EIP-712 signature verification. The signature
+     * must be provided by the authorized verifier address.
      */
     function verify(
         address account_,
@@ -154,9 +151,9 @@ contract KYCVerifierV1 is
                     )
                 ),
                 signature_
-            ) == _verifier
+            ) == _signer
         ) {
-            // KYC signature is valid
+            // signature is valid
             _nonces[account_]++;
 
             emit SignatureVerified(
@@ -166,20 +163,18 @@ contract KYCVerifierV1 is
                 accountNonce
             );
         } else {
-            // KYC signature is invalid
+            // signature is invalid
             revert InvalidSignature();
         }
     }
 
     /**
-     * @inheritdoc IKYCVerifierV1
+     * @inheritdoc IVerifierV1
      */
-    function updateVerifier(
-        address verifier_
-    ) public virtual override onlyOwner {
-        _verifier = verifier_;
+    function updateSigner(address signer_) public virtual override onlyOwner {
+        _signer = signer_;
 
-        emit VerifierUpdated(verifier_);
+        emit SignerUpdated(signer_);
     }
 
     // ======================================================================
@@ -203,13 +198,13 @@ contract KYCVerifierV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IKYCVerifierV1, IVersion, IDeploymentBlock, and IERC165
+     * @dev Supports IVerifierV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
-            interfaceId_ == type(IKYCVerifierV1).interfaceId ||
+            interfaceId_ == type(IVerifierV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);

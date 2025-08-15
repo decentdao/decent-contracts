@@ -12,8 +12,8 @@ import {
   IVersion__factory,
   MockERC20Votes,
   MockERC20Votes__factory,
-  MockKYCVerifier,
-  MockKYCVerifier__factory,
+  MockVerifier,
+  MockVerifier__factory,
   MultiSendCallOnly,
   MultiSendCallOnly__factory,
 } from '../../../../typechain-types';
@@ -69,7 +69,7 @@ describe('CountersignV1', () => {
   let countersign: CountersignV1;
   let daoToken: MockERC20Votes;
   let usdc: MockERC20Votes;
-  let mockKYCVerifier: MockKYCVerifier;
+  let mockVerifier: MockVerifier;
   let multisend: MultiSendCallOnly;
 
   // deadlines
@@ -92,7 +92,7 @@ describe('CountersignV1', () => {
     usdc = await new MockERC20Votes__factory(founder).deploy();
 
     // deploy mock contracts
-    mockKYCVerifier = await new MockKYCVerifier__factory(founder).deploy();
+    mockVerifier = await new MockVerifier__factory(founder).deploy();
     multisend = await new MultiSendCallOnly__factory(founder).deploy();
 
     // mint Alice 100 USDC
@@ -291,7 +291,7 @@ describe('CountersignV1', () => {
       await countersignImplementation.getAddress(),
       founder.address,
       agreementUri,
-      await mockKYCVerifier.getAddress(),
+      await mockVerifier.getAddress(),
       signingDeadline,
       executionDeadline,
       await multisend.getAddress(),
@@ -327,7 +327,7 @@ describe('CountersignV1', () => {
         countersign.initialize(
           founder.address,
           agreementUri,
-          await mockKYCVerifier.getAddress(),
+          await mockVerifier.getAddress(),
           signingDeadline,
           executionDeadline,
           await multisend.getAddress(),
@@ -346,8 +346,8 @@ describe('CountersignV1', () => {
       expect(await countersign.agreementUri()).to.equal(agreementUri);
     });
 
-    it('should return correct kyc verifier', async () => {
-      expect(await countersign.kycVerifier()).to.equal(await mockKYCVerifier.getAddress());
+    it('should return correct verifier', async () => {
+      expect(await countersign.verifier()).to.equal(await mockVerifier.getAddress());
     });
 
     it('should return correct signing deadline', async () => {
@@ -517,8 +517,8 @@ describe('CountersignV1', () => {
 
   describe('Signing', () => {
     it('should allow signers to sign', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       const [, , aliceBeforeSigned, , aliceBeforeSignedTimestamp, ,] = await countersign.signerData(
         investorAlice.address,
@@ -558,7 +558,7 @@ describe('CountersignV1', () => {
     });
 
     it('should not allow signers to sign after the signing deadline', async () => {
-      await mockKYCVerifier.setVerify(true);
+      await mockVerifier.setVerify(true);
 
       await time.increaseTo(signingDeadline + 1n);
       await expect(
@@ -567,32 +567,32 @@ describe('CountersignV1', () => {
     });
 
     it('should not allow signers to sign if they are not a signer', async () => {
-      await mockKYCVerifier.setVerify(true);
+      await mockVerifier.setVerify(true);
       await expect(
         countersign.connect(anon).sign(ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(countersign, 'InvalidSigner');
     });
 
     it('should not allow signers to sign if they have already signed', async () => {
-      await mockKYCVerifier.setVerify(true);
+      await mockVerifier.setVerify(true);
       await countersign.connect(investorAlice).sign(ethers.getBytes('0x'), 0n);
       await expect(
         countersign.connect(investorAlice).sign(ethers.getBytes('0x'), 0n),
       ).to.be.revertedWithCustomError(countersign, 'SignerAlreadySigned');
     });
 
-    it('should not allow signers to sign if the KYCVerifier does not verify', async () => {
-      await mockKYCVerifier.setVerify(false);
+    it('should not allow signers to sign if the Verifier does not verify', async () => {
+      await mockVerifier.setVerify(false);
       await expect(
         countersign.connect(investorAlice).sign(ethers.getBytes('0x'), 0n),
-      ).to.be.revertedWithCustomError(mockKYCVerifier, 'InvalidSignature');
+      ).to.be.revertedWithCustomError(mockVerifier, 'InvalidSignature');
     });
   });
 
   describe('Execution', () => {
     it('should revert if signing deadline has not elapsed', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // all signers sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -610,8 +610,8 @@ describe('CountersignV1', () => {
     });
 
     it('should revert if execution deadline has elapsed', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // all signers sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -629,8 +629,8 @@ describe('CountersignV1', () => {
     });
 
     it('should revert if preExecutionTransactions fail', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // preExecution transaction burns 200,000 DAO tokens from DAO treasury, which should fail
       preExecutionTransactions = ethers.solidityPacked(
@@ -657,7 +657,7 @@ describe('CountersignV1', () => {
         await countersignImplementation.getAddress(),
         founder.address,
         agreementUri,
-        await mockKYCVerifier.getAddress(),
+        await mockVerifier.getAddress(),
         signingDeadline,
         executionDeadline,
         await multisend.getAddress(),
@@ -681,8 +681,8 @@ describe('CountersignV1', () => {
     });
 
     it('should revert if required signer has not signed', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // Alice is required, but not signed
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -698,8 +698,8 @@ describe('CountersignV1', () => {
     });
 
     it('should execute even if a non-required signer has not signed', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // All signers except for Carol sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -717,8 +717,8 @@ describe('CountersignV1', () => {
     });
 
     it('should execute even if a non-required signer tx fails', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // All signers sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -750,8 +750,8 @@ describe('CountersignV1', () => {
     });
 
     it('should revert if a required signer tx fails', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // All signers sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -773,8 +773,8 @@ describe('CountersignV1', () => {
     });
 
     it('should revert if minimum weight is not met', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // Bob and Carol don't sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -790,8 +790,8 @@ describe('CountersignV1', () => {
     });
 
     it('should allow for initial execution', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
       await countersign.connect(investorAlice).sign(ethers.getBytes('0x'), 0n);
@@ -851,8 +851,8 @@ describe('CountersignV1', () => {
     });
 
     it('should allow for follow up execution when some non-required signers have not signed', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // all signers but Carol sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -912,8 +912,8 @@ describe('CountersignV1', () => {
     });
 
     it('should skip non-required signers that have not signed in follow up execution', async () => {
-      // set mock KYC verifier to verify all signatures
-      await mockKYCVerifier.setVerify(true);
+      // set mock verifier to verify all signatures
+      await mockVerifier.setVerify(true);
 
       // all signers but Carol sign
       await countersign.connect(founder).sign(ethers.getBytes('0x'), 0n);
@@ -1011,7 +1011,7 @@ describe('CountersignV1', () => {
     // Shared test data
     let testFounder: SignerWithAddress;
     let testInvestorAlice: SignerWithAddress;
-    let testMockKYCVerifierAddress: string;
+    let testMockVerifierAddress: string;
     let testMultisendAddress: string;
     let testSigningDeadline: bigint;
     let testExecutionDeadline: bigint;
@@ -1019,10 +1019,10 @@ describe('CountersignV1', () => {
     // Deploy contracts once before all tests
     beforeEach(async () => {
       [testFounder, testInvestorAlice] = await ethers.getSigners();
-      const testMockKYCVerifier = await new MockKYCVerifier__factory(testFounder).deploy();
+      const testMockVerifier = await new MockVerifier__factory(testFounder).deploy();
       const testMultisend = await new MultiSendCallOnly__factory(testFounder).deploy();
 
-      testMockKYCVerifierAddress = await testMockKYCVerifier.getAddress();
+      testMockVerifierAddress = await testMockVerifier.getAddress();
       testMultisendAddress = await testMultisend.getAddress();
 
       const currentTime = await time.latest();
@@ -1058,7 +1058,7 @@ describe('CountersignV1', () => {
         return [
           testFounder.address,
           agreementUri,
-          testMockKYCVerifierAddress,
+          testMockVerifierAddress,
           testSigningDeadline,
           testExecutionDeadline,
           testMultisendAddress,
@@ -1102,7 +1102,7 @@ describe('CountersignV1', () => {
           [
             testFounder.address,
             agreementUri,
-            testMockKYCVerifierAddress,
+            testMockVerifierAddress,
             testSigningDeadline,
             testExecutionDeadline,
             testMultisendAddress,

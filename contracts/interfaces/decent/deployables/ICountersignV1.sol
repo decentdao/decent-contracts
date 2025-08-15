@@ -3,14 +3,14 @@ pragma solidity ^0.8.30;
 
 /**
  * @title ICountersignV1
- * @notice Multi-party agreement system with KYC verification and weighted signatures
+ * @notice Multi-party agreement system with off-chain verification and weighted signatures
  * @dev This contract facilitates the creation of agreements that require multiple parties
- * to sign and execute transactions. It supports KYC verification through an external
+ * to sign and execute transactions. It supports verification through an external
  * verifier contract, weighted signing, and conditional transaction execution.
  *
  * Key features:
  * - Signers with configurable weights and required status
- * - KYC verification for all signers through external verifier
+ * - Verification for all signers through external verifier
  * - Two-phase process: signing period followed by execution period
  * - Pre-execution transactions that run before signer transactions
  * - Per-signer transaction bundles executed upon signature
@@ -18,7 +18,7 @@ pragma solidity ^0.8.30;
  *
  * Workflow:
  * 1. Contract is initialized with signers, deadlines, and transaction details
- * 2. Signers call sign() during the signing period (KYC verification required)
+ * 2. Signers call sign() during the signing period (verification required)
  * 3. After signing deadline, if minimum weight is met, execute() can be called
  * 4. Execute runs pre-execution transactions, then all signer transactions
  *
@@ -122,7 +122,7 @@ interface ICountersignV1 {
      * @dev Can only be called once during deployment. Sets up the complete agreement structure.
      * @param owner_ The address with owner privileges (can be a Safe or EOA)
      * @param agreementUri_ IPFS URI or other link to the agreement document
-     * @param verificationContract_ Address of the KYC verifier contract
+     * @param verificationContract_ Address of the verifier contract
      * @param signingDeadline_ Timestamp after which no more signatures are accepted
      * @param executionDeadline_ Timestamp after which execution is no longer allowed
      * @param multisend_ Address of the Gnosis MultiSend contract for batch transactions
@@ -159,11 +159,11 @@ interface ICountersignV1 {
     function agreementUri() external view returns (string memory agreementUri);
 
     /**
-     * @notice Returns the address of the KYC verifier contract
-     * @dev This contract validates signer signatures against KYC requirements
-     * @return kycVerifier The KYC verifier contract address
+     * @notice Returns the address of the verifier contract
+     * @dev This contract validates signer signatures against verification requirements
+     * @return verifier The verifier contract address
      */
-    function kycVerifier() external view returns (address kycVerifier);
+    function verifier() external view returns (address verifier);
 
     /**
      * @notice Returns the deadline for signers to sign the agreement
@@ -246,15 +246,15 @@ interface ICountersignV1 {
 
     /**
      * @notice Allows a valid signer to sign the agreement
-     * @dev Caller must be in the signers list and pass KYC verification.
+     * @dev Caller must be in the signers list and pass verifier checks.
      * Can only be called during the signing period (before signingDeadline).
      * Each signer can only sign once.
-     * @param verifyingSignature_ The verifier signature attesting to KYC status
+     * @param verifyingSignature_ The verifier signature attesting to verification status
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @custom:throws InvalidSigner if caller is not a valid signer
      * @custom:throws SigningDeadlineElapsed if past the signing deadline
      * @custom:throws SignerAlreadySigned if caller has already signed
-     * @custom:throws KYCVerificationFailed if KYC verification fails
+     * @custom:throws InvalidSignature if verification fails
      * @custom:emits Signed when signature is recorded
      */
     function sign(

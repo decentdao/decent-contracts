@@ -114,7 +114,7 @@ The codebase is organized into four distinct contract categories based on deploy
 - **Characteristics**: Referenced by multiple DAO deployable contracts
 - **Examples**:
   - StrategyV1ValidatorV1: Validates strategy voting for account abstraction
-  - KYCVerifierV1: Provides KYC verification services
+  - VerifierV1: Provides buyer verification services for Countersign and TokenSale contracts
 
 ## Local Setup & Testing
 

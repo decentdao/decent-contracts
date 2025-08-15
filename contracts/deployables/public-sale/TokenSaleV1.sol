@@ -6,9 +6,7 @@ import {
 } from "../../interfaces/decent/deployables/ITokenSaleV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
-import {
-    IKYCVerifierV1
-} from "../../interfaces/decent/services/IKYCVerifierV1.sol";
+import {IVerifierV1} from "../../interfaces/decent/services/IVerifierV1.sol";
 import {
     IVotingTokenLockupPlans
 } from "../../interfaces/hedgey/IVotingTokenLockupPlans.sol";
@@ -24,7 +22,7 @@ import {
 
 /**
  * @title TokenSaleV1
- * @notice Implementation of a public token sale with KYC verification
+ * @notice Implementation of a public token sale with buyer verification
  * @dev Supports time-based token sales with configurable parameters
  * @custom:security-contact security@decent-dao.org
  */
@@ -52,7 +50,7 @@ contract TokenSaleV1 is
         uint48 saleEndTimestamp;
         address commitmentToken;
         address saleToken;
-        address kycVerifier;
+        address verifier;
         address saleProceedsReceiver;
         address protocolFeeReceiver;
         uint256 minimumCommitment;
@@ -103,17 +101,17 @@ contract TokenSaleV1 is
     // ======================================================================
 
     /**
-     * @notice Ensures the caller has passed KYC verification
-     * @dev Calls the KYC verifier contract to check verification status
-     * @param verifyingSignature_ The verifier signature attesting to KYC status
+     * @notice Ensures the caller has passed verification
+     * @dev Calls the verifier contract to check verification status
+     * @param verifyingSignature_ The verifier signature attesting to verification status
      * @param signatureExpiration_ The expiration timestamp of the signature
      */
-    modifier isKYCVerified(
+    modifier isVerified(
         bytes calldata verifyingSignature_,
         uint48 signatureExpiration_
     ) {
         TokenSaleStorage storage $ = _getTokenSaleStorage();
-        IKYCVerifierV1($.kycVerifier).verify(
+        IVerifierV1($.verifier).verify(
             msg.sender,
             signatureExpiration_,
             verifyingSignature_
@@ -180,7 +178,7 @@ contract TokenSaleV1 is
         $.saleEndTimestamp = params_.saleEndTimestamp;
         $.commitmentToken = params_.commitmentToken;
         $.saleToken = params_.saleToken;
-        $.kycVerifier = params_.kycVerifier;
+        $.verifier = params_.verifier;
         $.saleProceedsReceiver = params_.saleProceedsReceiver;
         $.protocolFeeReceiver = params_.protocolFeeReceiver;
         $.minimumCommitment = params_.minimumCommitment;
@@ -295,9 +293,9 @@ contract TokenSaleV1 is
     /**
      * @inheritdoc ITokenSaleV1
      */
-    function kycVerifier() external view virtual override returns (address) {
+    function verifier() external view virtual override returns (address) {
         TokenSaleStorage storage $ = _getTokenSaleStorage();
-        return $.kycVerifier;
+        return $.verifier;
     }
 
     /**
@@ -550,7 +548,7 @@ contract TokenSaleV1 is
         payable
         virtual
         override
-        isKYCVerified(verifyingSignature_, signatureExpiration_)
+        isVerified(verifyingSignature_, signatureExpiration_)
     {
         TokenSaleStorage storage $ = _getTokenSaleStorage();
 
@@ -570,7 +568,7 @@ contract TokenSaleV1 is
         public
         virtual
         override
-        isKYCVerified(verifyingSignature_, signatureExpiration_)
+        isVerified(verifyingSignature_, signatureExpiration_)
     {
         TokenSaleStorage storage $ = _getTokenSaleStorage();
 

@@ -2,23 +2,23 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IKYCVerifierV1
- * @notice Service interface for Know Your Customer (KYC) verification
+ * @title IVerifierV1
+ * @notice Service interface for verification
  * @dev This interface provides a standard way to verify if an address has completed
- * KYC requirements. It's designed as a service contract that can be deployed once
- * per chain and referenced by multiple contracts that need KYC verification.
+ * verification requirements. It's designed as a service contract that can be deployed once
+ * per chain and referenced by multiple contracts that need verification. The signer will typically
+ * be a backend service that is responsible for signing verifications. Verification could include
+ * KYC, KYB, whitelisting, etc.
  *
  * Key features:
  * - verify function that reverts if the signature is invalid or expired
  * - checkVerify view function that returns a boolean indicating if a signature is valid
  *
- * Usage:
- * - CountersignV1 and TokenSaleV1 use this to verify signers before accepting signatures
  *
  * Security:
  * - Verification logic is critical for compliance
  */
-interface IKYCVerifierV1 {
+interface IVerifierV1 {
     // --- Errors ---
 
     /** @notice Thrown when the signature has expired */
@@ -31,8 +31,8 @@ interface IKYCVerifierV1 {
 
     /**
      * @notice Emitted when a signature is verified
-     * @param operator The address of the operator that is verifying KYC status
-     * @param account The address to verify KYC status for
+     * @param operator The address of the operator that is verifying
+     * @param account The address to verify for
      * @param signatureExpiration The expiration timestamp of the signature
      * @param nonce The nonce used for the signature
      */
@@ -44,19 +44,19 @@ interface IKYCVerifierV1 {
     );
 
     /**
-     * @notice Emitted when the verifier address is updated
-     * @param verifier The address of the verifier
+     * @notice Emitted when the signer address is updated
+     * @param signer The address of the signer
      */
-    event VerifierUpdated(address indexed verifier);
+    event SignerUpdated(address indexed signer);
 
     // --- View Functions ---
 
     /**
-     * @notice Returns the address of the verifier
-     * @dev The verifier is the address that is authorized to sign KYC attestations
-     * @return verifierAddress The address of the verifier
+     * @notice Returns the address of the signer
+     * @dev The signer is the address that is authorized to sign verifications
+     * @return signerAddress The address of the signer
      */
-    function verifier() external view returns (address verifierAddress);
+    function signer() external view returns (address signerAddress);
 
     /**
      * @notice Returns the nonce for an account
@@ -67,10 +67,10 @@ interface IKYCVerifierV1 {
 
     /**
      * @notice Checks if a signature is valid
-     * @param operator_ The address of the operator that is verifying KYC status
-     * @param account_ The address to verify KYC status for
+     * @param operator_ The address of the operator that is verifying
+     * @param account_ The address to verify for
      * @param signatureExpiration_ The expiration timestamp of the signature
-     * @param signature_ The verifier signature attesting to KYC status
+     * @param signature_ The signer signature attesting to verification
      * @return isValid Whether the signature is valid
      */
     function checkVerify(
@@ -83,12 +83,12 @@ interface IKYCVerifierV1 {
     // --- State-Changing Functions ---
 
     /**
-     * @notice Verifies if an address is KYC verified
+     * @notice Verifies if an address is verified
      * @dev Reverts if the signature is invalid or expired.
      * If signature is valid, the account's nonce is incremented.
-     * @param account_ The address to verify KYC status for
+     * @param account_ The address to verify for
      * @param signatureExpiration_ The expiration timestamp of the signature
-     * @param signature_ The verifier signature attesting to KYC status
+     * @param signature_ The signer signature attesting to verification
      */
     function verify(
         address account_,
@@ -97,8 +97,8 @@ interface IKYCVerifierV1 {
     ) external;
 
     /**
-     * @notice Updates the verifier address
-     * @param verifier_ The address of the new verifier
+     * @notice Updates the signer address
+     * @param signer_ The address of the new signer
      */
-    function updateVerifier(address verifier_) external;
+    function updateSigner(address signer_) external;
 }
