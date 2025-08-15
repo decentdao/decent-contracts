@@ -22,7 +22,7 @@ import {
 
 /**
  * @title TokenSaleV1
- * @notice Implementation of a public token sale with buyer verification
+ * @notice Implementation of a token sale with buyer verification
  * @dev Supports time-based token sales with configurable parameters
  * @custom:security-contact security@decent-dao.org
  */
@@ -70,7 +70,7 @@ contract TokenSaleV1 is
      * @dev Storage slot for TokenSaleStorage calculated using EIP-7201 formula:
      * keccak256(abi.encode(uint256(keccak256("Decent.TokenSale.main")) - 1)) & ~bytes32(uint256(0xff))
      */
-    bytes32 internal constant PUBLIC_SALE_STORAGE_LOCATION =
+    bytes32 internal constant TOKEN_SALE_STORAGE_LOCATION =
         0x2865da5af25c19b16f2ad5c9327e4a38930870c11de8367bfc68d9a873251900;
 
     /**
@@ -85,7 +85,7 @@ contract TokenSaleV1 is
     {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            $.slot := PUBLIC_SALE_STORAGE_LOCATION
+            $.slot := TOKEN_SALE_STORAGE_LOCATION
         }
     }
 
