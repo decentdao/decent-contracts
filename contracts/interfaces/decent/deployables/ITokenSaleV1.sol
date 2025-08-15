@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IPublicSaleV1
+ * @title ITokenSaleV1
  * @notice Interface for a public token sale contract with KYC verification
  * @dev Implements a time-based token sale with configurable parameters including:
  * - Sale duration with start and end timestamps
@@ -12,7 +12,7 @@ pragma solidity ^0.8.30;
  * - Configurable protocol fee and receiver
  * - Support for both native assets (ETH) and ERC20 tokens as payment
  */
-interface IPublicSaleV1 {
+interface ITokenSaleV1 {
     // --- Errors ---
 
     /**
@@ -241,14 +241,14 @@ interface IPublicSaleV1 {
      * @param commitmentTokenProtocolFeeAmount Commitment token amount taken as protocol fee
      * @param commitmentTokenAmountToSeller Commitment token amount sent to saleProceedsReceiver
      * @param saleTokenProtocolFeeAmount Sale tokena amount taken as protocol fee
-     * @param leftoverSaleTokenAmount Sale token amount leftover after sale
+     * @param unsoldSaleTokenAmount Sale token amount sent to saleProceedsReceiver
      */
     event SuccessfulSaleSellerSettled(
         address indexed caller,
         uint256 commitmentTokenProtocolFeeAmount,
         uint256 commitmentTokenAmountToSeller,
         uint256 saleTokenProtocolFeeAmount,
-        uint256 leftoverSaleTokenAmount
+        uint256 unsoldSaleTokenAmount
     );
 
     /**

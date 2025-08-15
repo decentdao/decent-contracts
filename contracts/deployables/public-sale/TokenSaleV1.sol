@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {
-    IPublicSaleV1
-} from "../../interfaces/decent/deployables/IPublicSaleV1.sol";
+    ITokenSaleV1
+} from "../../interfaces/decent/deployables/ITokenSaleV1.sol";
 import {IVersion} from "../../interfaces/decent/deployables/IVersion.sol";
 import {IDeploymentBlock} from "../../interfaces/decent/IDeploymentBlock.sol";
 import {
@@ -23,13 +23,13 @@ import {
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * @title PublicSaleV1
+ * @title TokenSaleV1
  * @notice Implementation of a public token sale with KYC verification
  * @dev Supports time-based token sales with configurable parameters
  * @custom:security-contact security@decent-dao.org
  */
-contract PublicSaleV1 is
-    IPublicSaleV1,
+contract TokenSaleV1 is
+    ITokenSaleV1,
     IVersion,
     DeploymentBlockInitializable,
     InitializerEventEmitter,
@@ -42,11 +42,11 @@ contract PublicSaleV1 is
     // ======================================================================
 
     /**
-     * @notice Main storage struct for PublicSaleV1 following EIP-7201
+     * @notice Main storage struct for TokenSaleV1 following EIP-7201
      * @dev Contains all agreement configuration and signer state
-     * @custom:storage-location erc7201:Decent.PublicSale.main
+     * @custom:storage-location erc7201:Decent.TokenSale.main
      */
-    struct PublicSaleStorage {
+    struct TokenSaleStorage {
         bool sellerSettled;
         uint48 saleStartTimestamp;
         uint48 saleEndTimestamp;
@@ -69,21 +69,21 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @dev Storage slot for PublicSaleStorage calculated using EIP-7201 formula:
-     * keccak256(abi.encode(uint256(keccak256("Decent.PublicSale.main")) - 1)) & ~bytes32(uint256(0xff))
+     * @dev Storage slot for TokenSaleStorage calculated using EIP-7201 formula:
+     * keccak256(abi.encode(uint256(keccak256("Decent.TokenSale.main")) - 1)) & ~bytes32(uint256(0xff))
      */
     bytes32 internal constant PUBLIC_SALE_STORAGE_LOCATION =
-        0x2954b43716f55c3a12eeb02cbe9a8c7ed7e82022cc9255428b4df142a8f4fa00;
+        0x2865da5af25c19b16f2ad5c9327e4a38930870c11de8367bfc68d9a873251900;
 
     /**
-     * @dev Returns the storage struct for PublicSaleV1
+     * @dev Returns the storage struct for TokenSaleV1
      * Following the EIP-7201 namespaced storage pattern to avoid storage collisions
-     * @return $ The storage struct for PublicSaleV1
+     * @return $ The storage struct for TokenSaleV1
      */
-    function _getPublicSaleStorage()
+    function _getTokenSaleStorage()
         internal
         pure
-        returns (PublicSaleStorage storage $)
+        returns (TokenSaleStorage storage $)
     {
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -112,7 +112,7 @@ contract PublicSaleV1 is
         bytes calldata verifyingSignature_,
         uint48 signatureExpiration_
     ) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         IKYCVerifierV1($.kycVerifier).verify(
             msg.sender,
             signatureExpiration_,
@@ -134,7 +134,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function initialize(
         InitializerParams memory params_
@@ -174,7 +174,7 @@ contract PublicSaleV1 is
             );
         }
 
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         $.saleStartTimestamp = params_.saleStartTimestamp;
         $.saleEndTimestamp = params_.saleEndTimestamp;
@@ -207,16 +207,16 @@ contract PublicSaleV1 is
     }
 
     // ======================================================================
-    // IPublicSaleV1
+    // ITokenSaleV1
     // ======================================================================
 
     // --- View Functions ---
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleState() public view virtual override returns (SaleState) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if (block.timestamp < $.saleStartTimestamp) {
             return SaleState.NOT_STARTED;
@@ -235,15 +235,15 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function sellerSettled() external view virtual override returns (bool) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.sellerSettled;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleStartTimestamp()
         external
@@ -252,12 +252,12 @@ contract PublicSaleV1 is
         override
         returns (uint48)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleStartTimestamp;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleEndTimestamp()
         external
@@ -266,12 +266,12 @@ contract PublicSaleV1 is
         override
         returns (uint48)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleEndTimestamp;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitmentToken()
         external
@@ -280,28 +280,28 @@ contract PublicSaleV1 is
         override
         returns (address)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.commitmentToken;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleToken() external view virtual override returns (address) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleToken;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function kycVerifier() external view virtual override returns (address) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.kycVerifier;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleProceedsReceiver()
         external
@@ -310,12 +310,12 @@ contract PublicSaleV1 is
         override
         returns (address)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleProceedsReceiver;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function protocolFeeReceiver()
         external
@@ -324,12 +324,12 @@ contract PublicSaleV1 is
         override
         returns (address)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.protocolFeeReceiver;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function minimumCommitment()
         external
@@ -338,12 +338,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.minimumCommitment;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function maximumCommitment()
         external
@@ -352,12 +352,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.maximumCommitment;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function minimumTotalCommitment()
         external
@@ -366,12 +366,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.minimumTotalCommitment;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function maximumTotalCommitment()
         external
@@ -380,20 +380,20 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.maximumTotalCommitment;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleTokenPrice() external view virtual override returns (uint256) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleTokenPrice;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitmentTokenProtocolFee()
         external
@@ -402,12 +402,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.commitmentTokenProtocolFee;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function saleTokenProtocolFee()
         external
@@ -416,11 +416,11 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.saleTokenProtocolFee;
     }
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function totalCommitments()
         external
@@ -429,32 +429,32 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.totalCommitments;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function commitments(
         address account_
     ) external view virtual override returns (uint256) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.commitments[account_];
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function settled(
         address account_
     ) external view virtual override returns (bool) {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.settled[account_];
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupEnabled()
         external
@@ -463,12 +463,12 @@ contract PublicSaleV1 is
         override
         returns (bool)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.enabled;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupStart()
         external
@@ -477,12 +477,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.start;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupCliff()
         external
@@ -491,12 +491,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.cliff;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupRatePercentage()
         external
@@ -505,12 +505,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.ratePercentage;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyLockupPeriod()
         external
@@ -519,12 +519,12 @@ contract PublicSaleV1 is
         override
         returns (uint256)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.period;
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function hedgeyVotingTokenLockupPlans()
         external
@@ -533,14 +533,14 @@ contract PublicSaleV1 is
         override
         returns (address)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
         return $.hedgeyLockupParams.votingTokenLockupPlans;
     }
 
     // --- State-Changing Functions ---
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function increaseCommitmentNative(
         bytes calldata verifyingSignature_,
@@ -552,7 +552,7 @@ contract PublicSaleV1 is
         override
         isKYCVerified(verifyingSignature_, signatureExpiration_)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if ($.commitmentToken != NATIVE_ASSET) revert InvalidCommitmentToken();
 
@@ -560,7 +560,7 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function increaseCommitmentERC20(
         uint256 increaseAmount_,
@@ -572,7 +572,7 @@ contract PublicSaleV1 is
         override
         isKYCVerified(verifyingSignature_, signatureExpiration_)
     {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if ($.commitmentToken == NATIVE_ASSET) revert InvalidCommitmentToken();
 
@@ -586,10 +586,10 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function buyerSettle(address recipient_) public virtual override {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if ($.settled[msg.sender]) revert AlreadySettled();
 
@@ -662,10 +662,10 @@ contract PublicSaleV1 is
     }
 
     /**
-     * @inheritdoc IPublicSaleV1
+     * @inheritdoc ITokenSaleV1
      */
     function sellerSettle() public virtual override {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if ($.sellerSettled) revert AlreadySettled();
 
@@ -774,13 +774,13 @@ contract PublicSaleV1 is
 
     /**
      * @inheritdoc ERC165
-     * @dev Supports IPublicSaleV1, IVersion, IDeploymentBlock, and IERC165
+     * @dev Supports ITokenSaleV1, IVersion, IDeploymentBlock, and IERC165
      */
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override returns (bool) {
         return
-            interfaceId_ == type(IPublicSaleV1).interfaceId ||
+            interfaceId_ == type(ITokenSaleV1).interfaceId ||
             interfaceId_ == type(IVersion).interfaceId ||
             interfaceId_ == type(IDeploymentBlock).interfaceId ||
             super.supportsInterface(interfaceId_);
@@ -854,7 +854,7 @@ contract PublicSaleV1 is
         address account_,
         uint256 increaseAmount_
     ) internal {
-        PublicSaleStorage storage $ = _getPublicSaleStorage();
+        TokenSaleStorage storage $ = _getTokenSaleStorage();
 
         if (saleState() != SaleState.ACTIVE) revert SaleNotActive();
 
