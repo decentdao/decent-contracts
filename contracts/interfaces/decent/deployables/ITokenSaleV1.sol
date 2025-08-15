@@ -2,17 +2,17 @@
 pragma solidity ^0.8.30;
 
 /**
- * @title IPublicSaleV1
- * @notice Interface for a public token sale contract with KYC verification
+ * @title ITokenSaleV1
+ * @notice Interface for a public token sale contract with signature-based verification
  * @dev Implements a time-based token sale with configurable parameters including:
  * - Sale duration with start and end timestamps
  * - Minimum and maximum commitment amounts per user
  * - Minimum and maximum total commitment amounts for the sale
- * - KYC verification requirement
+ * - Verification requirement via external verifier
  * - Configurable protocol fee and receiver
  * - Support for both native assets (ETH) and ERC20 tokens as payment
  */
-interface IPublicSaleV1 {
+interface ITokenSaleV1 {
     // --- Errors ---
 
     /**
@@ -142,7 +142,7 @@ interface IPublicSaleV1 {
      * @param saleTokenHolder Address holding the sale tokens to be distributed
      * @param commitmentToken Address of the token users commit (use NATIVE_ASSET constant for ETH)
      * @param saleToken Address of the token being sold
-     * @param kycVerifier Address of the KYC verification contract
+     * @param verifier Address of the verification contract
      * @param saleProceedsReceiver Address that receives sale proceeds
      * @param protocolFeeReceiver Address that receives protocol fees
      * @param minimumCommitment Minimum commitment amount per user
@@ -150,7 +150,8 @@ interface IPublicSaleV1 {
      * @param minimumTotalCommitment Minimum total commitments for successful sale
      * @param maximumTotalCommitment Maximum total commitments allowed
      * @param saleTokenPrice Price per sale token in commitment token units (with PRECISION decimals)
-     * @param protocolFee Fee percentage taken from proceeds (with PRECISION decimals)
+     * @param commitmentTokenProtocolFee Fee percentage taken from commitment token proceeds (with PRECISION decimals)
+     * @param saleTokenProtocolFee Fee percentage taken from sale token (with PRECISION decimals)
      * @param hedgeyLockupParams Parameters for initializing hedgey lockup plan
      */
     struct InitializerParams {
@@ -159,7 +160,7 @@ interface IPublicSaleV1 {
         address saleTokenHolder;
         address commitmentToken;
         address saleToken;
-        address kycVerifier;
+        address verifier;
         address saleProceedsReceiver;
         address protocolFeeReceiver;
         uint256 minimumCommitment;
@@ -167,7 +168,8 @@ interface IPublicSaleV1 {
         uint256 minimumTotalCommitment;
         uint256 maximumTotalCommitment;
         uint256 saleTokenPrice;
-        uint256 protocolFee;
+        uint256 commitmentTokenProtocolFee;
+        uint256 saleTokenProtocolFee;
         HedgeyLockupParams hedgeyLockupParams;
     }
 
@@ -236,13 +238,17 @@ interface IPublicSaleV1 {
     /**
      * @notice Emitted when seller settlement is performed after successful sale
      * @param caller Address that called sellerSettle
-     * @param saleProceeds Amount sent to saleProceedsReceiver
-     * @param protocolFee Amount sent to protocolFeeReceiver
+     * @param commitmentTokenProtocolFeeAmount Commitment token amount taken as protocol fee
+     * @param commitmentTokenAmountToSeller Commitment token amount sent to saleProceedsReceiver
+     * @param saleTokenProtocolFeeAmount Sale tokena amount taken as protocol fee
+     * @param unsoldSaleTokenAmount Sale token amount sent to saleProceedsReceiver
      */
     event SuccessfulSaleSellerSettled(
         address indexed caller,
-        uint256 saleProceeds,
-        uint256 protocolFee
+        uint256 commitmentTokenProtocolFeeAmount,
+        uint256 commitmentTokenAmountToSeller,
+        uint256 saleTokenProtocolFeeAmount,
+        uint256 unsoldSaleTokenAmount
     );
 
     /**
@@ -302,10 +308,10 @@ interface IPublicSaleV1 {
     function saleToken() external view returns (address token);
 
     /**
-     * @notice Returns the KYC verifier address
-     * @return verifier Address of the KYC verification contract
+     * @notice Returns the verifier address
+     * @return verifier Address of the verification contract
      */
-    function kycVerifier() external view returns (address verifier);
+    function verifier() external view returns (address verifier);
 
     /**
      * @notice Returns the sale proceeds receiver address
@@ -350,10 +356,16 @@ interface IPublicSaleV1 {
     function saleTokenPrice() external view returns (uint256 price);
 
     /**
-     * @notice Returns the protocol fee
+     * @notice Returns the commitment token protocol fee
      * @return fee Fee percentage (with PRECISION decimals)
      */
-    function protocolFee() external view returns (uint256 fee);
+    function commitmentTokenProtocolFee() external view returns (uint256 fee);
+
+    /**
+     * @notice Returns the sale token protocol fee
+     * @return fee Fee percentage (with PRECISION decimals)
+     */
+    function saleTokenProtocolFee() external view returns (uint256 fee);
 
     /**
      * @notice Returns the total commitments in the sale
@@ -423,7 +435,7 @@ interface IPublicSaleV1 {
 
     /**
      * @notice Increases commitment using native asset (ETH)
-     * @param verifyingSignature_ The verifier signature attesting to KYC status
+     * @param verifyingSignature_ The verifier signature attesting to buyer status
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @dev Reverts if commitment token is not NATIVE_ASSET
      */
@@ -435,7 +447,7 @@ interface IPublicSaleV1 {
     /**
      * @notice Increases commitment using ERC20 tokens
      * @param increaseAmount_ Amount to increase commitment by
-     * @param verifyingSignature_ The verifier signature attesting to KYC status
+     * @param verifyingSignature_ The verifier signature attesting to buyer status
      * @param signatureExpiration_ The expiration timestamp of the signature
      * @dev Reverts if commitment token is NATIVE_ASSET
      */
