@@ -150,7 +150,8 @@ interface IPublicSaleV1 {
      * @param minimumTotalCommitment Minimum total commitments for successful sale
      * @param maximumTotalCommitment Maximum total commitments allowed
      * @param saleTokenPrice Price per sale token in commitment token units (with PRECISION decimals)
-     * @param protocolFee Fee percentage taken from proceeds (with PRECISION decimals)
+     * @param commitmentTokenProtocolFee Fee percentage taken from commitment token proceeds (with PRECISION decimals)
+     * @param saleTokenProtocolFee Fee percentage taken from sale token (with PRECISION decimals)
      * @param hedgeyLockupParams Parameters for initializing hedgey lockup plan
      */
     struct InitializerParams {
@@ -167,7 +168,8 @@ interface IPublicSaleV1 {
         uint256 minimumTotalCommitment;
         uint256 maximumTotalCommitment;
         uint256 saleTokenPrice;
-        uint256 protocolFee;
+        uint256 commitmentTokenProtocolFee;
+        uint256 saleTokenProtocolFee;
         HedgeyLockupParams hedgeyLockupParams;
     }
 
@@ -236,13 +238,17 @@ interface IPublicSaleV1 {
     /**
      * @notice Emitted when seller settlement is performed after successful sale
      * @param caller Address that called sellerSettle
-     * @param saleProceeds Amount sent to saleProceedsReceiver
-     * @param protocolFee Amount sent to protocolFeeReceiver
+     * @param commitmentTokenProtocolFeeAmount Commitment token amount taken as protocol fee
+     * @param commitmentTokenAmountToSeller Commitment token amount sent to saleProceedsReceiver
+     * @param saleTokenProtocolFeeAmount Sale tokena amount taken as protocol fee
+     * @param leftoverSaleTokenAmount Sale token amount leftover after sale
      */
     event SuccessfulSaleSellerSettled(
         address indexed caller,
-        uint256 saleProceeds,
-        uint256 protocolFee
+        uint256 commitmentTokenProtocolFeeAmount,
+        uint256 commitmentTokenAmountToSeller,
+        uint256 saleTokenProtocolFeeAmount,
+        uint256 leftoverSaleTokenAmount
     );
 
     /**
@@ -350,10 +356,16 @@ interface IPublicSaleV1 {
     function saleTokenPrice() external view returns (uint256 price);
 
     /**
-     * @notice Returns the protocol fee
+     * @notice Returns the commitment token protocol fee
      * @return fee Fee percentage (with PRECISION decimals)
      */
-    function protocolFee() external view returns (uint256 fee);
+    function commitmentTokenProtocolFee() external view returns (uint256 fee);
+
+    /**
+     * @notice Returns the sale token protocol fee
+     * @return fee Fee percentage (with PRECISION decimals)
+     */
+    function saleTokenProtocolFee() external view returns (uint256 fee);
 
     /**
      * @notice Returns the total commitments in the sale
