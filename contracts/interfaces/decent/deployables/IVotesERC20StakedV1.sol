@@ -165,10 +165,12 @@ interface IVotesERC20StakedV1 {
      * @notice Completes initialization with metadata, minimum staking period, and rewards tokens (part 2 of 2)
      * @dev Can only be called once during deployment. Sets up the staking token
      * and initial reward tokens. The staking token itself cannot be a reward token.
+     * @param clockModeTimestamp_ The clock mode, true for timestamp, false for blocknumber
      * @param minimumStakingPeriod_ Minimum seconds before unstaking allowed
      * @param rewardsTokens_ Initial array of reward token addresses
      */
     function initialize2(
+        bool clockModeTimestamp_,
         uint256 minimumStakingPeriod_,
         address[] calldata rewardsTokens_
     ) external;
@@ -180,7 +182,7 @@ interface IVotesERC20StakedV1 {
      * @dev Returns "mode=timestamp" indicating timestamp-based timing
      * @return clockMode The clock mode string per EIP-6372
      */
-    function CLOCK_MODE() external pure returns (string memory clockMode);
+    function CLOCK_MODE() external view returns (string memory clockMode);
     // solhint-disable-previous-line func-name-mixedcase
 
     // --- View Functions ---

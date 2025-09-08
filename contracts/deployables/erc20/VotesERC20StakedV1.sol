@@ -81,6 +81,8 @@ contract VotesERC20StakedV1 is
      * @custom:storage-location erc7201:Decent.VotesERC20Staked.main
      */
     struct VotesERC20StakedStorage {
+        /** @notice The clock mode, true for timestamp, false for blocknumber */
+        bool clockModeTimestamp;
         /** @notice The ERC20 token that users stake */
         IERC20 stakedToken;
         /** @notice Minimum seconds before unstaking allowed */
@@ -167,9 +169,12 @@ contract VotesERC20StakedV1 is
      * @inheritdoc IVotesERC20StakedV1
      */
     function initialize2(
+        bool clockModeTimestamp_,
         uint256 minimumStakingPeriod_,
         address[] calldata rewardsTokens_
     ) public virtual override reinitializer(2) {
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        $.clockModeTimestamp = clockModeTimestamp_;
         _updateMinimumStakingPeriod(minimumStakingPeriod_);
         _addRewardsTokens(rewardsTokens_);
     }
@@ -203,12 +208,13 @@ contract VotesERC20StakedV1 is
     function CLOCK_MODE()
         // solhint-disable-previous-line func-name-mixedcase
         public
-        pure
+        view
         virtual
         override(IVotesERC20StakedV1, VotesUpgradeable)
         returns (string memory)
     {
-        return "mode=timestamp";
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return $.clockModeTimestamp ? "mode=timestamp" : "mode=blocknumber&from=default";
     }
 
     // --- View Functions ---
@@ -223,7 +229,8 @@ contract VotesERC20StakedV1 is
         override(IVotesERC20StakedV1, VotesUpgradeable)
         returns (uint48)
     {
-        return uint48(block.timestamp);
+        VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
+        return uint48($.clockModeTimestamp ? block.timestamp : block.number);
     }
 
     /**
