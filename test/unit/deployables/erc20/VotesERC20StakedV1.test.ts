@@ -105,7 +105,7 @@ async function deployVotesERC20StakedProxy(
   );
 
   // Call initialize2
-  await stakingContractInstance.initialize2(minimumStakingPeriod, rewardsTokens);
+  await stakingContractInstance.initialize2(true, minimumStakingPeriod, rewardsTokens);
 
   // Return a contract instance connected to the proxy
   return VotesERC20StakedV1__factory.connect(await proxy.getAddress(), owner);
