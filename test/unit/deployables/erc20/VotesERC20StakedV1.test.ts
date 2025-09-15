@@ -342,7 +342,7 @@ describe('VotesERC20StakedV1', () => {
 
       const currentTime = await ethers.provider.getBlock('latest').then(b => b!.timestamp);
       const clockTime = await votesERC20Staked.clock();
-      expect(Number(clockTime)).to.be.closeTo(currentTime, 5);
+      expect(Number(clockTime)).to.equal(currentTime);
     });
 
     it('deploys with blocknumber clock mode when false', async () => {
