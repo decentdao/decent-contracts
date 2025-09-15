@@ -214,7 +214,10 @@ contract VotesERC20StakedV1 is
         returns (string memory)
     {
         VotesERC20StakedStorage storage $ = _getVotesERC20StakedStorage();
-        return $.clockModeTimestamp ? "mode=timestamp" : "mode=blocknumber&from=default";
+        return
+            $.clockModeTimestamp
+                ? "mode=timestamp"
+                : "mode=blocknumber&from=default";
     }
 
     // --- View Functions ---
