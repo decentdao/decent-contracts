@@ -813,6 +813,7 @@ contract TokenSaleV1 is
         if (rate_ == 0) revert InvalidRate();
         if (rate_ > amount_) revert RateExceedsAmount();
         if (period_ == 0) revert InvalidPeriod();
+        if (cliff_ < start_) revert CliffBeforeStart();
 
         // Calculate vesting end time
         uint256 end = (amount_ % rate_ == 0)

@@ -305,7 +305,7 @@ interface IVotesERC20StakedV1 {
 
     /**
      * @notice Adds new reward tokens to the contract
-     * @dev Only callable by owner. Cannot add the staking token as a reward.
+     * @dev Only callable by owner. Note that the staking token may also be a reward token.
      * Duplicate tokens will revert.
      * @param rewardsTokens_ Array of new reward token addresses
      * @custom:access Restricted to owner

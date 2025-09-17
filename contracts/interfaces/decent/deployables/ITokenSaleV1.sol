@@ -76,6 +76,11 @@ interface ITokenSaleV1 {
     error CliffExceedsEnd();
 
     /**
+     * @notice Thrown when Hedgey vesting cliff is before the start time
+     */
+    error CliffBeforeStart();
+
+    /**
      * @notice Thrown when attempting to settle an already settled account
      */
     error AlreadySettled();

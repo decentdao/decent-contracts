@@ -508,6 +508,28 @@ describe('TokenSaleV1', () => {
       );
     });
 
+    it('should revert when Hedgey lockup cliff is before start time', async () => {
+      const currentTime = await time.latest();
+      const invalidHedgeyParams = {
+        ...defaultParams,
+        hedgeyLockupParams: {
+          enabled: true,
+          start: BigInt(currentTime + 1_000),
+          cliff: BigInt(currentTime + 999), // cliff < start
+          ratePercentage: ethers.parseEther('0.0025'),
+          period: 10_000,
+          votingTokenLockupPlans: await votingTokenLockupPlans.getAddress(),
+        },
+      };
+
+      await expect(
+        deployTokenSaleProxy(deployer, invalidHedgeyParams),
+      ).to.be.revertedWithCustomError(
+        TokenSaleV1__factory.connect(ethers.ZeroAddress, deployer),
+        'CliffBeforeStart',
+      );
+    });
+
     it('should prevent double initialization', async () => {
       tokenSale = await deployTokenSaleProxy(deployer, defaultParams);
 
