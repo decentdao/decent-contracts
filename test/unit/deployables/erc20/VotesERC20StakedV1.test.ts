@@ -89,6 +89,7 @@ async function deployVotesERC20StakedProxy(
   stakedToken: string,
   minimumStakingPeriod: bigint,
   rewardsTokens: string[],
+  clockModeTimestamp: boolean,
 ): Promise<VotesERC20StakedV1> {
   // Create initialization data with function selector
   const fullInitData = VotesERC20StakedV1__factory.createInterface().encodeFunctionData(
@@ -105,7 +106,11 @@ async function deployVotesERC20StakedProxy(
   );
 
   // Call initialize2
-  await stakingContractInstance.initialize2(minimumStakingPeriod, rewardsTokens);
+  await stakingContractInstance.initialize2(
+    clockModeTimestamp,
+    minimumStakingPeriod,
+    rewardsTokens,
+  );
 
   // Return a contract instance connected to the proxy
   return VotesERC20StakedV1__factory.connect(await proxy.getAddress(), owner);
@@ -156,6 +161,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
 
       expect(await votesERC20Staked.name()).to.equal('Staked Mock Voting Token');
@@ -182,6 +188,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
 
       await expect(
@@ -209,6 +216,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
 
       expect(await votesERC20Staked.owner()).to.equal(owner.address);
@@ -228,6 +236,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
     });
 
@@ -278,6 +287,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
     });
 
@@ -299,6 +309,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
     });
 
@@ -315,6 +326,44 @@ describe('VotesERC20StakedV1', () => {
     });
   });
 
+  describe('Clock mode deployment', () => {
+    it('deploys with timestamp clock mode when true', async () => {
+      votesERC20Staked = await deployVotesERC20StakedProxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        await stakedToken.getAddress(),
+        604800n,
+        [await rewardsTokenA.getAddress(), await rewardsTokenB.getAddress()],
+        true,
+      );
+
+      expect(await votesERC20Staked.CLOCK_MODE()).to.equal('mode=timestamp');
+
+      const currentTime = await ethers.provider.getBlock('latest').then(b => b!.timestamp);
+      const clockTime = await votesERC20Staked.clock();
+      expect(Number(clockTime)).to.equal(currentTime);
+    });
+
+    it('deploys with blocknumber clock mode when false', async () => {
+      votesERC20Staked = await deployVotesERC20StakedProxy(
+        proxyDeployer,
+        masterCopy,
+        owner,
+        await stakedToken.getAddress(),
+        604800n,
+        [await rewardsTokenA.getAddress(), await rewardsTokenB.getAddress()],
+        false,
+      );
+
+      expect(await votesERC20Staked.CLOCK_MODE()).to.equal('mode=blocknumber&from=default');
+
+      const latestBlockNumber = await ethers.provider.getBlockNumber();
+      const clockValue = await votesERC20Staked.clock();
+      expect(Number(clockValue)).to.equal(latestBlockNumber);
+    });
+  });
+
   describe('Timestamp-based clock functions', () => {
     beforeEach(async () => {
       votesERC20Staked = await deployVotesERC20StakedProxy(
@@ -328,6 +377,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
     });
 
@@ -374,6 +424,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
     });
 
@@ -402,6 +453,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
 
       // Mint 10 staked tokens to alice
@@ -471,6 +523,7 @@ describe('VotesERC20StakedV1', () => {
           await rewardsTokenB.getAddress(),
           await rewardsTokenC.getAddress(),
         ],
+        true,
       );
 
       // Mint 10 staked tokens to alice
@@ -623,6 +676,7 @@ describe('VotesERC20StakedV1', () => {
         await stakedToken.getAddress(),
         604800n,
         [await rewardsTokenA.getAddress(), await rewardsTokenB.getAddress(), nativeAssetAddress],
+        true,
       );
 
       // Mint 10 staked tokens to alice
@@ -844,6 +898,7 @@ describe('VotesERC20StakedV1', () => {
         await stakedToken.getAddress(),
         604800n,
         [await rewardsTokenA.getAddress(), await rewardsTokenB.getAddress(), nativeAssetAddress],
+        true,
       );
 
       // Mint 10 staked tokens to alice
@@ -1145,6 +1200,7 @@ describe('VotesERC20StakedV1', () => {
         await stakedToken.getAddress(),
         604800n,
         [await stakedToken.getAddress(), await rewardsTokenB.getAddress(), nativeAssetAddress],
+        true,
       );
 
       // Mint 100 staked tokens to alice
