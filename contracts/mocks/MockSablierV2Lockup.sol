@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {LockupLinear} from "../interfaces/sablier/types/DataTypes.sol";
+import {Lockup, LockupLinear} from "../interfaces/sablier/types/DataTypes.sol";
 
 /**
  * @title MockSablierV2Lockup
@@ -17,6 +17,7 @@ contract MockSablierV2Lockup {
         SETTLED, // 2
         CANCELED, // 3
         DEPLETED // 4
+
     }
 
     // Mock state
@@ -28,11 +29,7 @@ contract MockSablierV2Lockup {
     event WithdrawMaxCalled(uint256 streamId, address to);
     event StreamCanceled(uint256 streamId);
     event StreamCreated(
-        uint256 indexed streamId,
-        address indexed sender,
-        address indexed recipient,
-        uint128 totalAmount,
-        address asset
+        uint256 indexed streamId, address indexed sender, address indexed recipient, uint128 totalAmount, address asset
     );
 
     /**
@@ -52,9 +49,7 @@ contract MockSablierV2Lockup {
     /**
      * @dev Get withdrawable amount for a stream
      */
-    function withdrawableAmountOf(
-        uint256 streamId
-    ) external view returns (uint256) {
+    function withdrawableAmountOf(uint256 streamId) external view returns (uint256) {
         return withdrawableAmounts[streamId];
     }
 
@@ -96,28 +91,22 @@ contract MockSablierV2Lockup {
     }
 
     /**
-     * @dev Create a new stream with timestamps (matches ISablierV2LockupLinear)
+     * @dev Create a new linear stream with timestamps (matches new unified ISablierV2Lockup)
      */
-    function createWithTimestamps(
-        LockupLinear.CreateWithTimestamps calldata params
+    function createWithTimestampsLL(
+        Lockup.CreateWithTimestamps calldata params,
+        LockupLinear.UnlockAmounts calldata, /* unlockAmounts */
+        uint40 /* cliffTime */
     ) external returns (uint256 streamId) {
         streamId = _nextStreamId++;
 
         // Verify token approval
-        uint256 allowance = IERC20(params.asset).allowance(
-            msg.sender,
-            address(this)
-        );
+        uint256 allowance = IERC20(params.token).allowance(msg.sender, address(this));
         require(allowance >= params.totalAmount, "Insufficient allowance");
 
         // Transfer tokens from sender
         require(
-            IERC20(params.asset).transferFrom(
-                msg.sender,
-                address(this),
-                params.totalAmount
-            ),
-            "Token transfer failed"
+            IERC20(params.token).transferFrom(msg.sender, address(this), params.totalAmount), "Token transfer failed"
         );
 
         // Set initial stream state
@@ -125,13 +114,7 @@ contract MockSablierV2Lockup {
         withdrawableAmounts[streamId] = 0; // No funds withdrawable initially
 
         // Emit event
-        emit StreamCreated(
-            streamId,
-            params.sender,
-            params.recipient,
-            params.totalAmount,
-            address(params.asset)
-        );
+        emit StreamCreated(streamId, params.sender, params.recipient, params.totalAmount, address(params.token));
 
         return streamId;
     }

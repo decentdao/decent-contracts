@@ -476,14 +476,19 @@ describe('UtilityRolesManagementV1', () => {
         sablier: await mockSablier.getAddress(),
         sender: await mockSafe.getAddress(),
         totalAmount: ethers.parseEther('1000'),
-        asset: await mockToken.getAddress(),
+        token: await mockToken.getAddress(),
         cancelable: true,
         transferable: true,
         timestamps: {
           start: now,
-          cliff: now + 3600,
           end: now + 7200,
         },
+        cliffTime: now + 3600,
+        unlockAmounts: {
+          start: 0,
+          cliff: 0,
+        },
+        shape: '',
         broker: {
           account: ethers.ZeroAddress,
           fee: 0,
