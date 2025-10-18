@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.30;
 
-import {LockupLinear, Broker} from "../../sablier/types/DataTypes.sol";
+import {Lockup, LockupLinear, Broker} from "../../sablier/types/DataTypes.sol";
 
 /**
  * @title IUtilityRolesManagementV1
@@ -40,10 +40,14 @@ import {LockupLinear, Broker} from "../../sablier/types/DataTypes.sol";
 interface IUtilityRolesManagementV1 {
     // --- Errors ---
 
-    /** @notice Thrown when autonomous admin proxy deployment via delegatecall fails */
+    /**
+     * @notice Thrown when autonomous admin proxy deployment via delegatecall fails
+     */
     error ProxyDeploymentFailed();
 
-    /** @notice Thrown when entry point functions are called directly instead of via delegatecall */
+    /**
+     * @notice Thrown when entry point functions are called directly instead of via delegatecall
+     */
     error MustBeCalledViaDelegatecall();
 
     // --- Structs ---
@@ -73,10 +77,13 @@ interface IUtilityRolesManagementV1 {
 
     /**
      * @notice Parameters for creating a Sablier payment stream
-     * @param sablier The Sablier V2 LockupLinear contract address
+     * @param sablier The Sablier V2 Lockup contract address
      * @param sender The address funding the stream (usually the Safe)
-     * @param asset The ERC20 token to stream
-     * @param timestamps Start and cliff times for the stream
+     * @param token The ERC20 token to stream
+     * @param timestamps Start and end times for the stream
+     * @param cliffTime The cliff time for the stream (0 means no cliff)
+     * @param unlockAmounts Amounts to unlock at start and cliff times
+     * @param shape Optional parameter to describe the distribution function in UI
      * @param broker Fee configuration for stream creation
      * @param totalAmount Total tokens to stream over the duration
      * @param cancelable Whether the stream can be cancelled
@@ -85,8 +92,11 @@ interface IUtilityRolesManagementV1 {
     struct SablierStreamParams {
         address sablier;
         address sender;
-        address asset;
-        LockupLinear.Timestamps timestamps;
+        address token;
+        Lockup.Timestamps timestamps;
+        uint40 cliffTime;
+        LockupLinear.UnlockAmounts unlockAmounts;
+        string shape;
         Broker broker;
         uint128 totalAmount;
         bool cancelable;
@@ -184,9 +194,7 @@ interface IUtilityRolesManagementV1 {
      * @custom:security Safe must have sufficient token balances for streams
      * @custom:emits Updates KeyValuePairs with "topHatId" => topHatId
      */
-    function createAndDeclareTree(
-        CreateTreeParams calldata treeParams_
-    ) external;
+    function createAndDeclareTree(CreateTreeParams calldata treeParams_) external;
 
     /**
      * @notice Creates new role hats with payment streams in an existing tree
@@ -202,9 +210,7 @@ interface IUtilityRolesManagementV1 {
      * @param roleHatsParams_ Configuration for the new role hats to create
      * @custom:security Must be called via delegatecall from a Safe
      */
-    function createRoleHats(
-        CreateRoleHatsParams calldata roleHatsParams_
-    ) external;
+    function createRoleHats(CreateRoleHatsParams calldata roleHatsParams_) external;
 
     // --- Sablier Stream Management Functions ---
 
@@ -224,12 +230,8 @@ interface IUtilityRolesManagementV1 {
      * @custom:security Must be called via delegatecall from a Safe
      * @custom:security Requires the Safe to have control over the Hat account
      */
-    function withdrawMaxFromStream(
-        address sablier_,
-        address recipientHatAccount_,
-        uint256 streamId_,
-        address to_
-    ) external;
+    function withdrawMaxFromStream(address sablier_, address recipientHatAccount_, uint256 streamId_, address to_)
+        external;
 
     /**
      * @notice Cancels an active stream
