@@ -194,7 +194,9 @@ interface IUtilityRolesManagementV1 {
      * @custom:security Safe must have sufficient token balances for streams
      * @custom:emits Updates KeyValuePairs with "topHatId" => topHatId
      */
-    function createAndDeclareTree(CreateTreeParams calldata treeParams_) external;
+    function createAndDeclareTree(
+        CreateTreeParams calldata treeParams_
+    ) external;
 
     /**
      * @notice Creates new role hats with payment streams in an existing tree
@@ -210,7 +212,9 @@ interface IUtilityRolesManagementV1 {
      * @param roleHatsParams_ Configuration for the new role hats to create
      * @custom:security Must be called via delegatecall from a Safe
      */
-    function createRoleHats(CreateRoleHatsParams calldata roleHatsParams_) external;
+    function createRoleHats(
+        CreateRoleHatsParams calldata roleHatsParams_
+    ) external;
 
     // --- Sablier Stream Management Functions ---
 
@@ -230,8 +234,12 @@ interface IUtilityRolesManagementV1 {
      * @custom:security Must be called via delegatecall from a Safe
      * @custom:security Requires the Safe to have control over the Hat account
      */
-    function withdrawMaxFromStream(address sablier_, address recipientHatAccount_, uint256 streamId_, address to_)
-        external;
+    function withdrawMaxFromStream(
+        address sablier_,
+        address recipientHatAccount_,
+        uint256 streamId_,
+        address to_
+    ) external;
 
     /**
      * @notice Cancels an active stream

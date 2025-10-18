@@ -8,5 +8,7 @@ interface IBatch {
     /// https://paradigm.xyz/2021/08/two-rights-might-make-a-wrong for more information.
     /// @param calls An array of inputs for each call.
     /// @return results An array of results from each call. Empty when the calls do not return anything.
-    function batch(bytes[] calldata calls) external payable returns (bytes[] memory results);
+    function batch(
+        bytes[] calldata calls
+    ) external payable returns (bytes[] memory results);
 }
