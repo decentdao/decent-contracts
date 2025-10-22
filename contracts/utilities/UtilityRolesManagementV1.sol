@@ -22,7 +22,7 @@ import {
 import {IHatsModuleFactory} from "../interfaces/hats/IHatsModuleFactory.sol";
 import {ISablierLockup} from "../interfaces/sablier/ISablierLockup.sol";
 import {ISablierLockupBase} from "../interfaces/sablier/ISablierLockupBase.sol";
-import {LockupLinear, Lockup} from "../interfaces/sablier/types/DataTypes.sol";
+import {Lockup} from "../interfaces/sablier/types/DataTypes.sol";
 import {IERC6551Executable} from "../interfaces/erc6551/IERC6551Executable.sol";
 import {IDeploymentBlock} from "../interfaces/decent/IDeploymentBlock.sol";
 import {
