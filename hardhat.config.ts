@@ -80,6 +80,16 @@ const config: HardhatUserConfig = {
         ),
       ],
     },
+    intuition: {
+      chainId: 1155,
+      url: vars.get('INTUITION_PROVIDER', ''),
+      accounts: [
+        vars.get(
+          'DECENT_PRODUCTION_DEPLOYER_PK',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ),
+      ],
+    },
   },
   etherscan: {
     apiKey: vars.get('ETHERSCAN_API_KEY', ''),
