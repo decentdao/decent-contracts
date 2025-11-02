@@ -48,6 +48,7 @@ const config: HardhatUserConfig = {
       polygon: `privatekey://${process.env.POLYGON_DEPLOYER_PRIVATE_KEY}`,
       base: `privatekey://${process.env.BASE_DEPLOYER_PRIVATE_KEY}`,
       optimism: `privatekey://${process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY}`,
+      intuition: `privatekey://${process.env.INTUITION_DEPLOYER_PRIVATE_KEY}`,
     },
   },
   networks: {
@@ -84,6 +85,13 @@ const config: HardhatUserConfig = {
       url: process.env.OPTIMISM_PROVIDER || 'https://optimism-rpc.publicnode.com',
       accounts: process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY
         ? [process.env.OPTIMISM_DEPLOYER_PRIVATE_KEY]
+        : [dummyPrivateKey],
+    },
+    intuition: {
+      chainId: 1155,
+      url: process.env.INTUITION_PROVIDER || 'https://rpc.intuition.systems/http',
+      accounts: process.env.INTUITION_DEPLOYER_PRIVATE_KEY
+        ? [process.env.INTUITION_DEPLOYER_PRIVATE_KEY]
         : [dummyPrivateKey],
     },
   },
