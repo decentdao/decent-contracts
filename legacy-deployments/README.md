@@ -10,6 +10,7 @@ legacy-deployments/
 ├── mainnet/      # Ethereum mainnet deployments
 ├── optimism/     # Optimism network deployments
 ├── polygon/      # Polygon network deployments
+├── intiution/    # Intuition testnet deployments
 └── sepolia/      # Sepolia testnet deployments
 ```
 
